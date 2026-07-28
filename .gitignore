@@ -1,0 +1,38 @@
+# AudioRanobe Frontend — standalone ignores.
+# Mirrors the repository-root .gitignore so this directory works as its own
+# repository too. Keep both in sync.
+
+# IDE / editor (matches .idea at any depth, incl. one opened on this folder)
+.idea/
+.vscode/
+*.iml
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets — NEXT_PUBLIC_API_URL is public, but .env may grow private keys.
+# .env.example documents every key and stays tracked.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Next.js — .next is the dev/production build, .next-build is what
+# `npm run build:check` writes so it never clobbers a running dev server.
+.next/
+.next-build/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Hand-made export bundles
+*.zip

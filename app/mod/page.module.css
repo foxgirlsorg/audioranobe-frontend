@@ -1,0 +1,81 @@
+/* Moderation dashboard — stat tiles. */
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.3rem 1.4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tileLink {
+  cursor: pointer;
+}
+
+.tileLink:hover {
+  border-color: var(--border-hover);
+}
+
+.tileLink:hover .value {
+  color: var(--accent-hover);
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.value {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 200;
+  color: #fff;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  transition: color 0.25s ease;
+}
+
+/* actionable tiles get a quiet accent tint */
+.accentTile {
+  border-color: rgba(222, 97, 97, 0.35);
+  background: linear-gradient(155deg, rgba(222, 97, 97, 0.1), rgba(20, 20, 22, 0.6) 65%);
+}
+
+.accentTile .label {
+  color: rgba(236, 125, 125, 0.8);
+}
+
+.accentTile .value {
+  color: var(--accent-hover);
+}
+
+.accentTile.tileLink:hover {
+  border-color: rgba(222, 97, 97, 0.6);
+  box-shadow: 0 0 18px rgba(222, 97, 97, 0.12);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.7rem;
+  }
+
+  .tile {
+    padding: 1rem 1.1rem;
+  }
+}

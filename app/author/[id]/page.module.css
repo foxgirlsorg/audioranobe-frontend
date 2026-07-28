@@ -1,0 +1,78 @@
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 5rem 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- head ---------- */
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-bottom: 0.35rem;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.editBtn:hover {
+  color: var(--accent-hover);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ---------- bio ---------- */
+
+.bioPanel {
+  margin-top: 1.75rem;
+  padding: 1.4rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bio {
+  font-size: 14.5px;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 768px) {
+  .bioPanel {
+    padding: 1.1rem 1.2rem;
+  }
+}

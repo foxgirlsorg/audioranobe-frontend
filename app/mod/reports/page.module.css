@@ -1,0 +1,163 @@
+/* Reports desk — flagged content rows. */
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.row {
+  padding: 1.15rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.rowHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.reporter {
+  font-weight: 500;
+  color: #fff;
+  transition: color 0.2s ease;
+}
+
+.reporter:hover {
+  color: var(--accent-hover);
+}
+
+.deleted {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.flagWord {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.time {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.target {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.7rem;
+}
+
+.preview {
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  word-break: break-word;
+}
+
+.targetLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.targetLink:hover {
+  color: var(--accent-hover);
+}
+
+.gone {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.reason {
+  border-left: 2px solid rgba(222, 97, 97, 0.45);
+  padding: 0.35rem 0 0.35rem 0.9rem;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.resolution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.resolution .time {
+  margin-left: 0;
+}
+
+.note {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ---------- modal ---------- */
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.modalLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .row {
+    padding: 1rem 1.1rem;
+  }
+
+  .time {
+    margin-left: 0;
+    width: 100%;
+  }
+}

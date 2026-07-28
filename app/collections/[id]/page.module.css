@@ -1,0 +1,376 @@
+/* Collection detail — glass header, like button, owner tools, item grid with notes. */
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 5rem 0;
+}
+
+/* ---------- header ---------- */
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.6rem 1.8rem;
+  margin-bottom: 2.2rem;
+}
+
+.headMain {
+  min-width: 0;
+}
+
+.name {
+  margin-top: 0.4rem;
+  font-size: clamp(1.5rem, 3.2vw, 2.2rem);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #fff;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+.desc {
+  margin-top: 0.7rem;
+  max-width: 640px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ownerName {
+  color: var(--text-secondary);
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.ownerName:hover {
+  color: var(--accent-hover);
+}
+
+.metaDot {
+  opacity: 0.6;
+}
+
+/* ---------- actions ---------- */
+
+.headActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.likeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.likeBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--accent-hover);
+}
+
+.likeBtn:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.liked {
+  border-color: rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.12);
+  color: var(--accent-hover);
+}
+
+.liked:hover {
+  box-shadow: 0 0 18px rgba(222, 97, 97, 0.15);
+}
+
+.liked .heartIcon {
+  fill: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- items ---------- */
+
+.items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem 1.25rem;
+  align-items: flex-start;
+}
+
+.item {
+  display: block;
+  width: 164px;
+}
+
+.note {
+  margin-top: 8px;
+  padding: 4px 0 4px 10px;
+  border-left: 2px solid rgba(222, 97, 97, 0.5);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+}
+
+.itemTools {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.tool:hover {
+  border-color: var(--border-hover);
+  color: var(--accent-hover);
+}
+
+.tool:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.toolDanger:hover {
+  border-color: rgba(197, 52, 52, 0.65);
+  color: #e07a7a;
+}
+
+.noteEditor {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.noteEditor textarea {
+  font-size: 12.5px;
+  min-height: 70px;
+}
+
+.noteBtns {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.noteBtns button {
+  padding: 0.4rem 0.7rem;
+  font-size: 10px;
+}
+
+/* ---------- edit modal form ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: min(380px, 78vw);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.3rem;
+}
+
+/* ---------- add titles modal ---------- */
+
+.addBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: min(420px, 80vw);
+}
+
+.addResults {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.addStatus {
+  padding: 1.4rem 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.25s ease;
+}
+
+.addRow:hover {
+  border-color: var(--border-hover);
+}
+
+.addCover {
+  flex-shrink: 0;
+  width: 36px;
+  height: 54px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.addCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.addInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.addName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addAuthor {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addedTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-right: 6px;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 768px) {
+  .head {
+    flex-direction: column;
+    padding: 1.2rem 1.1rem;
+  }
+
+  .headActions {
+    justify-content: flex-start;
+  }
+
+  .items {
+    gap: 1.25rem 0.9rem;
+  }
+
+  .item {
+    width: 150px;
+  }
+
+  .form,
+  .addBox {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .items {
+    gap: 1rem 0.7rem;
+  }
+
+  .item {
+    width: 130px;
+  }
+
+  .tool {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .likeBtn {
+    min-height: 44px;
+  }
+}

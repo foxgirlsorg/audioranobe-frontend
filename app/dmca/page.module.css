@@ -1,0 +1,110 @@
+.wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 3rem;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.titleAccent {
+  color: #de6161;
+}
+
+.section {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.text {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.form {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.formTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.4rem;
+}
+
+.fieldError {
+  font-size: 0.78rem;
+  color: #de6161;
+  margin-top: 0.3rem;
+}
+
+.inputError {
+  border-color: #de6161 !important;
+}
+
+.optional {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+/* One URL input + its remove button. */
+.rowField {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rowField .input,
+.rowField input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.success {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  margin-top: 1rem;
+  transition: color 0.2s;
+}
+
+.back:hover {
+  color: #de6161;
+}

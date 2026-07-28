@@ -1,0 +1,26 @@
+.block {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2.5rem 0;
+  width: 100%;
+}
+
+.inline {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.ring {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent, #de6161);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

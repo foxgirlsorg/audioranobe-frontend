@@ -1,0 +1,130 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fade-in 0.2s ease;
+  overflow-y: auto;
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 3rem);
+  display: flex;
+  flex-direction: column;
+  background: rgba(18, 18, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  /* the one place a springy curve is allowed */
+  animation: pop-in 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.topBar {
+  display: block;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    var(--accent, #de6161),
+    rgba(222, 97, 97, 0.2),
+    transparent
+  );
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem 0.4rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted, #8a8a8a);
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.close:hover {
+  color: var(--text, #e8e8e8);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.body {
+  padding: 0.6rem 1.4rem 1.4rem;
+  overflow-y: auto;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .overlay {
+    padding: 0.9rem;
+  }
+
+  .close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .overlay {
+    padding: 0.6rem;
+    align-items: flex-end;
+  }
+
+  .panel {
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+    margin-bottom: 0;
+  }
+}

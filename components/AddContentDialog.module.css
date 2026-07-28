@@ -1,0 +1,140 @@
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.choice:hover {
+  border-color: rgba(222, 97, 97, 0.45);
+  background: rgba(222, 97, 97, 0.08);
+  transform: translateY(-1px);
+}
+
+.choice svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent, #de6161);
+}
+
+.choiceBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.choiceName {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.choiceHint {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+.optional {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.checkLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+.checkLabel input {
+  accent-color: var(--accent, #de6161);
+  cursor: pointer;
+}
+
+.error {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(222, 97, 97, 0.4);
+  border-radius: 8px;
+  background: rgba(222, 97, 97, 0.1);
+  font-size: 13px;
+  color: #ffb4b4;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+}

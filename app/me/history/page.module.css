@@ -1,0 +1,231 @@
+/* /me/history — rows with cover thumb, links, progress bar and resume. */
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 5rem 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  margin-bottom: 1.75rem;
+}
+
+.header h1 {
+  margin-bottom: 0;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 1.75rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.9rem 1.25rem;
+}
+
+.row:hover {
+  border-color: var(--border-hover);
+}
+
+/* ---------- thumb ---------- */
+
+.thumb {
+  flex-shrink: 0;
+  width: 52px;
+  height: 74px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  display: block;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.row:hover .thumbImg {
+  transform: scale(1.05);
+}
+
+.thumbFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+/* ---------- main column ---------- */
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.titleLink {
+  color: #fff;
+  font-weight: 500;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.titleLink:hover {
+  color: var(--accent-hover);
+}
+
+.chapterLink {
+  color: var(--text-secondary);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.chapterLink:hover {
+  color: var(--accent-hover);
+}
+
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+.progressBar {
+  flex: 1;
+  max-width: 340px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(to right, rgba(222, 97, 97, 0.65), var(--accent));
+}
+
+.progressText {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- side column ---------- */
+
+.rowSide {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.when {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.resume {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.12);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resume:hover {
+  background: rgba(222, 97, 97, 0.22);
+  border-color: rgba(222, 97, 97, 0.75);
+  box-shadow: 0 0 18px rgba(222, 97, 97, 0.18);
+}
+
+.resume:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 768px) {
+  .row {
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .rowMain {
+    flex: 1 1 60%;
+  }
+
+  .rowSide {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .thumb {
+    width: 44px;
+    height: 62px;
+  }
+
+  .resume {
+    min-height: 38px;
+    padding: 0.4rem 0.8rem;
+    font-size: 10px;
+  }
+
+  .row {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .rowMain {
+    flex: 1 1 100%;
+  }
+
+  .rowSide {
+    width: 100%;
+  }
+}

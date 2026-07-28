@@ -1,0 +1,370 @@
+/* Home page — hero (logged-out), announcements strip, continue rail, title rails. */
+
+.page {
+  position: relative;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 5rem 0;
+}
+
+/* ---------- hero (logged-out only) ---------- */
+
+.hero {
+  position: relative;
+  padding: 3.5rem 1rem 2.75rem;
+  text-align: center;
+  overflow: visible;
+}
+
+.glowA {
+  top: -70px;
+  left: 8%;
+}
+
+.glowB {
+  bottom: -50px;
+  right: 4%;
+  width: 38%;
+  height: 55%;
+  background: rgba(222, 97, 97, 0.04);
+}
+
+.heroTitle {
+  position: relative;
+  z-index: 1;
+  margin: 0.85rem auto 1rem;
+  max-width: 860px;
+  font-size: clamp(2.1rem, 6vw, 3.4rem);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.heroTitle span {
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.heroTagline {
+  position: relative;
+  z-index: 1;
+  max-width: 580px;
+  margin: 0 auto 1.7rem;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.heroActions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+/* ---------- announcements strip ---------- */
+
+.annStrip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.annCard {
+  position: relative;
+  display: flex;
+  gap: 0.9rem;
+  padding: 0.9rem 2.4rem 0.9rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(222, 97, 97, 0.28);
+  background: rgba(222, 97, 97, 0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.3s ease;
+}
+
+.annCard:hover {
+  border-color: rgba(222, 97, 97, 0.45);
+}
+
+.annIcon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--accent);
+}
+
+.annBody {
+  min-width: 0;
+}
+
+.annDate {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.annTitle {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #fff;
+  transition: color 0.2s ease;
+}
+
+.annTitle:hover {
+  color: var(--accent-hover);
+}
+
+.annText {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.annDismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 7px;
+  color: var(--text-muted);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.annDismiss:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- horizontal rails ---------- */
+
+.rail {
+  display: flex;
+  gap: 1.1rem;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  scroll-snap-type: x proximity;
+}
+
+.rail::-webkit-scrollbar {
+  height: 8px;
+}
+
+.railItem {
+  flex: 0 0 158px;
+  width: 158px;
+  scroll-snap-align: start;
+}
+
+.railEmpty {
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
+/* ---------- continue listening cards ---------- */
+
+.continueCard {
+  flex: 0 0 320px;
+  display: flex;
+  gap: 0.9rem;
+  padding: 0.8rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  scroll-snap-align: start;
+  transition: border-color 0.3s ease;
+}
+
+.continueCard:hover {
+  border-color: var(--border-hover);
+}
+
+.continueCover {
+  display: block;
+  flex-shrink: 0;
+  width: 62px;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.continueCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.65s ease;
+}
+
+.continueCard:hover .continueCover img {
+  transform: scale(1.05);
+}
+
+.coverFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.continueInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.continueName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.25s ease;
+}
+
+.continueName:hover {
+  color: var(--accent);
+}
+
+.continueChapter {
+  margin: 2px 0 9px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progressTrack {
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--accent);
+}
+
+.continueFoot {
+  margin-top: auto;
+  padding-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.continueTime {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.resumeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.12);
+  color: var(--text);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resumeBtn:hover {
+  background: rgba(222, 97, 97, 0.22);
+  border-color: rgba(222, 97, 97, 0.75);
+  box-shadow: 0 0 18px rgba(222, 97, 97, 0.18);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 2rem 0.25rem 2.25rem;
+  }
+
+  .continueCard {
+    flex-basis: 285px;
+  }
+
+  .railItem {
+    flex-basis: 140px;
+    width: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 1.75rem;
+    letter-spacing: 0.04em;
+  }
+
+  .heroTagline {
+    font-size: 14px;
+    padding: 0 0.25rem;
+  }
+
+  .continueCard {
+    flex-basis: 260px;
+    padding: 0.65rem;
+  }
+
+  .continueCover {
+    width: 52px;
+  }
+
+  .continueName {
+    font-size: 13px;
+  }
+
+  .railItem {
+    flex-basis: 125px;
+    width: 125px;
+  }
+
+  .annCard {
+    padding: 0.75rem 2rem 0.75rem 0.85rem;
+  }
+}

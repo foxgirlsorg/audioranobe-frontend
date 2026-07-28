@@ -1,0 +1,253 @@
+/* User management — search + table. */
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.searchRow {
+  position: relative;
+  max-width: 420px;
+  margin-bottom: 1.4rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  padding-left: 38px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.bannedRow td {
+  opacity: 0.65;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.username {
+  font-weight: 500;
+  color: #fff;
+  transition: color 0.2s ease;
+}
+
+.username:hover {
+  color: var(--accent-hover);
+}
+
+.bannedChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(197, 52, 52, 0.5);
+  background: rgba(197, 52, 52, 0.12);
+  color: #dd8181;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.email {
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.roleSelect {
+  width: 136px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  font-size: 13px;
+}
+
+.smallBtn {
+  padding: 0.42rem 0.85rem;
+  font-size: 11px;
+}
+
+.joined {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.fieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.banInfo {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .searchRow {
+    max-width: none;
+  }
+
+  .smallBtn {
+    min-height: 36px;
+    padding: 0.42rem 0.75rem;
+  }
+}
+
+.skipToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.skipToggle input {
+  accent-color: var(--accent, #de6161);
+  cursor: pointer;
+}
+
+.skipToggle input:disabled {
+  cursor: default;
+}
+
+
+/* Admin profile-image controls in the edit modal */
+.imagesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+.imageRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.imagePreview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.imageWide {
+  width: 72px;
+}
+
+.imagePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageEmpty {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.imageName {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.checkRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.checkRow input {
+  accent-color: var(--accent, #de6161);
+  cursor: pointer;
+}

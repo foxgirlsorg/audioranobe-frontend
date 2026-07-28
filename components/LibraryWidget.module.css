@@ -1,0 +1,223 @@
+.widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: rgba(20, 20, 22, 0.6);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a8a);
+}
+
+.eyebrow svg {
+  color: var(--accent, #de6161);
+  opacity: 0.85;
+}
+
+.guest {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-muted, #9a9a9a);
+}
+
+.loginBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.12);
+  color: var(--text, #e8e8e8);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.loginBtn:hover {
+  background: rgba(222, 97, 97, 0.22);
+  border-color: rgba(222, 97, 97, 0.75);
+  box-shadow: 0 0 18px rgba(222, 97, 97, 0.18);
+}
+
+.noteBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.noteLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a8a);
+}
+
+.note {
+  width: 100%;
+  resize: vertical;
+  min-height: 68px;
+  padding: 10px 13px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  color: var(--text, #e8e8e8);
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.note:focus {
+  border-color: rgba(222, 97, 97, 0.45);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.noteRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.noteCounter {
+  font-size: 10px;
+  color: var(--text-muted, #7a7a7a);
+  font-variant-numeric: tabular-nums;
+}
+
+.save {
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text, #e8e8e8);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.save:hover:not(:disabled) {
+  border-color: rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.1);
+  box-shadow: 0 0 14px rgba(222, 97, 97, 0.12);
+}
+
+.save:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (max-width: 768px) {
+  .save {
+    min-height: 44px;
+    padding: 8px 18px;
+  }
+}
+
+/* Styled list selector (replaces the old radio-style pills) */
+.selectRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.selectWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.55rem 2rem 0.55rem 0.75rem;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.select:hover:not(:disabled) {
+  border-color: rgba(222, 97, 97, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.select:focus-visible {
+  outline: none;
+  border-color: var(--accent, #de6161);
+}
+
+.select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Native option lists are OS-drawn; force readable colours on dark themes. */
+.select option {
+  background: #1b1b1b;
+  color: #fff;
+}
+
+.selectIcon {
+  position: absolute;
+  top: 50%;
+  right: 0.6rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+}
+
+.removeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.removeBtn:hover:not(:disabled) {
+  border-color: rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.1);
+  color: var(--accent, #de6161);
+}
+
+.removeBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

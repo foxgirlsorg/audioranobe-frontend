@@ -1,0 +1,72 @@
+.hint {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  max-width: 72ch;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin: 1.2rem 0 1.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.name {
+  color: #fff;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.name:hover {
+  color: var(--accent, #de6161);
+}
+
+.context,
+.when {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.smallBtn {
+  padding: 0.42rem 0.85rem;
+  font-size: 11px;
+}

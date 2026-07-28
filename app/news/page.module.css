@@ -1,0 +1,142 @@
+/* News — paginated announcement cards. */
+
+.page {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.pageHead {
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  margin-top: 0.45rem;
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.pageTitle span {
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 4rem 0;
+}
+
+/* ---------- list ---------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  transition: opacity 0.25s ease;
+}
+
+.listLoading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.card {
+  padding: 1.35rem 1.5rem;
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+}
+
+.cardIcon {
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.cardDate {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cardAuthor {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.cardTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.cardBody {
+  margin-top: 0.6rem;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+}
+
+.pagerWrap {
+  margin-top: 2.2rem;
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 1.05rem 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardTitle {
+    font-size: 15px;
+  }
+
+  .cardBody {
+    font-size: 13px;
+  }
+}
+
+.cardLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cardLink:hover {
+  color: var(--accent, #de6161);
+}
+
+.cardMore {
+  display: inline-block;
+  margin-top: 0.8rem;
+  font-size: 12.5px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cardMore:hover {
+  color: var(--accent, #de6161);
+}

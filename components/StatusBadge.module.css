@@ -1,0 +1,45 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+/* Muted, translucent semantic tones — deliberately quieter than the brand accent. */
+
+.amber {
+  color: #d4b26a;
+  background: rgba(201, 162, 82, 0.1);
+  border-color: rgba(201, 162, 82, 0.28);
+}
+
+.green {
+  color: #7dbb92;
+  background: rgba(94, 168, 122, 0.1);
+  border-color: rgba(94, 168, 122, 0.28);
+}
+
+.red {
+  color: #c98080;
+  background: rgba(168, 82, 82, 0.12);
+  border-color: rgba(168, 82, 82, 0.3);
+}
+
+.blue {
+  color: #82a6c9;
+  background: rgba(96, 138, 184, 0.1);
+  border-color: rgba(96, 138, 184, 0.28);
+}
+
+.gray {
+  color: #9a9a9a;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}

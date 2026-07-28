@@ -1,0 +1,147 @@
+.toast {
+  position: relative;
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 0.65rem;
+  width: 100%;
+  max-width: 360px;
+  padding: 0.8rem 0.85rem 0.85rem 0.9rem;
+  overflow: hidden;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  background: var(--surface-strong, rgba(28, 28, 28, 0.92));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+  color: var(--text, #fff);
+  font-size: 13.5px;
+  line-height: 1.5;
+  animation: toast-enter 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* A tinted rail on the leading edge carries the kind, matching the icon. */
+.toast::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.ok {
+  color: var(--ok, #5fbf7f);
+}
+
+.error {
+  color: var(--danger, #de6161);
+}
+
+.info {
+  color: var(--accent, #de6161);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.message {
+  min-width: 0;
+  color: var(--text, #fff);
+  word-break: break-word;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.close:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff;
+}
+
+/* Time-remaining rail along the bottom edge; pauses with the timer. */
+.progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left center;
+  background: currentColor;
+  opacity: 0.55;
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.leaving {
+  animation: toast-leave 0.18s ease forwards;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-leave {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(14px) scale(0.98);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .leaving {
+    animation: none;
+  }
+
+  .progress {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .toast {
+    max-width: none;
+  }
+}

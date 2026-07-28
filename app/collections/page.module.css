@@ -1,0 +1,142 @@
+/* Collections browse — search + sort tabs, grid, create modal. */
+
+.pageHead {
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  margin-top: 0.45rem;
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.pageTitle span {
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 4rem 0;
+}
+
+/* ---------- toolbar ---------- */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.search {
+  flex: 1 1 220px;
+  max-width: 340px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* ---------- grid ---------- */
+
+.gridWrap {
+  transition: opacity 0.25s ease;
+}
+
+.gridLoading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.pagerWrap {
+  margin-top: 2.2rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------- create modal form ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: min(380px, 78vw);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.fLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkRow input {
+  margin-top: 4px;
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.checkTitle {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.checkHint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.3rem;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    gap: 0.7rem;
+  }
+
+  .search {
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .spacer {
+    display: none;
+  }
+
+  .form {
+    min-width: 0;
+  }
+}

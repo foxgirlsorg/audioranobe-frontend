@@ -1,0 +1,330 @@
+/* /me/settings — stacked glass panels: profile, images, password, prefs, danger. */
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 5rem 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 860px;
+}
+
+.header {
+  margin-bottom: 0.25rem;
+}
+
+.header h1 {
+  margin-bottom: 0;
+}
+
+/* ---------- panels ---------- */
+
+.panel {
+  padding: 1.6rem 1.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.panelIcon {
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+  color: var(--accent);
+}
+
+.panelTitle {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.panelHint {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin-top: 0.2rem;
+}
+
+.email {
+  color: var(--text-secondary);
+}
+
+.panelActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------- fields ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---------- images ---------- */
+
+.imagesRow {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.imageBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.imageBlockWide {
+  flex: 1;
+  min-width: 0;
+}
+
+.avatarPreview {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.coverPreview {
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewEmpty {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- password ---------- */
+
+.pwGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.pwGrid .field:first-child {
+  grid-column: 1 / -1;
+}
+
+/* ---------- notification prefs ---------- */
+
+.prefList {
+  display: flex;
+  flex-direction: column;
+}
+
+.prefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.prefRow:last-child {
+  border-bottom: none;
+}
+
+.prefText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.prefLabel {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.prefHint {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ---------- toggle switch ---------- */
+
+.switch {
+  flex-shrink: 0;
+  position: relative;
+  width: 46px;
+  height: 25px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.switch:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.knob {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: left 0.25s var(--ease-smooth), background 0.25s ease;
+}
+
+.switchOn {
+  border-color: rgba(222, 97, 97, 0.55);
+  background: rgba(222, 97, 97, 0.25);
+  box-shadow: 0 0 14px rgba(222, 97, 97, 0.14);
+}
+
+.switchOn .knob {
+  left: calc(100% - 20px);
+  background: var(--accent);
+}
+
+/* ---------- danger zone ---------- */
+
+.dangerPanel {
+  border-color: rgba(197, 52, 52, 0.35);
+}
+
+.dangerPanel:hover {
+  border-color: rgba(197, 52, 52, 0.55);
+}
+
+.dangerIcon {
+  color: var(--danger);
+}
+
+.deleteBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.deleteBody p {
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 768px) {
+  .panel {
+    padding: 1.2rem 1.15rem;
+  }
+
+  .imagesRow {
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .imageBlockWide {
+    width: 100%;
+  }
+
+  .pwGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .panelActions {
+    justify-content: stretch;
+  }
+
+  .panelActions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .prefRow {
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+  }
+
+  .switch {
+    min-width: 44px;
+    min-height: 25px;
+  }
+}
+
+/* Email verification status row */
+.verifyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(222, 97, 97, 0.32);
+  border-radius: 9px;
+  background: rgba(222, 97, 97, 0.08);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.verifyRow span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.verifyOk {
+  border-color: rgba(95, 191, 127, 0.3);
+  background: rgba(95, 191, 127, 0.08);
+}

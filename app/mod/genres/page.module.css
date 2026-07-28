@@ -1,0 +1,119 @@
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.createForm {
+  padding: 1.4rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.formTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.9rem;
+}
+
+.formRow {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.nameInput {
+  max-width: 320px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.genreName {
+  font-weight: 500;
+  color: #fff;
+}
+
+.count {
+  color: var(--text-muted);
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.switch input {
+  accent-color: var(--accent, #de6161);
+  cursor: pointer;
+}
+
+.switch input:disabled {
+  cursor: default;
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.smallBtn {
+  padding: 0.42rem 0.85rem;
+  font-size: 11px;
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nameInput {
+    max-width: none;
+  }
+}

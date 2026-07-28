@@ -1,0 +1,77 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  position: relative;
+  display: inline-flex;
+  padding: 1px;
+  border: none;
+  background: none;
+  cursor: default;
+  color: rgba(255, 255, 255, 0.18);
+  line-height: 0;
+}
+
+.interactive .star {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.interactive .star:hover {
+  transform: scale(1.15);
+}
+
+.base {
+  display: block;
+}
+
+.fill {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  overflow: hidden;
+  pointer-events: none;
+  line-height: 0;
+}
+
+.filled {
+  display: block;
+  color: var(--accent, #de6161);
+  fill: var(--accent, #de6161);
+}
+
+.preview .filled {
+  color: #ec7d7d;
+  fill: #ec7d7d;
+}
+
+.text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted, #8a8a8a);
+}
+
+.avg {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text, #e8e8e8);
+}
+
+.dot {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.mine {
+  color: var(--accent, #de6161);
+}

@@ -1,0 +1,43 @@
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 20px 1fr 34px;
+  align-items: center;
+  gap: 9px;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #8a8a8a);
+  text-align: right;
+}
+
+.track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  min-width: 0;
+  border-radius: 9999px;
+  background: linear-gradient(to right, rgba(222, 97, 97, 0.55), var(--accent, #de6161));
+  transition: width 0.5s ease;
+}
+
+.count {
+  font-size: 10px;
+  color: var(--text-muted, #7a7a7a);
+  font-variant-numeric: tabular-nums;
+}

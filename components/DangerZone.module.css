@@ -1,0 +1,38 @@
+.zone {
+  margin-top: 1.5rem;
+  padding: 1.3rem 1.5rem;
+  border-color: rgba(222, 97, 97, 0.32);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.icon {
+  color: var(--danger, #de6161);
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--danger, #de6161);
+}
+
+.text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  max-width: 70ch;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}

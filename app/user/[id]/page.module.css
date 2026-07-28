@@ -1,0 +1,381 @@
+/* Public user profile — banner, avatar, stats chips, tabbed activity. */
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 5rem 0;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- banner ---------- */
+
+.banner {
+  position: relative;
+  height: 240px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: linear-gradient(125deg, #1c1c1f 0%, #151517 100%);
+}
+
+.bannerImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bannerBlur {
+  filter: blur(28px) saturate(1.05);
+  transform: scale(1.2);
+  opacity: 0.6;
+}
+
+.bannerEmpty {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.bannerGlow {
+  position: absolute;
+  top: -30%;
+  left: -10%;
+  width: 55%;
+  height: 120%;
+  background: rgba(222, 97, 97, 0.06);
+  filter: blur(80px);
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.bannerShade {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 20%,
+    rgba(15, 15, 17, 0.1) 0%,
+    rgba(15, 15, 17, 0.72) 100%
+  );
+}
+
+/* ---------- head ---------- */
+
+.head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  padding: 0 2rem;
+  margin-top: -54px;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-solid);
+  border: 3px solid rgba(24, 24, 26, 0.95);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarInitials {
+  font-size: 34px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.headMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-bottom: 0.35rem;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-size: clamp(1.4rem, 3.2vw, 2.1rem);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.since {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ---------- bio ---------- */
+
+.bioPanel {
+  margin-top: 1.75rem;
+  padding: 1.3rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.bio {
+  color: var(--text-secondary);
+  line-height: 1.75;
+  white-space: pre-line;
+}
+
+/* ---------- stats chips ---------- */
+
+.statsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.statChip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.55rem 1.1rem;
+  min-width: 72px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.statChip:hover {
+  border-color: var(--accent);
+  color: var(--text-secondary);
+  box-shadow: 0 0 12px rgba(222, 97, 97, 0.15);
+}
+
+.statChipActive {
+  border-color: var(--accent);
+  color: var(--text-secondary);
+  box-shadow: 0 0 14px rgba(222, 97, 97, 0.2);
+}
+
+.statValue {
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: inherit;
+}
+
+/* ---------- tabs & bodies ---------- */
+
+.tabsWrap {
+  margin-top: 2rem;
+}
+
+.subTabs {
+  margin-bottom: 1.5rem;
+}
+
+.tabBody {
+  margin-top: 1.5rem;
+}
+
+/* ---------- comments feed ---------- */
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.commentCard {
+  padding: 1.05rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.commentCard:hover {
+  border-color: var(--border-hover);
+}
+
+.commentMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.commentTargetLabel {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.commentTarget {
+  color: var(--accent);
+  transition: color 0.2s ease;
+}
+
+.commentTarget:hover {
+  color: var(--accent-hover);
+}
+
+.commentWhen {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.commentBody {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.commentDeleted {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.spoiler {
+  filter: blur(5px);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 0 0.25em;
+  cursor: pointer;
+  user-select: none;
+  transition: filter 0.25s ease;
+}
+
+.commentFoot {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.scoreUp {
+  color: var(--ok);
+}
+
+.scoreDown {
+  color: var(--danger);
+}
+
+.edited {
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- library notes ---------- */
+
+.libNote {
+  padding: 0.4rem 0.6rem;
+  margin-top: 0.3rem;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.libNoteText {
+  font-style: italic;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 768px) {
+  .banner {
+    height: 160px;
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 0 0.75rem;
+    margin-top: -46px;
+  }
+
+  .avatar {
+    width: 92px;
+    height: 92px;
+  }
+
+  .bioPanel {
+    padding: 1rem 1.15rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner {
+    height: 120px;
+  }
+
+  .head {
+    padding: 0 0.5rem;
+    margin-top: -36px;
+  }
+
+  .avatar {
+    width: 76px;
+    height: 76px;
+  }
+
+  .statChip {
+    padding: 0.45rem 0.85rem;
+    min-width: 64px;
+  }
+}
