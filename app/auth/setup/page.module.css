@@ -1,0 +1,85 @@
+.wrap {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 5rem 1.5rem;
+}
+
+.panel {
+  width: 100%;
+  max-width: 460px;
+  padding: 2rem 1.9rem 2.2rem;
+  border-radius: var(--radius);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.icon {
+  color: var(--accent);
+  margin-top: 0.5rem;
+  flex: none;
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fff;
+  margin: 0.2rem 0 0;
+}
+
+.titleAccent {
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.intro {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  margin: 0 0 1.6rem;
+}
+
+.field {
+  margin-bottom: 1.3rem;
+}
+
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.45rem;
+}
+
+.hint {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0.45rem 0 0;
+}
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.submit {
+  width: 100%;
+  justify-content: center;
+}

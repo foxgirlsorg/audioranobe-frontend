@@ -337,7 +337,7 @@ export default function CollectionDetailPage() {
                 href={`/user/${col.user.id}`}
                 className={styles.ownerName}
               >
-                {col.user.username}
+                {col.user.display_name || col.user.username}
               </Link>
             </span>
             <span className={styles.metaDot} aria-hidden="true">

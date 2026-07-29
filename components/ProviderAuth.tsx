@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ExternalLink, Send, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
@@ -130,6 +131,7 @@ export default function ProviderAuth({
   const providers = useAuthProviders().filter((p) => !hide.includes(p));
   const { adoptSession } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const [busy, setBusy] = useState<AuthProvider | null>(null);
   const [tg, setTg] = useState<TelegramStart | null>(null);
@@ -197,6 +199,7 @@ export default function ProviderAuth({
           setBusy(null);
           if (poll.token && poll.user) {
             adoptSession(poll.token, poll.user);
+            if (poll.user.needs_setup) router.push('/auth/setup');
           } else if (poll.identities) {
             onLinked?.(poll.identities);
             toast('Telegram привязан', 'ok');

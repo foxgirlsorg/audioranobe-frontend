@@ -65,8 +65,11 @@ export type ModRequestEntityType = 'narrator' | 'title' | 'chapter' | 'author';
 
 /** Minimal user reference used inside many shapes. */
 export interface UserBrief {
-  id: number;
+  /** The handle: profile URL and @mention target. */
   username: string;
+  /** What to show. Server falls back to username when none is set. */
+  display_name: string;
+  id: number;
   avatar_url: string | null;
 }
 
@@ -86,7 +89,10 @@ export interface NotificationPrefs {
 
 export interface UserPublic {
   id: number;
+  /** The handle: unique, ASCII, the profile URL and what @mentions resolve to. */
   username: string;
+  /** What to show. Server falls back to username when none is set. */
+  display_name: string;
   bio: string;
   socials: string[];
   avatar_url: string | null;
@@ -114,6 +120,13 @@ export interface Me extends UserPublic {
   /** False on a provider-only account: offer "set password", not "change". */
   has_password: boolean;
   identities: Identity[];
+  /**
+   * Raw value, NOT the username fallback — the settings field must show empty
+   * rather than the handle pre-filled as if it had been chosen.
+   */
+  display_name: string;
+  /** Provider-created account with an auto-generated username: send to /auth/setup. */
+  needs_setup: boolean;
   is_banned: boolean;
   ban_reason: string | null;
   /** Admin-granted: this user's submissions skip the moderation queue. */

@@ -66,7 +66,9 @@ export default function OAuthCallbackPage() {
 
         if (res.token && res.user) {
           adoptSession(res.token, res.user);
-          router.replace('/');
+          // A provider-created account still has a generated username; send it
+          // through onboarding before dropping the user on the site.
+          router.replace(res.user.needs_setup ? '/auth/setup' : '/');
           return;
         }
         // Link mode: the session we already had is still the right one, but Me

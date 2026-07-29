@@ -46,7 +46,6 @@ function initialsOf(username: string): string {
   return username.slice(0, 2).toUpperCase();
 }
 
-/** Renders ||spoiler|| chunks blurred, click to reveal. */
 function CommentBody({ body }: { body: string }) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
   const parts: { text: string; spoiler: boolean }[] = [];
@@ -248,10 +247,13 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
         <div className={styles.headMain}>
           <span className="eyebrow">Профиль слушателя</span>
           <h1 className={styles.name}>
-            {user.username}
+            {user.display_name || user.username}
             {user.role === 'admin' ? <span className="badge">Админ</span> : null}
             {user.role === 'moderator' ? <span className="badge">Модератор</span> : null}
           </h1>
+          {/* The handle stays visible even when a display name is set — it is
+              what someone needs in order to @mention this person. */}
+          {user.display_name ? <div className={styles.handle}>@{user.username}</div> : null}
           <div className={styles.since}>{`На сайте с ${formatDate(user.created_at)}`}</div>
           <SocialLinks urls={user.socials} />
         </div>

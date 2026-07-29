@@ -29,9 +29,11 @@ import Spinner from '@/components/Spinner';
 import SocialsEditor from '@/components/SocialsEditor';
 import ImageCropper from '@/components/ImageCropper';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import Modal from '@/components/Modal';
 import styles from './page.module.css';
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PROVIDER_LABELS: Record<AuthProvider, string> = {
   google: 'Google',
@@ -113,6 +115,7 @@ export default function SettingsPage() {
   const [emailVerificationOn, setEmailVerificationOn] = useState(false);
   const [resending, setResending] = useState(false);
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [socials, setSocials] = useState<string[]>([]);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -162,6 +165,10 @@ export default function SettingsPage() {
   const hasPassword = user?.has_password ?? true;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPw, setEmailPw] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
 
   // ---- content prefs ----
   // `null` while loading; `busy` holds the switch being saved ('nsfw' or a
@@ -186,6 +193,7 @@ export default function SettingsPage() {
     if (user && !seededRef.current) {
       seededRef.current = true;
       setUsername(user.username);
+      setDisplayName(user.display_name);
       setBio(user.bio);
       setSocials(user.socials ?? []);
       setPrefs(user.notification_prefs);
@@ -246,7 +254,12 @@ export default function SettingsPage() {
     try {
       await api<Me>('/me', {
         method: 'PATCH',
-        body: { username: name, bio: bio.trim(), socials: cleaned },
+        body: {
+          username: name,
+          display_name: displayName.trim(),
+          bio: bio.trim(),
+          socials: cleaned,
+        },
       });
       setSocials(cleaned);
       await refresh();
@@ -330,6 +343,33 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setPrefBusy(null);
+    }
+  }
+
+  // ------------------------------------------------------------- email
+
+  async function saveEmail() {
+    if (savingEmail) return;
+    const email = newEmail.trim();
+    if (!EMAIL_RE.test(email)) {
+      toast('Введите корректный email', 'error');
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      await api<Me>('/me/email', {
+        method: 'POST',
+        // Omitted entirely when the account has no password to confirm.
+        body: hasPassword ? { email, password: emailPw } : { email },
+      });
+      await refresh();
+      setEmailOpen(false);
+      setEmailPw('');
+      toast('Почта обновлена — подтвердите её по ссылке в письме', 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setSavingEmail(false);
     }
   }
 
@@ -467,8 +507,25 @@ export default function SettingsPage() {
         ) : null}
 
         <div className={styles.field}>
+          <label className={styles.label} htmlFor="settings-display">
+            {'Отображаемое имя'}
+          </label>
+          <input
+            id="settings-display"
+            className="input"
+            value={displayName}
+            maxLength={40}
+            placeholder={username || 'Как вас показывать'}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+          <p className={styles.fieldHint}>
+            {'Любые символы, до 40 знаков. Пусто — будет показан логин.'}
+          </p>
+        </div>
+
+        <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-username">
-            {'Имя пользователя'}
+            {'Логин'}
           </label>
           <input
             id="settings-username"
@@ -478,6 +535,13 @@ export default function SettingsPage() {
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
           />
+          <p className={styles.fieldHint}>
+            {'Адрес страницы и упоминания: /user/'}
+            {username || '…'}
+            {', @'}
+            {username || '…'}
+            {'. Латиница, цифры и подчёркивание.'}
+          </p>
         </div>
 
         <div className={styles.field}>
@@ -694,6 +758,29 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.prefList}>
+          {/* E-mail sits with the providers because it is a way in too: it is
+              what password reset goes to. */}
+          <div className={styles.prefRow}>
+            <div className={styles.prefText}>
+              <span className={styles.prefLabel}>{'Почта'}</span>
+              <span className={styles.prefHint}>
+                {user.email ?? 'не указана'}
+                {user.email && !user.email_verified ? ' — не подтверждена' : ''}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                setNewEmail(user.email ?? '');
+                setEmailPw('');
+                setEmailOpen(true);
+              }}
+            >
+              {user.email ? 'Изменить' : 'Добавить'}
+            </button>
+          </div>
+
           {(identities ?? []).map((idn) => (
             <div key={idn.provider} className={styles.prefRow}>
               <div className={styles.prefText}>
@@ -726,6 +813,54 @@ export default function SettingsPage() {
           }}
         />
       </section>
+
+      <Modal
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        title={user.email ? 'Изменить почту' : 'Добавить почту'}
+      >
+        <div className={styles.editForm}>
+          <label className={styles.label} htmlFor="settings-newemail">
+            {'Новый адрес'}
+          </label>
+          <input
+            id="settings-newemail"
+            className="input"
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            autoComplete="email"
+          />
+          {hasPassword ? (
+            <>
+              <label className={styles.label} htmlFor="settings-emailpw">
+                {'Текущий пароль'}
+              </label>
+              <input
+                id="settings-emailpw"
+                className="input"
+                type="password"
+                value={emailPw}
+                onChange={(e) => setEmailPw(e.target.value)}
+                autoComplete="current-password"
+              />
+            </>
+          ) : null}
+          <p className={styles.panelHint}>
+            {'Новый адрес нужно будет подтвердить — на него придёт письмо со ссылкой.'}
+          </p>
+          <div className={styles.panelActions}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => void saveEmail()}
+              disabled={savingEmail}
+            >
+              {savingEmail ? 'Сохраняем…' : 'Сохранить'}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* ------------------------------------------------ content */}
       <section className={`glass-panel ${styles.panel}`}>

@@ -477,8 +477,11 @@ function NestedComment({
             <Link
               href={`/user/${encodeURIComponent(comment.user.username)}`}
               className={styles.username}
+              // The link still goes to the handle; only the label is the
+              // display name, and the title shows the handle behind it.
+              title={`@${comment.user.username}`}
             >
-              {comment.user.username}
+              {comment.user.display_name || comment.user.username}
             </Link>
           ) : (
             <span className={styles.usernameGone}>удалённый пользователь</span>

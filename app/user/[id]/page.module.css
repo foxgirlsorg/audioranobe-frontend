@@ -379,3 +379,11 @@
     min-width: 64px;
   }
 }
+
+/* The @handle under a display name on a profile header. */
+.handle {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
