@@ -95,8 +95,25 @@ export interface UserPublic {
   created_at: string;
 }
 
+/** Provider sign-in methods this deployment has configured. */
+export type AuthProvider = 'google' | 'discord' | 'telegram';
+
+/** One linked third-party account. */
+export interface Identity {
+  provider: AuthProvider;
+  /** Address the provider reports, if any. Telegram never has one. */
+  email: string | null;
+  display_name: string;
+  avatar_url: string | null;
+  created_at: string;
+}
+
 export interface Me extends UserPublic {
-  email: string;
+  /** null on a Telegram-only account, which never receives an address. */
+  email: string | null;
+  /** False on a provider-only account: offer "set password", not "change". */
+  has_password: boolean;
+  identities: Identity[];
   is_banned: boolean;
   ban_reason: string | null;
   /** Admin-granted: this user's submissions skip the moderation queue. */

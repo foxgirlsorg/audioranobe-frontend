@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { errMsg } from '@/lib/toast';
+import { ProviderSection } from '@/components/ProviderAuth';
 import styles from './login.module.css';
 
 function safeNext(raw: string | null): string {
@@ -120,6 +121,8 @@ export default function LoginPage() {
             {submitting ? 'Входим…' : 'Войти'}
           </button>
         </form>
+
+        <ProviderSection mode="login" />
 
         <p className={styles.alt}>
           <Link href="/auth/forgot" className={styles.altLink}>

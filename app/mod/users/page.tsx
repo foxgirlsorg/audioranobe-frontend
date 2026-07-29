@@ -106,7 +106,7 @@ function UsersContent() {
   const openEdit = (u: Me) => {
     setToEdit(u);
     setEditUsername(u.username);
-    setEditEmail(u.email);
+    setEditEmail(u.email ?? '');
     setEditBio(u.bio || '');
     setEditPassword('');
   };
@@ -341,7 +341,7 @@ function UsersContent() {
                           ) : null}
                         </div>
                       </td>
-                      <td className={styles.email}>{u.email}</td>
+                      <td className={styles.email}>{u.email ?? '—'}</td>
                       <td>
                         <select
                           className={`select ${styles.roleSelect}`}

@@ -6,6 +6,7 @@ import {
   Bell,
   EyeOff,
   ImagePlus,
+  Link2 as LinkIcon,
   KeyRound,
   MailWarning,
   ShieldAlert,
@@ -13,7 +14,15 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { ContentPrefs, Genre, Me, NotificationPrefs } from '@/lib/types';
+import type {
+  AuthProvider,
+  ContentPrefs,
+  Genre,
+  Identity,
+  Me,
+  NotificationPrefs,
+} from '@/lib/types';
+import ProviderAuth from '@/components/ProviderAuth';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import Spinner from '@/components/Spinner';
@@ -23,6 +32,12 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import styles from './page.module.css';
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
+
+const PROVIDER_LABELS: Record<AuthProvider, string> = {
+  google: 'Google',
+  discord: 'Discord',
+  telegram: 'Telegram',
+};
 const MAX_SOCIAL_LEN = 200;
 
 const PREF_DEFS: { key: keyof NotificationPrefs; label: string; hint: string }[] = [
@@ -143,6 +158,11 @@ export default function SettingsPage() {
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [prefBusy, setPrefBusy] = useState<keyof NotificationPrefs | null>(null);
 
+  // ---- linked accounts ----
+  const hasPassword = user?.has_password ?? true;
+  const [identities, setIdentities] = useState<Identity[] | null>(null);
+  const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
+
   // ---- content prefs ----
   // `null` while loading; `busy` holds the switch being saved ('nsfw' or a
   // genre id) so only that one row is disabled mid-request.
@@ -170,6 +190,7 @@ export default function SettingsPage() {
       setSocials(user.socials ?? []);
       setPrefs(user.notification_prefs);
       setContent(user.content_prefs);
+      setIdentities(user.identities ?? []);
     }
   }, [user]);
 
@@ -258,7 +279,9 @@ export default function SettingsPage() {
 
   async function changePassword() {
     if (savingPw) return;
-    if (!oldPw) {
+    // An account created through Google/Discord/Telegram has no password yet,
+    // so there is nothing to confirm — it is a first password, not a change.
+    if (hasPassword && !oldPw) {
       toast('Введите текущий пароль', 'error');
       return;
     }
@@ -279,7 +302,8 @@ export default function SettingsPage() {
       setOldPw('');
       setNewPw('');
       setNewPw2('');
-      toast('Пароль изменён', 'ok');
+      toast(hasPassword ? 'Пароль изменён' : 'Пароль установлен', 'ok');
+      await refresh();
     } catch (e) {
       toast(errMsg(e), 'error');
     } finally {
@@ -306,6 +330,25 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setPrefBusy(null);
+    }
+  }
+
+  // --------------------------------------------------- linked accounts
+
+  async function unlink(provider: AuthProvider) {
+    if (unlinking) return;
+    setUnlinking(provider);
+    try {
+      const res = await api<{ identities: Identity[] }>(`/me/identities/${provider}`, {
+        method: 'DELETE',
+      });
+      setIdentities(res.identities);
+      await refresh();
+      toast(`${PROVIDER_LABELS[provider]} отвязан`, 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setUnlinking(null);
     }
   }
 
@@ -385,7 +428,9 @@ export default function SettingsPage() {
           <div>
             <h2 className={styles.panelTitle}>{'Профиль'}</h2>
             <p className={styles.panelHint}>
-              {'Вы вошли как'} <span className={styles.email}>{user.email}</span>
+              {'Вы вошли как'}{' '}
+              <span className={styles.email}>{user.email ?? user.username}</span>
+              {user.email === null ? ' — почта не указана' : null}
             </p>
           </div>
         </div>
@@ -533,27 +578,31 @@ export default function SettingsPage() {
         <div className={styles.panelHead}>
           <KeyRound size={16} className={styles.panelIcon} />
           <div>
-            <h2 className={styles.panelTitle}>{'Пароль'}</h2>
+            <h2 className={styles.panelTitle}>{hasPassword ? 'Пароль' : 'Задать пароль'}</h2>
             <p className={styles.panelHint}>
-              {'Минимум 8 символов. Выберите что-нибудь уникальное.'}
+              {hasPassword
+                ? 'Минимум 8 символов. Выберите что-нибудь уникальное.'
+                : 'Вы вошли через сторонний сервис, пароля у аккаунта нет. Задайте его, чтобы входить и по логину.'}
             </p>
           </div>
         </div>
 
         <div className={styles.pwGrid}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="settings-oldpw">
-              {'Текущий пароль'}
-            </label>
-            <input
-              id="settings-oldpw"
-              className="input"
-              type="password"
-              value={oldPw}
-              onChange={(e) => setOldPw(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
+          {hasPassword ? (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="settings-oldpw">
+                {'Текущий пароль'}
+              </label>
+              <input
+                id="settings-oldpw"
+                className="input"
+                type="password"
+                value={oldPw}
+                onChange={(e) => setOldPw(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+          ) : null}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="settings-newpw">
               {'Новый пароль'}
@@ -589,7 +638,7 @@ export default function SettingsPage() {
             onClick={changePassword}
             disabled={savingPw}
           >
-            {savingPw ? 'Меняем…' : 'Сменить пароль'}
+            {savingPw ? 'Сохраняем…' : hasPassword ? 'Сменить пароль' : 'Задать пароль'}
           </button>
         </div>
       </section>
@@ -628,6 +677,54 @@ export default function SettingsPage() {
             );
           })}
         </div>
+      </section>
+
+      {/* ------------------------------------------------ linked accounts */}
+      <section className={`glass-panel ${styles.panel}`}>
+        <div className={styles.panelHead}>
+          <LinkIcon size={16} className={styles.panelIcon} />
+          <div>
+            <h2 className={styles.panelTitle}>{'Способы входа'}</h2>
+            <p className={styles.panelHint}>
+              {hasPassword
+                ? 'Привяжите сервисы, чтобы входить в один клик.'
+                : 'У аккаунта пока нет пароля — вход возможен только через привязанные сервисы. Задайте пароль выше, чтобы отвязать последний из них.'}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.prefList}>
+          {(identities ?? []).map((idn) => (
+            <div key={idn.provider} className={styles.prefRow}>
+              <div className={styles.prefText}>
+                <span className={styles.prefLabel}>{PROVIDER_LABELS[idn.provider]}</span>
+                <span className={styles.prefHint}>
+                  {idn.display_name || idn.email || 'привязан'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={unlinking !== null}
+                onClick={() => void unlink(idn.provider)}
+              >
+                {unlinking === idn.provider ? 'Отвязываем…' : 'Отвязать'}
+              </button>
+            </div>
+          ))}
+          {identities !== null && identities.length === 0 ? (
+            <p className={styles.panelHint}>{'Пока ничего не привязано.'}</p>
+          ) : null}
+        </div>
+
+        <ProviderAuth
+          mode="link"
+          hide={(identities ?? []).map((i) => i.provider)}
+          onLinked={(next) => {
+            setIdentities(next);
+            void refresh();
+          }}
+        />
       </section>
 
       {/* ------------------------------------------------ content */}

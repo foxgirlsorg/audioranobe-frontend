@@ -112,7 +112,7 @@ function UserPicker({
               onClick={() => onPick({ id: u.id, name: u.username })}
             >
               <span className={styles.resultName}>{u.username}</span>
-              <span className={styles.resultSub}>{u.email}</span>
+              <span className={styles.resultSub}>{u.email ?? '—'}</span>
             </button>
           ))}
         </div>

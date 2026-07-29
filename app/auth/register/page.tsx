@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { UserPlus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { errMsg } from '@/lib/toast';
+import { ProviderSection } from '@/components/ProviderAuth';
 import styles from './register.module.css';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
@@ -221,6 +222,8 @@ export default function RegisterPage() {
             {submitting ? 'Создаём аккаунт…' : 'Создать аккаунт'}
           </button>
         </form>
+
+        <ProviderSection mode="login" />
 
         <p className={styles.alt}>
           {'Уже есть аккаунт?'}{' '}
