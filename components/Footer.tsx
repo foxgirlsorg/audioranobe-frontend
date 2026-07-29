@@ -34,6 +34,9 @@ export default function Footer() {
           <Link href="/legal" className={styles.link}>
             {'Правовая информация'}
           </Link>
+          <Link href="/api-docs" className={styles.link}>
+            {'API'}
+          </Link>
         </nav>
 
         <div className={styles.meta}>

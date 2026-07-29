@@ -1,0 +1,300 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Check, Copy, Terminal } from 'lucide-react';
+import JsonBlock from '@/components/JsonBlock';
+import { SAMPLES, SAMPLE_PATH, SAMPLE_QUERY } from './samples';
+import styles from './page.module.css';
+
+/**
+ * Public API reference.
+ *
+ * Scope is deliberately narrow: only GET endpoints that answer without an
+ * Authorization header. Anything that needs a token, and every write endpoint,
+ * is documented in contracts/API.md instead — this page is for people reading
+ * the catalogue from outside the site.
+ *
+ * Every endpoint listed here was checked against a running backend with no
+ * credentials attached.
+ */
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
+
+type Param = { name: string; desc: string };
+type Endpoint = {
+  path: string;
+  desc: string;
+  params?: Param[];
+  note?: string;
+};
+type Group = { title: string; endpoints: Endpoint[] };
+
+const PAGING: Param[] = [
+  { name: 'page', desc: 'Номер страницы, с 1. По умолчанию 1.' },
+  { name: 'per_page', desc: 'Размер страницы. По умолчанию 24, максимум 100.' },
+];
+
+const GROUPS: Group[] = [
+  {
+    title: 'Сервис',
+    endpoints: [
+      {
+        path: '/config',
+        desc: 'Какие необязательные функции включены на этом сервере. Сейчас это только {email_verification: bool}.',
+      },
+      {
+        path: '/home',
+        desc: 'Содержимое главной: объявления и подборки тайтлов (new_titles, popular, top_rated, recently_updated).',
+        note: 'Поле continue у неавторизованного запроса всегда пустое — история прослушивания привязана к аккаунту.',
+      },
+    ],
+  },
+  {
+    title: 'Тайтлы',
+    endpoints: [
+      {
+        path: '/titles',
+        desc: 'Каталог. Возвращает только одобренные и неудалённые тайтлы.',
+        params: [
+          { name: 'q', desc: 'Поиск по названию тайтла и имени автора.' },
+          { name: 'genre', desc: 'Слаг жанра, например fantasy.' },
+          { name: 'author', desc: 'Имя автора целиком, без учёта регистра.' },
+          { name: 'year_from, year_to', desc: 'Год выпуска, целое число.' },
+          {
+            name: 'release_status',
+            desc: 'ongoing | completed | abandoned | frozen.',
+          },
+          { name: 'min_rating', desc: 'Минимальная средняя оценка.' },
+          {
+            name: 'sort',
+            desc: 'popular (по умолчанию) | rating | new | updated | az.',
+          },
+          ...PAGING,
+        ],
+      },
+      {
+        path: '/titles/{slug}',
+        desc: 'Карточка тайтла целиком: описание, жанры, чтецы, тома с главами, похожие тайтлы.',
+        note: 'Вместо слага можно передать числовой id — это поддерживается намеренно.',
+      },
+      { path: '/titles/random', desc: 'Слаг случайного одобренного тайтла.' },
+      {
+        path: '/search/suggest',
+        desc: 'Быстрые подсказки для строки поиска: до 5 тайтлов и 3 чтецов.',
+        params: [{ name: 'q', desc: 'Запрос, минимум 2 символа. Короче — пустой результат.' }],
+      },
+      { path: '/genres', desc: 'Список жанров со счётчиком тайтлов.', params: [{ name: 'q', desc: 'Поиск по названию.' }, ...PAGING] },
+    ],
+  },
+  {
+    title: 'Главы и файлы',
+    endpoints: [
+      {
+        path: '/chapters/{id}',
+        desc: 'Данные для воспроизведения одной главы: audio_url, длительность, том, соседние главы.',
+        note: '404, пока глава не одобрена и её аудио не готово. Для тайтлов 18+ и с чувствительными тегами без входа возвращает 401 и не отдаёт audio_url — единственный способ получить ссылку на файл через API.',
+      },
+      {
+        path: '/download/chapters/{id}',
+        desc: 'Сам аудиофайл (Opus) с заголовком Content-Disposition. Обычная ссылка для скачивания, авторизация не требуется.',
+      },
+    ],
+  },
+  {
+    title: 'Чтецы и авторы',
+    endpoints: [
+      {
+        path: '/narrators',
+        desc: 'Список чтецов.',
+        params: [{ name: 'q', desc: 'Поиск по имени.' }, ...PAGING],
+      },
+      {
+        path: '/narrators/{slug}',
+        desc: 'Страница чтеца: описание, ссылки, тайтлы.',
+        note: 'Поле admin_contact всегда null — оно доступно только администраторам и участникам команды. Числовой id тоже принимается.',
+      },
+      {
+        path: '/narrators/{id}/posts',
+        desc: 'Посты чтеца. Скрытые посты в анонимный ответ не попадают.',
+        params: PAGING,
+      },
+      { path: '/posts/{id}', desc: 'Один пост чтеца.' },
+      {
+        path: '/authors',
+        desc: 'Список авторов.',
+        params: [{ name: 'q', desc: 'Поиск по имени.' }, ...PAGING],
+      },
+      { path: '/authors/{id}', desc: 'Страница автора и его тайтлы.' },
+    ],
+  },
+  {
+    title: 'Подборки, объявления, комментарии',
+    endpoints: [
+      {
+        path: '/collections',
+        desc: 'Публичные подборки пользователей.',
+        params: [
+          { name: 'q', desc: 'Поиск по названию.' },
+          { name: 'user', desc: 'Имя пользователя — вернёт только его публичные подборки.' },
+          { name: 'sort', desc: 'new (по умолчанию) | popular.' },
+          ...PAGING,
+        ],
+      },
+      { path: '/collections/{id}', desc: 'Одна подборка с её тайтлами. Приватные подборки недоступны.' },
+      { path: '/announcements', desc: 'Опубликованные новости.', params: PAGING },
+      { path: '/announcements/{slug}', desc: 'Одна новость.' },
+      {
+        path: '/comments',
+        desc: 'Комментарии к объекту, ответы вложены в родителя.',
+        params: [
+          { name: 'target_type', desc: 'Обязательный: title | narrator | post | announcement.' },
+          { name: 'target_id', desc: 'Обязательный: id объекта.' },
+          { name: 'sort', desc: 'new (по умолчанию) | old | top.' },
+          ...PAGING,
+        ],
+      },
+    ],
+  },
+  {
+    title: 'Профили',
+    endpoints: [
+      { path: '/users/{id}', desc: 'Публичный профиль. Имя пользователя вместо id тоже работает.' },
+      { path: '/users/{id}/library', desc: 'Библиотека пользователя.', params: PAGING },
+      { path: '/users/{id}/favorites', desc: 'Избранное пользователя.', params: PAGING },
+      { path: '/users/{id}/comments', desc: 'Комментарии пользователя.', params: PAGING },
+    ],
+  },
+  {
+    title: 'Правовые документы',
+    endpoints: [
+      { path: '/legal/rules', desc: 'Правила сервиса.' },
+      { path: '/legal/{type}', desc: 'privacy или terms.' },
+    ],
+  },
+];
+
+/** The curl line shown above each response sample. */
+function curlFor(path: string): string {
+  const concrete = SAMPLE_PATH[path] ?? path;
+  const query = SAMPLE_QUERY[path] ?? '';
+  return `curl "${API_BASE}${concrete}${query}"`;
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      className={styles.copy}
+      aria-label={'Скопировать'}
+      onClick={() => {
+        void navigator.clipboard?.writeText(text).then(() => {
+          setDone(true);
+          setTimeout(() => setDone(false), 1200);
+        });
+      }}
+    >
+      {done ? <Check size={13} /> : <Copy size={13} />}
+    </button>
+  );
+}
+
+export default function ApiDocsPage() {
+  return (
+    <div className={styles.wrap}>
+      <span className="eyebrow">{'Для разработчиков'}</span>
+      <h1 className={styles.title}>
+        {'Публичное'} <span className={styles.titleAccent}>{'API'}</span>
+      </h1>
+      <p className={styles.subtitle}>
+        {'Каталог AudioRanobe читается без регистрации. Ниже — все GET-запросы, доступные без токена: их можно вызывать из браузера, скрипта или приложения. Запросы на запись и всё, что требует входа, здесь не описаны.'}
+      </p>
+
+      <section className={`glass-panel ${styles.panel}`}>
+        <h2 className={styles.panelTitle}>{'Базовый адрес'}</h2>
+        <div className={styles.codeRow}>
+          <code className={styles.code}>{API_BASE}</code>
+          <CopyButton text={API_BASE} />
+        </div>
+        <p className={styles.note}>
+          {'Все пути ниже дописываются к этому адресу. Ответы — JSON в UTF-8; ошибки приходят как {"error": "текст"} с соответствующим HTTP-статусом.'}
+        </p>
+
+        <h2 className={styles.panelTitle}>{'Пример'}</h2>
+        <div className={styles.codeRow}>
+          <code className={styles.code}>
+            <Terminal size={12} className={styles.codeIcon} />
+            {`curl "${API_BASE}/titles?sort=new&per_page=5"`}
+          </code>
+          <CopyButton text={`curl "${API_BASE}/titles?sort=new&per_page=5"`} />
+        </div>
+      </section>
+
+      <section className={`glass-panel ${styles.panel} ${styles.warnPanel}`}>
+        <h2 className={styles.panelTitle}>{'Что видно без входа'}</h2>
+        <ul className={styles.list}>
+          <li>
+            {'Тайтлы с меткой 18+ по умолчанию скрыты из списков, поиска и подборок на главной. Без аккаунта это поведение изменить нельзя — переключатели живут в настройках профиля.'}
+          </li>
+          <li>
+            {'Тайтлы с чувствительными тегами остаются в списках, но приходят с флагом is_restricted — обложку следует размывать. Данных для воспроизведения по ним не приходит вовсе: ни ссылок на файлы, ни audio_url, а audio_status у глав подменяется на restricted.'}
+          </li>
+          <li>
+            {'Неодобренные, скрытые и удалённые материалы не отдаются вообще.'}
+          </li>
+          <li>
+            {'Списочные ответы имеют вид {items, page, per_page, total}.'}
+          </li>
+        </ul>
+      </section>
+
+      {GROUPS.map((group) => (
+        <section key={group.title} className={styles.group}>
+          <h2 className={styles.groupTitle}>{group.title}</h2>
+          <div className={styles.endpoints}>
+            {group.endpoints.map((ep) => (
+              <article key={ep.path} className={`glass-panel ${styles.endpoint}`}>
+                <div className={styles.epHead}>
+                  <span className={styles.method}>{'GET'}</span>
+                  <code className={styles.epPath}>{ep.path}</code>
+                  <CopyButton text={API_BASE + ep.path} />
+                </div>
+                <p className={styles.epDesc}>{ep.desc}</p>
+                {ep.params ? (
+                  <dl className={styles.params}>
+                    {ep.params.map((param) => (
+                      <div key={param.name} className={styles.param}>
+                        <dt className={styles.paramName}>{param.name}</dt>
+                        <dd className={styles.paramDesc}>{param.desc}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+                {ep.note ? <p className={styles.epNote}>{ep.note}</p> : null}
+                {SAMPLES[ep.path] ? (
+                  <>
+                    <JsonBlock
+                      label={'Запрос'}
+                      code={curlFor(ep.path)}
+                      copyText={curlFor(ep.path)}
+                    />
+                    <JsonBlock label={'Ответ'} code={SAMPLES[ep.path]} />
+                  </>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      <p className={styles.footNote}>
+        {'Материалы каталога принадлежат их правообладателям. Вопросы об использовании — через '}
+        <Link href="/dmca" className={styles.footLink}>
+          {'страницу DMCA'}
+        </Link>
+        {'.'}
+      </p>
+    </div>
+  );
+}
