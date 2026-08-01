@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Inbox } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -10,7 +10,8 @@ import type { ModRequest, Paginated } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Tabs from '@/components/Tabs/Tabs';
-import Pagination from '@/components/Pagination/Pagination';
+import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
+import { useInfiniteList } from '@/lib/useInfiniteList';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -227,11 +228,6 @@ function RequestCard({ r, onDone }: { r: ModRequest; onDone: (id: number) => voi
 function QueueContent() {
   const [init, setInit] = useState(false);
   const [type, setType] = useState('all');
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<Paginated<ModRequest> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     const urlType = new URLSearchParams(window.location.search).get('type');
@@ -239,59 +235,30 @@ function QueueContent() {
     setInit(true);
   }, []);
 
-  useEffect(() => {
-    if (!init) return;
-    let alive = true;
-    setLoading(true);
-    api<Paginated<ModRequest>>('/mod/queue', {
-      params: { type: type === 'all' ? undefined : type, page },
-    })
-      .then((d) => {
-        if (alive) {
-          setData(d);
-          setError('');
-        }
-      })
-      .catch((e) => {
-        if (alive) setError(errMsg(e));
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [init, type, page, reload]);
-
-  const removeRequest = (id: number) => {
-    setData((prev) =>
-      prev
-        ? {
-            ...prev,
-            items: prev.items.filter((r) => r.id !== id),
-            total: Math.max(0, prev.total - 1),
-          }
-        : prev
-    );
-  };
+  const fetchPage = useCallback(
+    (page: number) =>
+      api<Paginated<ModRequest>>('/mod/queue', {
+        params: { type: type === 'all' ? undefined : type, page },
+      }),
+    [type]
+  );
+  const list = useInfiniteList<ModRequest>(fetchPage);
+  const removeRequest = (id: number) => list.remove((r) => r.id === id);
 
   return (
     <div>
       <Tabs
         tabs={TYPE_TABS}
         active={type}
-        onChange={(k) => {
-          setType(k);
-          setPage(1);
-        }}
+        onChange={setType}
       />
-      {error ? (
-        <ErrorPanel message={error} onRetry={() => setReload((n) => n + 1)} />
-      ) : loading || !data ? (
+      {list.error ? (
+        <ErrorPanel message={list.error} onRetry={list.reload} />
+      ) : !init || list.loading || !list.items ? (
         <div className={styles.loading}>
           <Spinner />
         </div>
-      ) : data.items.length === 0 ? (
+      ) : list.items.length === 0 ? (
         <EmptyState
           icon={Inbox}
           title={'Очередь пуста'}
@@ -300,15 +267,17 @@ function QueueContent() {
       ) : (
         <>
           <div className={styles.list}>
-            {data.items.map((r) => (
+            {list.items.map((r) => (
               <RequestCard key={r.id} r={r} onDone={removeRequest} />
             ))}
           </div>
-          <Pagination
-            page={data.page}
-            total={data.total}
-            perPage={data.per_page}
-            onPage={setPage}
+          <InfiniteScroll
+            hasMore={list.hasMore}
+            loading={list.loadingMore}
+            error={list.moreError}
+            onLoad={list.loadMore}
+            total={list.total}
+            shown={list.items.length}
           />
         </>
       )}

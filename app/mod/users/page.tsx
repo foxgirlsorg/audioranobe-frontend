@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ImagePlus, KeyRound, Pencil, Search, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -10,7 +10,8 @@ import { formatDate } from '@/lib/format';
 import type { Me, Paginated, Role } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
-import Pagination from '@/components/Pagination/Pagination';
+import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
+import { useInfiniteList } from '@/lib/useInfiniteList';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
@@ -32,11 +33,6 @@ function UsersContent() {
 
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<Paginated<Me> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [reload, setReload] = useState(0);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<Me | null>(null);
   const [toEdit, setToEdit] = useState<Me | null>(null);
@@ -51,41 +47,17 @@ function UsersContent() {
   const [banReason, setBanReason] = useState('');
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setQuery(q.trim());
-      setPage(1);
-    }, 300);
+    const timer = window.setTimeout(() => setQuery(q.trim()), 300);
     return () => window.clearTimeout(timer);
   }, [q]);
 
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    api<Paginated<Me>>('/mod/users', { params: { q: query, page } })
-      .then((d) => {
-        if (alive) {
-          setData(d);
-          setError('');
-        }
-      })
-      .catch((e) => {
-        if (alive) setError(errMsg(e));
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [query, page, reload]);
+  const fetchPage = useCallback(
+    (page: number) => api<Paginated<Me>>('/mod/users', { params: { q: query, page } }),
+    [query]
+  );
+  const list = useInfiniteList<Me>(fetchPage);
 
-  const replaceRow = (updated: Me) => {
-    setData((prev) =>
-      prev
-        ? { ...prev, items: prev.items.map((u) => (u.id === updated.id ? updated : u)) }
-        : prev
-    );
-  };
+  const replaceRow = (updated: Me) => list.patch((u) => u.id === updated.id, () => updated);
 
   const changeRole = async (u: Me, role: string) => {
     if (role === u.role) return;
@@ -170,15 +142,7 @@ function UsersContent() {
     try {
       await api(`/mod/users/${u.id}`, { method: 'DELETE' });
       toast('Пользователь удалён');
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              items: prev.items.filter((x) => x.id !== u.id),
-              total: Math.max(0, prev.total - 1),
-            }
-          : prev
-      );
+      list.remove((x) => x.id === u.id);
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -288,13 +252,13 @@ function UsersContent() {
         />
       </div>
 
-      {error ? (
-        <ErrorPanel message={error} onRetry={() => setReload((n) => n + 1)} />
-      ) : loading || !data ? (
+      {list.error ? (
+        <ErrorPanel message={list.error} onRetry={list.reload} />
+      ) : list.loading || !list.items ? (
         <div className={styles.loading}>
           <Spinner />
         </div>
-      ) : data.items.length === 0 ? (
+      ) : list.items.length === 0 ? (
         <EmptyState
           icon={Users}
           title={'Пользователи не найдены'}
@@ -316,7 +280,7 @@ function UsersContent() {
                 </tr>
               </thead>
               <tbody>
-                {data.items.map((u) => {
+                {list.items.map((u) => {
                   const self = me?.id === u.id;
                   const busy = busyId === u.id;
                   return (
@@ -428,11 +392,13 @@ function UsersContent() {
               </tbody>
             </table>
           </div>
-          <Pagination
-            page={data.page}
-            total={data.total}
-            perPage={data.per_page}
-            onPage={setPage}
+          <InfiniteScroll
+            hasMore={list.hasMore}
+            loading={list.loadingMore}
+            error={list.moreError}
+            onLoad={list.loadMore}
+            total={list.total}
+            shown={list.items.length}
           />
         </>
       )}

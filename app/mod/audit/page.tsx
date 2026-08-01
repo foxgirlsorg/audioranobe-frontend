@@ -1,49 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import Link from 'next/link';
 import { ScrollText } from 'lucide-react';
 import { api } from '@/lib/api';
-import { errMsg } from '@/lib/toast';
 import { formatDateTime } from '@/lib/format';
+import { useInfiniteList } from '@/lib/useInfiniteList';
 import type { AuditEntry, Paginated } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
-import Pagination from '@/components/Pagination/Pagination';
+import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
 function AuditContent() {
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<Paginated<AuditEntry> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [reload, setReload] = useState(0);
+  const fetchPage = useCallback(
+    (page: number) => api<Paginated<AuditEntry>>('/mod/audit', { params: { page } }),
+    []
+  );
+  const list = useInfiniteList<AuditEntry>(fetchPage);
 
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    api<Paginated<AuditEntry>>('/mod/audit', { params: { page } })
-      .then((d) => {
-        if (alive) {
-          setData(d);
-          setError('');
-        }
-      })
-      .catch((e) => {
-        if (alive) setError(errMsg(e));
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [page, reload]);
+  if (list.error) return <ErrorPanel message={list.error} onRetry={list.reload} />;
 
-  if (error) return <ErrorPanel message={error} onRetry={() => setReload((n) => n + 1)} />;
-
-  if (loading || !data) {
+  if (list.loading || !list.items) {
     return (
       <div className={styles.loading}>
         <Spinner />
@@ -51,7 +30,7 @@ function AuditContent() {
     );
   }
 
-  if (data.items.length === 0) {
+  if (list.items.length === 0) {
     return (
       <EmptyState
         icon={ScrollText}
@@ -75,7 +54,7 @@ function AuditContent() {
             </tr>
           </thead>
           <tbody>
-            {data.items.map((en) => {
+            {list.items.map((en) => {
               const details = en.details || {};
               const hasDetails = Object.keys(details).length > 0;
               return (
@@ -110,7 +89,14 @@ function AuditContent() {
           </tbody>
         </table>
       </div>
-      <Pagination page={data.page} total={data.total} perPage={data.per_page} onPage={setPage} />
+      <InfiniteScroll
+        hasMore={list.hasMore}
+        loading={list.loadingMore}
+        error={list.moreError}
+        onLoad={list.loadMore}
+        total={list.total}
+        shown={list.items.length}
+      />
     </>
   );
 }
