@@ -8,13 +8,15 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import type { NarratorFull, NarratorStats, UserBrief } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import SocialsEditor from '@/components/SocialsEditor';
-import Tabs from '@/components/Tabs';
-import ImageCropper from '@/components/ImageCropper';
-import DangerZone from '@/components/DangerZone';
-import NarratorPosts from '@/components/NarratorPosts';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
+import Tabs from '@/components/Tabs/Tabs';
+import ImageCropper from '@/components/ImageCropper/ImageCropper';
+import DangerZone from '@/components/DangerZone/DangerZone';
+import NarratorPosts from '@/components/NarratorPosts/NarratorPosts';
+import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
+import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
 type MemberRow = { user: UserBrief; role: 'owner' | 'editor' };
@@ -40,28 +42,26 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
 
   const [tab, setTab] = useState(() => searchParams.get('tab') || 'info');
 
-  // Info tab
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [bio, setBio] = useState('');
   const [socials, setSocials] = useState<string[]>([]);
   const [isSelf, setIsSelf] = useState(false);
+  const [isAi, setIsAi] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [aiLocked, setAiLocked] = useState(false);
   const [adminContact, setAdminContact] = useState('');
   const [nameError, setNameError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Images tab
   const [cropper, setCropper] = useState<'avatar' | 'cover' | null>(null);
 
-  // Owner (a narrator has exactly one member)
   const [members, setMembers] = useState<MemberRow[] | null>(null);
   const [membersError, setMembersError] = useState('');
 
-  // Stats tab
   const [stats, setStats] = useState<NarratorStats | null>(null);
   const [statsError, setStatsError] = useState('');
 
-  // Transfer tab
   const [transferUsername, setTransferUsername] = useState('');
   const [transferring, setTransferring] = useState(false);
 
@@ -97,6 +97,9 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
       setBio(narrator.bio);
       setSocials(narrator.socials ?? []);
       setIsSelf(narrator.is_self);
+      setIsAi(narrator.is_ai);
+      setIsVerified(narrator.is_verified);
+      setAiLocked(narrator.is_ai);
       setAdminContact(narrator.admin_contact ?? '');
     }
   }, [narrator]);
@@ -129,8 +132,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     if (tab === 'stats') void loadStats();
   }, [tab, canEdit, loadMembers, loadStats]);
 
-  // ---------- Info handlers
-
   async function handleSaveInfo(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!narrator) return;
@@ -150,6 +151,10 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
           bio,
           socials: cleaned,
           is_self: isSelf,
+          ...(isAi !== (narrator.is_ai ?? false) ? { is_ai: isAi } : {}),
+          ...(isMod && isVerified !== (narrator.is_verified ?? false)
+            ? { is_verified: isVerified }
+            : {}),
           admin_contact: isSelf ? adminContact : null,
         },
       });
@@ -170,8 +175,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     }
   }
 
-  // ---------- Images handlers
-
   async function onCropped(blob: Blob) {
     if (!narrator || !cropper) return;
     const fd = new FormData();
@@ -184,8 +187,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
       toast(errMsg(err), 'error');
     }
   }
-
-  // ---------- Transfer handler
 
   async function handleTransfer() {
     if (!narrator) return;
@@ -209,8 +210,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     }
   }
 
-  // ---------- Tabs definition
-
   const tabs = useMemo(() => {
     const list: { key: string; label: string; count?: number }[] = [
       { key: 'info', label: 'Инфо' },
@@ -223,8 +222,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     }
     return list;
   }, [canEdit, isOwner]);
-
-  // ---------- Render
 
   if (authLoading || !user || !ready) {
     return (
@@ -264,8 +261,8 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
 
   return (
     <div className={styles.page}>
-      <Link href={`/narrator/${routeSlug}`} className="btn btn-ghost">
-        <ArrowLeft size={15} />
+      <Link href={`/narrator/${routeSlug}`} className="back-link">
+        <ArrowLeft size={14} />
         К чтецу
       </Link>
 
@@ -287,7 +284,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         <Tabs tabs={tabs} active={tab} onChange={setTab} urlParam="tab" />
       </div>
 
-      {/* -------- Инфо -------- */}
       {tab === 'info' && (
         <form className={`glass-panel ${styles.formPanel}`} onSubmit={handleSaveInfo} noValidate>
           <div className={styles.field}>
@@ -324,15 +320,11 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="n-bio">
-              О себе
-            </label>
-            <textarea
-              id="n-bio"
-              className="textarea"
+            <span className={styles.label}>О себе</span>
+            <MarkdownEditor
               value={bio}
+              onChange={setBio}
               maxLength={5000}
-              onChange={(e) => setBio(e.target.value)}
               placeholder="Расскажите слушателям об этом чтеце…"
             />
           </div>
@@ -343,17 +335,33 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
           </div>
 
           <div className={styles.field}>
-            <label className={styles.toggleLabel}>
-              <input
-                type="checkbox"
-                className={styles.toggleInput}
-                checked={isSelf}
-                onChange={(e) => setIsSelf(e.target.checked)}
-              />
-              <span className={styles.toggleSwitch} />
-              <span className={styles.toggleText}>Собственный профиль</span>
-            </label>
+            <Toggle
+              checked={isAi}
+              disabled={aiLocked && !isMod}
+              onChange={setIsAi}
+              label="Синтезированный голос"
+              hint="Отметьте, если это ИИ-озвучка. Рядом с именем появится метка."
+            />
           </div>
+
+          <div className={styles.field}>
+            <Toggle
+              checked={isSelf}
+              onChange={setIsSelf}
+              label="Собственный профиль"
+            />
+          </div>
+
+          {isMod ? (
+            <div className={styles.field}>
+              <Toggle
+                checked={isVerified}
+                onChange={setIsVerified}
+                label="Подтверждённый профиль"
+                hint="Личность подтверждена: рядом с именем появится галочка."
+              />
+            </div>
+          ) : null}
 
           {isSelf && (
             <div className={styles.field}>
@@ -371,7 +379,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
             </div>
           )}
 
-          {/* A narrator has exactly one member; ownership moves via Перенос. */}
           <div className={styles.field}>
             <span className={styles.label}>Владелец</span>
             {membersError ? (
@@ -411,69 +418,62 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         </form>
       )}
 
-      {/* -------- Записи -------- */}
       {tab === 'posts' && (
         <NarratorPosts narratorId={narrator.id} canEdit={canEdit} />
       )}
 
-      {/* -------- Изображения -------- */}
       {tab === 'images' && (
-        <div className={`glass-panel ${styles.formPanel}`}>
-          <div className={styles.mediaGrid}>
-            <div className={styles.mediaCard}>
+        <div className={styles.mediaGrid}>
+          <div className={`glass-panel ${styles.mediaCard}`}>
+            <div className={styles.mediaHead}>
               <span className={styles.label}>Аватар</span>
+              <span className={styles.ratio}>1:1</span>
+            </div>
+            <div className={styles.mediaStage}>
               <div className={styles.avatarPreview}>
                 {narrator.avatar_url ? (
-                  <img src={narrator.avatar_url} alt="avatar" className={styles.previewImg} />
+                  <img src={narrator.avatar_url} alt="" className={styles.previewImg} />
                 ) : (
-                  <Mic size={36} />
+                  <Mic size={30} />
                 )}
               </div>
-              <label className="btn btn-ghost">
-                <ImagePlus size={15} />
-                Загрузить аватар
-                <input
-                  type="file"
-                  accept="image/*"
-                  className={styles.hiddenInput}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setCropper('avatar');
-                    e.target.value = '';
-                  }}
-                />
-              </label>
             </div>
+            <button
+              type="button"
+              className={`btn ${styles.mediaAction}`}
+              onClick={() => setCropper('avatar')}
+            >
+              <ImagePlus size={15} />
+              {narrator.avatar_url ? 'Сменить аватар' : 'Загрузить аватар'}
+            </button>
+          </div>
 
-            <div className={styles.mediaCard}>
+          <div className={`glass-panel ${styles.mediaCard}`}>
+            <div className={styles.mediaHead}>
               <span className={styles.label}>Обложка</span>
+              <span className={styles.ratio}>3:1</span>
+            </div>
+            <div className={styles.mediaStage}>
               <div className={styles.coverPreview}>
                 {narrator.cover_url ? (
-                  <img src={narrator.cover_url} alt="cover" className={styles.previewImg} />
+                  <img src={narrator.cover_url} alt="" className={styles.previewImg} />
                 ) : (
-                  <Mic size={36} />
+                  <Mic size={30} />
                 )}
               </div>
-              <label className="btn btn-ghost">
-                <ImagePlus size={15} />
-                Загрузить обложку
-                <input
-                  type="file"
-                  accept="image/*"
-                  className={styles.hiddenInput}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setCropper('cover');
-                    e.target.value = '';
-                  }}
-                />
-              </label>
             </div>
+            <button
+              type="button"
+              className={`btn ${styles.mediaAction}`}
+              onClick={() => setCropper('cover')}
+            >
+              <ImagePlus size={15} />
+              {narrator.cover_url ? 'Сменить обложку' : 'Загрузить обложку'}
+            </button>
           </div>
         </div>
       )}
 
-      {/* -------- Статистика -------- */}
       {tab === 'stats' && (
         <div className={`glass-panel ${styles.formPanel}`}>
           {statsError ? (
@@ -517,7 +517,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         </div>
       )}
 
-      {/* -------- Перенос -------- */}
       {tab === 'transfer' && isOwner && (
         <div className={`glass-panel ${styles.formPanel}`}>
           <p className={styles.transferHint}>

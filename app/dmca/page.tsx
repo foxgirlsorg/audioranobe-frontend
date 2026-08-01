@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast, errMsg } from '@/lib/toast';
 import styles from './page.module.css';
@@ -46,6 +46,7 @@ export default function DmcaPage() {
     if (!contentUrls.some((u) => u.trim())) errs.content_url = 'Укажите хотя бы одну ссылку на контент';
     if (!originalUrls.some((u) => u.trim())) errs.original_url = 'Укажите хотя бы одну ссылку на оригинал';
     if (!proofUrl.trim()) errs.proof_url = 'Приложите подтверждение авторства';
+    if (!description.trim()) errs.description = 'Опишите, в чём состоит нарушение';
     setErrors(errs);
     setFormError('');
     if (Object.keys(errs).length > 0) return;
@@ -73,6 +74,11 @@ export default function DmcaPage() {
 
   return (
     <div className={styles.wrap}>
+      <Link href="/legal" className="back-link">
+        <ArrowLeft size={14} />
+        {'Правовая информация'}
+      </Link>
+
       <h1 className={styles.title}>
         {'Политика'} <span className={styles.titleAccent}>{'DMCA'}</span>
       </h1>
@@ -160,12 +166,18 @@ export default function DmcaPage() {
                   placeholder={'https://audioranobe.com/title/example'}
                   aria-invalid={!!errors.content_url}
                 />
-                <button type="button" className="btn btn-ghost" onClick={() => removeRow(setContentUrls, i)}>
-                  {'—'}
+                <button
+                  type="button"
+                  className={styles.rowRemove}
+                  onClick={() => removeRow(setContentUrls, i)}
+                  aria-label={'Удалить ссылку'}
+                >
+                  <Trash2 size={15} />
                 </button>
               </div>
             ))}
-            <button type="button" className="btn btn-ghost" onClick={() => addRow(setContentUrls)}>
+            <button type="button" className={styles.addRow} onClick={() => addRow(setContentUrls)}>
+              <Plus size={13} />
               {'Добавить ссылку'}
             </button>
             {errors.content_url && <div className={styles.fieldError}>{errors.content_url}</div>}
@@ -183,12 +195,18 @@ export default function DmcaPage() {
                   placeholder={'https://…'}
                   aria-invalid={!!errors.original_url}
                 />
-                <button type="button" className="btn btn-ghost" onClick={() => removeRow(setOriginalUrls, i)}>
-                  {'—'}
+                <button
+                  type="button"
+                  className={styles.rowRemove}
+                  onClick={() => removeRow(setOriginalUrls, i)}
+                  aria-label={'Удалить ссылку'}
+                >
+                  <Trash2 size={15} />
                 </button>
               </div>
             ))}
-            <button type="button" className="btn btn-ghost" onClick={() => addRow(setOriginalUrls)}>
+            <button type="button" className={styles.addRow} onClick={() => addRow(setOriginalUrls)}>
+              <Plus size={13} />
               {'Добавить ссылку'}
             </button>
             {errors.original_url && <div className={styles.fieldError}>{errors.original_url}</div>}
@@ -211,15 +229,17 @@ export default function DmcaPage() {
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="dmca-desc">
-              {'Описание проблемы'} <span className={styles.optional}>{'необязательно'}</span>
+              {'Описание проблемы'}
             </label>
             <textarea
               id="dmca-desc"
-              className="textarea"
+              className={`textarea ${errors.description ? styles.inputError : ''}`}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={'Опишите, каким образом нарушены ваши авторские права…'}
+              aria-invalid={!!errors.description}
             />
+            {errors.description && <div className={styles.fieldError}>{errors.description}</div>}
           </div>
 
           <div className={styles.field} style={{ display: 'none' }} aria-hidden="true">
@@ -234,17 +254,12 @@ export default function DmcaPage() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={submitting}>
+          <button type="submit" className={`btn btn-primary ${styles.submit}`} disabled={submitting}>
             <Send size={15} />
             {submitting ? 'Отправляем…' : 'Отправить жалобу'}
           </button>
         </form>
       )}
-
-      <Link href="/" className={styles.back}>
-        <ArrowLeft size={14} />
-        {'На главную'}
-      </Link>
     </div>
   );
 }

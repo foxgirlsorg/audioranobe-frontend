@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
+  ArrowLeft,
   Bell,
   EyeOff,
   ImagePlus,
@@ -22,14 +24,15 @@ import type {
   Me,
   NotificationPrefs,
 } from '@/lib/types';
-import ProviderAuth from '@/components/ProviderAuth';
+import ProviderAuth from '@/components/ProviderAuth/ProviderAuth';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
-import Spinner from '@/components/Spinner';
-import SocialsEditor from '@/components/SocialsEditor';
-import ImageCropper from '@/components/ImageCropper';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import Modal from '@/components/Modal';
+import Spinner from '@/components/Spinner/Spinner';
+import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
+import ImageCropper from '@/components/ImageCropper/ImageCropper';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import Modal from '@/components/Modal/Modal';
+import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import styles from './page.module.css';
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
@@ -100,7 +103,6 @@ function validSocial(u: string): boolean {
   }
 }
 
-/** Splits a translated two-tone heading on the first space: [plain, accent]. */
 function splitHeading(s: string): [string, string] {
   const i = s.indexOf(' ');
   return i === -1 ? [s, ''] : [s.slice(0, i), s.slice(i + 1)];
@@ -111,7 +113,6 @@ export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // ---- profile form ----
   const [emailVerificationOn, setEmailVerificationOn] = useState(false);
   const [resending, setResending] = useState(false);
   const [username, setUsername] = useState('');
@@ -120,7 +121,6 @@ export default function SettingsPage() {
   const [socials, setSocials] = useState<string[]>([]);
   const [savingProfile, setSavingProfile] = useState(false);
 
-  // Email verification only exists when the server has SMTP configured.
   useEffect(() => {
     let alive = true;
     api<{ email_verification: boolean }>('/config')
@@ -128,7 +128,6 @@ export default function SettingsPage() {
         if (alive) setEmailVerificationOn(!!c.email_verification);
       })
       .catch(() => {
-        // optional feature — stay hidden if we can't tell
       });
     return () => {
       alive = false;
@@ -147,21 +146,17 @@ export default function SettingsPage() {
     }
   }
 
-  // ---- images ----
   const [cropTarget, setCropTarget] = useState<'avatar' | 'cover' | null>(null);
   const [uploading, setUploading] = useState<'avatar' | 'cover' | null>(null);
 
-  // ---- password ----
   const [oldPw, setOldPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [newPw2, setNewPw2] = useState('');
   const [savingPw, setSavingPw] = useState(false);
 
-  // ---- notification prefs ----
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [prefBusy, setPrefBusy] = useState<keyof NotificationPrefs | null>(null);
 
-  // ---- linked accounts ----
   const hasPassword = user?.has_password ?? true;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
@@ -170,20 +165,16 @@ export default function SettingsPage() {
   const [emailPw, setEmailPw] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
 
-  // ---- content prefs ----
-  // `null` while loading; `busy` holds the switch being saved ('nsfw' or a
-  // genre id) so only that one row is disabled mid-request.
   const [content, setContent] = useState<ContentPrefs | null>(null);
   const [sensitiveGenres, setSensitiveGenres] = useState<Genre[]>([]);
   const [contentBusy, setContentBusy] = useState<'nsfw' | number | null>(null);
 
-  // ---- danger zone ----
   const [delOpen, setDelOpen] = useState(false);
   const [delPw, setDelPw] = useState('');
   const [deleting, setDeleting] = useState(false);
 
   const seededRef = useRef(false);
-  const leavingRef = useRef(false); // set when the account was just deleted
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user && !leavingRef.current) router.replace('/auth/login');
@@ -202,8 +193,6 @@ export default function SettingsPage() {
     }
   }, [user]);
 
-  // The per-tag switches are driven by the genre list, so only tags an admin
-  // has actually flagged sensitive get a row.
   useEffect(() => {
     if (!user) return;
     let alive = true;
@@ -212,7 +201,6 @@ export default function SettingsPage() {
         if (alive) setSensitiveGenres((r.items ?? []).filter((g) => g.is_sensitive));
       })
       .catch(() => {
-        // the switches simply don't render if we can't load the list
       });
     return () => {
       alive = false;
@@ -226,8 +214,6 @@ export default function SettingsPage() {
       </div>
     );
   }
-
-  // ------------------------------------------------------------- profile
 
   async function saveProfile() {
     if (savingProfile) return;
@@ -271,8 +257,6 @@ export default function SettingsPage() {
     }
   }
 
-  // ------------------------------------------------------------- images
-
   async function uploadImage(kind: 'avatar' | 'cover', blob: Blob) {
     setUploading(kind);
     try {
@@ -288,12 +272,8 @@ export default function SettingsPage() {
     }
   }
 
-  // ------------------------------------------------------------- password
-
   async function changePassword() {
     if (savingPw) return;
-    // An account created through Google/Discord/Telegram has no password yet,
-    // so there is nothing to confirm — it is a first password, not a change.
     if (hasPassword && !oldPw) {
       toast('Введите текущий пароль', 'error');
       return;
@@ -324,13 +304,11 @@ export default function SettingsPage() {
     }
   }
 
-  // ------------------------------------------------------------- prefs
-
   async function togglePref(key: keyof NotificationPrefs) {
     if (!prefs || prefBusy) return;
     const next = !prefs[key];
     setPrefBusy(key);
-    setPrefs({ ...prefs, [key]: next }); // optimistic
+    setPrefs({ ...prefs, [key]: next });
     try {
       const me = await api<Me>('/me/notification-prefs', {
         method: 'PATCH',
@@ -339,14 +317,12 @@ export default function SettingsPage() {
       setPrefs(me.notification_prefs);
       toast('Настройки уведомлений сохранены', 'ok');
     } catch (e) {
-      setPrefs((p) => (p ? { ...p, [key]: !next } : p)); // revert
+      setPrefs((p) => (p ? { ...p, [key]: !next } : p));
       toast(errMsg(e), 'error');
     } finally {
       setPrefBusy(null);
     }
   }
-
-  // ------------------------------------------------------------- email
 
   async function saveEmail() {
     if (savingEmail) return;
@@ -359,7 +335,6 @@ export default function SettingsPage() {
     try {
       await api<Me>('/me/email', {
         method: 'POST',
-        // Omitted entirely when the account has no password to confirm.
         body: hasPassword ? { email, password: emailPw } : { email },
       });
       await refresh();
@@ -372,8 +347,6 @@ export default function SettingsPage() {
       setSavingEmail(false);
     }
   }
-
-  // --------------------------------------------------- linked accounts
 
   async function unlink(provider: AuthProvider) {
     if (unlinking) return;
@@ -392,13 +365,11 @@ export default function SettingsPage() {
     }
   }
 
-  // ----------------------------------------------------- content prefs
-
   async function saveContent(next: ContentPrefs, busy: 'nsfw' | number) {
     if (!content || contentBusy !== null) return;
     const prev = content;
     setContentBusy(busy);
-    setContent(next); // optimistic
+    setContent(next);
     try {
       const me = await api<Me>('/me/content-prefs', {
         method: 'PATCH',
@@ -407,7 +378,7 @@ export default function SettingsPage() {
       setContent(me.content_prefs);
       toast('Настройки контента сохранены', 'ok');
     } catch (e) {
-      setContent(prev); // revert
+      setContent(prev);
       toast(errMsg(e), 'error');
     } finally {
       setContentBusy(null);
@@ -426,8 +397,6 @@ export default function SettingsPage() {
       : [...content.hidden_genres, id];
     void saveContent({ ...content, hidden_genres: hidden }, id);
   }
-
-  // ------------------------------------------------------------- delete
 
   async function deleteAccount() {
     if (deleting) return;
@@ -454,6 +423,11 @@ export default function SettingsPage() {
 
   return (
     <div className={styles.page}>
+      <Link href={`/user/${encodeURIComponent(user.username)}`} className="back-link">
+        <ArrowLeft size={14} />
+        {'В профиль'}
+      </Link>
+
       <header className={styles.header}>
         <span className="eyebrow">{'Аккаунт'}</span>
         <h1 className="section-title">
@@ -461,7 +435,6 @@ export default function SettingsPage() {
         </h1>
       </header>
 
-      {/* ------------------------------------------------ profile */}
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
           <UserIcon size={16} className={styles.panelIcon} />
@@ -475,7 +448,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Only rendered when the server actually has a mailer configured. */}
         {emailVerificationOn ? (
           <div
             className={
@@ -545,17 +517,12 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="settings-bio">
-            {'О себе'}
-          </label>
-          <textarea
-            id="settings-bio"
-            className="textarea"
+          <span className={styles.label}>{'О себе'}</span>
+          <MarkdownEditor
             value={bio}
-            rows={4}
+            onChange={setBio}
             maxLength={2000}
             placeholder={'Расскажите, что вы слушаете…'}
-            onChange={(e) => setBio(e.target.value)}
           />
         </div>
 
@@ -576,7 +543,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------ images */}
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
           <ImagePlus size={16} className={styles.panelIcon} />
@@ -590,54 +556,57 @@ export default function SettingsPage() {
 
         <div className={styles.imagesRow}>
           <div className={styles.imageBlock}>
-            <span className={styles.label}>{'Аватар'}</span>
-            <div className={styles.avatarPreview}>
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={'Текущий аватар'}
-                  className={styles.avatarImg}
-                />
-              ) : (
-                <span className={styles.previewEmpty}>
+            <div className={styles.imageHead}>
+              <span className={styles.label}>{'Аватар'}</span>
+              <span className={styles.ratio}>{'1:1'}</span>
+            </div>
+            <div className={styles.imageStage}>
+              <div className={styles.avatarPreview}>
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt={'Текущий аватар'} className={styles.previewImg} />
+                ) : (
                   <UserIcon size={26} />
-                </span>
-              )}
+                )}
+              </div>
             </div>
             <button
               type="button"
-              className="btn"
+              className={`btn ${styles.imageAction}`}
               onClick={() => setCropTarget('avatar')}
               disabled={uploading !== null}
             >
+              <ImagePlus size={15} />
               {uploading === 'avatar' ? 'Загружаем…' : 'Сменить аватар'}
             </button>
           </div>
 
-          <div className={`${styles.imageBlock} ${styles.imageBlockWide}`}>
-            <span className={styles.label}>{'Обложка профиля'}</span>
-            <div className={styles.coverPreview}>
-              {user.cover_url ? (
-                <img src={user.cover_url} alt={'Текущая обложка'} className={styles.coverImg} />
-              ) : (
-                <span className={styles.previewEmpty}>
+          <div className={styles.imageBlock}>
+            <div className={styles.imageHead}>
+              <span className={styles.label}>{'Обложка профиля'}</span>
+              <span className={styles.ratio}>{'3:1'}</span>
+            </div>
+            <div className={styles.imageStage}>
+              <div className={styles.coverPreview}>
+                {user.cover_url ? (
+                  <img src={user.cover_url} alt={'Текущая обложка'} className={styles.previewImg} />
+                ) : (
                   <ImagePlus size={26} />
-                </span>
-              )}
+                )}
+              </div>
             </div>
             <button
               type="button"
-              className="btn"
+              className={`btn ${styles.imageAction}`}
               onClick={() => setCropTarget('cover')}
               disabled={uploading !== null}
             >
+              <ImagePlus size={15} />
               {uploading === 'cover' ? 'Загружаем…' : 'Сменить обложку'}
             </button>
           </div>
         </div>
       </section>
 
-      {/* ------------------------------------------------ password */}
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
           <KeyRound size={16} className={styles.panelIcon} />
@@ -707,7 +676,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------ notifications */}
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
           <Bell size={16} className={styles.panelIcon} />
@@ -743,7 +711,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------ linked accounts */}
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
           <LinkIcon size={16} className={styles.panelIcon} />
@@ -758,8 +725,6 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.prefList}>
-          {/* E-mail sits with the providers because it is a way in too: it is
-              what password reset goes to. */}
           <div className={styles.prefRow}>
             <div className={styles.prefText}>
               <span className={styles.prefLabel}>{'Почта'}</span>
@@ -862,7 +827,6 @@ export default function SettingsPage() {
         </div>
       </Modal>
 
-      {/* ------------------------------------------------ content */}
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
           <EyeOff size={16} className={styles.panelIcon} />
@@ -926,7 +890,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------ danger zone */}
       <section className={`glass-panel ${styles.panel} ${styles.dangerPanel}`}>
         <div className={styles.panelHead}>
           <ShieldAlert size={16} className={`${styles.panelIcon} ${styles.dangerIcon}`} />
@@ -952,7 +915,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* ------------------------------------------------ modals */}
       <ImageCropper
         open={cropTarget === 'avatar'}
         onClose={() => setCropTarget(null)}

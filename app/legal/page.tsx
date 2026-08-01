@@ -1,6 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, Shield, FileText, Copyright, BookText } from 'lucide-react';
-import styles from './page.module.css';
+import styles from './legal.module.css';
+
+export const metadata: Metadata = {
+  title: 'Правовая информация — AudioRanobe',
+};
 
 const items = [
   {
@@ -32,6 +37,7 @@ const items = [
 export default function LegalPage() {
   return (
     <div className={styles.wrap}>
+      <span className="eyebrow">{'Документы'}</span>
       <h1 className={styles.title}>
         {'Правовая'} <span className={styles.titleAccent}>{'информация'}</span>
       </h1>
@@ -42,13 +48,13 @@ export default function LegalPage() {
       <div className={styles.links}>
         {items.map((item) => (
           <Link key={item.href} href={item.href} className={styles.linkCard}>
-            <div>
-              <div className={styles.linkTitle}>
-                <item.icon size={14} style={{ marginRight: 8, verticalAlign: -2 }} />
-                {item.title}
-              </div>
-              <div className={styles.linkDesc}>{item.desc}</div>
-            </div>
+            <span className={styles.linkIcon}>
+              <item.icon size={17} />
+            </span>
+            <span className={styles.linkText}>
+              <span className={styles.linkTitle}>{item.title}</span>
+              <span className={styles.linkDesc}>{item.desc}</span>
+            </span>
             <ChevronRight size={16} className={styles.linkArrow} />
           </Link>
         ))}

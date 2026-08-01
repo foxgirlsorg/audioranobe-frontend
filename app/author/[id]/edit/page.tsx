@@ -8,10 +8,11 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import type { AuthorFull } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import DangerZone from '@/components/DangerZone';
-import SocialsEditor from '@/components/SocialsEditor';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import DangerZone from '@/components/DangerZone/DangerZone';
+import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
+import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import styles from './page.module.css';
 
 export default function AuthorEditPage({ params }: { params: { id: string } }) {
@@ -130,8 +131,8 @@ export default function AuthorEditPage({ params }: { params: { id: string } }) {
 
   return (
     <div className={styles.page}>
-      <Link href={`/author/${authorRef}`} className="btn btn-ghost">
-        <ArrowLeft size={15} />
+      <Link href={`/author/${authorRef}`} className="back-link">
+        <ArrowLeft size={14} />
         К автору
       </Link>
 
@@ -159,15 +160,11 @@ export default function AuthorEditPage({ params }: { params: { id: string } }) {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="a-bio">
-            О себе
-          </label>
-          <textarea
-            id="a-bio"
-            className="textarea"
+          <span className={styles.label}>О себе</span>
+          <MarkdownEditor
             value={bio}
+            onChange={setBio}
             maxLength={5000}
-            onChange={(e) => setBio(e.target.value)}
             placeholder="Расскажите об этом авторе…"
           />
         </div>

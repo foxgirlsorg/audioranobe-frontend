@@ -10,7 +10,9 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
   max-width: 860px;
+  margin: 0 auto;
 }
 
 .header {
@@ -84,22 +86,52 @@
 
 /* ---------- images ---------- */
 
+/*
+ * Two equal cards. The avatar is a 112px circle and the cover is a 3:1 band, so
+ * left to themselves they are wildly different heights and the two buttons end
+ * up at different places on the row. Both previews are centred inside a
+ * fixed-height stage instead, which keeps the cards — and their buttons — level.
+ */
 .imagesRow {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
 }
 
 .imageBlock {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.65rem;
+  gap: 0.8rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.imageBlockWide {
+.imageHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ratio {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.imageStage {
   flex: 1;
-  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 168px;
 }
 
 .avatarPreview {
@@ -109,15 +141,10 @@
   overflow: hidden;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.avatarImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .coverPreview {
@@ -127,22 +154,20 @@
   overflow: hidden;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.coverImg {
+.previewImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.previewEmpty {
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.imageAction {
+  width: 100%;
 }
 
 /* ---------- password ---------- */
@@ -271,12 +296,7 @@
   }
 
   .imagesRow {
-    flex-direction: column;
-    gap: 1.4rem;
-  }
-
-  .imageBlockWide {
-    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .pwGrid {

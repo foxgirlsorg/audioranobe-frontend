@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/toast';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Markdown from '@/components/Markdown';
-import styles from '../page.module.css';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Markdown from '@/components/Markdown/Markdown';
+import styles from '../legal.module.css';
 
-/** Slug used for the heading anchors; must match Markdown's own heading ids. */
 function headingId(text: string): string {
   return text
     .toLowerCase()
@@ -48,44 +47,40 @@ export default function RulesPage() {
     };
   }, []);
 
-  if (error) {
-    return <EmptyState title="Не удалось загрузить правила" body={error} />;
-  }
-
-  if (!body) {
-    return (
-      <div className={styles.wrap}>
-        <div style={{ display: 'grid', placeItems: 'center', minHeight: 240 }}>
-          <Spinner />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.wrap}>
+      <Link href="/legal" className="back-link">
+        <ArrowLeft size={14} />
+        {'Правовая информация'}
+      </Link>
+
       <h1 className={styles.title}>
         {'Правила'} <span className={styles.titleAccent}>{'сервиса'}</span>
       </h1>
 
-      {/* Jump list built from the "## " headings in the served markdown. */}
-      {sections.length > 0 ? (
-        <nav className={styles.toc} aria-label="Разделы правил">
-          {sections.map((s) => (
-            <a key={s.id} href={`#${s.id}`} className={styles.tocLink}>
-              {s.text}
-            </a>
-          ))}
-        </nav>
-      ) : null}
+      {error ? (
+        <EmptyState title="Не удалось загрузить правила" body={error} />
+      ) : !body ? (
+        <div className={styles.center}>
+          <Spinner />
+        </div>
+      ) : (
+        <>
+          {sections.length > 0 ? (
+            <nav className={styles.toc} aria-label="Разделы правил">
+              {sections.map((s) => (
+                <a key={s.id} href={`#${s.id}`} className={styles.tocLink}>
+                  {s.text}
+                </a>
+              ))}
+            </nav>
+          ) : null}
 
-      <div className={styles.section}>
-        <Markdown source={body} />
-      </div>
-      <Link href="/legal" className={styles.back}>
-        <ArrowLeft size={14} />
-        {'Назад к правовой информации'}
-      </Link>
+          <div className={styles.section}>
+            <Markdown source={body} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

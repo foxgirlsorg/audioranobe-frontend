@@ -1,79 +1,83 @@
 .wrap {
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 4rem 1.5rem 3rem;
+  padding: 1rem 0 4rem;
 }
 
 .title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  margin: 0.5rem 0 1.5rem;
 }
 
 .titleAccent {
-  color: #de6161;
+  color: var(--accent);
+  font-weight: 400;
 }
 
 .section {
-  padding: 1.5rem;
+  padding: 1.35rem 1.5rem;
   margin-bottom: 1.5rem;
 }
 
 .sectionTitle {
-  font-size: 1.05rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.7rem;
 }
 
 .text {
-  font-size: 0.9rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
 }
 
 .form {
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  padding: 1.6rem 1.5rem;
 }
 
 .formTitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 1.4rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .field {
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
 .label {
   display: block;
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 0.4rem;
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+  margin-bottom: 0.45rem;
 }
 
 .fieldError {
-  font-size: 0.78rem;
-  color: #de6161;
   margin-top: 0.3rem;
+  font-size: 12px;
+  color: #e08585;
 }
 
 .inputError {
-  border-color: #de6161 !important;
+  border-color: rgba(197, 52, 52, 0.6);
 }
 
-.optional {
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-  color: rgba(255, 255, 255, 0.32);
-}
-
-/* One URL input + its remove button. */
+/* One URL input and its remove button. */
 .rowField {
   display: flex;
   gap: 0.5rem;
@@ -81,30 +85,61 @@
   margin-bottom: 0.5rem;
 }
 
-.rowField .input,
 .rowField input {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.success {
-  padding: 2rem;
-  text-align: center;
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.back {
+.rowRemove {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
-  text-decoration: none;
-  margin-top: 1rem;
-  transition: color 0.2s;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.back:hover {
-  color: #de6161;
+.rowRemove:hover {
+  border-color: rgba(197, 52, 52, 0.5);
+  background: rgba(197, 52, 52, 0.1);
+  color: #e08585;
+}
+
+.addRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0.15rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px dashed var(--border);
+  border-radius: 9999px;
+  background: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.addRow:hover {
+  border-color: rgba(222, 97, 97, 0.5);
+  color: #fff;
+}
+
+.submit {
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
+.success {
+  padding: 2.5rem 2rem;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
 }

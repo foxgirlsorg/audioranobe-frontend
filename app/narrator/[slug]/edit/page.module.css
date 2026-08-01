@@ -173,23 +173,53 @@
 .mediaGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1rem;
+  align-items: stretch;
 }
 
 .mediaCard {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+  padding: 1.3rem 1.4rem;
+}
+
+.mediaHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ratio {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* A round avatar and a 3:1 banner are different heights at the same width; the
+   fixed stage keeps the two cards, and their buttons, level. */
+.mediaStage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 168px;
 }
 
 .avatarPreview {
-  width: 100px;
-  height: 100px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-muted);
 }
@@ -197,11 +227,12 @@
 .coverPreview {
   width: 100%;
   aspect-ratio: 3 / 1;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-muted);
 }
@@ -212,12 +243,8 @@
   object-fit: cover;
 }
 
-.hiddenInput {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
-  pointer-events: none;
+.mediaAction {
+  width: 100%;
 }
 
 /* ---- Members tab ---- */
