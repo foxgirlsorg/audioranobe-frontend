@@ -15,8 +15,13 @@ interface AuthContextValue {
   user: Me | null;
   loading: boolean;
   login(login: string, password: string): Promise<void>;
-  register(username: string, email: string, password: string, acceptTerms: boolean): Promise<void>;
-  /** Adopt a session issued by a third-party provider flow. */
+  register(
+    username: string,
+    email: string,
+    password: string,
+    acceptTerms: boolean,
+    displayName?: string
+  ): Promise<void>;
   adoptSession(token: string, user: Me): void;
   logout(): void;
   refresh(): Promise<void>;
@@ -41,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
             setToken(null);
             if (alive) setUser(null);
           }
-          // network / 5xx: stay logged out for this render but keep the token
         }
       }
       if (alive) setLoading(false);
@@ -77,10 +81,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   }, []);
 
   const register = useCallback(
-    async (username: string, email: string, password: string, acceptTerms: boolean) => {
+    async (
+      username: string,
+      email: string,
+      password: string,
+      acceptTerms: boolean,
+      displayName = ''
+    ) => {
       const res = await api<{ token: string; user: Me }>('/auth/register', {
         method: 'POST',
-        body: { username, email, password, accept_terms: acceptTerms },
+        body: {
+          username,
+          email,
+          password,
+          accept_terms: acceptTerms,
+          ...(displayName ? { display_name: displayName } : {}),
+        },
       });
       setToken(res.token);
       setUser(res.user);
@@ -88,8 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     []
   );
 
-  // Google/Discord/Telegram return a ready-made {token, user}, so there is no
-  // credential for this provider to submit — just install the session.
   const adoptSession = useCallback((token: string, me: Me) => {
     setToken(token);
     setUser(me);

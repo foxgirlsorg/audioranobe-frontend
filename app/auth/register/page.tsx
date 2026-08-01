@@ -3,14 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Check } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { errMsg } from '@/lib/toast';
-import { ProviderSection } from '@/components/ProviderAuth';
+import { ProviderSection } from '@/components/ProviderAuth/ProviderAuth';
 import styles from './register.module.css';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_DISPLAY_NAME = 40;
 
 function safeNext(raw: string | null): string {
   if (raw && raw.startsWith('/') && !raw.startsWith('//')) return raw;
@@ -19,6 +20,7 @@ function safeNext(raw: string | null): string {
 
 interface FieldErrors {
   username?: string;
+  displayName?: string;
   email?: string;
   password?: string;
   confirm?: string;
@@ -31,6 +33,7 @@ export default function RegisterPage() {
 
   const [next, setNext] = useState('/');
   const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -43,7 +46,6 @@ export default function RegisterPage() {
     setNext(safeNext(new URLSearchParams(window.location.search).get('next')));
   }, []);
 
-  // Already signed in — no need to register.
   useEffect(() => {
     if (!loading && user) router.replace(next);
   }, [loading, user, next, router]);
@@ -56,9 +58,13 @@ export default function RegisterPage() {
     e.preventDefault();
     const errs: FieldErrors = {};
     const u = username.trim();
+    const dn = displayName.trim().replace(/\s+/g, ' ');
     const em = email.trim();
     if (!USERNAME_RE.test(u)) {
       errs.username = '3–30 символов: только латинские буквы, цифры и подчёркивания';
+    }
+    if (dn.length > MAX_DISPLAY_NAME) {
+      errs.displayName = `Не длиннее ${MAX_DISPLAY_NAME} символов`;
     }
     if (!EMAIL_RE.test(em)) {
       errs.email = 'Введите корректный email';
@@ -74,11 +80,11 @@ export default function RegisterPage() {
     }
     setErrors(errs);
     setFormError('');
-    if (errs.username || errs.email || errs.password || errs.confirm || errs.terms) return;
+    if (Object.values(errs).some(Boolean)) return;
 
     setSubmitting(true);
     try {
-      await register(u, em, password, acceptTerms);
+      await register(u, em, password, acceptTerms, dn);
       router.replace(next);
     } catch (err) {
       setFormError(errMsg(err));
@@ -129,6 +135,33 @@ export default function RegisterPage() {
               <div className={styles.fieldError}>{errors.username}</div>
             ) : (
               <div className={styles.hint}>{'Латинские буквы, цифры и подчёркивания, 3–30 символов'}</div>
+            )}
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="display-name">
+              {'Никнейм'}
+            </label>
+            <input
+              id="display-name"
+              className={errors.displayName ? `input ${styles.inputError}` : 'input'}
+              type="text"
+              autoComplete="nickname"
+              maxLength={MAX_DISPLAY_NAME}
+              value={displayName}
+              onChange={(e) => {
+                setDisplayName(e.target.value);
+                clearError('displayName');
+              }}
+              placeholder={'Как вас показывать'}
+              aria-invalid={!!errors.displayName}
+            />
+            {errors.displayName ? (
+              <div className={styles.fieldError}>{errors.displayName}</div>
+            ) : (
+              <div className={styles.hint}>
+                {'Отображается вместо имени пользователя. Можно оставить пустым и задать позже'}
+              </div>
             )}
           </div>
 
@@ -203,6 +236,9 @@ export default function RegisterPage() {
                 }}
                 aria-invalid={!!errors.terms}
               />
+              <span className={styles.checkbox} aria-hidden="true">
+                <Check size={13} strokeWidth={3} />
+              </span>
               <span>
                 {'Я принимаю '}
                 <Link href="/legal/terms" target="_blank" className={styles.altLink}>
