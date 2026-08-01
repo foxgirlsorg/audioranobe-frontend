@@ -1,3 +1,28 @@
+/*
+ * Inter, self-hosted from /public/fonts. Two variable files covering the whole
+ * weight axis, so `font-weight: 300` (display headings) and `700` (micro-labels)
+ * come from the same download rather than separate static cuts.
+ *
+ * The italic face is a separate @font-face, so the browser only fetches it if
+ * italic text is actually rendered. The filenames contain a comma, which url()
+ * cannot take unquoted.
+ */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* ==========================================================================
    AudioRanobe design system — dark, cinematic, glassy. See contracts/STYLE.md.
    Every page agent uses these tokens + utility classes; module CSS only for
@@ -58,15 +83,25 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Inter', 'Segoe UI', 'Noto Sans', system-ui, -apple-system, sans-serif;
+  font-optical-sizing: auto;
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-/* bottom padding while the global player bar is docked */
-body.has-player {
-  padding-bottom: calc(var(--player-height) + 12px);
+/* Clearance for the docked player bar is the footer's job — see
+   Footer.module.css. On <body> it created scrollable dead space under the
+   footer instead. */
+
+/* While a horizontal rail is being dragged (see components/DragScroll). The
+   cursor is forced past the link and button rules the pointer is travelling
+   over, so the whole gesture reads as one grab rather than flickering between
+   a hand and a pointer. */
+body.drag-scrolling,
+body.drag-scrolling * {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 
 a {
@@ -255,6 +290,34 @@ main.container {
   pointer-events: none;
 }
 
+/* "Back to wherever you came from", top-left of every settings, edit and legal
+   page. One definition so the control is in the same place at the same size on
+   all of them. */
+.back-link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  margin-bottom: 1.4rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.back-link:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
 .btn svg {
   width: 15px;
   height: 15px;
@@ -297,8 +360,7 @@ main.container {
 /* ---------- form controls ---------- */
 
 .input,
-.textarea,
-.select {
+.textarea {
   width: 100%;
   padding: 10px 14px;
   background: rgba(255, 255, 255, 0.04);
@@ -316,8 +378,7 @@ main.container {
 }
 
 .input:focus,
-.textarea:focus,
-.select:focus {
+.textarea:focus {
   border-color: rgba(222, 97, 97, 0.45);
   background: rgba(255, 255, 255, 0.06);
 }
@@ -328,20 +389,11 @@ main.container {
   line-height: 1.6;
 }
 
-.select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 2.4rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237b8087' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  cursor: pointer;
-}
-
-.select option {
-  background: var(--surface-solid);
-  color: var(--text);
-}
+/*
+ * There is no `.select` here on purpose. A native <select> hands its option list
+ * to the OS, which draws it white and square whatever this file says — use
+ * components/Select instead.
+ */
 
 /* ---------- pills & badges ---------- */
 
@@ -489,8 +541,10 @@ button.pill:hover,
     gap: 1.25rem;
   }
 
+  /* The bar stacks onto two rows on a phone, so it needs more clearance than
+     --player-height describes. Same variable, so the footer rule picks it up. */
   body.has-player {
-    padding-bottom: 160px;
+    --player-height: 148px;
   }
 
   .toast-stack {
