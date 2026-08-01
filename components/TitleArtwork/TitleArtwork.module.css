@@ -1,0 +1,106 @@
+/*
+ * Two cards on one row. Both are the same height and their buttons line up,
+ * which only holds if the previews sit in a fixed-height band — a 2:3 cover and
+ * a 3:1 banner are wildly different shapes at the same width.
+ */
+.wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.3rem 1.4rem;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ratio {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* The band both previews are centred in, so the two cards stay in step while
+   each preview keeps the shape the artwork will actually be cropped to. */
+.stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.coverPreview {
+  height: 220px;
+  aspect-ratio: 2 / 3;
+}
+
+.bgPreview {
+  width: 100%;
+  aspect-ratio: 3 / 1;
+}
+
+.coverPreview,
+.bgPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hint {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.action {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 760px) {
+  .wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .stage {
+    min-height: 180px;
+  }
+
+  .coverPreview {
+    height: 180px;
+  }
+}

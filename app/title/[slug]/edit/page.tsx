@@ -16,15 +16,19 @@ import {
   type ReleaseStatus,
   type TitleFull,
 } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import GenrePicker from '@/components/GenrePicker';
-import AuthorPicker from '@/components/AuthorPicker';
-import NarratorPicker, { type NarratorRef } from '@/components/NarratorPicker';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import DangerZone from '@/components/DangerZone';
-import Tabs from '@/components/Tabs';
-import TitleContentManager from '@/components/TitleContentManager';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import GenrePicker from '@/components/GenrePicker/GenrePicker';
+import AuthorPicker from '@/components/AuthorPicker/AuthorPicker';
+import NarratorPicker, { type NarratorRef } from '@/components/NarratorPicker/NarratorPicker';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import DangerZone from '@/components/DangerZone/DangerZone';
+import Tabs from '@/components/Tabs/Tabs';
+import TitleContentManager from '@/components/TitleContentManager/TitleContentManager';
+import TitleArtwork from '@/components/TitleArtwork/TitleArtwork';
+import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
+import Select from '@/components/Select/Select';
+import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -56,10 +60,10 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const [author, setAuthor] = useState<Author | null>(null);
   const [narrationStatuses, setNarrationStatuses] = useState<Record<number, NarrationStatus>>({});
   const [narrators, setNarrators] = useState<NarratorRef[]>([]);
-  /** Narrators this user is a member of — used to warn about losing access. */
   const [myNarratorIds, setMyNarratorIds] = useState<number[]>([]);
+  const [isAi, setIsAi] = useState(false);
+  const [aiLocked, setAiLocked] = useState(false);
   const [isNsfw, setIsNsfw] = useState(false);
-  /** True when the title arrived already marked 18+ — the mark is then admin-only to lift. */
   const [nsfwLocked, setNsfwLocked] = useState(false);
   const [confirmNsfw, setConfirmNsfw] = useState(false);
   const formInit = useRef(false);
@@ -99,8 +103,6 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     if (user) void loadTitle();
   }, [user, loadTitle]);
 
-  // The content manager mutates volumes/chapters/artwork, so it re-fetches
-  // through the same loader the form uses.
   const reloadTitle = useCallback(async () => {
     await loadTitle();
   }, [loadTitle]);
@@ -119,6 +121,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     setAuthor(
       title.author ? { ...title.author, titles_count: 0 } : null
     );
+    setIsAi(title.is_ai);
+    setAiLocked(title.is_ai);
     setIsNsfw(title.is_nsfw);
     setNsfwLocked(title.is_nsfw);
     setNarrators(
@@ -142,14 +146,12 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         if (alive) setMyNarratorIds((Array.isArray(list) ? list : []).map((n) => n.id));
       })
       .catch(() => {
-        // only powers a warning — not worth surfacing
       });
     return () => {
       alive = false;
     };
   }, [user]);
 
-  // Genres are matched by slug: TitleFull carries {slug, name} only.
   const [genresReady, setGenresReady] = useState(false);
   useEffect(() => {
     if (!title || genresReady) return;
@@ -166,14 +168,11 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       .catch(() => {});
   }, [title, genresReady]);
 
-  // Non-mods edit a title through one of their own narrators; dropping all of
-  // them would lock the user out of the title they are editing.
   const losingAccess =
     !isMod &&
     myNarratorIds.length > 0 &&
     !narrators.some((n) => myNarratorIds.includes(n.id));
 
-  /** Turning 18+ on is irreversible for non-admins, so it asks first. */
   const onNsfwToggle = (next: boolean) => {
     if (next) {
       setConfirmNsfw(true);
@@ -221,9 +220,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         genre_ids: genreIds,
         narration_statuses: narrationStatuses,
       };
-      // Only send is_nsfw when it actually changed: sending false for a locked
-      // title would be rejected for anyone but an admin.
       if (isNsfw !== title.is_nsfw) body.is_nsfw = isNsfw;
+      if (isAi !== title.is_ai) body.is_ai = isAi;
 
       const res = await api<{ applied: boolean }>(`/panel/titles/${title.id}`, {
         method: 'PATCH',
@@ -277,8 +275,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
 
   return (
     <div className={styles.page}>
-      <Link href={`/title/${routeSlug}`} className="btn btn-ghost">
-        <ArrowLeft size={15} />
+      <Link href={`/title/${routeSlug}`} className="back-link">
+        <ArrowLeft size={14} />
         К тайтлу
       </Link>
 
@@ -291,6 +289,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         <Tabs
           tabs={[
             { key: 'info', label: 'Инфо' },
+            { key: 'artwork', label: 'Оформление' },
             { key: 'content', label: 'Тома и главы' },
           ]}
           active={tab}
@@ -299,13 +298,12 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         />
       </div>
 
+      {tab === 'artwork' ? <TitleArtwork title={title} onReload={reloadTitle} /> : null}
+
       {tab === 'content' ? (
         <TitleContentManager title={title} onReload={reloadTitle} />
       ) : null}
 
-      {/* Kept mounted across tabs so in-progress edits survive a tab switch —
-          hidden by an explicit class, not just the `hidden` attribute, which a
-          later `display` rule on the panel could silently override. */}
       <form
         className={`glass-panel ${styles.formPanel} ${
           tab === 'info' ? '' : styles.hiddenPanel
@@ -384,18 +382,13 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             <label className={styles.label} htmlFor="t-status">
               Статус тайтла
             </label>
-            <select
+            <Select<ReleaseStatus>
               id="t-status"
-              className="select"
+              block
               value={form.status}
-              onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as ReleaseStatus }))}
-            >
-              {STATUS_VALUES.map((s) => (
-                <option key={s} value={s}>
-                  {RELEASE_STATUS_LABELS[s]}
-                </option>
-              ))}
-            </select>
+              options={STATUS_VALUES.map((s) => ({ value: s, label: RELEASE_STATUS_LABELS[s] }))}
+              onChange={(status) => setForm((f) => ({ ...f, status }))}
+            />
           </div>
         </div>
 
@@ -424,22 +417,18 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
               {narrators.map((n) => (
                 <div key={n.id} className={styles.narrationRow}>
                   <span className={styles.narrationName}>{n.name}</span>
-                  <select
-                    className="select"
+                  <Select<NarrationStatus>
+                    size="sm"
                     value={narrationStatuses[n.id] ?? 'ongoing'}
-                    onChange={(e) =>
-                      setNarrationStatuses((prev) => ({
-                        ...prev,
-                        [n.id]: e.target.value as NarrationStatus,
-                      }))
+                    options={STATUS_VALUES.map((s) => ({
+                      value: s,
+                      label: NARRATION_STATUS_LABELS[s],
+                    }))}
+                    onChange={(v) =>
+                      setNarrationStatuses((prev) => ({ ...prev, [n.id]: v }))
                     }
-                  >
-                    {STATUS_VALUES.map((s) => (
-                      <option key={s} value={s}>
-                        {NARRATION_STATUS_LABELS[s]}
-                      </option>
-                    ))}
-                  </select>
+                    ariaLabel={`Статус озвучки: ${n.name}`}
+                  />
                 </div>
               ))}
             </div>
@@ -447,39 +436,41 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         ) : null}
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="t-desc">
-            Описание
-          </label>
-          <textarea
-            id="t-desc"
-            className="textarea"
+          <span className={styles.label}>Описание</span>
+          <MarkdownEditor
             value={form.desc}
-            onChange={(e) => setForm((f) => ({ ...f, desc: e.target.value }))}
+            onChange={(desc) => setForm((f) => ({ ...f, desc }))}
+            placeholder="О чём эта книга? **Markdown** поддерживается."
           />
         </div>
 
         <div className={styles.field}>
-          <span className={styles.label}>Жанры</span>
+          <span className={styles.label}>Теги</span>
           <GenrePicker value={genreIds} onChange={setGenreIds} />
         </div>
 
         <div className={styles.field}>
-          <label className={styles.toggleLabel}>
-            <input
-              type="checkbox"
-              className={styles.toggleInput}
-              checked={isNsfw}
-              disabled={nsfwLocked && !isAdmin}
-              onChange={(e) => onNsfwToggle(e.target.checked)}
-            />
-            <span className={styles.toggleSwitch} />
-            <span className={styles.toggleText}>Материал 18+</span>
-          </label>
-          <p className={styles.formNote}>
-            {nsfwLocked && !isAdmin
-              ? 'Отметка 18+ уже установлена. Снять её может только администратор через панель модерации.'
-              : 'После включения отметку нельзя снять самостоятельно — только через администратора. Тайтл останется виден всем, но слушать и смотреть обложку смогут только зарегистрированные пользователи.'}
-          </p>
+          <Toggle
+            checked={isAi}
+            disabled={aiLocked && !isMod}
+            onChange={setIsAi}
+            label="Озвучено ИИ"
+            hint="Отметьте, если главы озвучены синтезированным голосом. На обложке появится метка."
+          />
+        </div>
+
+        <div className={styles.field}>
+          <Toggle
+            checked={isNsfw}
+            disabled={nsfwLocked && !isAdmin}
+            onChange={onNsfwToggle}
+            label="Материал 18+"
+            hint={
+              nsfwLocked && !isAdmin
+                ? 'Отметка 18+ уже установлена. Снять её может только администратор через панель модерации.'
+                : 'После включения отметку нельзя снять самостоятельно — только через администратора. Тайтл останется виден всем, но слушать и смотреть обложку смогут только зарегистрированные пользователи.'
+            }
+          />
         </div>
 
         <div className={styles.formFoot}>
