@@ -11,6 +11,7 @@ import Spinner from '@/components/Spinner/Spinner';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Markdown from '@/components/Markdown/Markdown';
+import Collapsible from '@/components/Collapsible/Collapsible';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import styles from './NarratorPosts.module.css';
 
@@ -169,9 +170,11 @@ export default function NarratorPosts({
                 <span className={styles.postMeta}>{timeAgo(p.created_at)}</span>
                 {p.is_hidden ? <span className={styles.hiddenTag}>{'скрыта'}</span> : null}
               </header>
-              <div className={styles.postBody}>
-                <Markdown source={p.body} />
-              </div>
+              <Collapsible maxHeight={220}>
+                <div className={styles.postBody}>
+                  <Markdown source={p.body} />
+                </div>
+              </Collapsible>
               <footer className={styles.postFoot}>
                 <Link href={`/post/${p.id}`} className={styles.commentsLink}>
                   <MessageSquare size={13} />

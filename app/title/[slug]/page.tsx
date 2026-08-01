@@ -127,7 +127,8 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
     const el = tagsRef.current;
     if (!el) return;
     const measure = () => {
-      if (!tagsOpen) setTagsClipped(el.scrollHeight > el.clientHeight + 1);
+      const line = parseFloat(getComputedStyle(el).lineHeight) || 18;
+      setTagsClipped(el.scrollHeight > line * 2 + 1);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -424,7 +425,11 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
               <span className={styles.quickLabel}>{'Теги'}</span>
               <p
                 ref={tagsRef}
-                className={tagsOpen ? styles.tags : `${styles.tags} ${styles.tagsClamped}`}
+                className={
+                  tagsOpen || !tagsClipped
+                    ? styles.tags
+                    : `${styles.tags} ${styles.tagsClamped}`
+                }
               >
                 {title.genres.map((g) => (
                   <Link key={g.slug} href={`/catalog?genre=${encodeURIComponent(g.slug)}`}>

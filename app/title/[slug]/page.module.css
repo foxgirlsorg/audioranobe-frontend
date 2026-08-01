@@ -1199,9 +1199,11 @@
   color: var(--text-muted);
 }
 
+/* One line, because the toggle takes the second: the block is never taller than
+   two lines whether the tags fit or not. */
 .tagsClamped {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
