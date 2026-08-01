@@ -2,22 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Check, Copy, Terminal } from 'lucide-react';
-import JsonBlock from '@/components/JsonBlock';
+import { Check, ChevronRight, Copy } from 'lucide-react';
+import JsonBlock from '@/components/JsonBlock/JsonBlock';
 import { SAMPLES, SAMPLE_PATH, SAMPLE_QUERY } from './samples';
 import styles from './page.module.css';
-
-/**
- * Public API reference.
- *
- * Scope is deliberately narrow: only GET endpoints that answer without an
- * Authorization header. Anything that needs a token, and every write endpoint,
- * is documented in contracts/API.md instead — this page is for people reading
- * the catalogue from outside the site.
- *
- * Every endpoint listed here was checked against a running backend with no
- * credentials attached.
- */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
 
@@ -40,13 +28,8 @@ const GROUPS: Group[] = [
     title: 'Сервис',
     endpoints: [
       {
-        path: '/config',
-        desc: 'Какие необязательные функции включены на этом сервере. Сейчас это только {email_verification: bool}.',
-      },
-      {
         path: '/home',
         desc: 'Содержимое главной: объявления и подборки тайтлов (new_titles, popular, top_rated, recently_updated).',
-        note: 'Поле continue у неавторизованного запроса всегда пустое — история прослушивания привязана к аккаунту.',
       },
     ],
   },
@@ -55,10 +38,10 @@ const GROUPS: Group[] = [
     endpoints: [
       {
         path: '/titles',
-        desc: 'Каталог. Возвращает только одобренные и неудалённые тайтлы.',
+        desc: 'Каталог.',
         params: [
           { name: 'q', desc: 'Поиск по названию тайтла и имени автора.' },
-          { name: 'genre', desc: 'Слаг жанра, например fantasy.' },
+          { name: 'genre', desc: 'Слаг тега, например fantasy. Можно перечислить через запятую.' },
           { name: 'author', desc: 'Имя автора целиком, без учёта регистра.' },
           { name: 'year_from, year_to', desc: 'Год выпуска, целое число.' },
           {
@@ -75,16 +58,16 @@ const GROUPS: Group[] = [
       },
       {
         path: '/titles/{slug}',
-        desc: 'Карточка тайтла целиком: описание, жанры, чтецы, тома с главами, похожие тайтлы.',
+        desc: 'Карточка тайтла целиком: описание, теги, чтецы, тома с главами, похожие тайтлы.',
         note: 'Вместо слага можно передать числовой id — это поддерживается намеренно.',
       },
-      { path: '/titles/random', desc: 'Слаг случайного одобренного тайтла.' },
+      { path: '/titles/random', desc: 'Слаг случайного тайтла.' },
       {
         path: '/search/suggest',
         desc: 'Быстрые подсказки для строки поиска: до 5 тайтлов и 3 чтецов.',
         params: [{ name: 'q', desc: 'Запрос, минимум 2 символа. Короче — пустой результат.' }],
       },
-      { path: '/genres', desc: 'Список жанров со счётчиком тайтлов.', params: [{ name: 'q', desc: 'Поиск по названию.' }, ...PAGING] },
+      { path: '/genres', desc: 'Список тегов со счётчиком тайтлов.', params: [{ name: 'q', desc: 'Поиск по названию.' }, ...PAGING] },
     ],
   },
   {
@@ -93,7 +76,7 @@ const GROUPS: Group[] = [
       {
         path: '/chapters/{id}',
         desc: 'Данные для воспроизведения одной главы: audio_url, длительность, том, соседние главы.',
-        note: '404, пока глава не одобрена и её аудио не готово. Для тайтлов 18+ и с чувствительными тегами без входа возвращает 401 и не отдаёт audio_url — единственный способ получить ссылку на файл через API.',
+        note: '404, пока глава не одобрена и её аудио не готово.',
       },
       {
         path: '/download/chapters/{id}',
@@ -112,11 +95,11 @@ const GROUPS: Group[] = [
       {
         path: '/narrators/{slug}',
         desc: 'Страница чтеца: описание, ссылки, тайтлы.',
-        note: 'Поле admin_contact всегда null — оно доступно только администраторам и участникам команды. Числовой id тоже принимается.',
+        note: 'Вместо слага принимается числовой id.',
       },
       {
         path: '/narrators/{id}/posts',
-        desc: 'Посты чтеца. Скрытые посты в анонимный ответ не попадают.',
+        desc: 'Посты чтеца.',
         params: PAGING,
       },
       { path: '/posts/{id}', desc: 'Один пост чтеца.' },
@@ -141,7 +124,7 @@ const GROUPS: Group[] = [
           ...PAGING,
         ],
       },
-      { path: '/collections/{id}', desc: 'Одна подборка с её тайтлами. Приватные подборки недоступны.' },
+      { path: '/collections/{id}', desc: 'Одна подборка с её тайтлами.' },
       { path: '/announcements', desc: 'Опубликованные новости.', params: PAGING },
       { path: '/announcements/{slug}', desc: 'Одна новость.' },
       {
@@ -159,7 +142,7 @@ const GROUPS: Group[] = [
   {
     title: 'Профили',
     endpoints: [
-      { path: '/users/{id}', desc: 'Публичный профиль. Имя пользователя вместо id тоже работает.' },
+      { path: '/users/{id}', desc: 'Публичный профиль. Вместо id принимается имя пользователя.' },
       { path: '/users/{id}/library', desc: 'Библиотека пользователя.', params: PAGING },
       { path: '/users/{id}/favorites', desc: 'Избранное пользователя.', params: PAGING },
       { path: '/users/{id}/comments', desc: 'Комментарии пользователя.', params: PAGING },
@@ -174,11 +157,9 @@ const GROUPS: Group[] = [
   },
 ];
 
-/** The curl line shown above each response sample. */
-function curlFor(path: string): string {
+function urlFor(path: string): string {
   const concrete = SAMPLE_PATH[path] ?? path;
-  const query = SAMPLE_QUERY[path] ?? '';
-  return `curl "${API_BASE}${concrete}${query}"`;
+  return `${API_BASE}${concrete}${SAMPLE_QUERY[path] ?? ''}`;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -208,7 +189,7 @@ export default function ApiDocsPage() {
         {'Публичное'} <span className={styles.titleAccent}>{'API'}</span>
       </h1>
       <p className={styles.subtitle}>
-        {'Каталог AudioRanobe читается без регистрации. Ниже — все GET-запросы, доступные без токена: их можно вызывать из браузера, скрипта или приложения. Запросы на запись и всё, что требует входа, здесь не описаны.'}
+        {'Ниже — GET-запросы каталога AudioRanobe. Их можно вызывать из браузера, скрипта или приложения. Запросы на запись здесь не описаны.'}
       </p>
 
       <section className={`glass-panel ${styles.panel}`}>
@@ -223,30 +204,9 @@ export default function ApiDocsPage() {
 
         <h2 className={styles.panelTitle}>{'Пример'}</h2>
         <div className={styles.codeRow}>
-          <code className={styles.code}>
-            <Terminal size={12} className={styles.codeIcon} />
-            {`curl "${API_BASE}/titles?sort=new&per_page=5"`}
-          </code>
-          <CopyButton text={`curl "${API_BASE}/titles?sort=new&per_page=5"`} />
+          <code className={styles.code}>{`${API_BASE}/titles?sort=new&per_page=5`}</code>
+          <CopyButton text={`${API_BASE}/titles?sort=new&per_page=5`} />
         </div>
-      </section>
-
-      <section className={`glass-panel ${styles.panel} ${styles.warnPanel}`}>
-        <h2 className={styles.panelTitle}>{'Что видно без входа'}</h2>
-        <ul className={styles.list}>
-          <li>
-            {'Тайтлы с меткой 18+ по умолчанию скрыты из списков, поиска и подборок на главной. Без аккаунта это поведение изменить нельзя — переключатели живут в настройках профиля.'}
-          </li>
-          <li>
-            {'Тайтлы с чувствительными тегами остаются в списках, но приходят с флагом is_restricted — обложку следует размывать. Данных для воспроизведения по ним не приходит вовсе: ни ссылок на файлы, ни audio_url, а audio_status у глав подменяется на restricted.'}
-          </li>
-          <li>
-            {'Неодобренные, скрытые и удалённые материалы не отдаются вообще.'}
-          </li>
-          <li>
-            {'Списочные ответы имеют вид {items, page, per_page, total}.'}
-          </li>
-        </ul>
       </section>
 
       {GROUPS.map((group) => (
@@ -273,14 +233,19 @@ export default function ApiDocsPage() {
                 ) : null}
                 {ep.note ? <p className={styles.epNote}>{ep.note}</p> : null}
                 {SAMPLES[ep.path] ? (
-                  <>
-                    <JsonBlock
-                      label={'Запрос'}
-                      code={curlFor(ep.path)}
-                      copyText={curlFor(ep.path)}
-                    />
-                    <JsonBlock label={'Ответ'} code={SAMPLES[ep.path]} />
-                  </>
+                  <details className={styles.sample}>
+                    <summary className={styles.sampleToggle}>
+                      <ChevronRight size={13} className={styles.sampleChev} />
+                      {'Пример ответа'}
+                    </summary>
+                    <div className={styles.sampleBody}>
+                      <div className={styles.codeRow}>
+                        <code className={styles.code}>{urlFor(ep.path)}</code>
+                        <CopyButton text={urlFor(ep.path)} />
+                      </div>
+                      <JsonBlock code={SAMPLES[ep.path]} />
+                    </div>
+                  </details>
                 ) : null}
               </article>
             ))}

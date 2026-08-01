@@ -34,9 +34,6 @@
   margin-bottom: 1rem;
 }
 
-.warnPanel {
-  border-color: rgba(222, 97, 97, 0.28);
-}
 
 .panelTitle {
   font-size: 10px;
@@ -58,19 +55,7 @@
   margin: 0.8rem 0 0;
 }
 
-.list {
-  margin: 0;
-  padding-left: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
 
-.list li {
-  font-size: 12.5px;
-  line-height: 1.7;
-  color: var(--text-secondary);
-}
 
 /* ------------------------------------------------------------ code */
 
@@ -97,11 +82,6 @@
   white-space: nowrap;
 }
 
-.codeIcon {
-  color: var(--text-muted);
-  margin-right: 0.5rem;
-  vertical-align: -1px;
-}
 
 .copy {
   flex: none;
@@ -252,4 +232,49 @@
     grid-template-columns: 1fr;
     gap: 0.15rem;
   }
+}
+
+/* ------------------------------------------------- collapsible sample */
+
+.sample {
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.sampleToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.sampleToggle::-webkit-details-marker {
+  display: none;
+}
+
+.sampleToggle:hover {
+  color: var(--text);
+}
+
+.sampleChev {
+  transition: transform 0.2s ease;
+}
+
+.sample[open] .sampleChev {
+  transform: rotate(90deg);
+}
+
+.sampleBody {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }

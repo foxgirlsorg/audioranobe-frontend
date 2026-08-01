@@ -1,65 +1,52 @@
-/**
- * Response samples for the public API reference.
- *
- * Every shape here was captured from a live backend with no Authorization
- * header — field names, types and nulls are what the API actually returns.
- * Values are illustrative and arrays are trimmed to one element, with the
- * remainder marked by an `// …` comment, so the blocks stay readable. That
- * makes the text intentionally not valid JSON; JsonBlock tokenizes rather
- * than parses for exactly this reason.
- */
+/* Response samples for the public API reference. The `//` notes make the text
+   intentionally invalid JSON — JsonBlock tokenizes rather than parses. */
 
-/** Reused: one TitleCard, as it appears in every paginated title list. */
 const TITLE_CARD = `{
-      "id": 2,
-      "slug": "tet1",
-      "name": "Тет 1",
-      "author": { "id": 1, "slug": "test", "name": "Автор" },
-      "year": 2024,
-      "cover_url": "https://cdn.example/covers/t2.jpg",
-      "release_status": "ongoing",
-      "avg_rating": 8.4,
-      "rating_count": 37,
-      "listens": 1284,
+      "id": 2,                       // id тайтла
+      "slug": "podnyatie-urovnya-v-odinochku",  // адрес страницы
+      "name": "Поднятие уровня в одиночку",
+      "author": { "id": 1, "slug": "chu-gong", "name": "Чу Гун" },
+      "year": 2016,                  // год выпуска, может быть null
+      "cover_url": "https://cdn.example/covers/2.jpg",  // обложка 2:3, может быть null
+      "release_status": "completed", // ongoing | completed | abandoned | frozen
+      "avg_rating": 9.1,             // средняя оценка 1–10, null если оценок нет
+      "rating_count": 372,           // сколько людей оценило
+      "listens": 18420,              // прослушиваний глав
       "genres": [
-        { "id": 1, "slug": "fantasy", "name": "Fantasy", "is_sensitive": false }
+        { "id": 1, "slug": "fantasy", "name": "Фэнтези", "is_sensitive": false }
       ],
-      "is_nsfw": false,
-      "has_sensitive_genre": false,
-      "is_restricted": false,
+      "is_nsfw": false,              // отметка 18+
+      "has_sensitive_genre": false,  // есть тег, помеченный чувствительным
+      "is_restricted": true,         // контент скрыт для этого запроса: размывайте обложку
       "is_deleted": false
     }`;
 
-const PAGE_TAIL = `  "page": 1,
-  "per_page": 24,
-  "total": 137
+const PAGE_TAIL = `  "page": 1,        // текущая страница
+  "per_page": 24,   // размер страницы
+  "total": 137      // всего элементов, не страниц
 }`;
 
 export const SAMPLES: Record<string, string> = {
-  '/config': `{
-  "email_verification": false
-}`,
-
   '/home': `{
-  "announcements": [
+  "announcements": [           // новости, закреплённые вверху главной
     {
       "id": 1,
       "slug": "release-notes",
       "title": "Обновление каталога",
-      "body": "…",
+      "body": "…",             // markdown
       "author": { "id": 1, "username": "admin" },
       "is_published": true,
       "is_hidden": false,
       "created_at": "2026-07-27 21:48:38.537303+00"
     }
   ],
-  "continue": [],
-  "new_titles": [
+  "continue": [],              // «продолжить слушать» — привязано к аккаунту
+  "new_titles": [              // недавно добавленные
     ${TITLE_CARD.trim()}
   ],
-  "popular": [],
-  "top_rated": [],
-  "recently_updated": []
+  "popular": [],               // по числу прослушиваний
+  "top_rated": [],             // по средней оценке
+  "recently_updated": []       // по дате последней главы
 }`,
 
   '/titles': `{
@@ -70,86 +57,98 @@ ${PAGE_TAIL}`,
 
   '/titles/{slug}': `{
   "id": 2,
-  "slug": "tet1",
-  "name": "Тет 1",
-  "alt_names": ["Tet One"],
-  "author": { "id": 1, "slug": "test", "name": "Автор" },
-  "description": "Описание тайтла.",
-  "year": 2024,
-  "cover_url": "https://cdn.example/covers/t2.jpg",
-  "bg_url": null,
-  "release_status": "ongoing",
-  "avg_rating": 8.4,
-  "rating_count": 37,
-  "rating_distribution": { "1": 0, "2": 1, "8": 12, "10": 9 },
-  "listens": 1284,
-  "views_count": 5310,
-  "favorites_count": 204,
+  "slug": "podnyatie-urovnya-v-odinochku",
+  "name": "Поднятие уровня в одиночку",
+  "alt_names": ["Solo Leveling", "나 혼자만 레벨업"],  // альтернативные названия
+  "author": { "id": 1, "slug": "chu-gong", "name": "Чу Гун" },
+  "description": "Описание тайтла в markdown.",
+  "year": 2016,
+  "cover_url": "https://cdn.example/covers/2.jpg",   // обложка 2:3
+  "bg_url": "https://cdn.example/bg/2.jpg",          // фоновый баннер 3:1, может быть null
+  "release_status": "completed",
+  "avg_rating": 9.1,
+  "rating_count": 372,
+  "rating_distribution": { "1": 2, "8": 44, "9": 121, "10": 168 },  // оценка → сколько раз поставлена
+  "listens": 18420,
+  "views_count": 53100,        // открытий страницы тайтла
+  "favorites_count": 2041,     // добавлений в избранное
   "genres": [
-    { "id": 1, "slug": "fantasy", "name": "Fantasy", "is_sensitive": false }
+    { "id": 1, "slug": "fantasy", "name": "Фэнтези", "is_sensitive": false }
   ],
   "narrators": [
     {
-      "id": 1, "slug": "fwa", "name": "FWA",
-      "avatar_url": null, "titles_count": 2,
-      "is_deleted": false, "narration_status": "ongoing"
+      "id": 1,
+      "slug": "adrenalin28",
+      "name": "adrenalin28",
+      "avatar_url": null,
+      "titles_count": 14,          // сколько тайтлов озвучил
+      "is_deleted": false,
+      "narration_status": "completed"  // статус этой озвучки, отдельно от статуса тайтла
     }
   ],
   "volumes": [
     {
-      "id": 1, "number": 1, "name": "Том 1",
+      "id": 1,
+      "number": 1,
+      "name": "Том 1",
       "chapters": [
         {
           "id": 2,
           "volume_id": 1,
-          "number": 1,
+          "number": 1,               // дробный: 4.1 — вставка между 4 и 5
           "name": "Пролог",
           "duration_seconds": 742.5,
-          "audio_status": "ready",
+          "audio_status": "ready",   // ready | processing | failed | restricted
           "mod_status": "approved",
-          "my_position": null,
-          "narrators": [{ "id": 1, "slug": "fwa", "name": "FWA" }],
+          "my_position": null,       // позиция прослушивания в секундах
+          "narrators": [{ "id": 1, "slug": "adrenalin28", "name": "adrenalin28" }],
           "is_deleted": false
         }
       ]
     }
   ],
-  "similar": [],
+  "similar": [],                 // похожие тайтлы, тот же вид что и в /titles
   "is_nsfw": false,
   "has_sensitive_genre": false,
   "is_restricted": false,
   "is_deleted": false,
   "mod_status": "approved",
-  "my_favorite": false,
-  "my_rating": null,
-  "my_library": null,
-  "can_edit": false,
+  "my_favorite": false,          // в избранном у вызывающего
+  "my_rating": null,             // его оценка
+  "my_library": null,            // planning | in_progress | completed | dropped
+  "can_edit": false,             // есть ли права на редактирование
   "created_at": "2026-07-27 21:48:38.537303+00",
   "updated_at": "2026-07-28 10:12:04.221900+00"
-}
-// my_favorite, my_rating, my_library и my_position без входа всегда null/false.
-// У тайтла 18+ audio_status подменяется на "restricted".`,
+}`,
 
   '/titles/random': `{
-  "slug": "tet1"
+  "slug": "podnyatie-urovnya-v-odinochku"   // подставьте в /titles/{slug}
 }`,
 
   '/search/suggest': `{
-  "titles": [
+  "titles": [                    // до 5 совпадений
     {
-      "id": 2, "slug": "tet1", "name": "Тет 1",
-      "author": { "id": 1, "slug": "test", "name": "Автор" },
-      "cover_url": null
+      "id": 2,
+      "slug": "podnyatie-urovnya-v-odinochku",
+      "name": "Поднятие уровня в одиночку",
+      "author": { "id": 1, "slug": "chu-gong", "name": "Чу Гун" },
+      "cover_url": "https://cdn.example/covers/2.jpg"
     }
   ],
-  "narrators": [
-    { "id": 2, "slug": "test", "name": "Тест", "avatar_url": null }
+  "narrators": [                 // до 3 совпадений
+    { "id": 1, "slug": "adrenalin28", "name": "adrenalin28", "avatar_url": null }
   ]
 }`,
 
   '/genres': `{
   "items": [
-    { "id": 1, "slug": "fantasy", "name": "Fantasy", "titles_count": 42, "is_sensitive": false }
+    {
+      "id": 1,
+      "slug": "fantasy",         // значение для ?genre=
+      "name": "Фэнтези",
+      "titles_count": 42,
+      "is_sensitive": false      // тег помечен чувствительным
+    }
   ],
 ${PAGE_TAIL}`,
 
@@ -158,15 +157,17 @@ ${PAGE_TAIL}`,
   "number": 1,
   "name": "Пролог",
   "duration_seconds": 742.5,
-  "audio_url": "https://cdn.example/audio/t2/c3-1753650000.opus",
-  "my_position": null,
+  "audio_url": "https://cdn.example/audio/2/c3-1753650000.opus",  // прямая ссылка на файл
+  "my_position": null,           // позиция прослушивания в секундах
   "volume": { "id": 1, "number": 1, "name": "Том 1" },
   "title": {
-    "id": 2, "slug": "tet1", "name": "Тет 1",
-    "cover_url": "https://cdn.example/covers/t2.jpg"
+    "id": 2,
+    "slug": "podnyatie-urovnya-v-odinochku",
+    "name": "Поднятие уровня в одиночку",
+    "cover_url": "https://cdn.example/covers/2.jpg"
   },
-  "prev_id": null,
-  "next_id": 4
+  "prev_id": null,               // предыдущая глава, null если первая
+  "next_id": 4                   // следующая глава, null если последняя
 }`,
 
   '/download/chapters/{id}': `HTTP/1.1 200 OK
@@ -180,38 +181,43 @@ Access-Control-Expose-Headers: Content-Length, Content-Disposition
   '/narrators': `{
   "items": [
     {
-      "id": 1, "slug": "fwa", "name": "FWA",
-      "avatar_url": null, "titles_count": 2, "is_deleted": false
+      "id": 1,
+      "slug": "adrenalin28",
+      "name": "adrenalin28",
+      "avatar_url": null,
+      "titles_count": 14,
+      "is_deleted": false
     }
   ],
 ${PAGE_TAIL}`,
 
   '/narrators/{slug}': `{
   "id": 1,
-  "slug": "fwa",
-  "name": "FWA",
-  "bio": "Команда озвучки.",
+  "slug": "adrenalin28",
+  "name": "adrenalin28",
+  "bio": "Описание чтеца в markdown.",
   "avatar_url": null,
-  "cover_url": null,
-  "socials": ["https://example.com/fwa"],
-  "titles_count": 2,
+  "cover_url": null,             // баннер профиля 3:1
+  "socials": ["https://boosty.to/adrenalin28"],  // до 10 ссылок
+  "is_ai": false,                // синтезированный голос
+  "is_verified": false,          // подтверждённый чтец
+  "titles_count": 14,
   "titles": [
     ${TITLE_CARD.trim()}
   ],
-  "is_self": false,
-  "admin_contact": null,
+  "is_self": false,              // чтец озвучивает сам себя, а не команда
+  "admin_contact": null,         // виден только администраторам и команде
   "mod_status": "approved",
   "is_deleted": false,
   "created_at": "2026-07-27 21:48:38.537303+00"
-}
-// admin_contact без прав администратора всегда null.`,
+}`,
 
   '/narrators/{id}/posts': `{
   "items": [
     {
       "id": 1,
-      "narrator": { "id": 1, "slug": "fwa", "name": "FWA", "avatar_url": null },
-      "title": "Новая глава",
+      "narrator": { "id": 1, "slug": "adrenalin28", "name": "adrenalin28", "avatar_url": null },
+      "title": "Финал озвучен",
       "body": "Текст поста в markdown.",
       "is_hidden": false,
       "created_at": "2026-07-27 21:48:38.537303+00",
@@ -222,8 +228,8 @@ ${PAGE_TAIL}`,
 
   '/posts/{id}': `{
   "id": 1,
-  "narrator": { "id": 1, "slug": "fwa", "name": "FWA", "avatar_url": null },
-  "title": "Новая глава",
+  "narrator": { "id": 1, "slug": "adrenalin28", "name": "adrenalin28", "avatar_url": null },
+  "title": "Финал озвучен",
   "body": "Текст поста в markdown.",
   "is_hidden": false,
   "created_at": "2026-07-27 21:48:38.537303+00",
@@ -232,16 +238,16 @@ ${PAGE_TAIL}`,
 
   '/authors': `{
   "items": [
-    { "id": 1, "slug": "test", "name": "Автор", "titles_count": 3 }
+    { "id": 1, "slug": "chu-gong", "name": "Чу Гун", "titles_count": 3 }
   ],
 ${PAGE_TAIL}`,
 
   '/authors/{id}': `{
   "id": 1,
-  "slug": "test",
-  "name": "Автор",
-  "bio": "",
-  "links": [],
+  "slug": "chu-gong",
+  "name": "Чу Гун",
+  "bio": "Биография в markdown.",
+  "links": [],                   // ссылки на автора
   "titles": [
     ${TITLE_CARD.trim()}
   ],
@@ -254,12 +260,12 @@ ${PAGE_TAIL}`,
     {
       "id": 1,
       "name": "Любимое фэнтези",
-      "description": "Подборка",
+      "description": "Описание подборки",
       "is_public": true,
-      "user": { "id": 1, "username": "admin", "avatar_url": null },
+      "user": { "id": 1, "username": "admin", "avatar_url": null },  // автор подборки
       "items_count": 12,
       "likes_count": 4,
-      "cover_urls": ["https://cdn.example/covers/t2.jpg"],
+      "cover_urls": ["https://cdn.example/covers/2.jpg"],  // до 4 обложек для превью
       "created_at": "2026-07-27 21:51:09.866397+00",
       "updated_at": "2026-07-27 21:51:30.262257+00"
     }
@@ -269,17 +275,17 @@ ${PAGE_TAIL}`,
   '/collections/{id}': `{
   "id": 1,
   "name": "Любимое фэнтези",
-  "description": "Подборка",
+  "description": "Описание подборки",
   "is_public": true,
   "user": { "id": 1, "username": "admin", "avatar_url": null },
   "items_count": 12,
   "likes_count": 4,
   "cover_urls": [],
-  "my_like": false,
+  "my_like": false,              // лайк вызывающего
   "items": [
     {
-      "position": 0,
-      "note": "Начать отсюда",
+      "position": 0,             // порядок, задан автором подборки
+      "note": "Начать отсюда",   // заметка автора к этому тайтлу
       "title": ${TITLE_CARD.trim()}
     }
   ],
@@ -317,35 +323,35 @@ ${PAGE_TAIL}`,
   "items": [
     {
       "id": 8,
-      "user": { "id": 1, "username": "admin", "avatar_url": null },
-      "target_type": "title",
+      "user": { "id": 1, "username": "admin", "avatar_url": null },  // null у удалённого аккаунта
+      "target_type": "title",    // к чему комментарий
       "target_id": 2,
-      "parent_id": null,
+      "parent_id": null,         // id родителя, null у корневого
       "body": "Отличная озвучка.",
-      "score": 5,
-      "my_vote": 0,
-      "is_deleted": false,
-      "edited_by_staff": false,
+      "score": 5,                // сумма голосов «за» минус «против»
+      "my_vote": 0,              // голос вызывающего: 1, 0 или -1
+      "is_deleted": false,       // удалённые остаются в дереве, но без текста
+      "edited_by_staff": false,  // текст правил модератор, а не автор
       "created_at": "2026-07-28 09:14:00.120000+00",
       "updated_at": "2026-07-28 09:14:00.120000+00",
-      "replies": []
+      "replies": []              // ответы вложены сюда
     }
   ],
-${PAGE_TAIL}
-// my_vote без входа всегда 0. Ответы вложены в поле replies родителя.`,
+${PAGE_TAIL}`,
 
   '/users/{id}': `{
   "user": {
     "id": 1,
-    "username": "admin",
+    "username": "admin",         // логин, он же адрес страницы
+    "display_name": "Админ",     // отображаемое имя, пусто — показывается логин
     "bio": "",
     "socials": [],
     "avatar_url": null,
     "cover_url": null,
-    "role": "admin",
+    "role": "admin",             // user | moderator | admin
     "created_at": "2026-07-26 18:02:11.004000+00"
   },
-  "stats": {
+  "stats": {                     // счётчики для вкладок профиля
     "planning": 3,
     "in_progress": 5,
     "completed": 12,
@@ -359,8 +365,8 @@ ${PAGE_TAIL}
   "items": [
     {
       "title": ${TITLE_CARD.trim()},
-      "status": "in_progress",
-      "note": "",
+      "status": "in_progress",   // planning | in_progress | completed | dropped
+      "note": "",                // заметка владельца полки
       "updated_at": "2026-07-28 09:14:00.120000+00"
     }
   ],
@@ -385,7 +391,10 @@ ${PAGE_TAIL}`,
       "my_vote": 0,
       "is_deleted": false,
       "edited_by_staff": false,
-      "target": { "name": "Тет 1", "link": "/title/tet1" },
+      "target": {                // куда ведёт комментарий
+        "name": "Поднятие уровня в одиночку",
+        "link": "/title/podnyatie-urovnya-v-odinochku"
+      },
       "created_at": "2026-07-28 09:14:00.120000+00",
       "updated_at": "2026-07-28 09:14:00.120000+00"
     }
@@ -394,35 +403,33 @@ ${PAGE_TAIL}`,
 
   '/legal/rules': `{
   "type": "rules",
-  "title": "Rules",
+  "title": "Правила",
   "body": "# Правила\\n\\nТекст в markdown."
 }`,
 
   '/legal/{type}': `{
   "type": "terms",
-  "title": "Terms of Service",
+  "title": "Условия использования",
   "body": "# Условия использования\\n\\nТекст в markdown."
 }`,
 };
 
-/** Query strings used in the curl line, where a bare path would be useless. */
 export const SAMPLE_QUERY: Record<string, string> = {
   '/titles': '?sort=new&genre=fantasy&per_page=1',
-  '/search/suggest': '?q=тет',
-  '/genres': '?q=fan',
-  '/narrators': '?q=fwa',
+  '/search/suggest': '?q=поднятие',
+  '/genres': '?q=фэн',
+  '/narrators': '?q=adrenalin',
   '/authors': '?per_page=1',
   '/collections': '?sort=popular',
   '/comments': '?target_type=title&target_id=2&sort=top',
   '/users/{id}/library': '?page=1',
 };
 
-/** Path params replaced with a concrete value in the curl line. */
 export const SAMPLE_PATH: Record<string, string> = {
-  '/titles/{slug}': '/titles/tet1',
+  '/titles/{slug}': '/titles/podnyatie-urovnya-v-odinochku',
   '/chapters/{id}': '/chapters/3',
   '/download/chapters/{id}': '/download/chapters/3',
-  '/narrators/{slug}': '/narrators/fwa',
+  '/narrators/{slug}': '/narrators/adrenalin28',
   '/narrators/{id}/posts': '/narrators/1/posts',
   '/posts/{id}': '/posts/1',
   '/authors/{id}': '/authors/1',
