@@ -1,0 +1,44 @@
+/*
+ * In flow, not fixed: BannedBanner is position:fixed and overlaps the nav, which
+ * is tolerable for the one-off "you are banned" case but not for a notice a user
+ * sees on every page for as long as they put off confirming.
+ */
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(230, 179, 92, 0.3);
+  background: rgba(230, 179, 92, 0.09);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.icon {
+  flex-shrink: 0;
+  color: #e6b35c;
+}
+
+.link {
+  color: #e6b35c;
+  border-bottom: 1px solid rgba(230, 179, 92, 0.45);
+  white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.link:hover {
+  color: #f0c887;
+  border-color: rgba(240, 200, 135, 0.7);
+}
+
+@media (max-width: 560px) {
+  .banner {
+    padding: 0.55rem 0.9rem;
+    font-size: 12px;
+  }
+}

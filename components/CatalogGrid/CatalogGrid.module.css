@@ -1,0 +1,305 @@
+/* Whole-catalog grid on the home page. */
+
+.wrap {
+  margin-top: 3.5rem;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a8a);
+  margin-bottom: 0.6rem;
+}
+
+.eyebrowBar {
+  display: inline-block;
+  width: 2.4rem;
+  height: 2px;
+  background: linear-gradient(
+          to right,
+          var(--accent, #de6161),
+          rgba(222, 97, 97, 0.2),
+          transparent
+  );
+  border-radius: 9999px;
+}
+
+.heading {
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.heading span {
+  font-weight: 400;
+  color: var(--accent);
+}
+
+.controls {
+  /*
+   * One height for every control on the row. Left to their own padding the sort
+   * strip, the direction button and the finished toggle land on three different
+   * heights (36.2 / 38 / 36.5), which reads as a ragged row of mismatched pills.
+   * The strip is the reference on a desktop and the dropdown is on a phone —
+   * both are the widest thing on the row, so everything else aligns to them.
+   */
+  --ctl-h: 38px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ---------- sort ---------- */
+
+.sortRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  /* min-height, not height: the row still wraps onto a second line at an
+     awkward width, and a fixed height would clip it. */
+  min-height: var(--ctl-h);
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sortLabel {
+  padding: 0 0.5rem 0 0.65rem;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sortBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.sortBtn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sortBtn svg {
+  opacity: 0.7;
+}
+
+.sortOn {
+  border-color: rgba(222, 97, 97, 0.45);
+  background: var(--accent-soft);
+  color: #fff;
+}
+
+.sortOn svg {
+  color: var(--accent);
+  opacity: 1;
+}
+
+/* ---------- finished toggle ---------- */
+
+.finishedBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: var(--ctl-h);
+  padding: 0 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.finishedBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+.finishedOn {
+  border-color: rgba(111, 174, 134, 0.5);
+  background: rgba(111, 174, 134, 0.12);
+  color: #fff;
+}
+
+.finishedOn svg {
+  color: #6fae86;
+}
+
+/* ---------- results ---------- */
+
+.countRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ---------- footer ---------- */
+
+
+.moreRow {
+  margin-top: 2rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.moreLink {
+  color: var(--accent);
+  border-bottom: 1px solid rgba(222, 97, 97, 0.35);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.moreLink:hover {
+  color: var(--accent-hover);
+  border-color: rgba(222, 97, 97, 0.6);
+}
+
+.grid {
+  transition: opacity 0.2s ease;
+}
+
+.gridLoading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 3rem 0;
+}
+
+/* ---------- mobile sort select ---------- */
+
+.sortSelectWrap {
+  display: none;
+  flex: 1 1 190px;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* The dropdown sets the row's height, but pin it anyway so a change to Select's
+   padding cannot silently pull the two buttons out of line. */
+.sortSelect {
+  height: var(--ctl-h);
+}
+
+.sortSelectLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@media (max-width: 870px) {
+  .head {
+    align-items: stretch;
+  }
+
+  .controls {
+    /* The dropdown's own padding puts it at 40px; the buttons beside it follow. */
+    --ctl-h: 40px;
+    width: 100%;
+    align-items: flex-end;
+  }
+
+  .sortRow {
+    display: none;
+  }
+
+  .sortSelectWrap {
+    display: flex;
+  }
+
+  .finishedBtn {
+    flex: 0 0 auto;
+    border-radius: 9px;
+  }
+}
+
+/* Sort direction. Icon-only: the arrow already says which way it goes, and the
+   label would double the width of a row that is tight on a phone. */
+.invertBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ctl-h);
+  height: var(--ctl-h);
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.invertBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+@media (max-width: 870px) {
+  .invertBtn {
+    border-radius: 9px;
+  }
+}

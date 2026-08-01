@@ -1,0 +1,93 @@
+/* Horizontal tab strip that scrolls instead of wrapping. See TabScroller.tsx. */
+
+.viewport {
+  position: relative;
+  min-width: 0;
+}
+
+.strip {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Room for a focus ring and the pill borders, which would otherwise be
+     clipped by the scroll container. */
+  padding: 3px 1px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /*
+   * Deliberately no `scroll-behavior: smooth`: it turns every wheel tick into
+   * a fresh animation, so a fast scroll fights itself instead of tracking the
+   * mouse. Both programmatic scrolls here want to be immediate too.
+   */
+  overscroll-behavior-x: contain;
+}
+
+/* The fades are the affordance; a scrollbar under the pills would only add a
+   second one that looks like a stray rule. */
+.strip::-webkit-scrollbar {
+  display: none;
+}
+
+.strip > * {
+  flex: 0 0 auto;
+}
+
+/* ---------- edge fades ---------- */
+
+/*
+ * A mask, not an overlay painted from --bg. The title hero sits on a blurred
+ * cover image, so a gradient the colour of the page background reads as a grey
+ * band across the artwork instead of a fade. Masking the strip fades the tabs
+ * themselves and leaves whatever is behind them alone — and it needs no
+ * pointer-events escape hatch, because there is nothing on top to click through.
+ *
+ * Only the side that actually has more content fades, so a fade means "there is
+ * more this way". A width of 0 collapses the stop pair, leaving the mask fully
+ * opaque, so an unfaded strip is pixel-identical to an unmasked one.
+ */
+@property --fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.strip {
+  --fade-start: 0px;
+  --fade-end: 0px;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+  /* Only animates where the @property registrations above are honoured;
+     elsewhere the fade snaps, which is the same picture a frame later. */
+  transition:
+    --fade-start 0.2s ease,
+    --fade-end 0.2s ease;
+}
+
+.fadeStart .strip {
+  --fade-start: 2.5rem;
+}
+
+.fadeEnd .strip {
+  --fade-end: 2.5rem;
+}

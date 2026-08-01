@@ -1,0 +1,37 @@
+/*
+ * Deliberately NOT the coral accent. Everything else on the site is some tint of
+ * #de6161; this one has to read as a warning rather than as decoration, so it
+ * gets its own red and a solid fill.
+ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #b3261e;
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.6;
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(180, 40, 40, 0.9);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+
+
+}
+
+.badge svg {
+  opacity: 0.9;
+}
+
+/* On a cover: top-left, above the artwork and its hover zoom. */
+.overlay {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 2;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
