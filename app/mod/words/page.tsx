@@ -5,17 +5,24 @@ import { Filter, Pencil, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { BannedWord, Paginated } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Pagination from '@/components/Pagination';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Pagination from '@/components/Pagination/Pagination';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
+import Select, { type SelectOption } from '@/components/Select/Select';
 import styles from './page.module.css';
 
-const MODE_LABELS: Record<BannedWord['match_mode'], string> = {
+type MatchMode = BannedWord['match_mode'];
+
+const MODE_LABELS: Record<MatchMode, string> = {
   substring: 'Подстрока',
   word: 'Целое слово',
 };
+
+const MODE_OPTIONS: SelectOption<MatchMode>[] = (
+  Object.keys(MODE_LABELS) as MatchMode[]
+).map((m) => ({ value: m, label: MODE_LABELS[m] }));
 
 function WordsContent() {
   const { toast } = useToast();
@@ -147,14 +154,13 @@ function WordsContent() {
               if (e.key === 'Enter') void createWord();
             }}
           />
-          <select
-            className={`select ${styles.modeSelect}`}
+          <Select<MatchMode>
+            className={styles.modeSelect}
             value={newMode}
-            onChange={(e) => setNewMode(e.target.value as BannedWord['match_mode'])}
-          >
-            <option value="substring">{MODE_LABELS.substring}</option>
-            <option value="word">{MODE_LABELS.word}</option>
-          </select>
+            options={MODE_OPTIONS}
+            onChange={setNewMode}
+            ariaLabel="Режим совпадения"
+          />
           <input
             className={`input ${styles.noteInput}`}
             type="text"
@@ -223,16 +229,13 @@ function WordsContent() {
                       </td>
                       <td>
                         {editing ? (
-                          <select
-                            className="select"
+                          <Select<MatchMode>
+                            size="sm"
                             value={editMode}
-                            onChange={(e) =>
-                              setEditMode(e.target.value as BannedWord['match_mode'])
-                            }
-                          >
-                            <option value="substring">{MODE_LABELS.substring}</option>
-                            <option value="word">{MODE_LABELS.word}</option>
-                          </select>
+                            options={MODE_OPTIONS}
+                            onChange={setEditMode}
+                            ariaLabel="Режим совпадения"
+                          />
                         ) : (
                           <span className={styles.mode}>{MODE_LABELS[w.match_mode]}</span>
                         )}

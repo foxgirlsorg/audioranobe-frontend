@@ -7,10 +7,10 @@ import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { timeAgo } from '@/lib/format';
 import type { ModRequest, Paginated } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Tabs from '@/components/Tabs';
-import Pagination from '@/components/Pagination';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Tabs from '@/components/Tabs/Tabs';
+import Pagination from '@/components/Pagination/Pagination';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -233,7 +233,6 @@ function QueueContent() {
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
 
-  // pick up ?type=… from the URL (dashboard tiles link here)
   useEffect(() => {
     const urlType = new URLSearchParams(window.location.search).get('type');
     if (urlType === 'narrator' || urlType === 'title' || urlType === 'chapter') setType(urlType);

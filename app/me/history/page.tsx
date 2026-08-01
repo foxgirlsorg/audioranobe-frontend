@@ -10,12 +10,11 @@ import { useAuth } from '@/lib/auth';
 import { usePlayer } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
 import { formatDuration, timeAgo } from '@/lib/format';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Pagination from '@/components/Pagination';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Pagination from '@/components/Pagination/Pagination';
 import styles from './page.module.css';
 
-/** Splits a translated two-tone heading on the first space: [plain, accent]. */
 function splitHeading(s: string): [string, string] {
   const i = s.indexOf(' ');
   return i === -1 ? [s, ''] : [s.slice(0, i), s.slice(i + 1)];

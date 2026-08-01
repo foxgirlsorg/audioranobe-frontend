@@ -6,10 +6,10 @@ import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { timeAgo } from '@/lib/format';
 import type { DmcaRequest, Paginated } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Tabs from '@/components/Tabs';
-import Pagination from '@/components/Pagination';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Tabs from '@/components/Tabs/Tabs';
+import Pagination from '@/components/Pagination/Pagination';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -18,7 +18,6 @@ const STATUS_TABS = [
   { key: 'resolved', label: 'Решённые' },
 ];
 
-/** A labelled block of external links; renders nothing when the list is empty. */
 function UrlList({ label, urls }: { label: string; urls: string[] }) {
   const clean = urls.filter(Boolean);
   if (clean.length === 0) return null;

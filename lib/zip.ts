@@ -1,12 +1,3 @@
-// Store-method ZIP builder that runs in the browser.
-//
-// Audiobook chapters are Opus — already compressed — so deflating them would
-// burn CPU for roughly no gain. Storing means the archive is just the files
-// back-to-back plus a small directory, which is cheap enough to do client-side
-// and lets us report honest progress as each chapter downloads.
-//
-// Parts are collected as a Blob rather than one big ArrayBuffer, so the browser
-// can spill to disk instead of holding a whole audiobook in memory.
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
@@ -43,7 +34,6 @@ function concat(parts: Uint8Array<ArrayBuffer>[]): Uint8Array<ArrayBuffer> {
   return out;
 }
 
-/** MS-DOS time/date words for the current moment. */
 function dosNow(): { time: number; date: number } {
   const d = new Date();
   return {
@@ -61,10 +51,6 @@ interface Entry {
   date: number;
 }
 
-/**
- * Accumulates entries and produces a Blob. Names must be unique; `add` renames
- * duplicates rather than producing a corrupt archive.
- */
 export class ZipBuilder {
   private parts: BlobPart[] = [];
   private entries: Entry[] = [];
@@ -77,12 +63,11 @@ export class ZipBuilder {
     const { time, date } = dosNow();
     const crc = crc32(data);
 
-    // Sizes are known up front here, so no data descriptor is needed.
     const header = concat([
       u32(0x04034b50),
-      u16(20), // version needed
-      u16(0x0800), // flags: names are UTF-8
-      u16(0), // method: store
+      u16(20),
+      u16(0x0800),
+      u16(0),
       u16(time),
       u16(date),
       u32(crc),
@@ -98,7 +83,6 @@ export class ZipBuilder {
     this.offset += header.length + data.length;
   }
 
-  /** Finish the archive. The builder must not be reused afterwards. */
   build(): Blob {
     const centralStart = this.offset;
     const central: Uint8Array<ArrayBuffer>[] = [];
@@ -107,21 +91,21 @@ export class ZipBuilder {
       central.push(
         concat([
           u32(0x02014b50),
-          u16(20), // version made by
-          u16(20), // version needed
+          u16(20),
+          u16(20),
           u16(0x0800),
-          u16(0), // method: store
+          u16(0),
           u16(e.time),
           u16(e.date),
           u32(e.crc),
           u32(e.size),
           u32(e.size),
           u16(e.nameBytes.length),
-          u16(0), // extra
-          u16(0), // comment
-          u16(0), // disk
-          u16(0), // internal attrs
-          u32(0), // external attrs
+          u16(0),
+          u16(0),
+          u16(0),
+          u16(0),
+          u32(0),
           u32(e.offset),
           e.nameBytes,
         ])
@@ -159,11 +143,6 @@ export class ZipBuilder {
   }
 }
 
-/**
- * Strip only what is actually illegal in a path on common systems: control
- * characters and the Windows-reserved set. Spaces and hyphens are valid in a
- * file name and are left alone; `/` survives so callers can build folders.
- */
 export function safeEntryName(name: string, fallback = 'file'): string {
   const cleaned = name
     // eslint-disable-next-line no-control-regex
@@ -174,7 +153,6 @@ export function safeEntryName(name: string, fallback = 'file'): string {
   return cleaned || fallback;
 }
 
-/** Hand a Blob to the browser as a download. */
 export function saveBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -184,6 +162,5 @@ export function saveBlob(blob: Blob, filename: string): void {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  // Revoking immediately can cancel the download in some browsers.
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

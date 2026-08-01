@@ -22,9 +22,9 @@ import type { Notification, NotificationType, Paginated } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { timeAgo } from '@/lib/format';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Pagination from '@/components/Pagination';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Pagination from '@/components/Pagination/Pagination';
 import styles from './page.module.css';
 
 const TYPE_ICONS: Record<NotificationType, ComponentType<{ size?: number | string }>> = {
@@ -55,7 +55,6 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   narrator_post: 'Запись чтеца',
 };
 
-/** Splits a translated two-tone heading on the first space: [plain, accent]. */
 function splitHeading(s: string): [string, string] {
   const i = s.indexOf(' ');
   return i === -1 ? [s, ''] : [s.slice(0, i), s.slice(i + 1)];

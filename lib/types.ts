@@ -1,11 +1,7 @@
-// Shared TypeScript interfaces for every object shape returned by the AudioRanobe API.
-// Mirrors contracts/API.md exactly — do not drift from it.
 
 export type Role = 'user' | 'moderator' | 'admin';
 export type ModStatus = 'pending' | 'approved' | 'rejected';
-/** Status of the source work itself. */
 export type ReleaseStatus = 'ongoing' | 'completed' | 'abandoned' | 'frozen';
-/** Status of one narrator's reading of a title — tracked separately. */
 export type NarrationStatus = ReleaseStatus;
 
 export const RELEASE_STATUS_LABELS: Record<ReleaseStatus, string> = {
@@ -26,10 +22,6 @@ export const STATUS_VALUES: ReleaseStatus[] = ['ongoing', 'completed', 'abandone
 export type AudioStatus = 'none' | 'queued' | 'processing' | 'ready' | 'error' | 'moderation';
 export type LibraryStatus = 'planning' | 'in_progress' | 'completed' | 'dropped';
 
-/**
- * Library list names shown to the user. The keys stay English — they are the
- * API values and the `?status=` slug — only the labels are Russian.
- */
 export const LIBRARY_STATUS_LABELS: Record<LibraryStatus, string> = {
   planning: 'В планах',
   in_progress: 'Слушаю',
@@ -63,11 +55,8 @@ export type ModRequestAction = 'create' | 'update' | 'delete' | 'transfer';
 export type ModRequestStatus = 'pending' | 'approved' | 'rejected';
 export type ModRequestEntityType = 'narrator' | 'title' | 'chapter' | 'author';
 
-/** Minimal user reference used inside many shapes. */
 export interface UserBrief {
-  /** The handle: profile URL and @mention target. */
   username: string;
-  /** What to show. Server falls back to username when none is set. */
   display_name: string;
   id: number;
   avatar_url: string | null;
@@ -89,9 +78,7 @@ export interface NotificationPrefs {
 
 export interface UserPublic {
   id: number;
-  /** The handle: unique, ASCII, the profile URL and what @mentions resolve to. */
   username: string;
-  /** What to show. Server falls back to username when none is set. */
   display_name: string;
   bio: string;
   socials: string[];
@@ -101,13 +88,10 @@ export interface UserPublic {
   created_at: string;
 }
 
-/** Provider sign-in methods this deployment has configured. */
 export type AuthProvider = 'google' | 'discord' | 'telegram';
 
-/** One linked third-party account. */
 export interface Identity {
   provider: AuthProvider;
-  /** Address the provider reports, if any. Telegram never has one. */
   email: string | null;
   display_name: string;
   avatar_url: string | null;
@@ -115,36 +99,22 @@ export interface Identity {
 }
 
 export interface Me extends UserPublic {
-  /** null on a Telegram-only account, which never receives an address. */
   email: string | null;
-  /** False on a provider-only account: offer "set password", not "change". */
   has_password: boolean;
   identities: Identity[];
-  /**
-   * Raw value, NOT the username fallback — the settings field must show empty
-   * rather than the handle pre-filled as if it had been chosen.
-   */
   display_name: string;
-  /** Provider-created account with an auto-generated username: send to /auth/setup. */
   needs_setup: boolean;
   is_banned: boolean;
   ban_reason: string | null;
-  /** Admin-granted: this user's submissions skip the moderation queue. */
   skip_moderation: boolean;
-  /** Always false when the server has no mailer configured. */
   email_verified: boolean;
   notification_prefs: NotificationPrefs;
   content_prefs: ContentPrefs;
   narrators_count: number;
 }
 
-/**
- * What the viewer has chosen to hide from listings. Defaults (also applied to
- * signed-out visitors): 18+ hidden, every sensitive tag shown.
- */
 export interface ContentPrefs {
   hide_nsfw: boolean;
-  /** Genre ids the viewer has switched off. */
   hidden_genres: number[];
 }
 
@@ -162,11 +132,9 @@ export interface Genre {
   slug: string;
   name: string;
   titles_count: number;
-  /** Admin-flagged: hidden from signed-out visitors, like 18+ titles. */
   is_sensitive: boolean;
 }
 
-/** A genre as it travels attached to a title. */
 export interface GenreTag {
   id: number;
   slug: string;
@@ -174,20 +142,17 @@ export interface GenreTag {
   is_sensitive: boolean;
 }
 
-/** GET /mod/trash — one soft-deleted row of any kind. */
 export type TrashKind = 'title' | 'narrator' | 'author' | 'chapter' | 'comment';
 
 export interface TrashEntry {
   kind: TrashKind;
   id: number;
   name: string;
-  /** Extra context: the parent title for a chapter, the author for a comment. */
   context: string;
   link: string;
   deleted_at: string | null;
 }
 
-/** GET /mod/words — one entry of the admin-configured forbidden word list. */
 export interface BannedWord {
   id: number;
   word: string;
@@ -215,18 +180,15 @@ export interface TitleCard {
   avg_rating: number | null;
   rating_count: number;
   listens: number;
+  updated_at: string | null;
+  chapters_count: number;
   genres: GenreTag[];
   age_rating: string | null;
   my_favorite: boolean;
   is_deleted: boolean;
-  /** 18+ mark: visible to everyone, but playable only when signed in. */
   is_nsfw: boolean;
-  /** True when one of the title's genres is admin-flagged as sensitive. */
+  is_ai: boolean;
   has_sensitive_genre: boolean;
-  /**
-   * True when the current viewer is signed out and the title is gated (18+ or
-   * sensitive genre): the UI blurs the cover and blocks playback.
-   */
   is_restricted: boolean;
 }
 
@@ -239,9 +201,7 @@ export interface ChapterRow {
   audio_status: AudioStatus;
   mod_status: ModStatus;
   my_position: number | null;
-  /** Narrators credited on this specific chapter (a chapter may have several). */
   narrators: { id: number; slug: string; name: string }[];
-  /** Soft-deleted; only editors and staff ever see these. */
   is_deleted: boolean;
 }
 
@@ -259,6 +219,8 @@ export interface NarratorCard {
   avatar_url: string | null;
   avatar_thumb_url: string | null;
   titles_count: number;
+  is_ai: boolean;
+  is_verified: boolean;
   is_deleted: boolean;
 }
 
@@ -298,7 +260,6 @@ export interface TitleFull extends TitleCard {
   age_rating: string | null;
   author: AuthorBrief | null;
   can_edit: boolean;
-  /** True when the viewer is signed out and the title is 18+: playback stripped. */
   nsfw_restricted?: boolean;
 }
 
@@ -326,7 +287,6 @@ export interface Comment {
   score: number;
   my_vote: -1 | 0 | 1;
   is_deleted: boolean;
-  /** True when a moderator/admin edited someone else's comment. */
   edited_by_staff: boolean;
   created_at: string;
   updated_at: string | null;
@@ -340,6 +300,8 @@ export interface LibraryEntry {
   title: TitleCard;
   status: LibraryStatus;
   note: string;
+  rating: number | null;
+  is_favorite: boolean;
   updated_at: string;
 }
 
@@ -377,19 +339,15 @@ export interface CollectionFull extends CollectionCard {
 
 export interface Announcement {
   id: number;
-  /** Own URL segment: /news/{slug}. */
   slug: string;
   title: string;
-  /** Markdown. */
   body: string;
   author: { id: number; username: string } | null;
   is_published: boolean;
-  /** Hidden from the home page but still listed on /news. */
   is_hidden: boolean;
   created_at: string;
 }
 
-/** A post by a narrator to its subscribers. Body is markdown. */
 export interface NarratorPost {
   id: number;
   narrator: { id: number; slug: string; name: string; avatar_url: string | null } | null;
@@ -459,27 +417,38 @@ export interface Paginated<T> {
   total: number;
 }
 
-// ---------------------------------------------------------------------------
-// Convenience shapes for specific endpoints (derived from API.md)
-// ---------------------------------------------------------------------------
+export interface ModNarrator {
+  id: number;
+  slug: string;
+  name: string;
+  avatar_url: string | null;
+  mod_status: ModStatus;
+  is_self: boolean;
+  titles_count: number;
+  subscribers_count: number;
+  created_at: string;
+  deleted_at: string | null;
+  owner: { id: number; username: string } | null;
+  admin_contact: string | null;
+}
 
-/** GET /home */
+export interface ModNarratorList extends Paginated<ModNarrator> {
+  counts: { pending: number; approved: number; rejected: number; deleted: number };
+}
+
 export interface HomeData {
   announcements: Announcement[];
   continue: ContinueItem[];
   new_titles: TitleCard[];
-  popular: TitleCard[];
-  top_rated: TitleCard[];
-  recently_updated: TitleCard[];
 }
 
-/** GET /search/suggest */
 export interface SearchSuggest {
   titles: { id: number; slug: string; name: string; author: AuthorBrief | null; cover_url: string | null }[];
   narrators: { id: number; slug: string; name: string; avatar_url: string | null }[];
+  authors: { id: number; slug: string; name: string; titles_count: number }[];
+  collections: { id: number; name: string; items_count: number }[];
 }
 
-/** GET /users/{username} */
 export interface UserProfile {
   user: UserPublic;
   stats: {
@@ -492,7 +461,6 @@ export interface UserProfile {
   };
 }
 
-/** GET /panel/narrators/{id}/stats */
 export interface NarratorStats {
   subscribers_count: number;
   totals: { listens: number; favorites: number; ratings: number };
@@ -528,7 +496,6 @@ export interface DmcaRequest {
   name: string;
   email: string;
   country: string;
-  /** Legacy single-URL column; kept as a fallback for pre-v2 claims. */
   content_url: string;
   content_urls: string[];
   original_urls: string[];
@@ -541,7 +508,6 @@ export interface DmcaRequest {
   resolved_at: string | null;
 }
 
-/** GET /mod/dashboard */
 export interface DashboardStats {
   users: number;
   new_users_7d: number;

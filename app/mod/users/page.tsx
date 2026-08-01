@@ -8,13 +8,15 @@ import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
 import type { Me, Paginated, Role } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Pagination from '@/components/Pagination';
-import UserAvatar from '@/components/UserAvatar';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import Modal from '@/components/Modal';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Pagination from '@/components/Pagination/Pagination';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import Modal from '@/components/Modal/Modal';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
+import Select from '@/components/Select/Select';
+import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -115,8 +117,6 @@ function UsersContent() {
     if (!toEdit) return;
     setBusyId(toEdit.id);
     try {
-      // Moderators may rename a user; e-mail, bio and password are admin-only,
-      // so those keys are left out entirely rather than sent and rejected.
       const updated = await api<Me>(`/mod/users/${toEdit.id}`, {
         method: 'PATCH',
         body: {
@@ -187,7 +187,6 @@ function UsersContent() {
 
   const roles: Role[] = ['user', 'moderator', 'admin'];
 
-  /** Mails the user a reset link instead of setting a password for them. */
   const sendResetLink = async (u: Me) => {
     setBusyId(u.id);
     try {
@@ -206,7 +205,6 @@ function UsersContent() {
     setBusyId(null);
   };
 
-  /** Confirm (or un-confirm) an address by hand, without sending mail. */
   const setVerified = async (value: boolean) => {
     if (!toEdit) return;
     setBusyId(toEdit.id);
@@ -257,10 +255,6 @@ function UsersContent() {
     setImageBusy(null);
   };
 
-  /**
-   * Admin-only: lets this user publish without review. The backend notifies
-   * them either way, so they know the rules changed.
-   */
   const toggleSkipModeration = async (u: Me) => {
     setBusyId(u.id);
     try {
@@ -343,31 +337,26 @@ function UsersContent() {
                       </td>
                       <td className={styles.email}>{u.email ?? '—'}</td>
                       <td>
-                        <select
-                          className={`select ${styles.roleSelect}`}
+                        <Select
+                          size="sm"
+                          className={styles.roleSelect}
                           value={u.role}
                           disabled={!isAdmin || self || busy}
-                          onChange={(e) => changeRole(u, e.target.value)}
-                          aria-label={`Роль пользователя ${u.username}`}
-                        >
-                          {roles.map((r) => (
-                            <option key={r} value={r}>
-                              {ROLE_LABELS[r] ? ROLE_LABELS[r] : r}
-                            </option>
-                          ))}
-                        </select>
+                          options={roles.map((r) => ({
+                            value: r,
+                            label: ROLE_LABELS[r] ? ROLE_LABELS[r] : r,
+                          }))}
+                          onChange={(v) => changeRole(u, v)}
+                          ariaLabel={`Роль пользователя ${u.username}`}
+                        />
                       </td>
                       <td>
-                        <label className={styles.skipToggle}>
-                          <input
-                            type="checkbox"
-                            checked={u.skip_moderation}
-                            disabled={!isAdmin || busy}
-                            onChange={() => void toggleSkipModeration(u)}
-                            aria-label={`Публикация без модерации для ${u.username}`}
-                          />
-                          <span>{u.skip_moderation ? 'разрешено' : 'нет'}</span>
-                        </label>
+                        <Toggle
+                          checked={u.skip_moderation}
+                          disabled={!isAdmin || busy}
+                          onChange={() => void toggleSkipModeration(u)}
+                          label={u.skip_moderation ? 'разрешено' : 'нет'}
+                        />
                       </td>
                       <td>
                         <button
@@ -464,8 +453,6 @@ function UsersContent() {
               placeholder={'Имя пользователя'}
             />
           </label>
-          {/* Account data — admin only. Moderators get the username, the
-              profile images and the reset link, and nothing else. */}
           {isAdmin ? (
             <>
               <label className={styles.fieldLabel}>
@@ -514,15 +501,12 @@ function UsersContent() {
           </button>
 
           {isAdmin ? (
-            <label className={styles.checkRow}>
-              <input
-                type="checkbox"
-                checked={!!toEdit?.email_verified}
-                onChange={(e) => void setVerified(e.target.checked)}
-                disabled={imageBusy !== null || busyId === toEdit?.id}
-              />
-              <span>{'Почта подтверждена'}</span>
-            </label>
+            <Toggle
+              checked={!!toEdit?.email_verified}
+              onChange={(on) => void setVerified(on)}
+              disabled={imageBusy !== null || busyId === toEdit?.id}
+              label="Почта подтверждена"
+            />
           ) : null}
 
           <div className={styles.imagesBlock}>

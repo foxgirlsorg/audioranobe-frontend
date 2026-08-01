@@ -36,7 +36,7 @@
 }
 
 .side {
-  width: 272px;
+  width: 300px;
   flex-shrink: 0;
   position: sticky;
   top: calc(var(--nav-height) + 1.5rem);
@@ -148,6 +148,14 @@
   .layout {
     flex-direction: column;
     gap: 1.5rem;
+    /*
+     * The row layout's `align-items: flex-start` must not survive the flip: on
+     * a column axis it makes both children shrink-to-fit *horizontally*, and
+     * `.main` collapsed to the width of its narrowest content (~84px, cards at
+     * 35px). It only looked fine while the cards carried a 138px min-width to
+     * prop it open — the two-column grid removed that floor and exposed it.
+     */
+    align-items: stretch;
   }
 
   .side {
@@ -155,7 +163,71 @@
     width: 100%;
   }
 
+  .main {
+    width: 100%;
+  }
+
   .genreList {
     max-height: 150px;
   }
+}
+
+/* "Только завершённые" — a checkbox row rather than another select. */
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.checkRow input {
+  margin-top: 2px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex: none;
+}
+
+.checkRow:hover {
+  color: var(--text);
+}
+
+.checkHint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Sort select + direction toggle share one line. */
+.sortRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.sortRow > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.invertBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.invertBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--text);
 }

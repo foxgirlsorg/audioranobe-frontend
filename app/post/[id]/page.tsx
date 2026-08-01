@@ -8,10 +8,11 @@ import { api, ApiError } from '@/lib/api';
 import { errMsg } from '@/lib/toast';
 import { timeAgo } from '@/lib/format';
 import type { NarratorPost } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Markdown from '@/components/Markdown';
-import CommentSection from '@/components/CommentSection';
+import { usePageTitle } from '@/lib/usePageTitle';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Markdown from '@/components/Markdown/Markdown';
+import CommentSection from '@/components/CommentSection/CommentSection';
 import styles from './page.module.css';
 
 export default function PostPage({ params }: { params: { id: string } }) {
@@ -39,9 +40,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    if (post) document.title = `${post.title} — AudioRanobe`;
-  }, [post]);
+  usePageTitle(post?.title);
 
   if (missing) notFound();
 

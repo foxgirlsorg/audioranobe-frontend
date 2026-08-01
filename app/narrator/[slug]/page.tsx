@@ -7,25 +7,29 @@ import { api, ApiError } from '@/lib/api';
 import type { NarratorFull } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { formatCount, formatDate } from '@/lib/format';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import StatusBadge from '@/components/StatusBadge';
-import SocialLinks from '@/components/SocialLinks';
-import SubscribeButton from '@/components/SubscribeButton';
-import ReportButton from '@/components/ReportButton';
-import Section from '@/components/Section';
-import CardGrid from '@/components/CardGrid';
-import TitleCardC from '@/components/TitleCardC';
-import CommentSection from '@/components/CommentSection';
-import NarratorPosts from '@/components/NarratorPosts';
-import ImageViewer from '@/components/ImageViewer';
-import Markdown from '@/components/Markdown';
+import { usePageTitle } from '@/lib/usePageTitle';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import StatusBadge from '@/components/StatusBadge/StatusBadge';
+import SocialLinks from '@/components/SocialLinks/SocialLinks';
+import SubscribeButton from '@/components/SubscribeButton/SubscribeButton';
+import ReportButton from '@/components/ReportButton/ReportButton';
+import Section from '@/components/Section/Section';
+import CardGrid from '@/components/CardGrid/CardGrid';
+import TitleCardC from '@/components/TitleCardC/TitleCardC';
+import CommentSection from '@/components/CommentSection/CommentSection';
+import NarratorPosts from '@/components/NarratorPosts/NarratorPosts';
+import ImageViewer from '@/components/ImageViewer/ImageViewer';
+import Markdown from '@/components/Markdown/Markdown';
+import AiBadge from '@/components/AiBadge/AiBadge';
+import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import styles from './page.module.css';
 
 export default function NarratorPage({ params }: { params: { slug: string } }) {
   const slug = decodeURIComponent(params.slug);
   const { user, isMod } = useAuth();
   const [narrator, setNarrator] = useState<NarratorFull | null>(null);
+  usePageTitle(narrator?.name);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
@@ -94,11 +98,10 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
           >
             <img src={n.cover_url} alt="" className={styles.bannerImg} />
           </button>
-        ) : n.avatar_url ? (
-          <img src={n.avatar_url} alt="" className={`${styles.bannerImg} ${styles.bannerBlur}`} />
         ) : (
           <div className={styles.bannerEmpty}>
             <span className={styles.bannerGlow} />
+            <img src="/foxgirl_narrator.svg" className={styles.bannerFoxgirl} alt=""/>
           </div>
         )}
         <div className={styles.bannerShade} />
@@ -124,6 +127,8 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
           <span className="eyebrow">Чтец</span>
           <h1 className={styles.name}>
             {n.name}
+            {n.is_verified ? <VerifiedBadge /> : null}
+            {n.is_ai ? <AiBadge title="Синтезированный голос" /> : null}
             {n.mod_status !== 'approved' ? <StatusBadge status={n.mod_status} /> : null}
             {canEdit ? (
               <Link href={`/narrator/${n.slug}/edit`} className={styles.editBtn} title="Редактировать">
@@ -136,7 +141,7 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
             <span className={styles.metaDot} aria-hidden="true" />
             <span className={styles.metaItem}>{`Подписчиков: ${formatCount(n.subscribers_count)}`}</span>
             <span className={styles.metaDot} aria-hidden="true" />
-            <span className={styles.metaItem}>{`на AudioRanobe с ${formatDate(n.created_at)}`}</span>
+            <span className={styles.metaItem}>{`на сайте с ${formatDate(n.created_at)}`}</span>
           </div>
           <SocialLinks urls={n.socials} />
         </div>
@@ -186,7 +191,7 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
         </div>
       ) : null}
 
-      <Section eyebrow="Блог" title="Записи" accent="чтеца">
+      <Section eyebrow="Блог" title="Публичные" accent="записи">
         <NarratorPosts narratorId={n.id} canEdit={n.can_edit} />
       </Section>
 

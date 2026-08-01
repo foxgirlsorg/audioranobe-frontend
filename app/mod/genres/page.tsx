@@ -6,10 +6,11 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import type { Genre, Paginated } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Pagination from '@/components/Pagination';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Pagination from '@/components/Pagination/Pagination';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import Toggle from '@/components/Toggle/Toggle';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -60,7 +61,7 @@ function GenresContent() {
     setCreating(true);
     try {
       await api('/genres', { method: 'POST', body: { name } });
-      toast('Жанр создан');
+      toast('Тег создан');
       setNewName('');
       setReload((n) => n + 1);
     } catch (e) {
@@ -83,7 +84,7 @@ function GenresContent() {
     setBusyId(g.id);
     try {
       await api(`/mod/genres/${g.id}`, { method: 'PATCH', body: { name } });
-      toast('Жанр обновлён');
+      toast('Тег обновлён');
       setEditingId(null);
       setReload((n) => n + 1);
     } catch (e) {
@@ -92,7 +93,6 @@ function GenresContent() {
     setBusyId(null);
   };
 
-  /** Sensitive genres are hidden from signed-out visitors, like 18+ titles. */
   const toggleSensitive = async (g: Genre) => {
     setBusyId(g.id);
     try {
@@ -100,7 +100,7 @@ function GenresContent() {
         method: 'PATCH',
         body: { is_sensitive: !g.is_sensitive },
       });
-      toast(fresh.is_sensitive ? 'Жанр помечен как чувствительный' : 'Отметка снята');
+      toast(fresh.is_sensitive ? 'Тег помечен как чувствительный' : 'Отметка снята');
       setData((prev) =>
         prev
           ? {
@@ -121,7 +121,7 @@ function GenresContent() {
     setBusyId(g.id);
     try {
       await api(`/mod/genres/${g.id}`, { method: 'DELETE' });
-      toast('Жанр удалён');
+      toast('Тег удалён');
       setData((prev) =>
         prev
           ? {
@@ -141,12 +141,12 @@ function GenresContent() {
     <div>
       {isAdmin ? (
         <div className={`glass-panel ${styles.createForm}`}>
-          <h3 className={styles.formTitle}>{'Новый жанр'}</h3>
+          <h3 className={styles.formTitle}>{'Новый тег'}</h3>
           <div className={styles.formRow}>
             <input
               className={`input ${styles.nameInput}`}
               type="text"
-              placeholder={'Название жанра'}
+              placeholder={'Название тега'}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
@@ -174,8 +174,8 @@ function GenresContent() {
       ) : data.items.length === 0 ? (
         <EmptyState
           icon={BookMarked}
-          title={'Жанров пока нет'}
-          body={'Создайте первый жанр выше.'}
+          title={'Тегов пока нет'}
+          body={'Создайте первый тег выше.'}
         />
       ) : (
         <>
@@ -214,15 +214,12 @@ function GenresContent() {
                       </td>
                       <td className={styles.count}>{g.titles_count}</td>
                       <td>
-                        <label className={styles.switch}>
-                          <input
-                            type="checkbox"
-                            checked={g.is_sensitive}
-                            disabled={!isAdmin || busy}
-                            onChange={() => void toggleSensitive(g)}
-                          />
-                          <span>{g.is_sensitive ? 'Скрыт для гостей' : 'Виден всем'}</span>
-                        </label>
+                        <Toggle
+                          checked={g.is_sensitive}
+                          disabled={!isAdmin || busy}
+                          onChange={() => void toggleSensitive(g)}
+                          label={g.is_sensitive ? 'Скрыт для гостей' : 'Виден всем'}
+                        />
                       </td>
                       {isAdmin ? (
                         <td>
@@ -291,10 +288,10 @@ function GenresContent() {
         onConfirm={() => {
           if (toDelete) void deleteGenre(toDelete);
         }}
-        title={'Удалить жанр'}
+        title={'Удалить тег'}
         body={
           toDelete
-            ? `Удалить жанр «${toDelete.name}»? Тайтлы не будут удалены, но потеряют привязку к этому жанру.`
+            ? `Удалить тег «${toDelete.name}»? Тайтлы не будут удалены, но потеряют привязку к этому тегу.`
             : ''
         }
         danger
@@ -304,7 +301,7 @@ function GenresContent() {
 }
 
 export default function ModGenresPage() {
-  const h = splitHeading('Управление жанрами');
+  const h = splitHeading('Управление тегами');
   return (
     <ModShell title={h.title} accent={h.accent} adminOnly>
       <GenresContent />

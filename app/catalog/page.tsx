@@ -2,7 +2,14 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertTriangle, RotateCcw, SearchX, SlidersHorizontal } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  RotateCcw,
+  SearchX,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import {
   RELEASE_STATUS_LABELS,
@@ -13,20 +20,28 @@ import {
 } from '@/lib/types';
 import { errMsg } from '@/lib/toast';
 import { formatCount } from '@/lib/format';
-import CardGrid from '@/components/CardGrid';
-import TitleCardC from '@/components/TitleCardC';
-import Pagination from '@/components/Pagination';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import GenrePicker from '@/components/GenrePicker';
+import CardGrid from '@/components/CardGrid/CardGrid';
+import TitleCardC from '@/components/TitleCardC/TitleCardC';
+import Pagination from '@/components/Pagination/Pagination';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import GenrePicker from '@/components/GenrePicker/GenrePicker';
+import Select, { type SelectOption } from '@/components/Select/Select';
+import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
-const SORT_OPTIONS: { value: string; label: string }[] = [
+const SORT_OPTIONS: SelectOption[] = [
   { value: 'popular', label: 'По прослушиваниям' },
   { value: 'rating', label: 'По рейтингу' },
   { value: 'new', label: 'Сначала новые' },
   { value: 'updated', label: 'Недавно обновлённые' },
   { value: 'az', label: 'По алфавиту' },
+  { value: 'chapters', label: 'По числу глав' },
+];
+
+const RATING_OPTIONS: SelectOption[] = [
+  { value: '', label: 'Любой рейтинг' },
+  ...[9, 8, 7, 6, 5].map((n) => ({ value: String(n), label: `${n}+` })),
 ];
 
 function CatalogInner() {
@@ -34,35 +49,34 @@ function CatalogInner() {
   const searchParams = useSearchParams();
   const sp = searchParams.toString();
 
-  // -- current filter values, straight from the URL (single source of truth) --
   const q = searchParams.get('q') ?? '';
   const genre = searchParams.get('genre') ?? '';
+  const genreSlugs = genre ? genre.split(',').filter(Boolean) : [];
   const author = searchParams.get('author') ?? '';
   const yearFrom = searchParams.get('year_from') ?? '';
   const yearTo = searchParams.get('year_to') ?? '';
   const status = searchParams.get('release_status') ?? '';
+  const finished = searchParams.get('finished') === '1';
+  const showAi = searchParams.get('hide_ai') !== '1';
   const minRating = searchParams.get('min_rating') ?? '';
   const sort = searchParams.get('sort') ?? 'popular';
+  const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
 
-  // -- local state for debounced text inputs --
   const [qInput, setQInput] = useState(q);
   const [authorInput, setAuthorInput] = useState(author);
   const [yearFromInput, setYearFromInput] = useState(yearFrom);
   const [yearToInput, setYearToInput] = useState(yearTo);
 
   const [genres, setGenres] = useState<Genre[]>([]);
-  // The URL carries a genre slug; the picker works in ids.
-  const selectedGenreIds = genre
-    ? genres.filter((g) => g.slug === genre).map((g) => g.id)
-    : [];
+  const selectedGenreIds = genres
+    .filter((g) => genreSlugs.includes(g.slug))
+    .map((g) => g.id);
   const [data, setData] = useState<Paginated<TitleCard> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
 
-  /** Query string of the last URL we pushed ourselves (to tell our own
-   *  replaces apart from external navigation like back/forward). */
   const pushedRef = useRef<string | null>(null);
 
   const setParams = useCallback(
@@ -80,7 +94,6 @@ function CatalogInner() {
     [searchParams, router]
   );
 
-  // External URL change (back/forward, link with query) → resync the inputs.
   useEffect(() => {
     if (pushedRef.current === sp) return;
     setQInput(q);
@@ -90,7 +103,6 @@ function CatalogInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sp]);
 
-  // Debounce text inputs into the URL.
   useEffect(() => {
     const t = window.setTimeout(() => {
       const patch: Record<string, string | null> = {};
@@ -103,7 +115,6 @@ function CatalogInner() {
     return () => window.clearTimeout(t);
   }, [qInput, authorInput, yearFromInput, yearToInput, q, author, yearFrom, yearTo, setParams]);
 
-  // Genres load once.
   useEffect(() => {
     let alive = true;
     api<{ items: Genre[]; total: number }>('/genres', { params: { per_page: 500 } })
@@ -111,14 +122,12 @@ function CatalogInner() {
         if (alive) setGenres(d.items ?? []);
       })
       .catch(() => {
-        // non-fatal — the pills simply won't render
       });
     return () => {
       alive = false;
     };
   }, []);
 
-  // Titles load whenever the URL query changes.
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -131,8 +140,11 @@ function CatalogInner() {
         year_from: yearFrom,
         year_to: yearTo,
         release_status: status,
+        finished: finished ? '1' : '',
+        hide_ai: showAi ? '' : '1',
         min_rating: minRating,
         sort,
+        order,
         page,
       },
     })
@@ -152,7 +164,17 @@ function CatalogInner() {
   }, [sp, nonce]);
 
   const hasFilters = Boolean(
-    q || genre || author || yearFrom || yearTo || status || minRating || sort !== 'popular'
+    q ||
+      genre ||
+      author ||
+      yearFrom ||
+      yearTo ||
+      status ||
+      finished ||
+      !showAi ||
+      minRating ||
+      sort !== 'popular' ||
+      order !== 'desc'
   );
 
   const resetFilters = () => {
@@ -201,17 +223,17 @@ function CatalogInner() {
             </div>
 
             <div className={styles.field}>
-              <span className={styles.fLabel}>Жанр</span>
+              <span className={styles.fLabel}>Теги</span>
               <GenrePicker
                 genres={genres}
                 allowCreate={false}
-                placeholder="Найти жанр…"
+                placeholder="Найти тег…"
                 value={selectedGenreIds}
                 onChange={(ids) => {
-                  // The catalog filters on a single genre slug.
-                  const next = ids.length > 0 ? ids[ids.length - 1] : null;
-                  const picked = next != null ? genres.find((g) => g.id === next) : null;
-                  setParams({ genre: picked ? picked.slug : null });
+                  const slugs = ids
+                    .map((id) => genres.find((g) => g.id === id)?.slug)
+                    .filter((s): s is string => !!s);
+                  setParams({ genre: slugs.length > 0 ? slugs.join(',') : null });
                 }}
               />
             </div>
@@ -224,7 +246,7 @@ function CatalogInner() {
                 id="catalog-author"
                 type="text"
                 className="input"
-                placeholder="Например: Урсула Ле Гуин"
+                placeholder="Например: Адольф Гитлер"
                 value={authorInput}
                 onChange={(e) => setAuthorInput(e.target.value)}
               />
@@ -260,58 +282,80 @@ function CatalogInner() {
               <label className={styles.fLabel} htmlFor="catalog-status">
                 Статус
               </label>
-              <select
+              <Select
                 id="catalog-status"
-                className="select"
+                block
                 value={status}
-                onChange={(e) => setParams({ release_status: e.target.value || null })}
-              >
-                <option value="">Любой статус</option>
-                {STATUS_VALUES.map((s) => (
-                  <option key={s} value={s}>
-                    {RELEASE_STATUS_LABELS[s]}
-                  </option>
-                ))}
-              </select>
+                placeholder="Любой статус"
+                options={[
+                  { value: '', label: 'Любой статус' },
+                  ...STATUS_VALUES.map((s) => ({ value: s, label: RELEASE_STATUS_LABELS[s] })),
+                ]}
+                onChange={(v) => setParams({ release_status: v || null })}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <Toggle
+                checked={showAi}
+                onChange={(on) => setParams({ hide_ai: on ? null : '1' })}
+                label="Показывать ИИ-озвучку"
+                hint="тайтлы, озвученные синтезированным голосом"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <Toggle
+                checked={finished}
+                onChange={(on) => setParams({ finished: on ? '1' : null })}
+                label="Только завершённые"
+                hint="тайтл завершён и хотя бы один чтец завершил озвучку"
+              />
             </div>
 
             <div className={styles.field}>
               <label className={styles.fLabel} htmlFor="catalog-rating">
                 Мин. рейтинг
               </label>
-              <select
+              <Select
                 id="catalog-rating"
-                className="select"
+                block
                 value={minRating}
-                onChange={(e) => setParams({ min_rating: e.target.value || null })}
-              >
-                <option value="">Любой рейтинг</option>
-                <option value="9">9+</option>
-                <option value="8">8+</option>
-                <option value="7">7+</option>
-                <option value="6">6+</option>
-                <option value="5">5+</option>
-              </select>
+                placeholder="Любой рейтинг"
+                options={RATING_OPTIONS}
+                onChange={(v) => setParams({ min_rating: v || null })}
+              />
             </div>
 
             <div className={styles.field}>
               <label className={styles.fLabel} htmlFor="catalog-sort">
                 Сортировка
               </label>
-              <select
-                id="catalog-sort"
-                className="select"
-                value={sort}
-                onChange={(e) =>
-                  setParams({ sort: e.target.value === 'popular' ? null : e.target.value })
-                }
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              <div className={styles.sortRow}>
+                <Select
+                  id="catalog-sort"
+                  block
+                  value={sort}
+                  options={SORT_OPTIONS}
+                  onChange={(v) => setParams({ sort: v === 'popular' ? null : v })}
+                />
+                <button
+                  type="button"
+                  className={styles.invertBtn}
+                  onClick={() => setParams({ order: order === 'asc' ? null : 'asc' })}
+                  aria-pressed={order === 'asc'}
+                  title={order === 'asc' ? 'Сейчас по возрастанию' : 'Сейчас по убыванию'}
+                  aria-label={
+                    order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'
+                  }
+                >
+                  {order === 'asc' ? (
+                    <ArrowUpNarrowWide size={15} />
+                  ) : (
+                    <ArrowDownWideNarrow size={15} />
+                  )}
+                </button>
+              </div>
             </div>
 
             {hasFilters ? (

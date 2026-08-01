@@ -9,13 +9,14 @@ import { api } from '@/lib/api';
 import type { CollectionCard, CollectionFull, Paginated } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
-import CardGrid from '@/components/CardGrid';
-import CollectionCardC from '@/components/CollectionCardC';
-import Pagination from '@/components/Pagination';
-import Tabs from '@/components/Tabs';
-import Modal from '@/components/Modal';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
+import CardGrid from '@/components/CardGrid/CardGrid';
+import CollectionCardC from '@/components/CollectionCardC/CollectionCardC';
+import Pagination from '@/components/Pagination/Pagination';
+import Tabs from '@/components/Tabs/Tabs';
+import Modal from '@/components/Modal/Modal';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
 export default function CollectionsPage() {
@@ -33,14 +34,12 @@ export default function CollectionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
 
-  // create modal
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [creating, setCreating] = useState(false);
 
-  // debounce the search box
   useEffect(() => {
     const t = window.setTimeout(() => {
       const trimmed = qInput.trim();
@@ -213,17 +212,12 @@ export default function CollectionsPage() {
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-          <label className={styles.checkRow}>
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-            />
-            <span>
-              <span className={styles.checkTitle}>Публичная коллекция</span>
-              <span className={styles.checkHint}>Любой сможет найти её и поставить лайк</span>
-            </span>
-          </label>
+          <Toggle
+            checked={isPublic}
+            onChange={setIsPublic}
+            label="Публичная коллекция"
+            hint="Любой сможет найти её и поставить лайк"
+          />
           <div className={styles.formActions}>
             <button type="button" className="btn btn-ghost" onClick={() => setCreateOpen(false)}>
               Отмена

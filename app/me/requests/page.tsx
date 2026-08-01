@@ -8,10 +8,10 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import type { ModRequest, Paginated } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import StatusBadge from '@/components/StatusBadge';
-import Pagination from '@/components/Pagination';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import StatusBadge from '@/components/StatusBadge/StatusBadge';
+import Pagination from '@/components/Pagination/Pagination';
 import { formatDateTime, timeAgo } from '@/lib/format';
 import styles from './requests.module.css';
 
@@ -38,7 +38,7 @@ const FIELD_LABELS: Record<string, string> = {
   description: 'описание',
   year: 'год',
   release_status: 'статус выхода',
-  genre_ids: 'жанры',
+  genre_ids: 'теги',
   narrator_id: 'ID чтеца',
   volume_id: 'ID тома',
   number: 'номер',

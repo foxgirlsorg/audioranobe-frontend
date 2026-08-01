@@ -6,19 +6,21 @@ import { BookOpen, Pencil } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import type { AuthorFull } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import SocialLinks from '@/components/SocialLinks';
-import Section from '@/components/Section';
-import CardGrid from '@/components/CardGrid';
-import TitleCardC from '@/components/TitleCardC';
-import Markdown from '@/components/Markdown';
+import { usePageTitle } from '@/lib/usePageTitle';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import SocialLinks from '@/components/SocialLinks/SocialLinks';
+import Section from '@/components/Section/Section';
+import CardGrid from '@/components/CardGrid/CardGrid';
+import TitleCardC from '@/components/TitleCardC/TitleCardC';
+import Markdown from '@/components/Markdown/Markdown';
 import styles from './page.module.css';
 
 export default function AuthorPage({ params }: { params: { id: string } }) {
   const authorRef = decodeURIComponent(params.id);
   const { user, isMod } = useAuth();
   const [author, setAuthor] = useState<AuthorFull | null>(null);
+  usePageTitle(author?.name);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);

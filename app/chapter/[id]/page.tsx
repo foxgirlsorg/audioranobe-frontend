@@ -20,8 +20,9 @@ import type { ChapterPlay } from '@/lib/types';
 import { usePlayer } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
 import { formatDuration } from '@/lib/format';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
+import { usePageTitle } from '@/lib/usePageTitle';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
 import styles from './page.module.css';
 
 export default function ChapterPage({ params }: { params: { id: string } }) {
@@ -65,11 +66,11 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    if (chapter) {
-      document.title = `${chapter.number}. ${chapter.name || 'Глава'} — ${chapter.title.name} — AudioRanobe`;
-    }
-  }, [chapter]);
+  usePageTitle(
+    chapter
+      ? `${chapter.number}. ${chapter.name || 'Глава'} — ${chapter.title.name}`
+      : null
+  );
 
   async function onPlayPause() {
     if (!chapter) return;
@@ -144,7 +145,6 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
 
   return (
     <div className={styles.page}>
-      {/* Blurred cover backdrop: media → vignette → grain (STYLE.md 4.2) */}
       <div className={styles.backdrop} aria-hidden="true">
         {chapter.title.cover_url ? (
           <img src={chapter.title.cover_url} alt="" className={styles.bdImg} />

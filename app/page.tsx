@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Compass, Megaphone, Play, UserPlus, X } from 'lucide-react';
+import { AlertTriangle, Megaphone, Play, UserPlus, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { HomeData, TitleCard } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { usePlayer } from '@/lib/player';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate, formatDuration } from '@/lib/format';
-import Section from '@/components/Section';
-import TitleCardC from '@/components/TitleCardC';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
+import Section from '@/components/Section/Section';
+import CatalogGrid from '@/components/CatalogGrid/CatalogGrid';
+import CardGrid from '@/components/CardGrid/CardGrid';
+import TitleCardC from '@/components/TitleCardC/TitleCardC';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
 import styles from './page.module.css';
 
 const SEEN_KEY = 'audioranobe_seen_announcements';
@@ -32,7 +34,6 @@ function writeSeenIds(ids: number[]): void {
   try {
     window.localStorage.setItem(SEEN_KEY, JSON.stringify(ids.slice(-200)));
   } catch {
-    // storage unavailable — dismissal lasts for this session only
   }
 }
 
@@ -41,13 +42,11 @@ function TitleRail({ titles }: { titles: TitleCard[] }) {
     return <p className={styles.railEmpty}>Здесь пока пусто.</p>;
   }
   return (
-    <div className={styles.rail}>
+    <CardGrid>
       {titles.map((t) => (
-        <div key={t.id} className={styles.railItem}>
-          <TitleCardC title={t} />
-        </div>
+        <TitleCardC key={t.id} title={t} />
       ))}
-    </div>
+    </CardGrid>
   );
 }
 
@@ -132,20 +131,17 @@ export default function HomePage() {
         <section className={styles.hero}>
           <span className={`glow ${styles.glowA}`} aria-hidden="true" />
           <span className={`glow ${styles.glowB}`} aria-hidden="true" />
-          <div className="eyebrow">Аудиокниги от сообщества</div>
+          <span className={styles.heroArt} aria-hidden="true" />
+          <div className="eyebrow">audioranobe.com</div>
           <h1 className={styles.heroTitle}>
-            Истории, которые <span>оживают в звуке</span>
+            Ранобэ в формате  <span>аудиокниг</span>
           </h1>
           <p className={styles.heroTagline}>
-            AudioRanobe — дом для аудиокниг в озвучке сообщества. Подписывайтесь на любимых чтецов,
-            собирайте свою библиотеку и продолжайте каждую историю ровно с того места, где
-            остановились.
+            Подписывайтесь на любимых чтецов и
+            собирайте свою библиотеку.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/catalog" className="btn btn-primary">
-              <Compass />
-              Открыть каталог
-            </Link>
+
             <Link href="/auth/register" className="btn">
               <UserPlus />
               Создать аккаунт
@@ -154,7 +150,7 @@ export default function HomePage() {
         </section>
       ) : null}
 
-      {visibleAnnouncements.length > 0 ? (
+      {(visibleAnnouncements.length > 0 && user) ? (
         <div className={styles.annStrip}>
           {visibleAnnouncements.map((a) => (
             <div key={a.id} className={styles.annCard}>
@@ -241,17 +237,7 @@ export default function HomePage() {
         <TitleRail titles={data.new_titles} />
       </Section>
 
-      <Section eyebrow="Что слушают все" title="Популярное" accent="сейчас">
-        <TitleRail titles={data.popular} />
-      </Section>
-
-      <Section eyebrow="Лучшее по оценкам слушателей" title="Топ" accent="по оценкам">
-        <TitleRail titles={data.top_rated} />
-      </Section>
-
-      <Section eyebrow="Только что вышли новые главы" title="Недавно" accent="обновлено">
-        <TitleRail titles={data.recently_updated} />
-      </Section>
+      <CatalogGrid />
     </div>
   );
 }

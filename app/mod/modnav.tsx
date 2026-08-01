@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ShieldOff } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import Spinner from '@/components/Spinner';
+import Spinner from '@/components/Spinner/Spinner';
+import TabScroller from '@/components/TabScroller/TabScroller';
 import styles from './modnav.module.css';
 
 const TABS: { href: string; label: string; adminOnly?: boolean }[] = [
@@ -13,7 +14,8 @@ const TABS: { href: string; label: string; adminOnly?: boolean }[] = [
   { href: '/mod/queue', label: 'Очередь' },
   { href: '/mod/reports', label: 'Жалобы' },
   { href: '/mod/users', label: 'Пользователи' },
-  { href: '/mod/genres', label: 'Жанры', adminOnly: true },
+  { href: '/mod/narrators', label: 'Чтецы' },
+  { href: '/mod/genres', label: 'Теги', adminOnly: true },
   { href: '/mod/authors', label: 'Авторы', adminOnly: true },
   { href: '/mod/dmca', label: 'DMCA', adminOnly: true },
   { href: '/mod/words', label: 'Стоп-слова', adminOnly: true },
@@ -23,26 +25,19 @@ const TABS: { href: string; label: string; adminOnly?: boolean }[] = [
   { href: '/mod/audit', label: 'Аудит', adminOnly: true },
 ];
 
-/**
- * Splits a translated two-tone heading into the white part (first word) and
- * the accented part (the rest), matching the ModShell title/accent props.
- * Headings are translated as whole phrases so each locale can pick natural
- * word order; in English this reproduces the original title/accent split.
- */
 export function splitHeading(heading: string): { title: string; accent?: string } {
   const i = heading.indexOf(' ');
   if (i < 0) return { title: heading };
   return { title: heading.slice(0, i), accent: heading.slice(i + 1) };
 }
 
-/** Section tabs shared by every /mod page. Audit is only visible to admins. */
 export function ModNav() {
   const pathname = usePathname();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
   return (
-    <nav className={styles.nav} aria-label={'Разделы модерации'}>
+    <TabScroller as="nav" ariaLabel="Разделы модерации" className={styles.nav}>
       {TABS.filter((tab) => !tab.adminOnly || isAdmin).map((tab) => {
         const active =
           tab.href === '/mod' ? pathname === '/mod' : (pathname ?? '').startsWith(tab.href);
@@ -57,11 +52,10 @@ export function ModNav() {
           </Link>
         );
       })}
-    </nav>
+    </TabScroller>
   );
 }
 
-/** Small reusable error panel with an optional retry action. */
 export function ErrorPanel({
   message,
   onRetry,
@@ -81,12 +75,6 @@ export function ErrorPanel({
   );
 }
 
-/**
- * Guard + chrome for every moderation page: waits for auth, redirects guests
- * to /auth/login, shows a styled 403 for non-staff (or non-admins when
- * adminOnly), then renders the page heading, the section tabs and children.
- * Children are only mounted once the guard passes, so pages can fetch freely.
- */
 export function ModShell({
   title,
   accent,

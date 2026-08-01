@@ -6,12 +6,13 @@ import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
 import type { Announcement, Paginated } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Pagination from '@/components/Pagination';
-import Modal from '@/components/Modal';
-import Markdown from '@/components/Markdown';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Pagination from '@/components/Pagination/Pagination';
+import Modal from '@/components/Modal/Modal';
+import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import Toggle from '@/components/Toggle/Toggle';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -79,36 +80,20 @@ function EditorModal({
             maxLength={200}
           />
         </label>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>
-            {'Текст'} <span className={styles.hintInline}>{'поддерживается Markdown'}</span>
-          </span>
-          <textarea
-            className="textarea"
-            rows={8}
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>{'Текст'}</span>
+          <MarkdownEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={setBody}
             placeholder={'**Подробности**, [ссылки](https://…) — всё, что стоит знать сообществу…'}
           />
-        </label>
-        {body.trim() ? (
-          <div className={styles.preview}>
-            <span className={styles.fieldLabel}>{'Предпросмотр'}</span>
-            <Markdown source={body} />
-          </div>
-        ) : null}
-        <label className={styles.checkRow}>
-          <input
-            type="checkbox"
-            checked={published}
-            onChange={(e) => setPublished(e.target.checked)}
-          />
-          <span>{'Опубликовано'}</span>
-        </label>
-        <label className={styles.checkRow}>
-          <input type="checkbox" checked={hidden} onChange={(e) => setHidden(e.target.checked)} />
-          <span>{'Скрыть с главной (остаётся в разделе «Новости»)'}</span>
-        </label>
+        </div>
+        <Toggle checked={published} onChange={setPublished} label="Опубликовано" />
+        <Toggle
+          checked={hidden}
+          onChange={setHidden}
+          label="Скрыть с главной (остаётся в разделе «Новости»)"
+        />
         <div className={styles.editorActions}>
           <button type="button" className="btn btn-ghost" disabled={busy} onClick={onClose}>
             {'Отмена'}
@@ -182,7 +167,6 @@ function AnnouncementsContent() {
     setBusyId(null);
   };
 
-  /** Hides the announcement from the home page only; /news still lists it. */
   const toggleHidden = async (a: Announcement) => {
     setBusyId(a.id);
     try {

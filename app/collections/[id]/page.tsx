@@ -21,12 +21,13 @@ import type { CollectionFull, SearchSuggest } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
-import TitleCardC from '@/components/TitleCardC';
-import UserAvatar from '@/components/UserAvatar';
-import Modal from '@/components/Modal';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
+import { usePageTitle } from '@/lib/usePageTitle';
+import TitleCardC from '@/components/TitleCardC/TitleCardC';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
+import Modal from '@/components/Modal/Modal';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
 import styles from './page.module.css';
 
 export default function CollectionDetailPage() {
@@ -39,6 +40,7 @@ export default function CollectionDetailPage() {
   const { toast } = useToast();
 
   const [col, setCol] = useState<CollectionFull | null>(null);
+  usePageTitle(col?.name);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -48,16 +50,13 @@ export default function CollectionDetailPage() {
   const [visBusy, setVisBusy] = useState(false);
   const [moveBusy, setMoveBusy] = useState(false);
 
-  // edit meta modal
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // delete
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  // add-titles modal
   const [addOpen, setAddOpen] = useState(false);
   const [addQuery, setAddQuery] = useState('');
   const [addResults, setAddResults] = useState<SearchSuggest['titles']>([]);
@@ -65,7 +64,6 @@ export default function CollectionDetailPage() {
   const [addingId, setAddingId] = useState<number | null>(null);
   const searchSeq = useRef(0);
 
-  // per-item note editing
   const [noteFor, setNoteFor] = useState<number | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
@@ -97,7 +95,6 @@ export default function CollectionDetailPage() {
     };
   }, [id, nonce]);
 
-  // search titles for the add modal (GET /search/suggest)
   useEffect(() => {
     if (!addOpen) return;
     const q = addQuery.trim();
@@ -259,7 +256,6 @@ export default function CollectionDetailPage() {
     }
   };
 
-  /** Swap positions with the neighbor above (-1) or below (+1). */
   const move = async (index: number, dir: -1 | 1) => {
     if (!col || moveBusy) return;
     const j = index + dir;
@@ -269,7 +265,6 @@ export default function CollectionDetailPage() {
     setMoveBusy(true);
     try {
       if (a.position === b.position) {
-        // degenerate tie — nudge the moved item past its neighbor
         const fresh = await api<CollectionFull>(
           `/collections/${col.id}/items/${a.title.id}`,
           { method: 'PUT', body: { position: b.position + dir } }
@@ -496,7 +491,6 @@ export default function CollectionDetailPage() {
         </div>
       )}
 
-      {/* ---------- edit meta modal ---------- */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title={'Изменить коллекцию'}>
         <form className={styles.form} onSubmit={saveMeta}>
           <div className={styles.field}>
@@ -537,7 +531,6 @@ export default function CollectionDetailPage() {
         </form>
       </Modal>
 
-      {/* ---------- add titles modal ---------- */}
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title={'Добавить тайтлы'}>
         <div className={styles.addBox}>
           <input
@@ -594,7 +587,6 @@ export default function CollectionDetailPage() {
         </div>
       </Modal>
 
-      {/* ---------- delete confirm ---------- */}
       <ConfirmDialog
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}

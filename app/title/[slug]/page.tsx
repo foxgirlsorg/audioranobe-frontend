@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -14,46 +14,66 @@ import {
   ListMusic,
   Lock,
   Mic,
+  PenLine,
   Pencil,
   Pause,
   Play,
   RefreshCw,
   ShieldAlert,
   Star,
+  type LucideIcon,
 } from 'lucide-react';
 import { api, API_URL, ApiError } from '@/lib/api';
 import {
   NARRATION_STATUS_LABELS,
   RELEASE_STATUS_LABELS,
-  type ChapterPlay,
   type ChapterRow,
+  type NarrationStatus,
   type TitleFull,
   type Volume,
 } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { usePlayer } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
-import { formatCount, formatDuration } from '@/lib/format';
-import Section from '@/components/Section';
-import CardGrid from '@/components/CardGrid';
-import TitleCardC from '@/components/TitleCardC';
-import RatingStars from '@/components/RatingStars';
-import RatingBars from '@/components/RatingBars';
-import CommentSection from '@/components/CommentSection';
-import LibraryWidget from '@/components/LibraryWidget';
-import FavoriteButton from '@/components/FavoriteButton';
-import StatusBadge from '@/components/StatusBadge';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import ImageViewer from '@/components/ImageViewer';
-import Markdown from '@/components/Markdown';
-import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDownloadButton';
+import { chapterFilePrefix, formatCount, formatDuration } from '@/lib/format';
+import { usePageTitle } from '@/lib/usePageTitle';
+import Section from '@/components/Section/Section';
+import TabScroller from '@/components/TabScroller/TabScroller';
+import CardGrid from '@/components/CardGrid/CardGrid';
+import TitleCardC from '@/components/TitleCardC/TitleCardC';
+import RatingStars from '@/components/RatingStars/RatingStars';
+import RatingBars from '@/components/RatingBars/RatingBars';
+import CommentSection from '@/components/CommentSection/CommentSection';
+import LibraryWidget from '@/components/LibraryWidget/LibraryWidget';
+import FavoriteButton from '@/components/FavoriteButton/FavoriteButton';
+import StatusBadge from '@/components/StatusBadge/StatusBadge';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import ImageViewer from '@/components/ImageViewer/ImageViewer';
+import Markdown from '@/components/Markdown/Markdown';
+import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDownloadButton/ArchiveDownloadButton';
+import AiBadge from '@/components/AiBadge/AiBadge';
 import styles from './page.module.css';
 
 const DESC_CLAMP_CHARS = 420;
 
 function volumeDuration(v: Volume): number {
   return v.chapters.reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
+}
+
+const STATUS_TONE: Record<NarrationStatus, string> = {
+  ongoing: 'toneLive',
+  completed: 'toneDone',
+  frozen: 'toneFrozen',
+  abandoned: 'toneDropped',
+};
+
+function sharedNarrationStatus(
+  narrators: { narration_status: NarrationStatus }[]
+): NarrationStatus | null {
+  if (narrators.length === 0) return null;
+  const first = narrators[0].narration_status;
+  return narrators.every((n) => n.narration_status === first) ? first : null;
 }
 
 export default function TitlePage({ params }: { params: { slug: string } }) {
@@ -68,6 +88,9 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
   const [missing, setMissing] = useState(false);
   const [openVols, setOpenVols] = useState<Record<number, boolean>>({});
   const [descOpen, setDescOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [tagsClipped, setTagsClipped] = useState(false);
+  const tagsRef = useRef<HTMLParagraphElement | null>(null);
   const [coverOpen, setCoverOpen] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
 
@@ -81,9 +104,8 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
     try {
       const full = await api<TitleFull>(`/titles/${encodeURIComponent(slug)}`);
       setTitle(full);
-      // open the first volume (prefer the first one that actually has chapters)
-      const first = full.volumes.find((v) => v.chapters.length > 0) ?? full.volumes[0];
-      setOpenVols(first ? { [first.id]: true } : {});
+
+      setOpenVols({});
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) {
         setMissing(true);
@@ -99,11 +121,20 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    if (title) document.title = `${title.name} — AudioRanobe`;
-  }, [title]);
+  usePageTitle(title?.name);
 
-  // Chapters in listening order that can actually be played right now.
+  useEffect(() => {
+    const el = tagsRef.current;
+    if (!el) return;
+    const measure = () => {
+      if (!tagsOpen) setTagsClipped(el.scrollHeight > el.clientHeight + 1);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [title, tagsOpen]);
+
   const playableChapters = useMemo(() => {
     if (!title) return [] as ChapterRow[];
     const out: ChapterRow[] = [];
@@ -115,8 +146,6 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
     return out;
   }, [title]);
 
-  // "Start / Continue listening" target: the last chapter with saved progress
-  // (rolling over to the next one when it is basically finished), else chapter one.
   const resume = useMemo(() => {
     if (playableChapters.length === 0) return null;
     let idx = -1;
@@ -145,11 +174,6 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
     }
   }
 
-  /**
-   * A single chapter is a plain link: the endpoint is public and sends its own
-   * Content-Disposition, so the browser owns the transfer. Multi-file downloads
-   * go through ArchiveDownloadButton, which zips them client-side.
-   */
   function downloadChapter(chapterId: number) {
     const a = document.createElement('a');
     a.href = `${API_URL}/download/chapters/${chapterId}`;
@@ -159,7 +183,6 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
     a.remove();
   }
 
-  /** Chapters worth archiving, named the way the server names a single file. */
   function archiveItems(volumes: Volume[], foldered: boolean): ArchiveItem[] {
     const out: ArchiveItem[] = [];
     for (const v of volumes) {
@@ -168,7 +191,7 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
         const label = c.name || `Глава ${c.number}`;
         out.push({
           id: c.id,
-          name: `${String(c.number).padStart(3, '0')}. ${label}.opus`,
+          name: `${chapterFilePrefix(c.number)}. ${label}.opus`,
           folder: foldered ? `Том ${v.number}` : undefined,
         });
       }
@@ -242,13 +265,13 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
   const bg = title.bg_url ?? title.cover_url;
   const descLong = title.description.length > DESC_CLAMP_CHARS;
   const chaptersTotal = title.volumes.reduce((n, v) => n + v.chapters.length, 0);
-  // Gated (18+ or sensitive genre) and the viewer is signed out: the page stays
-  // browsable, but the cover is blurred, the viewer is off and nothing plays.
+  const runtime = title.volumes.reduce((n, v) => n + volumeDuration(v), 0);
+  const narrationStatus = sharedNarrationStatus(title.narrators);
+
   const restricted = title.is_restricted;
 
   return (
     <div className={styles.page}>
-      {/* Full-bleed blurred backdrop: media → vignette → grain (STYLE.md 4.2) */}
       <div className={styles.backdrop} aria-hidden="true">
         {bg ? <img src={bg} alt="" className={styles.bdImg} /> : null}
         <div className={styles.bdVignette} />
@@ -278,10 +301,6 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
                   aria-hidden="true"
                   className={`${styles.cover} ${styles.coverBlurred}`}
                 />
-                <span className={styles.coverLockLabel}>
-                  <Lock size={16} />
-                  {'Только для зарегистрированных'}
-                </span>
               </div>
             ) : title.cover_url ? (
               <button
@@ -305,9 +324,9 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
         </div>
 
         <div className={styles.infoCol}>
-          <span className="eyebrow">{'Аудиокнига'}</span>
           <div className={styles.nameRow}>
             <h1 className={styles.name}>{title.name}</h1>
+            {title.is_ai ? <AiBadge /> : null}
             {title.is_nsfw ? (
               <span className={styles.nsfwBadge} title="Материал 18+">
                 18+
@@ -337,44 +356,92 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
           {title.alt_names.length > 0 ? (
             <p className={styles.altNames}>{title.alt_names.join(' · ')}</p>
           ) : null}
-          {title.author ? (
-            <Link
-              href={`/author/${title.author.id}`}
-              className={styles.author}
-              title={`Ещё от ${title.author.name}`}
-            >
-              {title.author.name}
-            </Link>
-          ) : null}
 
-          <div className={styles.metaChips}>
-            {title.year != null ? (
-              <span className={styles.chip} title={'Год'}>
-                <Calendar size={12} />
-                {title.year}
-              </span>
+          <TabScroller
+            className={styles.quickInfoWrap}
+            stripClassName={styles.quickInfo}
+            ariaLabel="Сведения о тайтле"
+          >
+            <div className={styles.quickItem}>
+              <span className={styles.quickLabel}>{'Тайтл'}</span>
+              <span className={styles.quickValue}>{RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}</span>
+            </div>
+
+            {title.narrators.length > 0 ? (
+              <div className={styles.quickItem}>
+                <span className={styles.quickLabel}>{'Озвучка'}</span>
+                <span className={styles.quickValue}>{narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}</span>
+              </div>
             ) : null}
-            <span className={styles.chip} title={'Статус тайтла'}>
-              <Disc3 size={12} />
-              {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
-            </span>
-            <span className={styles.chip} title={'Прослушивания'}>
-              <Headphones size={12} />
-              {formatCount(title.listens)}
-            </span>
-            <span className={styles.chip} title={'Просмотров'}>
-              <Eye size={12} />
-              {formatCount(title.views_count)}
-            </span>
-          </div>
+
+            <div className={styles.quickItem}>
+              <span className={styles.quickLabel}>{'Автор'}</span>
+              <span className={styles.quickValue}>
+                {title.author ? (
+                  <Link href={`/author/${title.author.id}`} title={`Ещё от ${title.author.name}`}>
+                    {title.author.name}
+                  </Link>
+                ) : (
+                  <span className={styles.quickMuted}>{'не указан'}</span>
+                )}
+              </span>
+            </div>
+
+            {title.year != null ? (
+              <div className={styles.quickItem}>
+                <span className={styles.quickLabel}>{'Год'}</span>
+                <span className={styles.quickValue}>{title.year}</span>
+              </div>
+            ) : null}
+
+            {runtime > 0 ? (
+              <div className={styles.quickItem}>
+                <span className={styles.quickLabel}>{'Длительность'}</span>
+                <span className={styles.quickValue}>{formatDuration(runtime)}</span>
+              </div>
+            ) : null}
+
+            {chaptersTotal > 0 ? (
+              <div className={styles.quickItem}>
+                <span className={styles.quickLabel}>{'Глав'}</span>
+                <span className={styles.quickValue}>{chaptersTotal}</span>
+              </div>
+            ) : null}
+
+            <div className={styles.quickItem}>
+              <span className={styles.quickLabel}>{'Прослушиваний'}</span>
+              <span className={styles.quickValue}>{formatCount(title.listens)}</span>
+            </div>
+
+            <div className={styles.quickItem}>
+              <span className={styles.quickLabel}>{'Просмотров'}</span>
+              <span className={styles.quickValue}>{formatCount(title.views_count)}</span>
+            </div>
+          </TabScroller>
 
           {title.genres.length > 0 ? (
-            <div className={styles.genres}>
-              {title.genres.map((g) => (
-                <Link key={g.slug} href={`/catalog?genre=${encodeURIComponent(g.slug)}`} className="pill">
-                  {g.name}
-                </Link>
-              ))}
+            <div className={styles.tagsWrap}>
+              <span className={styles.quickLabel}>{'Теги'}</span>
+              <p
+                ref={tagsRef}
+                className={tagsOpen ? styles.tags : `${styles.tags} ${styles.tagsClamped}`}
+              >
+                {title.genres.map((g) => (
+                  <Link key={g.slug} href={`/catalog?genre=${encodeURIComponent(g.slug)}`}>
+                    {g.name}
+                  </Link>
+                ))}
+              </p>
+              {tagsClipped || tagsOpen ? (
+                <button
+                  type="button"
+                  className={styles.tagsToggle}
+                  onClick={() => setTagsOpen((o) => !o)}
+                  aria-expanded={tagsOpen}
+                >
+                  {tagsOpen ? 'Свернуть' : 'Показать все'}
+                </button>
+              ) : null}
             </div>
           ) : null}
 
@@ -382,11 +449,15 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
             <div className={styles.narrators}>
               <span className={styles.narrLabel}>
                 <Mic size={11} />
-                {'Озвучка'}
+                {title.narrators.length > 1 ? `Чтецы · ${title.narrators.length}` : 'Чтец'}
               </span>
               <div className={styles.narrList}>
                 {title.narrators.map((n) => (
-                  <Link key={n.id} href={`/narrator/${n.slug}`} className={styles.narrItem}>
+                  <Link
+                    key={n.id}
+                    href={`/narrator/${n.slug}`}
+                    className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}`}
+                  >
                     {n.avatar_url ? (
                       <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
                     ) : (
@@ -395,9 +466,6 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
                       </span>
                     )}
                     <span className={styles.narrName}>{n.name}</span>
-                    <span className={styles.narrStatus}>
-                      {NARRATION_STATUS_LABELS[n.narration_status] ?? ''}
-                    </span>
                   </Link>
                 ))}
               </div>
@@ -421,20 +489,8 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
             </div>
           ) : null}
 
-          {restricted ? (
-            <div className={styles.restrictedNotice} role="status">
-              <Lock size={15} />
-              <span>
-                {title.is_nsfw
-                  ? 'Этот тайтл помечен 18+. Войдите в аккаунт, чтобы слушать его и увидеть обложку.'
-                  : 'Этот тайтл содержит чувствительные теги. Войдите в аккаунт, чтобы слушать его и увидеть обложку.'}
-              </span>
-              <Link href="/auth/login" className="btn btn-primary">
-                {'Войти'}
-              </Link>
-            </div>
-          ) : resume ? (
-            <div className={styles.actions}>
+          <div className={styles.actions}>
+            {!restricted && resume ? (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -447,25 +503,18 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
                 )}
                 {resume.continued ? 'Продолжить слушать' : 'Начать слушать'}
               </button>
-              {user ? (
-                <ArchiveDownloadButton
-                  items={archiveItems(title.volumes, title.volumes.length > 1)}
-                  archiveName={title.name}
-                  title="Скачать все главы одним архивом"
-                />
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-
-        <aside className={styles.sideCol}>
-          <div className={styles.favRow}>
+            ) : null}
+            {user && (
             <FavoriteButton
               titleId={title.id}
               favorited={title.my_favorite}
               count={title.favorites_count}
-            />
+              compact
+            />)}
           </div>
+        </div>
+
+        <aside className={styles.sideCol}>
           <LibraryWidget
             titleId={title.id}
             entry={title.my_library}
@@ -486,7 +535,9 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
               my={title.my_rating}
               onRate={user ? (v) => void rate(v) : undefined}
             />
-            <RatingBars distribution={title.rating_distribution} />
+            <div className={styles.ratingBars}>
+              <RatingBars distribution={title.rating_distribution} />
+            </div>
           </div>
         </aside>
       </header>
@@ -505,46 +556,53 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
               const total = volumeDuration(v);
               return (
                 <div key={v.id} className={`glass-panel ${styles.volume}`}>
-                  <button
-                    type="button"
-                    className={styles.volHead}
-                    onClick={() => toggleVolume(v.id)}
-                    aria-expanded={open}
-                  >
-                    <span className={styles.volTitle}>
-                      <span className={styles.volLabel}>{`Том ${v.number}`}</span>
-                      {v.name ? <span className={styles.volName}>{v.name}</span> : null}
-                    </span>
-                    <span className={styles.volMeta}>
-                      <span className={styles.volMetaItem}>
-                        <ListMusic size={12} />
-                        {v.chapters.length === 1
-                          ? `Глав: ${v.chapters.length}`
-                          : `Глав: ${v.chapters.length}`}
+
+                  <div className={styles.volHeadRow}>
+                    <button
+                      type="button"
+                      className={styles.volHead}
+                      onClick={() => toggleVolume(v.id)}
+                      aria-expanded={open}
+                    >
+                      <span className={styles.volTitle}>
+                        <span className={styles.volLabel}>{`Том ${v.number}`}</span>
+                        {v.name ? <span className={styles.volName}>{v.name}</span> : null}
                       </span>
-                      {total > 0 ? (
+                      <span className={styles.volMeta}>
                         <span className={styles.volMetaItem}>
-                          <Clock size={12} />
-                          {formatDuration(total)}
+                          <ListMusic size={12} />
+                          {`Глав: ${v.chapters.length}`}
                         </span>
-                      ) : null}
+                        {total > 0 ? (
+                          <span className={styles.volMetaItem}>
+                            <Clock size={12} />
+                            {formatDuration(total)}
+                          </span>
+                        ) : null}
+                      </span>
+                    </button>
+                    {user ? (
+                      <ArchiveDownloadButton
+                        items={archiveItems([v], false)}
+                        archiveName={`${title.name} — Том ${v.number}`}
+                        label={`Скачать том ${v.number} архивом`}
+                        className={styles.volDownload}
+                        iconOnly
+                      />
+                    ) : null}
+                    <button
+                      type="button"
+                      className={styles.volChev}
+                      onClick={() => toggleVolume(v.id)}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                    >
                       <ChevronDown
                         size={16}
                         className={open ? `${styles.chev} ${styles.chevOpen}` : styles.chev}
                       />
-                    </span>
-                  </button>
-                  {user ? (
-                    <span className={styles.volDownloadRow}>
-                      <ArchiveDownloadButton
-                        items={archiveItems([v], false)}
-                        archiveName={`${title.name} — Том ${v.number}`}
-                        label="Скачать том"
-                        className={styles.volDownload}
-                        title="Скачать том архивом"
-                      />
-                    </span>
-                  ) : null}
+                    </button>
+                  </div>
                   <div className={open ? `${styles.volBody} ${styles.volBodyOpen}` : styles.volBody}>
                     <div className={styles.volInner}>
                       {v.chapters.length === 0 ? (

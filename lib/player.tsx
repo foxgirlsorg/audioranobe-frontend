@@ -1,8 +1,5 @@
 'use client';
 
-// Global audio player state. Owns the single HTMLAudioElement for the whole app.
-// <Player /> (components/Player.tsx) is only the UI on top of this provider.
-
 import React, {
   createContext,
   useCallback,
@@ -23,9 +20,7 @@ interface PlayerContextValue {
   rate: number;
   volume: number;
   sleepRemaining: number | null;
-  /** Extra: the active sleep setting ('chapter' | minutes | null) for UI display. */
   sleep: number | 'chapter' | null;
-  /** Extra: seconds buffered from the start (for the seek bar's buffered track). */
   buffered: number;
   playChapter(id: number): Promise<void>;
   toggle(): void;
@@ -64,14 +59,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const endedRef = useRef<() => void>(() => {});
   const loadSeqRef = useRef(0);
 
-  // ---- progress saving -----------------------------------------------------
-
   const saveProgress = useCallback((keepalive = false, positionOverride?: number) => {
     const cur = currentRef.current;
     const audio = audioRef.current;
     if (!cur || !audio) return;
     const token = getToken();
-    if (!token) return; // guests can play, but no progress saving
+    if (!token) return;
     const pos = positionOverride !== undefined ? positionOverride : audio.currentTime;
     if (!Number.isFinite(pos)) return;
     try {
@@ -85,11 +78,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         keepalive,
       }).catch(() => {});
     } catch {
-      // ignore — progress saving must never break playback
     }
   }, []);
-
-  // ---- audio element (created lazily, client-side only) --------------------
 
   const ensureAudio = useCallback((): HTMLAudioElement => {
     let audio = audioRef.current;
@@ -129,7 +119,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     audio.addEventListener('pause', () => {
       const a = audioRef.current;
       setPlaying(false);
-      // natural chapter end is handled by 'ended'; explicit pause saves here
       if (a && !a.ended && currentRef.current) saveProgress();
     });
     audio.addEventListener('ended', () => endedRef.current());
@@ -139,22 +128,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     return audio;
   }, [saveProgress]);
 
-  // ---- core actions --------------------------------------------------------
-
   const playChapter = useCallback(
     async (id: number) => {
       const audio = ensureAudio();
-      // clicking the chapter that is already loaded just resumes it
       if (currentRef.current && currentRef.current.id === id && audio.src) {
         audio.play().catch(() => {});
         return;
       }
-      // flush progress of whatever was playing before switching
       if (currentRef.current && currentRef.current.id !== id) saveProgress();
 
       const seq = ++loadSeqRef.current;
       const ch = await api<ChapterPlay>(`/chapters/${id}`);
-      if (seq !== loadSeqRef.current) return; // superseded by a newer playChapter call
+      if (seq !== loadSeqRef.current) return;
 
       currentRef.current = ch;
       setCurrent(ch);
@@ -175,7 +160,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
           try {
             audio.currentTime = start;
           } catch {
-            // not seekable yet — playback starts from 0 in that edge case
           }
         };
         audio.addEventListener('loadedmetadata', onMeta);
@@ -183,7 +167,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       try {
         await audio.play();
       } catch {
-        // autoplay blocked or interrupted — user can hit play in the UI
       }
     },
     [ensureAudio, saveProgress]
@@ -212,7 +195,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       try {
         audio.currentTime = clamped;
       } catch {
-        // ignore
       }
       setPosition(clamped);
       saveProgress(false, clamped);
@@ -253,7 +235,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     try {
       localStorage.setItem(RATE_KEY, String(clamped));
     } catch {
-      // ignore
     }
   }, []);
 
@@ -266,7 +247,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     try {
       localStorage.setItem(VOL_KEY, String(clamped));
     } catch {
-      // ignore
     }
   }, []);
 
@@ -300,7 +280,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       try {
         audio.load();
       } catch {
-        // ignore
       }
     }
     currentRef.current = null;
@@ -315,8 +294,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     setSleepRemaining(null);
   }, [saveProgress]);
 
-  // ---- chapter end: save + auto-advance ------------------------------------
-
   const handleEnded = useCallback(() => {
     const cur = currentRef.current;
     if (!cur) return;
@@ -328,7 +305,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     saveProgress(false, endPos);
 
     if (sleepRef.current === 'chapter') {
-      // sleep timer set to "end of chapter": stop here, clear the timer
       sleepRef.current = null;
       setSleepState(null);
       setSleepRemaining(null);
@@ -346,8 +322,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     endedRef.current = handleEnded;
   }, [handleEnded]);
 
-  // ---- persisted rate/volume -----------------------------------------------
-
   useEffect(() => {
     try {
       const r = parseFloat(localStorage.getItem(RATE_KEY) || '');
@@ -361,11 +335,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         setVolumeState(v);
       }
     } catch {
-      // ignore
     }
   }, []);
-
-  // ---- periodic progress save while playing --------------------------------
 
   useEffect(() => {
     if (!playing) return;
@@ -373,15 +344,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     return () => window.clearInterval(iv);
   }, [playing, saveProgress]);
 
-  // ---- save on tab close ----------------------------------------------------
-
   useEffect(() => {
     const handler = () => saveProgress(true);
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [saveProgress]);
-
-  // ---- sleep timer countdown (minutes mode) --------------------------------
 
   useEffect(() => {
     if (typeof sleep !== 'number') return;
@@ -398,8 +365,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     }, 1000);
     return () => window.clearInterval(iv);
   }, [sleep]);
-
-  // ---- keyboard shortcuts ---------------------------------------------------
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -428,8 +393,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [toggle, skip]);
-
-  // ---- body padding while the player bar is visible ------------------------
 
   useEffect(() => {
     document.body.classList.toggle('has-player', !!current);

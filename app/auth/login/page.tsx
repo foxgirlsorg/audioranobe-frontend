@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { errMsg } from '@/lib/toast';
-import { ProviderSection } from '@/components/ProviderAuth';
+import { ProviderSection } from '@/components/ProviderAuth/ProviderAuth';
 import styles from './login.module.css';
 
 function safeNext(raw: string | null): string {
@@ -29,7 +29,6 @@ export default function LoginPage() {
     setNext(safeNext(new URLSearchParams(window.location.search).get('next')));
   }, []);
 
-  // Already signed in — go back where the user came from.
   useEffect(() => {
     if (!loading && user) router.replace(next);
   }, [loading, user, next, router]);

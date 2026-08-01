@@ -25,10 +25,8 @@
   font-weight: 400;
 }
 
+/* Layout now lives in TabScroller; this only positions the strip. */
 .nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   margin-bottom: 2rem;
 }
 

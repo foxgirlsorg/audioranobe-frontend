@@ -1,5 +1,3 @@
-// Thin fetch wrapper for the AudioRanobe PHP API.
-// All frontend data access goes through api() — never construct storage URLs.
 
 export const API_URL: string =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
@@ -8,11 +6,8 @@ const TOKEN_KEY = 'audioranobe_token';
 
 export class ApiError extends Error {
   status: number;
-  /** Machine-readable error slug, when the backend sends one (e.g. 'forbidden_word'). */
   code?: string;
-  /** For 'forbidden_word': the word that tripped the filter. */
   word?: string;
-  /** For 'forbidden_word': dotted path of the offending request-body field. */
   field?: string;
 
   constructor(status: number, message: string, extra?: { code?: string; word?: string; field?: string }) {
@@ -25,7 +20,6 @@ export class ApiError extends Error {
   }
 }
 
-/** True when the request was rejected by the admin-configured word filter. */
 export function isForbiddenWord(e: unknown): e is ApiError {
   return e instanceof ApiError && e.code === 'forbidden_word';
 }
@@ -45,7 +39,6 @@ export function setToken(t: string | null): void {
     if (t) window.localStorage.setItem(TOKEN_KEY, t);
     else window.localStorage.removeItem(TOKEN_KEY);
   } catch {
-    // storage unavailable (private mode etc.) — session-only auth then
   }
 }
 

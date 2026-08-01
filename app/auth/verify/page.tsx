@@ -6,7 +6,7 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg } from '@/lib/toast';
-import Spinner from '@/components/Spinner';
+import Spinner from '@/components/Spinner/Spinner';
 import styles from './page.module.css';
 
 function VerifyInner() {
@@ -26,11 +26,9 @@ function VerifyInner() {
       .then(async () => {
         if (!alive) return;
         setState('done');
-        // Pull the fresh email_verified flag if this browser is signed in.
         try {
           await refresh();
         } catch {
-          // not signed in — the confirmation still stands
         }
       })
       .catch((e) => {

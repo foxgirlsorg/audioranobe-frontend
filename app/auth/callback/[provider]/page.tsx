@@ -8,17 +8,10 @@ import { api } from '@/lib/api';
 import { errMsg } from '@/lib/toast';
 import { useAuth } from '@/lib/auth';
 import type { AuthProvider, Identity, Me } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import { OAUTH_MODE_KEY } from '@/components/ProviderAuth';
+import Spinner from '@/components/Spinner/Spinner';
+import { OAUTH_MODE_KEY } from '@/components/ProviderAuth/ProviderAuth';
 import styles from './page.module.css';
 
-/**
- * Where Google and Discord send the browser back to.
- *
- * The page exists purely to hand code+state to the API and then get out of the
- * way. The API owns state validation; nothing here trusts the query string
- * beyond passing it along.
- */
 export default function OAuthCallbackPage() {
   const params = useParams<{ provider: string }>();
   const search = useSearchParams();
@@ -26,8 +19,6 @@ export default function OAuthCallbackPage() {
   const { adoptSession, refresh } = useAuth();
 
   const [error, setError] = useState<string | null>(null);
-  // React 18 StrictMode mounts effects twice in dev; the state is single-use on
-  // the server, so a second exchange would always fail.
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -66,13 +57,9 @@ export default function OAuthCallbackPage() {
 
         if (res.token && res.user) {
           adoptSession(res.token, res.user);
-          // A provider-created account still has a generated username; send it
-          // through onboarding before dropping the user on the site.
           router.replace(res.user.needs_setup ? '/auth/setup' : '/');
           return;
         }
-        // Link mode: the session we already had is still the right one, but Me
-        // now carries another identity.
         await refresh();
         router.replace('/me/settings');
       } catch (e) {

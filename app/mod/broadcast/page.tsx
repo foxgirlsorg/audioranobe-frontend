@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth';
 import type { Me, Paginated, SearchSuggest } from '@/lib/types';
-import Spinner from '@/components/Spinner';
+import Spinner from '@/components/Spinner/Spinner';
 import { ModShell, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -207,8 +207,6 @@ function SuggestPicker({
 function BroadcastContent() {
   const { toast } = useToast();
   const { user } = useAuth();
-  // A site-wide send is admin-only; moderators may only target a specific user
-  // or the subscribers of one narrator/title.
   const isAdmin = user?.role === 'admin';
   const audiences = isAdmin ? AUDIENCES : AUDIENCES.filter((a) => a.key !== 'all');
   const [audience, setAudience] = useState<Audience>(isAdmin ? 'all' : 'user');

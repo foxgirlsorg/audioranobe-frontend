@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 import { ApiError } from '@/lib/api';
-import Toast, { type ToastKind } from '@/components/Toast';
+import Toast, { type ToastKind } from '@/components/Toast/Toast';
 
 export type { ToastKind };
 
@@ -17,7 +17,6 @@ function genericError(): string {
   return 'Что-то пошло не так';
 }
 
-/** Human-readable message for any thrown value (ApiError-aware). */
 export function errMsg(e: unknown): string {
   if (e instanceof ApiError) return e.message || genericError();
   if (e instanceof Error) return e.message || genericError();
@@ -25,7 +24,6 @@ export function errMsg(e: unknown): string {
   return genericError();
 }
 
-/** Errors linger; confirmations get out of the way faster. */
 const DURATIONS: Record<ToastKind, number> = {
   ok: 4500,
   info: 5500,
@@ -54,8 +52,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }): JSX.
     setItems((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Each Toast owns its own timer (so hover can pause it); the provider only
-  // caps how many are on screen at once.
   const toast = useCallback((msg: string, kind: ToastKind = 'ok') => {
     setItems((prev) => [...prev, { id: idRef.current++, msg, kind }].slice(-MAX_VISIBLE));
   }, []);

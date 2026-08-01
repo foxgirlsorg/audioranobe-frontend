@@ -7,21 +7,11 @@ import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth';
 import type { Me } from '@/lib/types';
-import Spinner from '@/components/Spinner';
+import Spinner from '@/components/Spinner/Spinner';
 import styles from './page.module.css';
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
 
-/**
- * One-time onboarding after a provider sign-up.
- *
- * Google/Discord/Telegram give us a name, not a handle, so the account starts
- * with a generated username like `google_user417293`. This is where the user
- * picks the real one — plus a display name, which has no format rules.
- *
- * The server refuses this endpoint once needs_setup is cleared, so it cannot be
- * used as a second, unrestricted rename route.
- */
 export default function AuthSetupPage() {
   const { user, loading, refresh } = useAuth();
   const router = useRouter();
@@ -38,15 +28,12 @@ export default function AuthSetupPage() {
       router.replace('/auth/login');
       return;
     }
-    // Already set up: nothing to do here.
     if (!user.needs_setup) {
       router.replace('/');
       return;
     }
     if (!seeded) {
       setSeeded(true);
-      // The generated handle is a poor suggestion, so the field starts empty;
-      // the provider's name is a good display-name default, so that one does not.
       setDisplayName(user.display_name || '');
     }
   }, [loading, user, router, seeded]);

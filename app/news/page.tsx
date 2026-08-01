@@ -7,10 +7,10 @@ import { api } from '@/lib/api';
 import type { Announcement, Paginated } from '@/lib/types';
 import { errMsg } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
-import Pagination from '@/components/Pagination';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Markdown from '@/components/Markdown';
+import Pagination from '@/components/Pagination/Pagination';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Markdown from '@/components/Markdown/Markdown';
 import styles from './page.module.css';
 
 export default function NewsPage() {
@@ -97,7 +97,7 @@ export default function NewsPage() {
                   </div>
                 ) : null}
                 <Link href={`/news/${a.slug}`} className={styles.cardMore}>
-                  {'Читать и обсудить'}
+                  {'Читать полностью'}
                 </Link>
               </article>
             ))}

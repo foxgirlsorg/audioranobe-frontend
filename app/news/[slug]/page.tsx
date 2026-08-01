@@ -8,10 +8,11 @@ import { api, ApiError } from '@/lib/api';
 import { errMsg } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
 import type { Announcement } from '@/lib/types';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Markdown from '@/components/Markdown';
-import CommentSection from '@/components/CommentSection';
+import { usePageTitle } from '@/lib/usePageTitle';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Markdown from '@/components/Markdown/Markdown';
+import CommentSection from '@/components/CommentSection/CommentSection';
 import styles from './page.module.css';
 
 export default function NewsItemPage({ params }: { params: { slug: string } }) {
@@ -39,9 +40,7 @@ export default function NewsItemPage({ params }: { params: { slug: string } }) {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    if (item) document.title = `${item.title} — AudioRanobe`;
-  }, [item]);
+  usePageTitle(item?.title);
 
   if (missing) notFound();
 
