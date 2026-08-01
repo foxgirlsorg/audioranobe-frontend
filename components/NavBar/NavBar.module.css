@@ -1,0 +1,599 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.scrolled {
+  background: rgba(16, 16, 18, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: var(--border);
+}
+
+.inner {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ---------- logo ---------- */
+
+.logo {
+  font-size: 17px;
+  font-weight: 300;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  flex: none;
+}
+
+.logoAccent {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------- primary links ---------- */
+
+.links {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.link {
+  padding: 0.45rem 0.7rem;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: var(--accent-hover);
+}
+
+.linkActive {
+  color: #fff;
+}
+
+/* ---------- search ---------- */
+
+.search {
+  position: relative;
+  margin-left: auto;
+  width: 300px;
+  max-width: 32vw;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 14px 8px 34px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  color: var(--text);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted);
+}
+
+.searchInput:focus {
+  border-color: rgba(222, 97, 97, 0.45);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 150;
+  padding: 6px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.groupLabel {
+  padding: 8px 10px 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.emptySug {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.itemActive {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.itemCover {
+  width: 30px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #232326;
+  flex: none;
+  display: block;
+}
+
+.itemAvatar {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #232326;
+  flex: none;
+  display: block;
+}
+
+/* Authors and collections have no artwork — a glyph holds the same column. */
+.itemIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+  flex: none;
+}
+
+.itemBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemName {
+  font-size: 13.5px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemSub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.allResults {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 8px 8px;
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--accent-hover);
+  transition: background 0.15s ease;
+}
+
+.allResults:hover {
+  background: rgba(222, 97, 97, 0.08);
+}
+
+/* ---------- icon buttons ---------- */
+
+.iconBtn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  flex: none;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.iconBtn:hover {
+  color: var(--accent-hover);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.iconBtn svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* ---------- language switcher ---------- */
+
+.langSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  flex: none;
+}
+
+.langBtn {
+  padding: 4px 9px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.langBtn:hover {
+  color: var(--text);
+}
+
+.langBtnActive,
+.langBtnActive:hover {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+.navLang {
+  flex: none;
+}
+
+.overlayLang {
+  margin-top: 2rem;
+  align-self: flex-start;
+  flex: none;
+}
+
+/* ---------- auth area ---------- */
+
+.authArea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+}
+
+.authGhost {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.authBtns {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.userWrap {
+  position: relative;
+}
+
+.avatarBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  padding: 0;
+  display: block;
+  transition: border-color 0.25s ease;
+}
+
+.avatarBtn:hover {
+  border-color: var(--border-hover);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatarFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.userMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 214px;
+  z-index: 150;
+  padding: 6px;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.menuHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 6px;
+}
+
+.menuEyebrow {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.menuName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuSep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 6px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.menuItem svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  flex: none;
+  transition: color 0.15s ease;
+}
+
+.menuItem:hover svg {
+  color: var(--accent-hover);
+}
+
+/* ---------- burger + mobile overlay ---------- */
+
+.burger {
+  display: none;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(12, 12, 14, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  padding: 0 1.5rem 3rem;
+  overflow-y: auto;
+  animation: overlay-in 0.25s ease;
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.overlayHead {
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+}
+
+.overlaySearch {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.overlayLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.15rem;
+  margin-top: 2.25rem;
+}
+
+.overlayLink {
+  font-size: 1.45rem;
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #fff;
+  transition: color 0.2s ease;
+  text-align: left;
+}
+
+.overlayLink:hover {
+  color: var(--accent-hover);
+}
+
+.overlaySep {
+  height: 1px;
+  background: linear-gradient(to right, var(--accent), rgba(222, 97, 97, 0.2), transparent);
+  opacity: 0.6;
+  margin: 2rem 0 1.5rem;
+  flex: none;
+}
+
+.overlaySubLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.95rem;
+}
+
+.overlaySub {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+  text-align: left;
+}
+
+.overlaySub:hover {
+  color: var(--accent-hover);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1023px) {
+  .search {
+    max-width: 24vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .inner {
+    padding-inline: 1rem;
+    gap: 0.5rem;
+  }
+
+  .links,
+  .search,
+  .authBtns,
+  .navLang {
+    display: none;
+  }
+
+  .logo {
+    margin-right: auto;
+  }
+
+  .burger {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .inner {
+    padding-inline: 0.75rem;
+  }
+
+  .logo {
+    font-size: 15px;
+    letter-spacing: 0.28em;
+  }
+
+  .overlayLink {
+    font-size: 1.2rem;
+  }
+
+  .overlaySub {
+    font-size: 0.85rem;
+  }
+
+  .search {
+    max-width: 50vw;
+  }
+}
+
+/* Narrator rows in the account menu carry their avatar where an icon would go. */
+.menuAvatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+}

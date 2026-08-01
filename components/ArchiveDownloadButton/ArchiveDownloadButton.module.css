@@ -1,0 +1,63 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.bar {
+  display: block;
+  width: 120px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent, #de6161);
+  transition: width 0.15s linear;
+}
+
+/* Icon-only progress: the percentage stands in for the icon, same footprint. */
+.pct {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  font-size: 11.5px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.cancel:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+@media (max-width: 640px) {
+  .bar {
+    width: 70px;
+  }
+}

@@ -1,0 +1,360 @@
+.row {
+  padding: 0.6rem 0.85rem;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.row:hover {
+  border-color: var(--border-hover, rgba(222, 97, 97, 0.3));
+}
+
+.rowOpen {
+  border-color: rgba(222, 97, 97, 0.35);
+}
+
+.main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.cover {
+  flex-shrink: 0;
+  width: 60px;
+  height: 90px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  display: block;
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.coverEmpty {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.name {
+  color: var(--text, #e8e8e8);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.name:hover {
+  color: var(--accent, #de6161);
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+}
+
+.author {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 18ch;
+}
+
+.status {
+  color: var(--text-secondary, #9ca3af);
+}
+
+/* Collapsed rows show the note as a single quiet line; the editor shows it in
+   full. Truncating here is what keeps row heights uniform. */
+.note {
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--text-muted, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marks {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.fav {
+  display: inline-flex;
+  color: var(--accent, #de6161);
+}
+
+/* Collapsed-row rating: the bare number, right-aligned so the column lines up
+   down the list. */
+.rating,
+.ratingEmpty {
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 1.6em;
+  text-align: right;
+}
+
+.rating {
+  color: var(--accent, #de6161);
+}
+
+.ratingEmpty {
+  color: var(--text-muted, #4b5563);
+}
+
+/* ---------- stars (editor only) ---------- */
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.star {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+  cursor: default;
+}
+
+.starsLive .star {
+  cursor: pointer;
+  padding: 1px;
+  transition: transform 0.15s ease;
+}
+
+.starsLive .star:hover {
+  transform: scale(1.18);
+}
+
+.starOn {
+  color: var(--accent, #de6161);
+}
+
+.starOff {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: transparent;
+  color: var(--text-muted, #8a8a8a);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.editBtn:hover {
+  color: var(--accent, #de6161);
+  border-color: rgba(222, 97, 97, 0.35);
+}
+
+/* ---------- expanded editor ---------- */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fieldLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+}
+
+/* Custom dropdown. A native <select> hands its option list to the OS, which
+   paints it white with square corners and ignores every rule we write — so the
+   list is ordinary elements we can style to match the panel. */
+
+/* The bespoke status dropdown moved to components/Select. */
+
+.rateRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rateValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent, #de6161);
+  min-width: 1.6em;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.favBtn,
+.removeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: transparent;
+  color: var(--text-muted, #8a8a8a);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.favBtn:hover {
+  color: var(--accent, #de6161);
+  border-color: rgba(222, 97, 97, 0.35);
+}
+
+.favBtnOn {
+  color: var(--accent, #de6161);
+  border-color: rgba(222, 97, 97, 0.35);
+  background: rgba(222, 97, 97, 0.1);
+}
+
+.removeBtn:hover {
+  color: #e5807f;
+  border-color: rgba(229, 128, 127, 0.4);
+}
+
+.favBtn:disabled,
+.removeBtn:disabled,
+.save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.noteBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.noteInput {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text, #e8e8e8);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.noteInput:focus {
+  outline: none;
+  border-color: rgba(222, 97, 97, 0.45);
+}
+
+.noteFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.noteCounter {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #6b7280);
+}
+
+.save {
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid rgba(222, 97, 97, 0.35);
+  background: rgba(222, 97, 97, 0.12);
+  color: var(--accent, #de6161);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .editLabel {
+    display: none;
+  }
+
+  .marks {
+    gap: 0.5rem;
+  }
+
+  .author {
+    display: none;
+  }
+
+  .controls {
+    gap: 0.5rem;
+  }
+
+  .selectBtn {
+    min-width: 8.5rem;
+  }
+}

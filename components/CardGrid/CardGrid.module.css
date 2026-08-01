@@ -1,0 +1,19 @@
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 1.25rem;
+  align-items: stretch;
+}
+
+/*
+ * Phones get exactly two per row, full-bleed. Flex wrapping left a ragged last
+ * row and a gutter of dead space on the right; a two-column grid divides the
+ * screen instead of leaving whatever the card's max-width happened to allow.
+ */
+@media (max-width: 768px) {
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem 0.9rem;
+  }
+}

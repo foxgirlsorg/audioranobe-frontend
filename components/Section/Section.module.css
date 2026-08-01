@@ -1,0 +1,53 @@
+.section {
+  margin: 3rem 0;
+}
+
+.header {
+  margin-bottom: 1.4rem;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a8a);
+  margin-bottom: 0.6rem;
+}
+
+.eyebrowBar {
+  display: inline-block;
+  width: 2.4rem;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    var(--accent, #de6161),
+    rgba(222, 97, 97, 0.2),
+    transparent
+  );
+  border-radius: 9999px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  font-weight: 300;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.accent {
+  color: var(--accent, #de6161);
+  font-weight: 400;
+}
+
+@media (max-width: 768px) {
+  .section {
+    margin: 2.2rem 0;
+  }
+}
