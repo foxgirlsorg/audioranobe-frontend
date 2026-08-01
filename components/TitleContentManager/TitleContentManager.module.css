@@ -203,7 +203,11 @@
   overflow: hidden;
 }
 
+/* The whole header opens the volume. `.volumeHit` is a transparent button laid
+   over the row, under the action buttons — that way the actions keep their own
+   click targets without every one of them needing to stop propagation. */
 .volumeHead {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -211,6 +215,42 @@
   flex-wrap: wrap;
   padding: 0.85rem 1.2rem;
   background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s ease;
+}
+
+.volumeHead:has(.volumeHit:hover) {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.volumeHit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  cursor: pointer;
+}
+
+.volumeTitle,
+.volumeActions,
+.volumeEditForm {
+  position: relative;
+  z-index: 1;
+}
+
+.volumeChev {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 0.35rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.volumeChevOpen {
+  transform: rotate(90deg);
+  color: var(--text);
 }
 
 .volumeTitle {
@@ -219,28 +259,6 @@
   gap: 0.7rem;
   flex-wrap: wrap;
   min-width: 0;
-}
-
-.volumeToggle {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin-right: -0.25rem;
-  border-radius: 6px;
-  color: var(--text-muted);
-  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
-}
-
-.volumeToggle:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text);
-}
-
-.volumeToggleOpen {
-  transform: rotate(90deg);
 }
 
 .volumeNum {

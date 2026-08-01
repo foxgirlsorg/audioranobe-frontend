@@ -778,23 +778,21 @@ export default function TitleContentManager({
                           title="Выбрать все главы тома"
                         />
                       ) : null}
-                      <button
-                        type="button"
-                        className={
-                          openVolumes.has(v.id)
-                            ? `${styles.volumeToggle} ${styles.volumeToggleOpen}`
-                            : styles.volumeToggle
-                        }
-                        onClick={() => toggleVolume(v.id)}
-                        aria-expanded={openVolumes.has(v.id)}
-                        aria-label={openVolumes.has(v.id) ? `Свернуть том ${v.number}` : `Развернуть том ${v.number}`}
-                      >
-                        <ChevronRight size={15} />
-                      </button>
                       <span className={styles.volumeNum}>{`Том ${v.number}`}</span>
                       {v.name ? <span className={styles.volumeName}>{v.name}</span> : null}
                       <span className={styles.volumeCount}>{`Глав: ${v.chapters.length}`}</span>
                     </div>
+                    <button
+                      type="button"
+                      className={styles.volumeHit}
+                      onClick={() => toggleVolume(v.id)}
+                      aria-expanded={openVolumes.has(v.id)}
+                      aria-label={
+                        openVolumes.has(v.id)
+                          ? `Свернуть том ${v.number}`
+                          : `Развернуть том ${v.number}`
+                      }
+                    />
                     <div className={styles.volumeActions}>
                       {isMod && pendingIn(v) > 0 ? (
                         <>
@@ -848,6 +846,16 @@ export default function TitleContentManager({
                       >
                         <Trash2 size={14} />
                       </button>
+                      <span
+                        className={
+                          openVolumes.has(v.id)
+                            ? `${styles.volumeChev} ${styles.volumeChevOpen}`
+                            : styles.volumeChev
+                        }
+                        aria-hidden="true"
+                      >
+                        <ChevronRight size={16} />
+                      </span>
                     </div>
                   </>
                 )}
