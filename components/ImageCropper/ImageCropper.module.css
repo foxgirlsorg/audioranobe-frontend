@@ -1,0 +1,188 @@
+.cropArea {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0c0c0e;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.zoomRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1rem;
+}
+
+.zoomIcon {
+  color: var(--text-muted, #8a8a8a);
+  flex-shrink: 0;
+}
+
+.zoom {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 3px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+}
+
+.zoom::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent, #de6161);
+  border: none;
+  cursor: pointer;
+  transition: box-shadow 0.25s ease;
+}
+
+.zoom::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 12px rgba(222, 97, 97, 0.5);
+}
+
+.zoom::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent, #de6161);
+  border: none;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 1.2rem;
+}
+
+.actionsRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* One height and one minimum width for all three: a <label> and two <button>s
+   size themselves differently from the same padding, and the labels are short
+   enough that a shared floor keeps them from stepping on each other. */
+.cancel,
+.confirm,
+.replace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  min-width: 116px;
+  padding: 0 1rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease,
+    color 0.25s ease;
+}
+
+.cancel,
+.replace {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted, #9a9a9a);
+}
+
+.cancel:hover,
+.replace:hover {
+  color: var(--text, #e8e8e8);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.confirm {
+  border: 1px solid rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.13);
+  color: var(--text, #e8e8e8);
+}
+
+.confirm:hover:not(:disabled) {
+  background: rgba(222, 97, 97, 0.22);
+  border-color: rgba(222, 97, 97, 0.75);
+  box-shadow: 0 0 18px rgba(222, 97, 97, 0.18);
+}
+
+.confirm:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.fileInput {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .cropArea {
+    height: 260px;
+  }
+
+  .zoom::-webkit-slider-thumb,
+  .zoom::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cancel,
+  .confirm,
+  .replace {
+    flex: 1;
+    height: 44px;
+    min-width: 0;
+  }
+
+  .picker {
+    padding: 2rem 1rem;
+  }
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 3rem 1.5rem;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-muted, #8a8a8a);
+  cursor: pointer;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+}
+
+.picker:hover {
+  border-color: rgba(222, 97, 97, 0.45);
+  color: var(--text, #e8e8e8);
+  background: rgba(222, 97, 97, 0.05);
+}
+
+.pickerTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 0.4rem;
+}
+
+.pickerHint {
+  font-size: 11px;
+  color: var(--text-muted, #7a7a7a);
+}
