@@ -16,20 +16,40 @@ import {
   type UserProfile,
 } from '@/lib/types';
 import { formatDate, timeAgo } from '@/lib/format';
-import Spinner from '@/components/Spinner';
-import EmptyState from '@/components/EmptyState';
-import Tabs from '@/components/Tabs';
-import Pagination from '@/components/Pagination';
-import CardGrid from '@/components/CardGrid';
-import TitleCardC from '@/components/TitleCardC';
-import CollectionCardC from '@/components/CollectionCardC';
-import SocialLinks from '@/components/SocialLinks';
+import { useAuth } from '@/lib/auth';
+import { usePageTitle } from '@/lib/usePageTitle';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import LibraryRow from '@/components/LibraryRow/LibraryRow';
+import Tabs from '@/components/Tabs/Tabs';
+import Pagination from '@/components/Pagination/Pagination';
+import CardGrid from '@/components/CardGrid/CardGrid';
+import TitleCardC from '@/components/TitleCardC/TitleCardC';
+import CollectionCardC from '@/components/CollectionCardC/CollectionCardC';
+import SocialLinks from '@/components/SocialLinks/SocialLinks';
+import Markdown from '@/components/Markdown/Markdown';
 import styles from './page.module.css';
 
-const LIBRARY_STATUSES: { key: string; label: string }[] = LIBRARY_STATUS_VALUES.map((k) => ({
-  key: k,
-  label: LIBRARY_STATUS_LABELS[k],
-}));
+const LIBRARY_STATUSES: { key: string; label: string }[] = [
+  { key: 'all', label: 'Все' },
+  ...LIBRARY_STATUS_VALUES.map((k) => ({ key: k, label: LIBRARY_STATUS_LABELS[k] })),
+];
+
+const LIBRARY_EMPTY_COPY: Record<string, string> = {
+  all: 'В библиотеке пока пусто.',
+  planning: 'В планах пока ничего нет.',
+  in_progress: 'Сейчас ничего не слушает.',
+  completed: 'Прослушанных тайтлов пока нет.',
+  dropped: 'Ничего не брошено.',
+};
+
+const OWN_LIBRARY_EMPTY_COPY: Record<string, string> = {
+  all: 'Ваша библиотека пуста. Найдите что-нибудь в каталоге и добавьте в список.',
+  planning: 'В планах пока пусто. Загляните в каталог и выберите, что послушать дальше.',
+  in_progress: 'Сейчас вы ничего не слушаете.',
+  completed: 'Завершённых тайтлов пока нет — они появятся здесь, когда вы что-нибудь дослушаете.',
+  dropped: 'Ничего не брошено. Так держать!',
+};
 
 const STAT_LABELS: { key: keyof UserProfile['stats']; label: string }[] = [
   ...LIBRARY_STATUS_VALUES.map((k) => ({
@@ -88,20 +108,21 @@ function CommentBody({ body }: { body: string }) {
 }
 
 export default function UserProfilePage({ params }: { params: { id: string } }) {
-  // Profiles are addressed by id; the backend still resolves a username here
-  // so links minted before the switch keep working.
+
   const userRef = decodeURIComponent(params.id);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user: viewer } = useAuth();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  usePageTitle(profile ? profile.user.display_name || profile.user.username : null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const tabParam = searchParams.get('tab');
   const statusParam = searchParams.get('status');
   const initialTab = (tabParam === 'comments' || tabParam === 'collections' || tabParam === 'favorites') ? tabParam : 'library';
-  const initialStatus = statusParam && LIBRARY_STATUSES.some(s => s.key === statusParam) ? statusParam : 'planning';
+  const initialStatus = statusParam && LIBRARY_STATUSES.some(s => s.key === statusParam) ? statusParam : 'all';
 
   const [tab, setTab] = useState<'library' | 'comments' | 'collections' | 'favorites'>(initialTab);
   const [libStatus, setLibStatus] = useState(initialStatus);
@@ -155,7 +176,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     };
   }, [userRef]);
 
-  // Per-tab data loading.
   useEffect(() => {
     if (!profile) return;
     let alive = true;
@@ -165,7 +185,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
         if (tab === 'library') {
           const res = await api<Paginated<LibraryEntry>>(
             `/users/${encodeURIComponent(userRef)}/library`,
-            { params: { status: libStatus, page: libPage } }
+            { params: { status: libStatus === 'all' ? undefined : libStatus, page: libPage } }
           );
           if (alive) setLibrary(res);
         } else if (tab === 'comments') {
@@ -174,6 +194,12 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             { params: { page: comPage } }
           );
           if (alive) setComments(res);
+        } else if (tab === 'favorites') {
+          const res = await api<Paginated<TitleCard>>(
+            `/users/${encodeURIComponent(userRef)}/favorites`,
+            { params: { page: favPage } }
+          );
+          if (alive) setFavorites(res);
         } else {
           const res = await api<Paginated<CollectionCard>>('/collections', {
             params: { user: profile.user.username, page: colPage },
@@ -220,16 +246,43 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
   const { user, stats } = profile;
 
+  const canEditLibrary =
+    viewer != null && (viewer.id === user.id || viewer.role === 'admin');
+  const isOwnProfile = viewer != null && viewer.id === user.id;
+  const libraryTotal = LIBRARY_STATUS_VALUES.reduce(
+    (sum, k) => sum + (stats[k as keyof UserProfile['stats']] ?? 0),
+    0
+  );
+
+  function handleEntryChange(titleId: number, next: LibraryEntry) {
+    setLibrary((prev) =>
+      prev
+        ? { ...prev, items: prev.items.map((e) => (e.title.id === titleId ? next : e)) }
+        : prev
+    );
+  }
+
+  function handleEntryRemove(titleId: number) {
+    setLibrary((prev) =>
+      prev
+        ? {
+            ...prev,
+            items: prev.items.filter((e) => e.title.id !== titleId),
+            total: Math.max(0, prev.total - 1),
+          }
+        : prev
+    );
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.banner} aria-hidden="true">
         {user.cover_url ? (
           <img src={user.cover_url} alt="" className={styles.bannerImg} />
-        ) : user.avatar_url ? (
-          <img src={user.avatar_url} alt="" className={`${styles.bannerImg} ${styles.bannerBlur}`} />
         ) : (
           <div className={styles.bannerEmpty}>
             <span className={styles.bannerGlow} />
+            <img src="/foxgirl_user.svg" className={styles.bannerFoxgirl} alt=""/>
           </div>
         )}
         <div className={styles.bannerShade} />
@@ -251,10 +304,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             {user.role === 'admin' ? <span className="badge">Админ</span> : null}
             {user.role === 'moderator' ? <span className="badge">Модератор</span> : null}
           </h1>
-          {/* The handle stays visible even when a display name is set — it is
-              what someone needs in order to @mention this person. */}
-          {user.display_name ? <div className={styles.handle}>@{user.username}</div> : null}
-          <div className={styles.since}>{`На сайте с ${formatDate(user.created_at)}`}</div>
+          <div className={styles.headSub}>
+            {user.display_name ? <span>@{user.username}</span> : null}
+            <span className={styles.metaDot} aria-hidden="true" />
+            <span>{`На сайте с ${formatDate(user.created_at)}`}</span>
+          </div>
           <SocialLinks urls={user.socials} />
         </div>
       </header>
@@ -262,46 +316,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
       {user.bio ? (
         <div className={`glass-panel ${styles.bioPanel}`}>
           <span className="eyebrow">О себе</span>
-          <p className={styles.bio}>{user.bio}</p>
+          <div className={styles.bio}>
+            <Markdown source={user.bio} />
+          </div>
         </div>
       ) : null}
-
-      <div className={styles.statsRow} aria-label="Статистика профиля">
-        {STAT_LABELS.map((s) => {
-          const isLibraryStatus = s.key !== 'comments' && s.key !== 'favorites';
-          const isActive = isLibraryStatus
-            ? tab === 'library' && libStatus === s.key
-            : s.key === 'favorites'
-              ? tab === 'favorites'
-              : tab === 'comments';
-          return (
-            <button
-              key={s.key}
-              type="button"
-              className={`${styles.statChip}${isActive ? ` ${styles.statChipActive}` : ''}`}
-              onClick={() => {
-                if (isLibraryStatus) {
-                  updateUrl('library', s.key);
-                  setTab('library');
-                  setLibStatus(s.key);
-                  setLibPage(1);
-                } else if (s.key === 'favorites') {
-                  updateUrl('favorites');
-                  setTab('favorites');
-                  setFavPage(1);
-                } else {
-                  updateUrl('comments');
-                  setTab('comments');
-                  setComPage(1);
-                }
-              }}
-            >
-              <span className={styles.statValue}>{stats[s.key]}</span>
-              <span className={styles.statLabel}>{s.label}</span>
-            </button>
-          );
-        })}
-      </div>
 
       <div className={styles.tabsWrap}>
         <Tabs
@@ -322,20 +341,35 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
       {tab === 'library' ? (
         <div className={styles.tabBody}>
-          <div className={styles.subTabs}>
-            <Tabs
-              tabs={LIBRARY_STATUSES.map((s) => ({
-                key: s.key,
-                label: s.label,
-                count: stats[s.key as keyof UserProfile['stats']],
-              }))}
-              active={libStatus}
-              onChange={(k) => {
-                setLibStatus(k);
-                setLibPage(1);
-                updateUrl('library', k);
-              }}
-            />
+
+          <div className={styles.statusRail} role="tablist" aria-label="Список в библиотеке">
+            {LIBRARY_STATUSES.map((s) => {
+              const count =
+                s.key === 'all'
+                  ? libraryTotal
+                  : stats[s.key as keyof UserProfile['stats']] ?? 0;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={s.key === libStatus}
+                  className={
+                    s.key === libStatus
+                      ? `${styles.statusChip} ${styles.statusChipActive}`
+                      : styles.statusChip
+                  }
+                  onClick={() => {
+                    setLibStatus(s.key);
+                    setLibPage(1);
+                    updateUrl('library', s.key);
+                  }}
+                >
+                  {s.label}
+                  <span className={styles.statusCount}>{count}</span>
+                </button>
+              );
+            })}
           </div>
           {tabLoading || !library ? (
             <div className={styles.center}>
@@ -345,22 +379,28 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             <EmptyState
               icon={Library}
               title="Здесь пусто"
-              body={`У ${user.username} нет тайтлов в этом списке.`}
+              body={
+                isOwnProfile
+                  ? OWN_LIBRARY_EMPTY_COPY[libStatus]
+                  : LIBRARY_EMPTY_COPY[libStatus]
+              }
             />
           ) : (
             <>
-              <CardGrid>
+
+              <div className={styles.entries}>
                 {library.items.map((e) => (
-                  <div key={e.title.id}>
-                    <TitleCardC title={e.title} />
-                    {e.note ? (
-                      <div className={styles.libNote}>
-                        <span className={styles.libNoteText}>{e.note}</span>
-                      </div>
-                    ) : null}
-                  </div>
+                  <LibraryRow
+                    key={e.title.id}
+                    entry={e}
+                    userId={user.id}
+                    canEdit={canEditLibrary}
+                    isOwnShelf={isOwnProfile}
+                    onChange={(next) => handleEntryChange(e.title.id, next)}
+                    onRemove={() => handleEntryRemove(e.title.id)}
+                  />
                 ))}
-              </CardGrid>
+              </div>
               <Pagination
                 page={library.page}
                 total={library.total}
@@ -388,13 +428,14 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             <>
               <div className={styles.commentList}>
                 {comments.items.map((c) => (
-                  <article key={c.id} className={`glass-panel ${styles.commentCard}`}>
+                  <Link
+                    key={c.id}
+                    href={`${c.target.link || ''}#comment-${c.id}`}
+                    className={`glass-panel ${styles.commentCard}`}
+                  >
                     <div className={styles.commentMeta}>
                       <span className={styles.commentTargetLabel}>
-                        {'к'}{' '}
-                        <Link href={c.target.link || '#'} className={styles.commentTarget}>
-                          {c.target.name || c.target.type}
-                        </Link>
+                        {'к'} <span className={styles.commentTarget}>{c.target.name || c.target.type}</span>
                       </span>
                       <span className={styles.commentWhen}>{timeAgo(c.created_at)}</span>
                     </div>
@@ -418,7 +459,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                       </span>
                       {c.updated_at ? <span className={styles.edited}>изменено</span> : null}
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
               <Pagination
