@@ -207,7 +207,7 @@ export default function ProviderAuth({
             disabled={busy !== null}
             onClick={() => (p === 'telegram' ? void startTelegram() : void startOAuth(p))}
           >
-            {busy === p ? <Spinner size={14} /> : <Mark provider={p} />}
+            {busy === p ? <Spinner size={14} inline /> : <Mark provider={p} />}
             {mode === 'link' && (
                 <span>
                   Привязать {LABELS[p]}

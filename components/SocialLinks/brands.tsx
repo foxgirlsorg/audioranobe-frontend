@@ -21,10 +21,13 @@ export function PatreonIcon({ size = 18 }: IconProps) {
 
 export function TelegramIcon({ size = 18 }: IconProps) {
   return (
+    // viewBox cropped to the plane's own bounding box (square, so it is not
+    // stretched): the source glyph is a 455px card with the plane occupying the
+    // middle, which rendered as a small plane surrounded by nothing.
     <svg
       width={size}
       height={size}
-      viewBox="0 0 455 455"
+      viewBox="70 70 315 315"
       fill="currentColor"
       fillRule="evenodd"
       clipRule="evenodd"
