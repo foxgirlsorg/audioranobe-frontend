@@ -9,6 +9,7 @@ import {
   LogIn,
   MessageSquare,
   Pencil,
+  RotateCcw,
   Trash2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -361,6 +362,7 @@ function NestedComment({
   editingId,
   currentUserId,
   canModerate,
+  isAdmin,
   flashId,
   expandedSet,
   onToggleExpand,
@@ -368,6 +370,7 @@ function NestedComment({
   onReply,
   onEdit,
   onDelete,
+  onRestore,
   onSubmitReply,
   onSubmitEdit,
 }: {
@@ -378,6 +381,7 @@ function NestedComment({
   editingId: number | null;
   currentUserId: number | null;
   canModerate: boolean;
+  isAdmin: boolean;
   flashId: number | null;
   expandedSet: Set<number>;
   onToggleExpand: (id: number) => void;
@@ -385,6 +389,7 @@ function NestedComment({
   onReply: (id: number | null) => void;
   onEdit: (id: number | null) => void;
   onDelete: (c: Comment) => void;
+  onRestore: (c: Comment) => void;
   onSubmitReply: (body: string, parentId: number) => Promise<boolean>;
   onSubmitEdit: (id: number, body: string) => Promise<boolean>;
 }) {
@@ -432,7 +437,14 @@ function NestedComment({
         </header>
 
         {comment.is_deleted ? (
-          <div className={styles.deletedBody}>[удалено]</div>
+          isAdmin ? (
+            <>
+              <div className={styles.deletedBody}>[удалено] — видно только администрации</div>
+              <CommentBody body={comment.body} />
+            </>
+          ) : (
+            <div className={styles.deletedBody}>[удалено]</div>
+          )
         ) : editingId === comment.id ? (
           <Composer
             initial={comment.body}
@@ -445,7 +457,20 @@ function NestedComment({
           <CommentBody body={comment.body} />
         )}
 
-        {!comment.is_deleted && editingId !== comment.id ? (
+        {comment.is_deleted ? (
+          isAdmin ? (
+            <footer className={styles.actions}>
+              <button
+                type="button"
+                className={styles.actionBtn}
+                onClick={() => onRestore(comment)}
+              >
+                <RotateCcw size={12} />
+                Восстановить
+              </button>
+            </footer>
+          ) : null
+        ) : editingId !== comment.id ? (
           <footer className={styles.actions}>
             <span className={styles.votes}>
               <button
@@ -548,6 +573,7 @@ function NestedComment({
                     editingId={editingId}
                     currentUserId={currentUserId}
                     canModerate={canModerate}
+                    isAdmin={isAdmin}
                     flashId={flashId}
                     expandedSet={expandedSet}
                     onToggleExpand={onToggleExpand}
@@ -555,6 +581,7 @@ function NestedComment({
                     onReply={onReply}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onRestore={onRestore}
                     onSubmitReply={onSubmitReply}
                     onSubmitEdit={onSubmitEdit}
                   />
@@ -586,6 +613,7 @@ export function CommentSection({
 }) {
   const { user, isMod } = useAuth();
   const { toast } = useToast();
+  const isAdmin = user?.role === 'admin';
 
   const [items, setItems] = useState<Comment[]>([]);
   const [total, setTotal] = useState(0);
@@ -688,6 +716,12 @@ export function CommentSection({
 
     const roots: Comment[] = [];
     for (const c of items) {
+      // Deleted root comments with no replies are invisible to everyone but
+      // admins — a thread nobody can answer has nothing left to show. The
+      // server already filters them out; this is a defensive second pass.
+      if (c.is_deleted && !isAdmin && c.parent_id == null && !(directChildren.get(c.id)?.length)) {
+        continue;
+      }
       if (c.parent_id == null || !byId.has(c.parent_id)) {
         roots.push(c);
         continue;
@@ -699,7 +733,7 @@ export function CommentSection({
 
     for (const arr of directChildren.values()) arr.sort((a, b) => a.id - b.id);
     return { roots, directChildren, byId };
-  }, [items]);
+  }, [items, isAdmin]);
 
   const hasMore = page < Math.ceil(total / PER_PAGE);
 
@@ -857,6 +891,16 @@ export function CommentSection({
     }
   }
 
+  async function restoreComment(c: Comment) {
+    try {
+      await api(`/mod/trash/comment/${c.id}/restore`, { method: 'POST' });
+      patch(c.id, { is_deleted: false });
+      toast('Комментарий восстановлен', 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+  }
+
   function toggleReply(id: number | null) {
     if (id != null && !user) {
       toast('Войдите, чтобы ответить', 'error');
@@ -943,6 +987,7 @@ export function CommentSection({
                   editingId={editingId}
                   currentUserId={user ? user.id : null}
                   canModerate={isMod}
+                  isAdmin={isAdmin}
                   flashId={flashId}
                   expandedSet={expandedComments}
                   onToggleExpand={toggleExpand}
@@ -950,6 +995,7 @@ export function CommentSection({
                   onReply={toggleReply}
                   onEdit={toggleEdit}
                   onDelete={(c) => setToDelete(c)}
+                  onRestore={(c) => void restoreComment(c)}
                   onSubmitReply={(b, parentId) => post(b, parentId)}
                   onSubmitEdit={saveEdit}
                 />
@@ -980,8 +1026,8 @@ export function CommentSection({
         title="Удалить комментарий"
         body={
           toDelete && user && toDelete.user && toDelete.user.id !== user.id
-            ? 'Удалить этот комментарий как модератор? Вместо него будет показано [удалено].'
-            : 'Удалить ваш комментарий? Вместо него будет показано [удалено].'
+            ? 'Удалить этот комментарий как модератор? Он будет заменён на [удалено] и скрыт от всех, кроме администрации.'
+            : 'Удалить ваш комментарий? Он будет заменён на [удалено] и скрыт от всех, кроме администрации.'
         }
         danger
       />
