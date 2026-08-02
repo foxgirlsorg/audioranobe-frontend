@@ -19,6 +19,7 @@ const TABS: { href: string; label: string; adminOnly?: boolean }[] = [
   { href: '/mod/authors', label: 'Авторы', adminOnly: true },
   { href: '/mod/dmca', label: 'DMCA', adminOnly: true },
   { href: '/mod/words', label: 'Стоп-слова', adminOnly: true },
+  { href: '/mod/usernames', label: 'Имена', adminOnly: true },
   { href: '/mod/trash', label: 'Корзина' },
   { href: '/mod/announcements', label: 'Объявления', adminOnly: true },
   { href: '/mod/broadcast', label: 'Рассылка' },

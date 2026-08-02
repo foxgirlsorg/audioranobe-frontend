@@ -417,6 +417,14 @@ export interface JobsPage extends Paginated<Job> {
   active: number;
 }
 
+export interface ReservedUsername {
+  id: number;
+  username: string;
+  note: string;
+  created_by_username: string | null;
+  created_at: string;
+}
+
 export interface Paginated<T> {
   items: T[];
   page: number;
