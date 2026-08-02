@@ -49,9 +49,9 @@ export default function RulesPage() {
 
   return (
     <div className={styles.wrap}>
-      <Link href="/legal" className="back-link">
+      <Link href="/" className="back-link">
         <ArrowLeft size={14} />
-        {'Правовая информация'}
+        {'На главную'}
       </Link>
 
       <h1 className={styles.title}>
