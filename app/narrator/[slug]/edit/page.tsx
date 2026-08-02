@@ -160,14 +160,14 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
       });
       if (res.applied) {
         toast('Изменения применены');
+        // Re-fetch rather than patch the local copy by hand: the hand-written
+        // patch left out is_ai and is_verified, and the effect that seeds the
+        // form from `narrator` then flipped both switches back off — the mark
+        // was saved, the toggle just said otherwise.
+        await loadNarrator();
       } else {
         toast('Отправлено на модерацию');
       }
-      setNarrator((prev) =>
-        prev
-          ? { ...prev, name: name.trim(), bio, socials: cleaned, is_self: isSelf, admin_contact: isSelf ? adminContact : null }
-          : prev
-      );
     } catch (err) {
       toast(errMsg(err), 'error');
     } finally {
