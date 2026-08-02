@@ -1,8 +1,10 @@
 /* The site's on/off switch. See Toggle.tsx. */
 
+/* Centred, not top-aligned: with a label and a hint the switch belongs between
+   the two lines rather than beside the first one. */
 .wrap {
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.65rem;
   cursor: pointer;
   user-select: none;
@@ -26,7 +28,6 @@
   position: relative;
   width: 36px;
   height: 20px;
-  margin-top: 1px;
   flex-shrink: 0;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.12);
