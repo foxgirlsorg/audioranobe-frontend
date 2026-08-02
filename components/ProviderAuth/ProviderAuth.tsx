@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, Send, X } from 'lucide-react';
+import { ExternalLink, X } from 'lucide-react';
+import { TelegramIcon } from '@/components/SocialLinks/brands';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth';
@@ -52,7 +53,11 @@ function DiscordMark() {
 function Mark({ provider }: { provider: AuthProvider }) {
   if (provider === 'google') return <GoogleMark />;
   if (provider === 'discord') return <DiscordMark />;
-  return <Send size={16} color="#2AABEE" />;
+  return (
+    <span style={{ color: '#2AABEE', display: 'inline-flex' }}>
+      <TelegramIcon size={16} />
+    </span>
+  );
 }
 
 export function useAuthProviders(): AuthProvider[] {
