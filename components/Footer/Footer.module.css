@@ -145,8 +145,25 @@
     padding-bottom: 1.5rem;
   }
 
+  /* `flex: 1 1 320px` is a 320px *height* once the container turns into a
+     column — that was the empty band above the links. */
+  .brand {
+    flex: none;
+    max-width: none;
+    width: 100%;
+  }
+
+  /* Two even columns rather than three uneven ones squeezed onto a phone; the
+     contacts, whose labels are longest, take the full width underneath. */
   .cols {
-    gap: 1.75rem 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.6rem 1rem;
+    width: 100%;
+  }
+
+  .col:last-child {
+    grid-column: 1 / -1;
   }
 
   .bottom {
