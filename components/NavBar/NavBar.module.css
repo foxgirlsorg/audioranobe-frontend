@@ -51,6 +51,7 @@
 .links {
   display: flex;
   gap: 0.15rem;
+  flex: none;
 }
 
 .link {
@@ -74,11 +75,17 @@
 
 /* ---------- search ---------- */
 
+/*
+ * Fixed width, deliberately. It used to be capped at a vw fraction, so between
+ * about 1044px and the mobile breakpoint the field shrank a little further with
+ * every pixel until the placeholder no longer fit. Below 1044 the primary links
+ * go instead — they are one tap away in the burger, the search box is not.
+ */
 .search {
   position: relative;
   margin-left: auto;
   width: 300px;
-  max-width: 32vw;
+  flex: none;
 }
 
 .searchIcon {
@@ -402,6 +409,14 @@
   white-space: nowrap;
 }
 
+.menuNarratorName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .menuSep {
   height: 1px;
   background: var(--border);
@@ -534,9 +549,36 @@
 
 /* ---------- responsive ---------- */
 
-@media (max-width: 1023px) {
-  .search {
-    max-width: 24vw;
+/*
+ * Measured: logo + links + a 300px search + the signed-out auth buttons need a
+ * 1172px viewport. Below that the links go rather than the search — they are one
+ * tap away in the burger, and a search field that shrinks with every pixel stops
+ * fitting its own placeholder long before the breakpoint.
+ */
+@media (max-width: 1179px) {
+  .links {
+    display: none;
+  }
+}
+
+/*
+ * The signed-out auth buttons are 240px of the row, and below ~880 they no
+ * longer fit beside the search. They fold into the burger — which already
+ * carries Войти and Регистрация — a step before the rest of the bar does, so
+ * the search survives all the way down to the mobile view.
+ */
+@media (max-width: 899px) {
+  .authBtns,
+  .navLang {
+    display: none;
+  }
+
+  .burger {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
   }
 }
 
