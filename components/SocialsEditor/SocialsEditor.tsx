@@ -35,7 +35,7 @@ export function SocialsEditor({
   return (
     <div className={styles.editor}>
       {urls.length === 0 ? (
-        <p className={styles.empty}>{'Пока нет ссылок. Добавьте свои соцсети, чтобы вас нашли.'}</p>
+        <p className={styles.empty}>{'Пока нет ссылок.'}</p>
       ) : null}
 
       {urls.map((u, i) => {

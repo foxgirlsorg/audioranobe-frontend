@@ -410,9 +410,6 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         {narrators.length > 0 ? (
           <div className={styles.field}>
             <span className={styles.label}>Статус озвучки</span>
-            <p className={styles.formNote}>
-              Свой статус для каждого чтеца, отдельно от статуса самого тайтла.
-            </p>
             <div className={styles.narrationList}>
               {narrators.map((n) => (
                 <div key={n.id} className={styles.narrationRow}>
@@ -455,7 +452,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             disabled={aiLocked && !isMod}
             onChange={setIsAi}
             label="Озвучено ИИ"
-            hint="Отметьте, если главы озвучены синтезированным голосом. На обложке появится метка."
+            hint="Отметьте, если главы озвучены синтезированным голосом."
           />
         </div>
 
@@ -467,8 +464,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             label="Материал 18+"
             hint={
               nsfwLocked && !isAdmin
-                ? 'Отметка 18+ уже установлена. Снять её может только администратор через панель модерации.'
-                : 'После включения отметку нельзя снять самостоятельно — только через администратора. Тайтл останется виден всем, но слушать и смотреть обложку смогут только зарегистрированные пользователи.'
+                ? 'Отметка 18+ уже установлена. Снять её может только администратор.'
+                : 'После включения отметку нельзя снять самостоятельно — только через администратора.'
             }
           />
         </div>
@@ -502,7 +499,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
           setConfirmNsfw(false);
         }}
         title="Пометить как 18+"
-        body="Это действие необратимо: снять отметку 18+ сможет только администратор. Тайтл останется в каталоге, но незарегистрированные пользователи не смогут его слушать, а обложка будет размыта."
+        body="Это действие необратимо: снять отметку 18+ сможет только администратор."
         danger
       />
     </div>

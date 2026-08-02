@@ -60,10 +60,6 @@ export default function LoginPage() {
       <div className={styles.glowSpot} aria-hidden="true" />
       <div className={`glass-panel ${styles.card}`}>
         <span className={styles.topBar} aria-hidden="true" />
-        <Link href="/" className={styles.logo}>
-          AUDIO<span className={styles.logoAccent}>RANOBE</span>
-        </Link>
-        <span className="eyebrow">{'С возвращением'}</span>
         <h1 className={styles.title}>
           {'Вход'} <span className={styles.titleAccent}>{'в аккаунт'}</span>
         </h1>

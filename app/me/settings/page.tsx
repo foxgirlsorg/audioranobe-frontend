@@ -438,36 +438,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {emailVerificationOn ? (
-          <div
-            className={
-              user.email_verified
-                ? `${styles.verifyRow} ${styles.verifyOk}`
-                : styles.verifyRow
-            }
-          >
-            {user.email_verified ? (
-              <>
-                <ShieldCheck size={15} />
-                <span>{'Почта подтверждена'}</span>
-              </>
-            ) : (
-              <>
-                <MailWarning size={15} />
-                <span>{'Почта не подтверждена — проверьте входящие.'}</span>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  disabled={resending}
-                  onClick={() => void resendVerification()}
-                >
-                  {resending ? 'Отправляем…' : 'Отправить ещё раз'}
-                </button>
-              </>
-            )}
-          </div>
-        ) : null}
-
         <div className={styles.field}>
           <label className={styles.label} htmlFor="settings-display">
             {'Отображаемое имя'}
@@ -481,7 +451,7 @@ export default function SettingsPage() {
             onChange={(e) => setDisplayName(e.target.value)}
           />
           <p className={styles.fieldHint}>
-            {'Любые символы, до 40 знаков. Пусто — будет показан логин.'}
+            {'Любые символы, до 40 знаков. Если оставить пустым, будет показан логин.'}
           </p>
         </div>
 
@@ -498,11 +468,8 @@ export default function SettingsPage() {
             autoComplete="username"
           />
           <p className={styles.fieldHint}>
-            {'Адрес страницы и упоминания: /user/'}
+            {'audioranobe.com/user/'}
             {username || '…'}
-            {', @'}
-            {username || '…'}
-            {'. Латиница, цифры и подчёркивание.'}
           </p>
         </div>
 
@@ -512,7 +479,7 @@ export default function SettingsPage() {
             value={bio}
             onChange={setBio}
             maxLength={2000}
-            placeholder={'Расскажите, что вы слушаете…'}
+            placeholder={'Расскажите что-нибудь…'}
           />
         </div>
 
@@ -539,7 +506,7 @@ export default function SettingsPage() {
           <div>
             <h2 className={styles.panelTitle}>{'Аватар и обложка'}</h2>
             <p className={styles.panelHint}>
-              {'Аватар — квадратный, обложка — широкий баннер 3:1 в вашем профиле.'}
+              {'Картиночки.'}
             </p>
           </div>
         </div>
@@ -823,7 +790,7 @@ export default function SettingsPage() {
           <div>
             <h2 className={styles.panelTitle}>{'Контент'}</h2>
             <p className={styles.panelHint}>
-              {'Скрытые тайтлы не появляются в каталоге, поиске, на главной и в рекомендациях. По прямой ссылке они по-прежнему открываются.'}
+              {'Скрытые тайтлы не появляются в каталоге, поиске, на главной и в рекомендациях.'}
             </p>
           </div>
         </div>
@@ -860,7 +827,7 @@ export default function SettingsPage() {
                 <div className={styles.prefText}>
                   <span className={styles.prefLabel}>{`Скрывать «${g.name}»`}</span>
                   <span className={styles.prefHint}>
-                    {'Чувствительный тег — по умолчанию показывается'}
+                    {'Тег помечен администрацией — по умолчанию показывается'}
                   </span>
                 </div>
                 <button

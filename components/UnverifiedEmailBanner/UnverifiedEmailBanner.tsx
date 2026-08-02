@@ -30,7 +30,7 @@ export default function UnverifiedEmailBanner() {
     <div className={styles.banner} role="status">
       <MailWarning size={16} className={styles.icon} />
       <span className={styles.text}>
-        Почта не подтверждена — восстановить пароль по ней не получится.{' '}
+        Почта не подтверждена — вы не сможете восстановить пароль в случае его потери.{' '}
         <Link href="/me/settings" className={styles.link}>
           Подтвердить
         </Link>

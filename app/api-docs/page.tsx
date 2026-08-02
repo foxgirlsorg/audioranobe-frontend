@@ -148,13 +148,7 @@ const GROUPS: Group[] = [
       { path: '/users/{id}/comments', desc: 'Комментарии пользователя.', params: PAGING },
     ],
   },
-  {
-    title: 'Правовые документы',
-    endpoints: [
-      { path: '/legal/rules', desc: 'Правила сервиса.' },
-      { path: '/legal/{type}', desc: 'privacy или terms.' },
-    ],
-  },
+
 ];
 
 function urlFor(path: string): string {
@@ -186,11 +180,9 @@ export default function ApiDocsPage() {
     <div className={styles.wrap}>
       <span className="eyebrow">{'Для разработчиков'}</span>
       <h1 className={styles.title}>
-        {'Публичное'} <span className={styles.titleAccent}>{'API'}</span>
+        {'документация'} <span className={styles.titleAccent}>{'API'}</span>
       </h1>
-      <p className={styles.subtitle}>
-        {'Ниже — GET-запросы каталога AudioRanobe. Их можно вызывать из браузера, скрипта или приложения. Запросы на запись здесь не описаны.'}
-      </p>
+
 
       <section className={`glass-panel ${styles.panel}`}>
         <h2 className={styles.panelTitle}>{'Базовый адрес'}</h2>
@@ -199,10 +191,10 @@ export default function ApiDocsPage() {
           <CopyButton text={API_BASE} />
         </div>
         <p className={styles.note}>
-          {'Все пути ниже дописываются к этому адресу. Ответы — JSON в UTF-8; ошибки приходят как {"error": "текст"} с соответствующим HTTP-статусом.'}
+          {'Ответы — JSON в UTF-8; ошибки приходят как {"error": "текст"} с соответствующим HTTP-статусом.'}
         </p>
 
-        <h2 className={styles.panelTitle}>{'Пример'}</h2>
+        <h2 className={styles.panelTitle}>{'Пример запроса'}</h2>
         <div className={styles.codeRow}>
           <code className={styles.code}>{`${API_BASE}/titles?sort=new&per_page=5`}</code>
           <CopyButton text={`${API_BASE}/titles?sort=new&per_page=5`} />
@@ -253,13 +245,6 @@ export default function ApiDocsPage() {
         </section>
       ))}
 
-      <p className={styles.footNote}>
-        {'Материалы каталога принадлежат их правообладателям. Вопросы об использовании — через '}
-        <Link href="/dmca" className={styles.footLink}>
-          {'страницу DMCA'}
-        </Link>
-        {'.'}
-      </p>
     </div>
   );
 }

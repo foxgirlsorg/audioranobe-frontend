@@ -99,10 +99,6 @@ export default function RegisterPage() {
       <div className={styles.glowSpot} aria-hidden="true" />
       <div className={`glass-panel ${styles.card}`}>
         <span className={styles.topBar} aria-hidden="true" />
-        <Link href="/" className={styles.logo}>
-          AUDIO<span className={styles.logoAccent}>RANOBE</span>
-        </Link>
-        <span className="eyebrow">{'Присоединяйтесь к библиотеке'}</span>
         <h1 className={styles.title}>
           {'Создать'} <span className={styles.titleAccent}>{'аккаунт'}</span>
         </h1>
@@ -128,7 +124,7 @@ export default function RegisterPage() {
                 setUsername(e.target.value);
                 clearError('username');
               }}
-              placeholder={'listener_01'}
+              placeholder={'iloveranobe228'}
               aria-invalid={!!errors.username}
             />
             {errors.username ? (
@@ -153,7 +149,7 @@ export default function RegisterPage() {
                 setDisplayName(e.target.value);
                 clearError('displayName');
               }}
-              placeholder={'Как вас показывать'}
+              placeholder={'Как вас называть'}
               aria-invalid={!!errors.displayName}
             />
             {errors.displayName ? (

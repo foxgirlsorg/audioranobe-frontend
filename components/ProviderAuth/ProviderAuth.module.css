@@ -55,6 +55,16 @@
   cursor: default;
 }
 
+.btn.auth {
+  width: unset;
+  padding: 0.7rem 0.7rem;
+}
+
+.grid.auth {
+  flex-direction: row;
+  justify-content: center;
+}
+
 /* ------------------------------------------------------------- telegram */
 
 .tgPanel {

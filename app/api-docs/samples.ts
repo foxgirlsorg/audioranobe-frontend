@@ -16,8 +16,8 @@ const TITLE_CARD = `{
         { "id": 1, "slug": "fantasy", "name": "Фэнтези", "is_sensitive": false }
       ],
       "is_nsfw": false,              // отметка 18+
-      "has_sensitive_genre": false,  // есть тег, помеченный чувствительным
-      "is_restricted": true,         // контент скрыт для этого запроса: размывайте обложку
+      "has_sensitive_genre": false,  // есть тег, помеченный для скрытия
+      "is_restricted": true,         // контент нужно скрывать
       "is_deleted": false
     }`;
 
@@ -439,5 +439,4 @@ export const SAMPLE_PATH: Record<string, string> = {
   '/users/{id}/library': '/users/1/library',
   '/users/{id}/favorites': '/users/1/favorites',
   '/users/{id}/comments': '/users/1/comments',
-  '/legal/{type}': '/legal/terms',
 };

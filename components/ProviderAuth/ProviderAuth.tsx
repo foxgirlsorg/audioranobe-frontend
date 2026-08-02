@@ -193,20 +193,22 @@ export default function ProviderAuth({
 
   return (
     <>
-      <div className={styles.grid}>
+      <div className={`${styles.grid} ${mode !== 'link' ? styles.auth : ''}`}>
         {providers.map((p) => (
           <button
             key={p}
             type="button"
-            className={styles.btn}
+            className={`${styles.btn} ${mode !== 'link' ? styles.auth : ''}`}
             disabled={busy !== null}
             onClick={() => (p === 'telegram' ? void startTelegram() : void startOAuth(p))}
           >
             {busy === p ? <Spinner size={14} /> : <Mark provider={p} />}
-            <span>
-              {mode === 'link' ? 'Привязать ' : 'Войти через '}
-              {LABELS[p]}
-            </span>
+            {mode === 'link' && (
+                <span>
+                  Привязать {LABELS[p]}
+                </span>
+            )}
+
           </button>
         ))}
       </div>

@@ -35,9 +35,7 @@ export default function ResetPage() {
         <div className={styles.glowSpot} aria-hidden="true" />
         <div className={`glass-panel ${styles.card}`}>
           <span className={styles.topBar} aria-hidden="true" />
-          <Link href="/" className={styles.logo}>
-            AUDIO<span className={styles.logoAccent}>RANOBE</span>
-          </Link>
+
           <span className="eyebrow">{'Загрузка'}</span>
         </div>
       </div>
@@ -50,10 +48,7 @@ export default function ResetPage() {
         <div className={styles.glowSpot} aria-hidden="true" />
         <div className={`glass-panel ${styles.card}`}>
           <span className={styles.topBar} aria-hidden="true" />
-          <Link href="/" className={styles.logo}>
-            AUDIO<span className={styles.logoAccent}>RANOBE</span>
-          </Link>
-          <span className="eyebrow">{'Ошибка'}</span>
+
           <h1 className={styles.title}>
             {'Неверная'} <span className={styles.titleAccent}>{'ссылка'}</span>
           </h1>
@@ -76,10 +71,7 @@ export default function ResetPage() {
         <div className={styles.glowSpot} aria-hidden="true" />
         <div className={`glass-panel ${styles.card}`}>
           <span className={styles.topBar} aria-hidden="true" />
-          <Link href="/" className={styles.logo}>
-            AUDIO<span className={styles.logoAccent}>RANOBE</span>
-          </Link>
-          <span className="eyebrow">{'Готово'}</span>
+
           <h1 className={styles.title}>
             {'Пароль'} <span className={styles.titleAccent}>{'обновлён'}</span>
           </h1>
@@ -120,10 +112,7 @@ export default function ResetPage() {
       <div className={styles.glowSpot} aria-hidden="true" />
       <div className={`glass-panel ${styles.card}`}>
         <span className={styles.topBar} aria-hidden="true" />
-        <Link href="/" className={styles.logo}>
-          AUDIO<span className={styles.logoAccent}>RANOBE</span>
-        </Link>
-        <span className="eyebrow">{'Новый пароль'}</span>
+
         <h1 className={styles.title}>
           {'Сбросить'} <span className={styles.titleAccent}>{'пароль'}</span>
         </h1>

@@ -39,12 +39,10 @@ export default function ForgotPage() {
         <div className={styles.glowSpot} aria-hidden="true" />
         <div className={`glass-panel ${styles.card}`}>
           <span className={styles.topBar} aria-hidden="true" />
-          <Link href="/" className={styles.logo}>
-            AUDIO<span className={styles.logoAccent}>RANOBE</span>
-          </Link>
+
           <span className="eyebrow">{'Проверьте почту'}</span>
           <h1 className={styles.title}>
-            {'Письмо с'} <span className={styles.titleAccent}>{'инструкциями'}</span>
+            {'Письмо'} <span className={styles.titleAccent}>{'отправлено'}</span>
           </h1>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
             {'Письмо с инструкциями отправлено на указанный адрес. Если письмо не приходит, проверьте папку «Спам».'}
@@ -64,9 +62,7 @@ export default function ForgotPage() {
       <div className={styles.glowSpot} aria-hidden="true" />
       <div className={`glass-panel ${styles.card}`}>
         <span className={styles.topBar} aria-hidden="true" />
-        <Link href="/" className={styles.logo}>
-          AUDIO<span className={styles.logoAccent}>RANOBE</span>
-        </Link>
+
         <span className="eyebrow">{'Восстановление доступа'}</span>
         <h1 className={styles.title}>
           {'Забыли'} <span className={styles.titleAccent}>{'пароль?'}</span>

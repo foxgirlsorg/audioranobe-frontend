@@ -521,32 +521,35 @@
   color: var(--accent-hover);
 }
 
-/* The narrator's own reading status, as an inset chip on the right of the pill. */
 .narrStatus {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.6rem;
+  gap: 6px;
+  padding: 4px 10px 4px 5px;
   border-radius: 9999px;
-  background: var(--tone-soft);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
   color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  cursor: default;
   white-space: nowrap;
+  width: fit-content;
 }
 
 .narrAvatar {
-  width: 26px;
-  height: 26px;
+  height: 20px;
+  width: 20px;
   border-radius: 50%;
   object-fit: cover;
-  display: block;
+  border: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
 }
 
 .narrAvatarFallback {
-  width: 26px;
-  height: 26px;
+  height: 20px;
+  width: 20px;
   border-radius: 50%;
   display: flex;
   align-items: center;
