@@ -53,11 +53,10 @@ export default function DangerZone({
           ? `/panel/${kind}s/${id}`
           : `/mod/${kind}s/${id}`;
       const res = await api<{ applied?: boolean }>(path, { method: 'DELETE' });
-      toast(
-        res && res.applied === false
-          ? 'Удаление отправлено на модерацию'
-          : 'Удалено — восстановить можно через модерацию'
-      );
+      // Never "…but it can be restored": the trash is an administrator's tool,
+      // and telling the person deleting about it turns a final decision into a
+      // reversible one in their head.
+      toast(res && res.applied === false ? 'Удаление отправлено на модерацию' : 'Удалено');
       setConfirm(null);
       router.push(redirectTo);
     } catch (e) {
@@ -101,19 +100,18 @@ export default function DangerZone({
         <span className={styles.title}>Опасная зона</span>
       </div>
 
-      {isDeleted ? (
+      {isDeleted && isAdmin ? (
         <p className={styles.text}>
-          {`Этот ${label} удалён. Он не виден в каталоге, но его можно восстановить.`}
+          {`Этот ${label} удалён и не виден на сайте. Восстановить его можно только отсюда или из корзины.`}
         </p>
       ) : (
         <p className={styles.text}>
-          {`Удаление убирает ${label} из каталога. Отменить это самостоятельно не получится — `}
-          {'восстановление возможно только через модерацию.'}
+          {`Этот ${label} исчезнет с сайта, из каталога и из списков пользователей. Отменить удаление нельзя.`}
         </p>
       )}
 
       <div className={styles.actions}>
-        {isDeleted && isMod ? (
+        {isDeleted && isAdmin ? (
           <button type="button" className="btn" disabled={busy} onClick={() => void doRestore()}>
             <RotateCcw size={15} />
             Восстановить
@@ -151,7 +149,7 @@ export default function DangerZone({
         onClose={() => setConfirm(null)}
         onConfirm={() => void doDelete()}
         title={`Удалить ${label}?`}
-        body={`«${name}» будет удалён без возможности вернуть его самостоятельно. Это действие необратимо.`}
+        body={`«${name}» будет удалён безвозвратно. Отменить это действие нельзя.`}
         danger
       />
 

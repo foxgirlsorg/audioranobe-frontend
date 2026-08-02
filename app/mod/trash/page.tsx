@@ -200,7 +200,7 @@ function TrashContent() {
 export default function ModTrashPage() {
   const h = splitHeading('Корзина модерации');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} adminOnly>
       <TrashContent />
     </ModShell>
   );

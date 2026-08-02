@@ -20,7 +20,7 @@ const TABS: { href: string; label: string; adminOnly?: boolean }[] = [
   { href: '/mod/dmca', label: 'DMCA', adminOnly: true },
   { href: '/mod/words', label: 'Стоп-слова', adminOnly: true },
   { href: '/mod/usernames', label: 'Имена', adminOnly: true },
-  { href: '/mod/trash', label: 'Корзина' },
+  { href: '/mod/trash', label: 'Корзина', adminOnly: true },
   { href: '/mod/announcements', label: 'Объявления', adminOnly: true },
   { href: '/mod/broadcast', label: 'Рассылка' },
   { href: '/mod/audit', label: 'Аудит', adminOnly: true },

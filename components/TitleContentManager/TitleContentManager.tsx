@@ -387,6 +387,11 @@ export default function TitleContentManager({
     }
   }
 
+  // A deleted chapter is an administrator's business. Everyone else — the
+  // owner included — should see the volume as if it were gone.
+  const visibleChapters = (v: Volume) =>
+    isAdmin ? v.chapters : v.chapters.filter((c) => !c.is_deleted);
+
   const pendingIn = (v: Volume) =>
     v.chapters.filter((c) => c.mod_status === 'pending' && !c.is_deleted).length;
   const pendingTotal = title.volumes.reduce((n, v) => n + pendingIn(v), 0);
@@ -923,10 +928,10 @@ export default function TitleContentManager({
                 </form>
               ) : null}
 
-              {!openVolumes.has(v.id) ? null : v.chapters.length === 0 ? (
+              {!openVolumes.has(v.id) ? null : visibleChapters(v).length === 0 ? (
                 <p className={styles.noChapters}>В этом томе пока нет глав.</p>
               ) : (
-                v.chapters.map((c) => (
+                visibleChapters(v).map((c) => (
                   <div key={c.id} className={styles.chapterRow}>
                     {editingChapter === c.id ? (
                       <form
@@ -1004,7 +1009,7 @@ export default function TitleContentManager({
                           ) : null}
                         </span>
                         <span className={styles.chActions}>
-                          {c.is_deleted ? (
+                          {c.is_deleted && isAdmin ? (
                             <button
                               type="button"
                               className={styles.iconBtn}
@@ -1143,7 +1148,7 @@ export default function TitleContentManager({
           <Toggle
             checked={bulkUseFileNames}
             onChange={setBulkUseFileNames}
-            label="Брать названия глав из имён файлов"
+            label="Использовать имена файлов как названия глав"
           />
 
           <div className={styles.bulkRow}>

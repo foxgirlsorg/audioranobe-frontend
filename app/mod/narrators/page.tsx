@@ -189,6 +189,7 @@ function NarratorsContent() {
                         <div className={styles.rowActions}>
                           {deleted ? (
                             <>
+                              {isAdmin ? (
                               <button
                                 type="button"
                                 className={`btn ${styles.smallBtn}`}
@@ -208,6 +209,7 @@ function NarratorsContent() {
                                 <RotateCcw size={14} />
                                 {'Вернуть'}
                               </button>
+                              ) : null}
                               {isAdmin ? (
                                 <button
                                   type="button"
