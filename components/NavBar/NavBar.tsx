@@ -27,6 +27,7 @@ import { errMsg, useToast } from '@/lib/toast';
 import type { NarratorCard, SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import AddContentDialog from '@/components/AddContentDialog/AddContentDialog';
+import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import styles from './NavBar.module.css';
 
 type SuggestKind = 'title' | 'narrator' | 'author' | 'collection';
@@ -255,8 +256,6 @@ export default function NavBar() {
   const userLinks = user
     ? [
         { href: `/user/${user.id}`, label: 'Профиль', icon: User },
-        { href: `/user/${user.id}?tab=library`, label: 'Моя библиотека', icon: LibraryBig },
-        { href: `/user/${user.id}?tab=favorites`, label: 'Избранное', icon: Heart },
         { href: '/me/history', label: 'История', icon: History },
         { href: '/me/requests', label: 'Мои заявки', icon: ClipboardList },
         ...(isMod ? [{ href: '/mod', label: 'Модерация', icon: Shield }] : []),
@@ -410,42 +409,44 @@ export default function NavBar() {
                         <span className={styles.menuName}>{user.username}</span>
                       </div>
                       <div className={styles.menuSep} />
-                      <button type="button" className={styles.menuItem} onClick={openAdd}>
-                        <Plus aria-hidden="true" />
-                        {'Добавить'}
-                      </button>
-                      {myNarrators.length > 0 ? (
-                        <>
-                          <div className={styles.menuSep} />
-                          <span className={styles.menuEyebrow}>{'мои чтецы'}</span>
-                          {myNarrators.map((n) => (
-                            <Link
-                              key={n.id}
-                              href={`/narrator/${n.slug}`}
-                              className={styles.menuItem}
-                            >
-                              {n.avatar_url ? (
-                                <img
-                                  src={n.avatar_url}
-                                  alt=""
-                                  className={styles.menuAvatar}
-                                />
-                              ) : (
-                                <Mic aria-hidden="true" />
-                              )}
-                              {n.name}
-                            </Link>
-                          ))}
-                          <div className={styles.menuSep} />
-                        </>
-                      ) : null}
+
                       {userLinks.map((l) => (
                         <Link key={l.href} href={l.href} className={styles.menuItem}>
                           <l.icon aria-hidden="true" />
                           {l.label}
                         </Link>
                       ))}
+
                       <div className={styles.menuSep} />
+                      <button type="button" className={styles.menuItem} onClick={openAdd}>
+                        <Plus aria-hidden="true" />
+                        {'Добавить'}
+                      </button>
+                      {myNarrators.length > 0 ? (
+                          <>
+                            <div className={styles.menuSep} />
+                            {myNarrators.map((n) => (
+                                <Link
+                                    key={n.id}
+                                    href={`/narrator/${n.slug}`}
+                                    className={styles.menuItem}
+                                >
+                                  {n.avatar_url ? (
+                                      <img
+                                          src={n.avatar_url}
+                                          alt=""
+                                          className={styles.menuAvatar}
+                                      />
+                                  ) : (
+                                      <Mic aria-hidden="true" />
+                                  )}
+                                  <span className={styles.menuNarratorName}>{n.name}</span>
+                                  {n.is_verified ? <VerifiedBadge size={13} /> : null}
+                                </Link>
+                            ))}
+                            <div className={styles.menuSep} />
+                          </>
+                      ) : null}
                       <button type="button" className={styles.menuItem} onClick={doLogout}>
                         <LogOut aria-hidden="true" />
                         {'Выйти'}

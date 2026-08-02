@@ -1,12 +1,8 @@
-/*
- * Cool blue, not the coral accent and not the AI red: this is neither a brand
- * highlight nor a warning, and it has to read as "trust" at a glance.
- */
 .badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #4a9eda;
+  color: #de6161;
   vertical-align: middle;
   flex-shrink: 0;
 }
