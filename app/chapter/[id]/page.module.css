@@ -69,7 +69,7 @@
 
 .backdrop {
   position: absolute;
-  top: calc(-1 * (var(--nav-height) + 2rem));
+  top: calc(-1 * (var(--nav-height) + 2.5rem));
   left: 50%;
   width: 100vw;
   margin-left: -50vw;

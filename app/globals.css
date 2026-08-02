@@ -205,6 +205,10 @@ main.container {
   padding-bottom: 4rem;
 }
 
+body.has-notice main.container {
+  padding-top: var(--nav-total);
+}
+
 /* ---------- noise overlay (STYLE.md 4.1) ---------- */
 
 .noise {
