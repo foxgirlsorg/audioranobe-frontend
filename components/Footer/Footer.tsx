@@ -2,10 +2,31 @@
 
 import Link from 'next/link';
 import React from 'react';
+import { Mail } from 'lucide-react';
+import { TelegramIcon } from '@/components/SocialLinks/brands';
 import styles from './Footer.module.css';
+
+const SUPPORT_EMAIL = 'support@audioranobe.com';
+const SUPPORT_BOT = 'https://t.me/audioranobesupportbot';
+const CHANNEL = 'https://t.me/audioranobecom';
+
+const NAV = [
+  { href: '/catalog', label: 'Каталог' },
+  { href: '/collections', label: 'Коллекции' },
+  { href: '/news', label: 'Новости' },
+  { href: '/api-docs', label: 'API' },
+];
+
+const LEGAL = [
+  { href: '/legal/rules', label: 'Правила' },
+  { href: '/legal/terms', label: 'Условия' },
+  { href: '/legal/privacy', label: 'Конфиденциальность' },
+  { href: '/dmca', label: 'DMCA' },
+];
 
 export default function Footer() {
   const year = new Date().getFullYear();
+
   return (
     <footer className={styles.footer}>
       <div className={`container ${styles.inner}`}>
@@ -13,63 +34,70 @@ export default function Footer() {
           <Link href="/" className={styles.logo}>
             AUDIO<span className={styles.logoAccent}>RANOBE</span>
           </Link>
-          <p className={styles.tagline}>
-            {'Аудиокниги от сообщества — их озвучивают, отмечают и советуют люди, которые действительно слушают.'}
+          <p className={styles.disclaimer}>
+            {
+              'Все материалы размещены пользователями и доступны бесплатно, исключительно для ознакомления. Сайт не владеет размещённым контентом и не несёт ответственности за него. Если вы правообладатель — напишите через форму DMCA, и материал будет удалён.'
+            }
           </p>
         </div>
 
-        <nav className={styles.links} aria-label={'Подвал сайта'}>
-          <Link href="/catalog" className={styles.link}>
-            {'Каталог'}
-          </Link>
-          <Link href="/collections" className={styles.link}>
-            {'Коллекции'}
-          </Link>
-          <Link href="/news" className={styles.link}>
-            {'Новости'}
-          </Link>
-          <Link href="/legal/rules" className={styles.link}>
-            {'Правила'}
-          </Link>
-          <Link href="/legal" className={styles.link}>
-            {'Правовая информация'}
-          </Link>
-          <Link href="/api-docs" className={styles.link}>
-            {'API'}
-          </Link>
-        </nav>
+        <div className={styles.cols}>
+          <nav className={styles.col} aria-label={'Разделы сайта'}>
+            <span className={styles.colTitle}>{'Сайт'}</span>
+            {NAV.map((l) => (
+              <Link key={l.href} href={l.href} className={styles.link}>
+                {l.label}
+              </Link>
+            ))}
+          </nav>
 
-        <div className={styles.meta}>
-          <span className={styles.copy}>{`© ${year} AudioRanobe`}</span>
-          <span className={styles.copy}> · </span>
-          <a
-            href="https://foxgirls.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.copy}
-          >
-            Проект foxgirls.org
-          </a>
-          <span className={styles.copy}> · </span>
-          <a
-            href="mailto:support@audioranobe.com"
-            className={styles.copy}
-          >
-            support@audioranobe.com
-          </a>
+          <nav className={styles.col} aria-label={'Документы'}>
+            <span className={styles.colTitle}>{'Документы'}</span>
+            {LEGAL.map((l) => (
+              <Link key={l.href} href={l.href} className={styles.link}>
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className={styles.col}>
+            <span className={styles.colTitle}>{'Связь'}</span>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.contact}>
+              <Mail size={14} />
+              {SUPPORT_EMAIL}
+            </a>
+            <a
+              href={SUPPORT_BOT}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.contact}
+            >
+              <TelegramIcon size={14} />
+              {'Поддержка'}
+            </a>
+            <a
+              href={CHANNEL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.contact}
+            >
+              <TelegramIcon size={14} />
+              {'Канал'}
+            </a>
+          </div>
         </div>
+      </div>
 
-        <nav className={styles.legal} aria-label={'Правовая информация'}>
-          <Link href="/legal/terms" className={styles.legalLink}>
-            {'Условия'}
-          </Link>
-          <Link href="/legal/privacy" className={styles.legalLink}>
-            {'Конфиденциальность'}
-          </Link>
-          <Link href="/dmca" className={styles.legalLink}>
-            {'DMCA'}
-          </Link>
-        </nav>
+      <div className={`container ${styles.bottom}`}>
+        <span className={styles.copy}>{`© ${year} AudioRanobe`}</span>
+        <a
+          href="https://foxgirls.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.copyLink}
+        >
+          foxgirls.org
+        </a>
       </div>
     </footer>
   );
