@@ -101,6 +101,52 @@
   text-transform: uppercase;
 }
 
+.emailRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.emailText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.verifiedChip {
+  display: inline-flex;
+  color: var(--ok);
+  flex: none;
+}
+
+.verifyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.verifyBtn:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.verifyBtn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .email {
   color: var(--text-secondary);
   word-break: break-all;

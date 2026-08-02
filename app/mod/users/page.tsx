@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ImagePlus, KeyRound, Pencil, Search, Trash2, Users } from 'lucide-react';
+import { ImagePlus, KeyRound, MailCheck, Pencil, Search, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -169,21 +169,24 @@ function UsersContent() {
     setBusyId(null);
   };
 
-  const setVerified = async (value: boolean) => {
-    if (!toEdit) return;
-    setBusyId(toEdit.id);
+  const verifyEmail = async (u: Me, value: boolean) => {
+    setBusyId(u.id);
     try {
-      const updated = await api<Me>(`/mod/users/${toEdit.id}`, {
+      const updated = await api<Me>(`/mod/users/${u.id}`, {
         method: 'PATCH',
         body: { email_verified: value },
       });
       replaceRow(updated);
-      setToEdit(updated);
+      setToEdit((prev) => (prev && prev.id === u.id ? updated : prev));
       toast(value ? 'Почта отмечена подтверждённой' : 'Отметка подтверждения снята');
     } catch (e) {
       toast(errMsg(e), 'error');
     }
     setBusyId(null);
+  };
+
+  const setVerified = async (value: boolean) => {
+    if (toEdit) await verifyEmail(toEdit, value);
   };
 
   const uploadImage = async (kind: 'avatar' | 'cover', file: File) => {
@@ -299,7 +302,29 @@ function UsersContent() {
                           ) : null}
                         </div>
                       </td>
-                      <td className={styles.email}>{u.email ?? '—'}</td>
+                      <td className={styles.email}>
+                        <span className={styles.emailRow}>
+                          <span className={styles.emailText}>{u.email ?? '—'}</span>
+                          {u.email && isAdmin ? (
+                            u.email_verified ? (
+                              <span className={styles.verifiedChip} title="Почта подтверждена">
+                                <MailCheck size={13} />
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className={styles.verifyBtn}
+                                disabled={busyId === u.id}
+                                onClick={() => void verifyEmail(u, true)}
+                                title="Отметить почту подтверждённой"
+                              >
+                                <MailCheck size={13} />
+                                {'Подтвердить'}
+                              </button>
+                            )
+                          ) : null}
+                        </span>
+                      </td>
                       <td>
                         <Select
                           size="sm"

@@ -40,6 +40,9 @@ export default function RegisterPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState('');
+  // The server refuses a second account on one address; the form offers the way
+  // out it is pointing at rather than making the reader find it.
+  const [emailTaken, setEmailTaken] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -87,7 +90,9 @@ export default function RegisterPage() {
       await register(u, em, password, acceptTerms, dn);
       router.replace(next);
     } catch (err) {
-      setFormError(errMsg(err));
+      const msg = errMsg(err);
+      setFormError(msg);
+      setEmailTaken(/уже зарегистрирован|уже заняты/.test(msg));
       setSubmitting(false);
     }
   }
@@ -106,6 +111,14 @@ export default function RegisterPage() {
         {formError ? (
           <div className={styles.formError} role="alert">
             {formError}
+            {emailTaken ? (
+              <>
+                {' '}
+                <Link href={loginHref} className={styles.altLink}>
+                  {'Войти'}
+                </Link>
+              </>
+            ) : null}
           </div>
         ) : null}
 
