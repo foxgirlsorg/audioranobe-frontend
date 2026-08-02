@@ -18,8 +18,9 @@ import { uploadInChunks } from '@/lib/upload';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { formatDuration, formatDateTime, timeAgo } from '@/lib/format';
-import type { ChapterRow, Job, TitleFull, Volume } from '@/lib/types';
+import type { ChapterRow, JobsPage, TitleFull, Volume } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
+import Pagination from '@/components/Pagination/Pagination';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
@@ -31,6 +32,7 @@ import Toggle from '@/components/Toggle/Toggle';
 const AUDIO_RE = /\.(mp3|m4a|m4b|aac|wav|ogg|opus|flac)$/i;
 const MAX_AUDIO_BYTES = 2 * 1024 * 1024 * 1024;
 const AUDIO_ACCEPT = '.mp3,.m4a,.m4b,.aac,.wav,.ogg,.opus,.flac,audio/*';
+const JOBS_PER_PAGE = 30;
 
 const naturalCompare = (a: string, b: string) =>
   a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -139,17 +141,20 @@ export default function TitleContentManager({
     'approve' | 'reject' | 'delete' | 'purge' | null
   >(null);
 
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [jobsLoaded, setJobsLoaded] = useState(false);
+  const [jobs, setJobs] = useState<JobsPage | null>(null);
+  const [jobsPage, setJobsPage] = useState(1);
 
   const loadJobs = useCallback(async () => {
     try {
-      setJobs(await api<Job[]>(`/panel/titles/${titleId}/jobs`));
+      setJobs(
+        await api<JobsPage>(`/panel/titles/${titleId}/jobs`, {
+          params: { page: jobsPage, per_page: JOBS_PER_PAGE },
+        })
+      );
     } catch {
-    } finally {
-      setJobsLoaded(true);
+      // jobs are auxiliary — keep whatever we have
     }
-  }, [titleId]);
+  }, [titleId, jobsPage]);
 
   useEffect(() => {
     void loadJobs();
@@ -165,26 +170,27 @@ export default function TitleContentManager({
     }
   }, [title]);
 
-  const activeJobs = useMemo(
-    () => jobs.filter((j) => j.status === 'queued' || j.status === 'processing').length,
-    [jobs]
-  );
+  // Counted server-side across the whole title, not over the page: the running
+  // jobs may well be on a page nobody is looking at.
+  const activeJobs = jobs?.active ?? 0;
 
+  // One request per tick for the page on screen, rather than one per job or one
+  // for every job the title has ever had.
   useEffect(() => {
     if (activeJobs === 0) return;
     const t = window.setInterval(async () => {
       try {
-        const next = await api<Job[]>(`/panel/titles/${titleId}/jobs`);
+        const next = await api<JobsPage>(`/panel/titles/${titleId}/jobs`, {
+          params: { page: jobsPage, per_page: JOBS_PER_PAGE },
+        });
         setJobs(next);
-        const nextActive = next.filter(
-          (j) => j.status === 'queued' || j.status === 'processing'
-        ).length;
-        if (nextActive < activeJobs) void onReload();
+        if (next.active < activeJobs) void onReload();
       } catch {
+        // transient poll failure — try again next tick
       }
     }, 5000);
     return () => window.clearInterval(t);
-  }, [activeJobs, titleId, onReload]);
+  }, [activeJobs, titleId, jobsPage, onReload]);
 
   function openAddVolume() {
     const maxNum = Math.max(0, ...title.volumes.map((v) => v.number));
@@ -1199,11 +1205,11 @@ export default function TitleContentManager({
 
       <section className={styles.section}>
         <span className={styles.sectionLabel}>Задачи конвертации</span>
-        {!jobsLoaded ? (
+        {!jobs ? (
           <div className={styles.center}>
             <Spinner />
           </div>
-        ) : jobs.length === 0 ? (
+        ) : jobs.items.length === 0 ? (
           <p className={styles.noJobs}>
             Задач конвертации пока нет — загрузите аудио, и они появятся здесь.
           </p>
@@ -1221,7 +1227,7 @@ export default function TitleContentManager({
                 </tr>
               </thead>
               <tbody>
-                {jobs.map((j) => (
+                {jobs.items.map((j) => (
                   <tr key={j.id}>
                     <td className={styles.jobChapter}>{j.chapter_name || `#${j.chapter_id}`}</td>
                     <td>
@@ -1241,6 +1247,14 @@ export default function TitleContentManager({
             </table>
           </div>
         )}
+        {jobs ? (
+          <Pagination
+            page={jobs.page}
+            total={jobs.total}
+            perPage={jobs.per_page}
+            onPage={setJobsPage}
+          />
+        ) : null}
       </section>
 
       <input

@@ -410,6 +410,11 @@ export interface Job {
   finished_at: string | null;
 }
 
+/** GET /panel/titles/{id}/jobs — `active` counts the whole title, not the page. */
+export interface JobsPage extends Paginated<Job> {
+  active: number;
+}
+
 export interface Paginated<T> {
   items: T[];
   page: number;
