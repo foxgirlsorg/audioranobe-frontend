@@ -216,7 +216,7 @@ function CatalogInner() {
                 id="catalog-q"
                 type="search"
                 className="input"
-                placeholder="Тайтл или автор…"
+                placeholder="Название тайтла …"
                 value={qInput}
                 onChange={(e) => setQInput(e.target.value)}
               />
@@ -246,7 +246,7 @@ function CatalogInner() {
                 id="catalog-author"
                 type="text"
                 className="input"
-                placeholder="Например: Адольф Гитлер"
+                placeholder="Например: Duichidak"
                 value={authorInput}
                 onChange={(e) => setAuthorInput(e.target.value)}
               />
