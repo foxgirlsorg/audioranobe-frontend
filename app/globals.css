@@ -53,6 +53,10 @@
   --radius-sm: 8px;
 
   --nav-height: 72px;
+  /* How far the page has to start below the fixed chrome. Grows when the
+     unverified-email notice is pinned under the bar. */
+  --notice-height: 0px;
+  --nav-total: var(--nav-height);
   --player-height: 96px;
 
   --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -93,6 +97,10 @@ body {
 /* Clearance for the docked player bar is the footer's job — see
    Footer.module.css. On <body> it created scrollable dead space under the
    footer instead. */
+
+body.has-notice {
+  --nav-total: calc(var(--nav-height) + var(--notice-height));
+}
 
 /* While a horizontal rail is being dragged (see components/DragScroll). The
    cursor is forced past the link and button rules the pointer is travelling
@@ -193,7 +201,7 @@ html {
 
 main.container {
   flex: 1;
-  padding-top: calc(var(--nav-height) + 2rem);
+  padding-top: calc(var(--nav-total) + 2rem);
   padding-bottom: 4rem;
 }
 
@@ -534,7 +542,7 @@ button.pill:hover,
   }
 
   main.container {
-    padding-top: calc(var(--nav-height) + 1.25rem);
+    padding-top: calc(var(--nav-total) + 1.25rem);
   }
 
   .card-grid {
@@ -560,7 +568,7 @@ button.pill:hover,
   }
 
   main.container {
-    padding-top: calc(var(--nav-height) + 1rem);
+    padding-top: calc(var(--nav-total) + 1rem);
     padding-bottom: 3rem;
   }
 

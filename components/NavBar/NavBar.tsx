@@ -28,6 +28,7 @@ import type { NarratorCard, SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import AddContentDialog from '@/components/AddContentDialog/AddContentDialog';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
+import UnverifiedEmailBanner from '@/components/UnverifiedEmailBanner/UnverifiedEmailBanner';
 import styles from './NavBar.module.css';
 
 type SuggestKind = 'title' | 'narrator' | 'author' | 'collection';
@@ -479,6 +480,8 @@ export default function NavBar() {
           </button>
         </div>
       </header>
+
+      <UnverifiedEmailBanner />
 
       {mobileOpen && (
         <div className={styles.overlay}>

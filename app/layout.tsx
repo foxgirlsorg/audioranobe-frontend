@@ -6,7 +6,6 @@ import { ToastProvider } from '@/lib/toast';
 import { PlayerProvider } from '@/lib/player';
 import NavBar from '@/components/NavBar/NavBar';
 import BannedBanner from '@/components/BannedBanner/BannedBanner';
-import UnverifiedEmailBanner from '@/components/UnverifiedEmailBanner/UnverifiedEmailBanner';
 import Footer from '@/components/Footer/Footer';
 import Player from '@/components/Player/Player';
 import DragScroll from '@/components/DragScroll/DragScroll';
@@ -28,7 +27,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <DragScroll />
               <NavBar />
               <BannedBanner />
-              <UnverifiedEmailBanner />
               <main className="container">{children}</main>
               <Footer />
               <Player />
