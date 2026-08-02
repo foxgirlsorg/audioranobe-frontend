@@ -1,46 +1,40 @@
+/* Per-kind accent lives in --toast-accent; the icon carries it, the surface
+   itself stays neutral glass. */
 .toast {
   position: relative;
   pointer-events: auto;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: start;
-  gap: 0.65rem;
+  gap: 0.7rem;
   width: 100%;
   max-width: 360px;
-  padding: 0.8rem 0.85rem 0.85rem 0.9rem;
+  padding: 0.85rem 0.9rem 0.9rem 0.95rem;
   overflow: hidden;
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
-  border-radius: 12px;
-  background: var(--surface-strong, rgba(28, 28, 28, 0.92));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
-  color: var(--text, #fff);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  background: rgba(16, 16, 18, 0.55);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  color: var(--toast-accent);
   font-size: 13.5px;
   line-height: 1.5;
-  animation: toast-enter 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-
-/* A tinted rail on the leading edge carries the kind, matching the icon. */
-.toast::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: currentColor;
-  opacity: 0.9;
+  animation: toast-enter 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .ok {
-  color: var(--ok, #5fbf7f);
+  --toast-accent: var(--ok, #58a878);
 }
 
 .error {
-  color: var(--danger, #de6161);
+  --toast-accent: var(--danger, #c53434);
 }
 
 .info {
-  color: var(--accent, #de6161);
+  --toast-accent: var(--accent, #de6161);
 }
 
 .icon {
@@ -63,20 +57,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
-  border: none;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
   background: transparent;
-  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  color: var(--text-muted, #7b8087);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .close:hover {
-  background: rgba(255, 255, 255, 0.09);
+  border-color: color-mix(in srgb, var(--toast-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--toast-accent) 14%, transparent);
   color: #fff;
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--toast-accent);
+  outline-offset: 1px;
 }
 
 /* Time-remaining rail along the bottom edge; pauses with the timer. */
@@ -87,8 +87,8 @@
   height: 2px;
   width: 100%;
   transform-origin: left center;
-  background: currentColor;
-  opacity: 0.55;
+  background: var(--toast-accent);
+  opacity: 0.6;
   animation-name: toast-progress;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -101,7 +101,7 @@
 @keyframes toast-enter {
   from {
     opacity: 0;
-    transform: translateX(14px) scale(0.98);
+    transform: translateX(18px) scale(0.97);
   }
   to {
     opacity: 1;
@@ -116,7 +116,7 @@
   }
   to {
     opacity: 0;
-    transform: translateX(14px) scale(0.98);
+    transform: translateX(18px) scale(0.97);
   }
 }
 
