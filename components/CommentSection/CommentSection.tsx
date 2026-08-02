@@ -68,20 +68,9 @@ function scrollToComment(el: HTMLElement) {
   }
 }
 
-function CommentBody({ body, mention }: { body: string; mention: Comment | null }) {
+function CommentBody({ body }: { body: string }) {
   return (
     <div className={styles.body}>
-      {mention ? (
-        mention.user ? (
-          <>
-            <Link href={`/user/${mention.user.id}`} className={styles.mention}>
-              @{mention.user.username}
-            </Link>{' '}
-          </>
-        ) : (
-          <span className={styles.mention}>@удалён </span>
-        )
-      ) : null}
       <Markdown source={body} compact />
     </div>
   );
@@ -366,9 +355,7 @@ function Composer({
 
 function NestedComment({
   comment,
-  children,
   directChildren,
-  byId,
   depth,
   replyingId,
   editingId,
@@ -385,9 +372,7 @@ function NestedComment({
   onSubmitEdit,
 }: {
   comment: Comment;
-  children: Map<number, Comment[]>;
   directChildren: Map<number, Comment[]>;
-  byId: Map<number, Comment>;
   depth: number;
   replyingId: number | null;
   editingId: number | null;
@@ -404,7 +389,6 @@ function NestedComment({
   onSubmitEdit: (id: number, body: string) => Promise<boolean>;
 }) {
   const own = currentUserId != null && comment.user != null && comment.user.id === currentUserId;
-  const mention = comment.parent_id != null ? byId.get(comment.parent_id) ?? null : null;
   const isRoot = depth === 0;
   const avatarSize = Math.max(22, 34 - depth * 2);
 
@@ -458,7 +442,7 @@ function NestedComment({
             onCancel={() => onEdit(null)}
           />
         ) : (
-          <CommentBody body={comment.body} mention={!isRoot ? mention : null} />
+          <CommentBody body={comment.body} />
         )}
 
         {!comment.is_deleted && editingId !== comment.id ? (
@@ -558,9 +542,7 @@ function NestedComment({
                 <div key={child.id} className={styles.nestedReply}>
                   <NestedComment
                     comment={child}
-                    children={children}
                     directChildren={directChildren}
-                    byId={byId}
                     depth={depth + 1}
                     replyingId={replyingId}
                     editingId={editingId}
@@ -680,7 +662,7 @@ export function CommentSection({
     }
   }
 
-  const { roots, childrenOf, directChildren, byId } = useMemo(() => {
+  const { roots, directChildren, byId } = useMemo(() => {
     const byId = new Map<number, Comment>();
     for (const c of items) byId.set(c.id, c);
 
@@ -704,30 +686,19 @@ export function CommentSection({
       return cur.id;
     };
 
-    const rootOf = new Map<number, number>();
     const roots: Comment[] = [];
-    const childrenOf = new Map<number, Comment[]>();
-
     for (const c of items) {
       if (c.parent_id == null || !byId.has(c.parent_id)) {
-        rootOf.set(c.id, c.id);
         roots.push(c);
         continue;
       }
-      const rid = rootIdOf(c);
-      rootOf.set(c.id, rid);
-      if (rid === c.id) {
+      if (rootIdOf(c) === c.id) {
         roots.push(c);
-        continue;
       }
-      const arr = childrenOf.get(rid);
-      if (arr) arr.push(c);
-      else childrenOf.set(rid, [c]);
     }
 
-    for (const arr of childrenOf.values()) arr.sort((a, b) => a.id - b.id);
     for (const arr of directChildren.values()) arr.sort((a, b) => a.id - b.id);
-    return { roots, childrenOf, directChildren, byId };
+    return { roots, directChildren, byId };
   }, [items]);
 
   const hasMore = page < Math.ceil(total / PER_PAGE);
@@ -966,9 +937,7 @@ export function CommentSection({
               <div key={root.id} className={styles.thread}>
                 <NestedComment
                   comment={root}
-                  children={childrenOf}
                   directChildren={directChildren}
-                  byId={byId}
                   depth={0}
                   replyingId={replyingId}
                   editingId={editingId}
