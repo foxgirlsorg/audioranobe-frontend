@@ -150,6 +150,7 @@ export default function SettingsPage() {
   const hasPassword = user?.has_password ?? true;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
+  const [toUnlink, setToUnlink] = useState<Identity | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [emailPw, setEmailPw] = useState('');
@@ -715,7 +716,7 @@ export default function SettingsPage() {
                 type="button"
                 className="btn btn-ghost"
                 disabled={unlinking !== null}
-                onClick={() => void unlink(idn.provider)}
+                onClick={() => setToUnlink(idn)}
               >
                 {unlinking === idn.provider ? 'Отвязываем…' : 'Отвязать'}
               </button>
@@ -885,6 +886,26 @@ export default function SettingsPage() {
         aspect={3}
         title={'Обрезка обложки профиля'}
         onCropped={(blob) => uploadImage('cover', blob)}
+      />
+
+      <ConfirmDialog
+        open={toUnlink !== null}
+        onClose={() => setToUnlink(null)}
+        onConfirm={() => {
+          if (toUnlink) void unlink(toUnlink.provider);
+          setToUnlink(null);
+        }}
+        title={toUnlink ? `Отвязать ${PROVIDER_LABELS[toUnlink.provider]}?` : ''}
+        body={
+          toUnlink
+            ? `Войти через ${PROVIDER_LABELS[toUnlink.provider]} больше не получится${
+                toUnlink.email || toUnlink.display_name
+                  ? ` — аккаунт ${toUnlink.display_name || toUnlink.email} будет отвязан`
+                  : ''
+              }. Привязать обратно можно в любой момент.`
+            : ''
+        }
+        danger
       />
 
       <ConfirmDialog
