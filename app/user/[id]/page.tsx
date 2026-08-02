@@ -22,7 +22,8 @@ import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import LibraryRow from '@/components/LibraryRow/LibraryRow';
 import Tabs from '@/components/Tabs/Tabs';
-import Pagination from '@/components/Pagination/Pagination';
+import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
+import { useInfiniteList } from '@/lib/useInfiniteList';
 import CardGrid from '@/components/CardGrid/CardGrid';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import CollectionCardC from '@/components/CollectionCardC/CollectionCardC';
@@ -127,15 +128,39 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   const [tab, setTab] = useState<'library' | 'comments' | 'collections' | 'favorites'>(initialTab);
   const [libStatus, setLibStatus] = useState(initialStatus);
 
-  const [library, setLibrary] = useState<Paginated<LibraryEntry> | null>(null);
-  const [comments, setComments] = useState<Paginated<UserComment> | null>(null);
-  const [collections, setCollections] = useState<Paginated<CollectionCard> | null>(null);
-  const [favorites, setFavorites] = useState<Paginated<TitleCard> | null>(null);
-  const [tabLoading, setTabLoading] = useState(false);
-  const [libPage, setLibPage] = useState(1);
-  const [comPage, setComPage] = useState(1);
-  const [colPage, setColPage] = useState(1);
-  const [favPage, setFavPage] = useState(1);
+  const username = profile?.user.username ?? '';
+
+  const fetchLibrary = useCallback(
+    (page: number) =>
+      api<Paginated<LibraryEntry>>(`/users/${encodeURIComponent(userRef)}/library`, {
+        params: { status: libStatus === 'all' ? undefined : libStatus, page },
+      }),
+    [userRef, libStatus]
+  );
+  const fetchComments = useCallback(
+    (page: number) =>
+      api<Paginated<UserComment>>(`/users/${encodeURIComponent(userRef)}/comments`, {
+        params: { page },
+      }),
+    [userRef]
+  );
+  const fetchFavorites = useCallback(
+    (page: number) =>
+      api<Paginated<TitleCard>>(`/users/${encodeURIComponent(userRef)}/favorites`, {
+        params: { page },
+      }),
+    [userRef]
+  );
+  const fetchCollections = useCallback(
+    (page: number) =>
+      api<Paginated<CollectionCard>>('/collections', { params: { user: username, page } }),
+    [username]
+  );
+
+  const library = useInfiniteList<LibraryEntry>(fetchLibrary);
+  const comments = useInfiniteList<UserComment>(fetchComments);
+  const favorites = useInfiniteList<TitleCard>(fetchFavorites);
+  const collections = useInfiniteList<CollectionCard>(fetchCollections);
 
   const updateUrl = useCallback((newTab: string, newStatus?: string) => {
     const sp = new URLSearchParams(searchParams.toString());
@@ -155,10 +180,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     setProfile(null);
     setTab(initialTab);
     setLibStatus(initialStatus);
-    setLibPage(1);
-    setComPage(1);
-    setColPage(1);
-    setFavPage(1);
     (async () => {
       try {
         const p = await api<UserProfile>(`/users/${encodeURIComponent(userRef)}`);
@@ -175,54 +196,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
       alive = false;
     };
   }, [userRef]);
-
-  useEffect(() => {
-    if (!profile) return;
-    let alive = true;
-    setTabLoading(true);
-    (async () => {
-      try {
-        if (tab === 'library') {
-          const res = await api<Paginated<LibraryEntry>>(
-            `/users/${encodeURIComponent(userRef)}/library`,
-            { params: { status: libStatus === 'all' ? undefined : libStatus, page: libPage } }
-          );
-          if (alive) setLibrary(res);
-        } else if (tab === 'comments') {
-          const res = await api<Paginated<UserComment>>(
-            `/users/${encodeURIComponent(userRef)}/comments`,
-            { params: { page: comPage } }
-          );
-          if (alive) setComments(res);
-        } else if (tab === 'favorites') {
-          const res = await api<Paginated<TitleCard>>(
-            `/users/${encodeURIComponent(userRef)}/favorites`,
-            { params: { page: favPage } }
-          );
-          if (alive) setFavorites(res);
-        } else {
-          const res = await api<Paginated<CollectionCard>>('/collections', {
-            params: { user: profile.user.username, page: colPage },
-          });
-          if (alive) setCollections(res);
-        }
-      } catch {
-        if (alive) {
-          if (tab === 'library') setLibrary({ items: [], page: 1, per_page: 24, total: 0 });
-          else if (tab === 'comments')
-            setComments({ items: [], page: 1, per_page: 24, total: 0 });
-          else if (tab === 'favorites')
-            setFavorites({ items: [], page: 1, per_page: 24, total: 0 });
-          else setCollections({ items: [], page: 1, per_page: 24, total: 0 });
-        }
-      } finally {
-        if (alive) setTabLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [profile, tab, libStatus, libPage, comPage, colPage, favPage, userRef]);
 
   if (loading) {
     return (
@@ -254,25 +227,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     0
   );
 
-  function handleEntryChange(titleId: number, next: LibraryEntry) {
-    setLibrary((prev) =>
-      prev
-        ? { ...prev, items: prev.items.map((e) => (e.title.id === titleId ? next : e)) }
-        : prev
-    );
-  }
+  const handleEntryChange = (titleId: number, next: LibraryEntry) =>
+    library.patch((e) => e.title.id === titleId, () => next);
 
-  function handleEntryRemove(titleId: number) {
-    setLibrary((prev) =>
-      prev
-        ? {
-            ...prev,
-            items: prev.items.filter((e) => e.title.id !== titleId),
-            total: Math.max(0, prev.total - 1),
-          }
-        : prev
-    );
-  }
+  const handleEntryRemove = (titleId: number) =>
+    library.remove((e) => e.title.id === titleId);
 
   return (
     <div className={styles.page}>
@@ -361,7 +320,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   }
                   onClick={() => {
                     setLibStatus(s.key);
-                    setLibPage(1);
                     updateUrl('library', s.key);
                   }}
                 >
@@ -371,7 +329,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
               );
             })}
           </div>
-          {tabLoading || !library ? (
+          {library.loading || !library.items ? (
             <div className={styles.center}>
               <Spinner />
             </div>
@@ -401,11 +359,13 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   />
                 ))}
               </div>
-              <Pagination
-                page={library.page}
+              <InfiniteScroll
+                hasMore={library.hasMore}
+                loading={library.loadingMore}
+                error={library.moreError}
+                onLoad={library.loadMore}
                 total={library.total}
-                perPage={library.per_page}
-                onPage={setLibPage}
+                shown={library.items.length}
               />
             </>
           )}
@@ -414,7 +374,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
       {tab === 'comments' ? (
         <div className={styles.tabBody}>
-          {tabLoading || !comments ? (
+          {comments.loading || !comments.items ? (
             <div className={styles.center}>
               <Spinner />
             </div>
@@ -462,11 +422,13 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   </Link>
                 ))}
               </div>
-              <Pagination
-                page={comments.page}
+              <InfiniteScroll
+                hasMore={comments.hasMore}
+                loading={comments.loadingMore}
+                error={comments.moreError}
+                onLoad={comments.loadMore}
                 total={comments.total}
-                perPage={comments.per_page}
-                onPage={setComPage}
+                shown={comments.items.length}
               />
             </>
           )}
@@ -475,7 +437,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
       {tab === 'favorites' ? (
         <div className={styles.tabBody}>
-          {tabLoading || !favorites ? (
+          {favorites.loading || !favorites.items ? (
             <div className={styles.center}>
               <Spinner />
             </div>
@@ -492,11 +454,13 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   <TitleCardC key={tc.id} title={tc} />
                 ))}
               </CardGrid>
-              <Pagination
-                page={favorites.page}
+              <InfiniteScroll
+                hasMore={favorites.hasMore}
+                loading={favorites.loadingMore}
+                error={favorites.moreError}
+                onLoad={favorites.loadMore}
                 total={favorites.total}
-                perPage={favorites.per_page}
-                onPage={setFavPage}
+                shown={favorites.items.length}
               />
             </>
           )}
@@ -505,7 +469,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
       {tab === 'collections' ? (
         <div className={styles.tabBody}>
-          {tabLoading || !collections ? (
+          {collections.loading || !collections.items ? (
             <div className={styles.center}>
               <Spinner />
             </div>
@@ -522,11 +486,13 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   <CollectionCardC key={c.id} collection={c} />
                 ))}
               </CardGrid>
-              <Pagination
-                page={collections.page}
+              <InfiniteScroll
+                hasMore={collections.hasMore}
+                loading={collections.loadingMore}
+                error={collections.moreError}
+                onLoad={collections.loadMore}
                 total={collections.total}
-                perPage={collections.per_page}
-                onPage={setColPage}
+                shown={collections.items.length}
               />
             </>
           )}
