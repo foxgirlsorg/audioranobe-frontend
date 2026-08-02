@@ -43,6 +43,9 @@ export type NotificationType =
   | 'narrator_comment'
   | 'mention'
   | 'system'
+  | 'request_reviewed'
+  // Retired in favour of request_reviewed, but rows already in the table keep
+  // their original type and still have to render.
   | 'request_approved'
   | 'request_rejected'
   | 'entity_modified'
@@ -62,18 +65,17 @@ export interface UserBrief {
   avatar_url: string | null;
 }
 
+/** `system` has no key: hand-written announcements are not opt-out. */
 export interface NotificationPrefs {
   new_chapter: boolean;
   narrator_release: boolean;
+  narrator_post: boolean;
   comment_reply: boolean;
   narrator_comment: boolean;
   mention: boolean;
-  system: boolean;
-  request_approved: boolean;
-  request_rejected: boolean;
+  request_reviewed: boolean;
   entity_modified: boolean;
   entity_deleted: boolean;
-  narrator_post: boolean;
 }
 
 export interface UserPublic {

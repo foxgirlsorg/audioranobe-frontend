@@ -67,19 +67,9 @@ const PREF_DEFS: { key: keyof NotificationPrefs; label: string; hint: string }[]
     hint: 'Кто-то комментирует тайтл в озвучке вашей команды',
   },
   {
-    key: 'system',
-    label: 'Объявления',
-    hint: 'Новости и служебные сообщения от команды AudioRanobe',
-  },
-  {
-    key: 'request_approved',
-    label: 'Заявки одобрены',
-    hint: 'Модератор одобрил вашу заявку на создание или изменение',
-  },
-  {
-    key: 'request_rejected',
-    label: 'Заявки отклонены',
-    hint: 'Модератор отклонил вашу заявку с указанием причины',
+    key: 'request_reviewed',
+    label: 'Решения по заявкам',
+    hint: 'Модератор рассмотрел вашу заявку — одобрил или отклонил с причиной',
   },
   {
     key: 'entity_modified',
