@@ -410,11 +410,18 @@
 }
 
 .menuNarratorName {
-  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* `.menuItem svg` paints every icon in the menu muted and the hover rule paints
+   them accent, and the badge's own colour lives on its wrapper — so the mark has
+   to be told to take it back, in both states. */
+.menuItem .menuVerified svg,
+.menuItem:hover .menuVerified svg {
+  color: inherit;
 }
 
 .menuSep {

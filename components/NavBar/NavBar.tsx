@@ -441,7 +441,9 @@ export default function NavBar() {
                                       <Mic aria-hidden="true" />
                                   )}
                                   <span className={styles.menuNarratorName}>{n.name}</span>
-                                  {n.is_verified ? <VerifiedBadge size={13} /> : null}
+                                  {n.is_verified ? (
+                                      <VerifiedBadge size={13} className={styles.menuVerified} />
+                                  ) : null}
                                 </Link>
                             ))}
                             <div className={styles.menuSep} />
