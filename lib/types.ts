@@ -109,6 +109,7 @@ export interface Me extends UserPublic {
   is_banned: boolean;
   ban_reason: string | null;
   skip_moderation: boolean;
+  accepted_cookies: boolean;
   email_verified: boolean;
   notification_prefs: NotificationPrefs;
   content_prefs: ContentPrefs;
