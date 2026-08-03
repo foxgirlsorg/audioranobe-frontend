@@ -1,40 +1,52 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { api } from '@/lib/api';
+import { errMsg } from '@/lib/toast';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Markdown from '@/components/Markdown/Markdown';
 import styles from '../legal.module.css';
 
-export const metadata: Metadata = {
-  title: 'Условия использования — AudioRanobe',
-};
-
-const sections = [
-  {
-    title: 'Принятие условий',
-    text: 'Используя AudioRanobe, вы соглашаетесь с данными условиями. Если вы не согласны с каким-либо положением, пожалуйста, прекратите использование сервиса. Мы оставляем за собой право изменять условия с уведомлением пользователей.',
-  },
-  {
-    title: 'Обязанности пользователя',
-    text: 'Пользователь обязуется: использовать сервис только в законных целях, не пытаться взломать или обойти системы безопасности, не создавать фиктивные аккаунты для манипулирования рейтингами, не загружать вредоносный контент. Каждый пользователь несёт ответственность за безопасность своего аккаунта.',
-  },
-  {
-    title: 'Авторские права и контент',
-    text: 'Все аудиокниги и материалы, размещённые на платформе, принадлежат их правообладателям. AudioRanobe предоставляет платформу для размещения пользовательского контента. Загружая контент, пользователь подтверждает, что имеет право на его распространение. В случае нарушения авторских прав мы действуем в соответствии с процедурой DMCA.',
-  },
-  {
-    title: 'Допустимое использование',
-    text: 'Запрещается: массовая загрузка контента с помощью автоматических средств, распространение вредоносного ПО, попытки получить несанкционированный доступ к чужим аккаунтам, использование сервиса для коммерческих целей без согласия администрации. Нарушение этих правил может привести к блокировке аккаунта.',
-  },
-  {
-    title: 'Блокировка аккаунта',
-    text: 'Администрация AudioRanobe оставляет за собой право заблокировать или удалить аккаунт в случае нарушения условий использования. Пользователь может удалить свой аккаунт самостоятельно через настройки. При удалении аккаунта все данные удаляются без возможности восстановления.',
-  },
-  {
-    title: 'Ограничение ответственности',
-    text: 'AudioRanobe предоставляется «как есть» без каких-либо гарантий. Мы не несём ответственности за ущерб, возникший в результате использования или невозможности использования сервиса, за точность размещённого контента или за действия третьих сторон. Суммарный размер ответственности сервиса не может превышать суммы, уплаченной пользователем за последний месяц использования.',
-  },
-];
+function headingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 export default function TermsPage() {
+  const [body, setBody] = useState('');
+  const [error, setError] = useState('');
+
+  const sections = useMemo(
+    () =>
+      body
+        .split('\n')
+        .filter((l) => l.startsWith('## '))
+        .map((l) => {
+          const text = l.slice(3).trim();
+          return { id: headingId(text), text };
+        }),
+    [body]
+  );
+
+  useEffect(() => {
+    let alive = true;
+    api<{ type: string; title: string; body: string }>('/legal/terms')
+      .then((d) => {
+        if (alive) setBody(d.body);
+      })
+      .catch((e) => {
+        if (alive) setError(errMsg(e));
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <div className={styles.wrap}>
       <Link href="/" className="back-link">
@@ -49,14 +61,29 @@ export default function TermsPage() {
         {'Правила и ответственность при использовании AudioRanobe.'}
       </p>
 
-      <div className={styles.doc}>
-        {sections.map((s) => (
-          <section key={s.title} className={styles.section}>
-            <h2 className={styles.sectionTitle}>{s.title}</h2>
-            <p className={styles.text}>{s.text}</p>
-          </section>
-        ))}
-      </div>
+      {error ? (
+        <EmptyState title="Не удалось загрузить условия" body={error} />
+      ) : !body ? (
+        <div className={styles.center}>
+          <Spinner />
+        </div>
+      ) : (
+        <>
+          {sections.length > 0 ? (
+            <nav className={styles.toc} aria-label="Разделы документа">
+              {sections.map((s) => (
+                <a key={s.id} href={`#${s.id}`} className={styles.tocLink}>
+                  {s.text}
+                </a>
+              ))}
+            </nav>
+          ) : null}
+
+          <div className={styles.section}>
+            <Markdown source={body} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

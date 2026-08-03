@@ -54,7 +54,7 @@ marked.use({
 
 function preprocessMentions(md: string): string {
   return md.replace(
-    /@([A-Za-zА-Яа-яЁё0-9_]{3,30})/g,
+    /(?<![\wА-Яа-яЁё])@([A-Za-zА-Яа-яЁё0-9_]{3,30})/g,
     '<a class="md-mention" href="/user/$1" target="_blank" rel="noopener noreferrer">@$1</a>',
   );
 }

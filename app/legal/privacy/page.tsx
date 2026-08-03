@@ -1,40 +1,52 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { api } from '@/lib/api';
+import { errMsg } from '@/lib/toast';
+import Spinner from '@/components/Spinner/Spinner';
+import EmptyState from '@/components/EmptyState/EmptyState';
+import Markdown from '@/components/Markdown/Markdown';
 import styles from '../legal.module.css';
 
-export const metadata: Metadata = {
-  title: 'Политика конфиденциальности — AudioRanobe',
-};
-
-const sections = [
-  {
-    title: 'Сбор данных',
-    text: 'AudioRanobe собирает только те данные, которые необходимы для предоставления и улучшения сервиса. Это включает: информацию, указанную при регистрации (имя пользователя, email), историю прослушивания, избранные аудиокниги и настройки пользователя.',
-  },
-  {
-    title: 'Использование данных',
-    text: 'Собранные данные используются исключительно для работы сервиса: персонализация рекомендаций, сохранение прогресса прослушивания и улучшение качества интерфейса. Мы не продаём данные третьим сторонам и не используем их для показа рекламы.',
-  },
-  {
-    title: 'Трекинг и аналитика',
-    text: 'AudioRanobe не использует сторонние сервисы отслеживания, рекламные сети или аналитические трекеры. Мы не передаём информацию о вашем поведении на сайте третьим сторонам.',
-  },
-  {
-    title: 'Хранение данных',
-    text: 'Данные хранятся на защищённых серверах сервиса. Для авторизации используются JWT-токены, хранящиеся в localStorage вашего браузера. Настройки интерфейса также сохраняются локально.',
-  },
-  {
-    title: 'Удаление аккаунта',
-    text: 'Вы имеете право удалить свой аккаунт и все связанные данные в любой момент. Это можно сделать через настройки профиля. После удаления все ваши данные будут безвозвратно стёрты с наших серверов.',
-  },
-  {
-    title: 'Контакты',
-    text: 'По вопросам конфиденциальности обращайтесь к администрации сервиса через форму обратной связи или по адресу электронной почты, указанному на сайте.',
-  },
-];
+function headingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 export default function PrivacyPage() {
+  const [body, setBody] = useState('');
+  const [error, setError] = useState('');
+
+  const sections = useMemo(
+    () =>
+      body
+        .split('\n')
+        .filter((l) => l.startsWith('## '))
+        .map((l) => {
+          const text = l.slice(3).trim();
+          return { id: headingId(text), text };
+        }),
+    [body]
+  );
+
+  useEffect(() => {
+    let alive = true;
+    api<{ type: string; title: string; body: string }>('/legal/privacy')
+      .then((d) => {
+        if (alive) setBody(d.body);
+      })
+      .catch((e) => {
+        if (alive) setError(errMsg(e));
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <div className={styles.wrap}>
       <Link href="/" className="back-link">
@@ -49,14 +61,29 @@ export default function PrivacyPage() {
         {'Какие данные собирает AudioRanobe, зачем и как их удалить.'}
       </p>
 
-      <div className={styles.doc}>
-        {sections.map((s) => (
-          <section key={s.title} className={styles.section}>
-            <h2 className={styles.sectionTitle}>{s.title}</h2>
-            <p className={styles.text}>{s.text}</p>
-          </section>
-        ))}
-      </div>
+      {error ? (
+        <EmptyState title="Не удалось загрузить политику конфиденциальности" body={error} />
+      ) : !body ? (
+        <div className={styles.center}>
+          <Spinner />
+        </div>
+      ) : (
+        <>
+          {sections.length > 0 ? (
+            <nav className={styles.toc} aria-label="Разделы документа">
+              {sections.map((s) => (
+                <a key={s.id} href={`#${s.id}`} className={styles.tocLink}>
+                  {s.text}
+                </a>
+              ))}
+            </nav>
+          ) : null}
+
+          <div className={styles.section}>
+            <Markdown source={body} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
