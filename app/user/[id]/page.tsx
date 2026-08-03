@@ -400,7 +400,14 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                       <span className={styles.commentWhen}>{timeAgo(c.created_at)}</span>
                     </div>
                     {c.is_deleted ? (
-                      <p className={styles.commentDeleted}>Комментарий удалён</p>
+                      viewer?.role === 'admin' ? (
+                        <>
+                          <p className={styles.commentDeleted}>Комментарий удалён</p>
+                          <CommentBody body={c.body} />
+                        </>
+                      ) : (
+                        <p className={styles.commentDeleted}>Комментарий удалён</p>
+                      )
                     ) : (
                       <CommentBody body={c.body} />
                     )}

@@ -884,7 +884,7 @@ export function CommentSection({
   async function doDelete(c: Comment) {
     try {
       await api(`/comments/${c.id}`, { method: 'DELETE' });
-      patch(c.id, { is_deleted: true, body: '' });
+      patch(c.id, { is_deleted: true, body: isAdmin ? c.body : '' });
       toast('Комментарий удалён', 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
