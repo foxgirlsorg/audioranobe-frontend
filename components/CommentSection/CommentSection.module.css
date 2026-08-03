@@ -130,9 +130,6 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  flex-basis: 100%;
-  min-width: 100%;
-  flex-shrink: 0;
 }
 
 /* Right-aligned wherever it lands — on its own line when the footer is too
@@ -581,6 +578,12 @@ a.inlineMention:hover {
 
   .votes {
     margin-right: auto;
+  }
+
+  .composerBtns {
+    flex-basis: 100%;
+    min-width: 100%;
+    flex-shrink: 0;
   }
 
 }
