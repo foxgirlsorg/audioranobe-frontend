@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowBigDown,
@@ -30,6 +30,7 @@ const PER_PAGE = 20;
 const MAX_BODY = 5000;
 const MAX_DEPTH = 8;
 const INITIAL_REPLIES_SHOWN = 3;
+const COLLAPSED_HEIGHT = 144;
 
 type Sort = 'new' | 'old' | 'top';
 
@@ -57,7 +58,7 @@ function timeAgo(iso: string): string {
 
 function scrollToComment(el: HTMLElement) {
   const nav =
-    parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-height'), 10) || 72;
+      parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-height'), 10) || 72;
   let last = -1;
   for (const ms of [0, 120, 400, 900]) {
     window.setTimeout(() => {
@@ -70,20 +71,79 @@ function scrollToComment(el: HTMLElement) {
 }
 
 function CommentBody({ body }: { body: string }) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [isLong, setIsLong] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+  const [maxHeight, setMaxHeight] = useState<number | 'none'>('none');
+
+  /* Raw character count under-reports how much vertical space a comment takes —
+     a wall of @mentions is short in chars but tall once rendered. Measure the
+     actual rendered height and collapse only when it overflows. */
+  useLayoutEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    const tall = el.scrollHeight > COLLAPSED_HEIGHT + 1;
+    setIsLong(tall);
+    setExpanded(!tall);
+    setMaxHeight(tall ? COLLAPSED_HEIGHT : 'none');
+  }, [body]);
+
+  const toggle = () => {
+    const el = innerRef.current;
+    if (!el) return;
+    const fullHeight = el.scrollHeight;
+
+    if (expanded) {
+      setMaxHeight(fullHeight);
+      setExpanded(false);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setMaxHeight(COLLAPSED_HEIGHT));
+      });
+    } else {
+      setExpanded(true);
+      setMaxHeight(fullHeight);
+    }
+  };
+
+  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.propertyName !== 'max-height') return;
+    if (expanded) setMaxHeight('none');
+  };
+
   return (
-    <div className={styles.body}>
-      <Markdown source={body} compact />
-    </div>
+      <div className={styles.body}>
+        <div
+            ref={innerRef}
+            className={[
+              styles.bodyInner,
+              isLong ? styles.bodyAnimated : '',
+              isLong && !expanded ? styles.bodyCollapsed : '',
+            ]
+                .filter(Boolean)
+                .join(' ')}
+            style={
+              isLong ? { maxHeight: maxHeight === 'none' ? undefined : `${maxHeight}px` } : undefined
+            }
+            onTransitionEnd={handleTransitionEnd}
+        >
+          <Markdown source={body} compact />
+        </div>
+        {isLong ? (
+            <button type="button" className={styles.expandBtn} onClick={toggle}>
+              {expanded ? 'Свернуть' : 'Показать полностью'}
+            </button>
+        ) : null}
+      </div>
   );
 }
 
 function MentionDropdown({
-  users,
-  query,
-  activeIndex,
-  onSelect,
-  position,
-}: {
+                           users,
+                           query,
+                           activeIndex,
+                           onSelect,
+                           position,
+                         }: {
   users: { id: number; username: string; avatar_url: string | null }[];
   query: string;
   activeIndex: number;
@@ -98,49 +158,49 @@ function MentionDropdown({
   if (filtered.length === 0) return null;
 
   return (
-    <div className={styles.mentionDropdown} style={{ top: position.top, left: position.left }}>
-      {filtered.slice(0, 8).map((u, i) => {
-        const q = query.toLowerCase();
-        const idx = u.username.toLowerCase().indexOf(q);
-        return (
-          <div
-            key={u.id}
-            className={`${styles.mentionItem} ${i === activeIndex ? styles.mentionItemActive : ''}`}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              onSelect(u.username);
-            }}
-          >
-            <UserAvatar user={{ username: u.username, avatar_url: u.avatar_url }} size={20} />
-            <span className={styles.mentionItemName}>
+      <div className={styles.mentionDropdown} style={{ top: position.top, left: position.left }}>
+        {filtered.slice(0, 8).map((u, i) => {
+          const q = query.toLowerCase();
+          const idx = u.username.toLowerCase().indexOf(q);
+          return (
+              <div
+                  key={u.id}
+                  className={`${styles.mentionItem} ${i === activeIndex ? styles.mentionItemActive : ''}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onSelect(u.username);
+                  }}
+              >
+                <UserAvatar user={{ username: u.username, avatar_url: u.avatar_url }} size={20} />
+                <span className={styles.mentionItemName}>
               {idx >= 0 ? (
-                <>
-                  {u.username.slice(0, idx)}
-                  <span className={styles.mentionItemMatch}>
+                  <>
+                    {u.username.slice(0, idx)}
+                    <span className={styles.mentionItemMatch}>
                     {u.username.slice(idx, idx + query.length)}
                   </span>
-                  {u.username.slice(idx + query.length)}
-                </>
+                    {u.username.slice(idx + query.length)}
+                  </>
               ) : (
-                u.username
+                  u.username
               )}
             </span>
-          </div>
-        );
-      })}
-    </div>
+              </div>
+          );
+        })}
+      </div>
   );
 }
 
 function Composer({
-  initial = '',
-  placeholder,
-  submitLabel,
-  onSubmit,
-  onCancel,
-  autoFocus = false,
-  mentionUsers = [],
-}: {
+                    initial = '',
+                    placeholder,
+                    submitLabel,
+                    onSubmit,
+                    onCancel,
+                    autoFocus = false,
+                    mentionUsers = [],
+                  }: {
   initial?: string;
   placeholder?: string;
   submitLabel: string;
@@ -162,15 +222,15 @@ function Composer({
 
   const triggerIdx = mentionAt ?? -1;
   const mentionQ =
-    triggerIdx >= 0 ? val.slice(triggerIdx + 1, textarea()?.selectionStart ?? val.length) : '';
+      triggerIdx >= 0 ? val.slice(triggerIdx + 1, textarea()?.selectionStart ?? val.length) : '';
   const showMention = mentionAt !== null && !/\s/.test(mentionQ) && mentionQ.length < 30;
 
   const mentionFiltered = useMemo(() => {
     if (!showMention) return [];
     const q = mentionQ.toLowerCase();
     return q
-      ? mentionUsers.filter((u) => u.username.toLowerCase().includes(q))
-      : mentionUsers;
+        ? mentionUsers.filter((u) => u.username.toLowerCase().includes(q))
+        : mentionUsers;
   }, [showMention, mentionQ, mentionUsers]);
 
   useEffect(() => {
@@ -302,78 +362,87 @@ function Composer({
   }
 
   return (
-    <div className={styles.composer}>
-      <MarkdownEditor
-        variant="slim"
-        handleRef={editorRef}
-        value={val}
-        onChange={handleInput}
-        placeholder={placeholder}
-        maxLength={MAX_BODY}
-        autoFocus={autoFocus}
-        onKeyDown={handleKeyDown}
-        onSelect={handleSelect}
-        onClick={handleSelect}
-        overlay={
-          <>
-            <div
-              ref={mirrorRef}
-              style={{ position: 'absolute', visibility: 'hidden' }}
-              aria-hidden
-            />
-            {showMention && mentionFiltered.length > 0 ? (
-              <MentionDropdown
-                users={mentionFiltered}
-                query={mentionQ}
-                activeIndex={mentionActiveIdx}
-                onSelect={insertMention}
-                position={mentionPos}
-              />
-            ) : null}
-          </>
-        }
-        footer={
-          <>
-            {onCancel ? (
-              <button type="button" className={styles.composerCancel} onClick={onCancel}>
-                Отмена
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className={styles.composerSubmit}
-              onClick={() => void submit()}
-              disabled={busy || val.trim() === ''}
-            >
-              {busy ? 'Отправка…' : submitLabel}
-            </button>
-          </>
-        }
-      />
-    </div>
+      <div className={styles.composer}>
+        <MarkdownEditor
+            variant="slim"
+            handleRef={editorRef}
+            value={val}
+            onChange={handleInput}
+            placeholder={placeholder}
+            maxLength={MAX_BODY}
+            autoFocus={autoFocus}
+            onKeyDown={handleKeyDown}
+            onSelect={handleSelect}
+            onClick={handleSelect}
+            overlay={
+              <>
+                <div
+                    ref={mirrorRef}
+                    style={{ position: 'absolute', visibility: 'hidden' }}
+                    aria-hidden
+                />
+                {showMention && mentionFiltered.length > 0 ? (
+                    <MentionDropdown
+                        users={mentionFiltered}
+                        query={mentionQ}
+                        activeIndex={mentionActiveIdx}
+                        onSelect={insertMention}
+                        position={mentionPos}
+                    />
+                ) : null}
+              </>
+            }
+            footer={
+              onCancel ? (
+                  <div className={styles.composerBtns}>
+                    <button type="button" className={styles.composerCancel} onClick={onCancel}>
+                      Отмена
+                    </button>
+                    <button
+                        type="button"
+                        className={styles.composerSubmit}
+                        onClick={() => void submit()}
+                        disabled={busy || val.trim() === ''}
+                    >
+                      {busy ? 'Отправка…' : submitLabel}
+                    </button>
+                  </div>
+              ) : (
+                  <button
+                      type="button"
+                      className={`${styles.composerSubmit} ${styles.composerSubmitAuto}`}
+                      onClick={() => void submit()}
+                      disabled={busy || val.trim() === ''}
+                  >
+                    {busy ? 'Отправка…' : submitLabel}
+                  </button>
+              )
+            }
+        />
+      </div>
   );
 }
 
 function NestedComment({
-  comment,
-  directChildren,
-  depth,
-  replyingId,
-  editingId,
-  currentUserId,
-  canModerate,
-  isAdmin,
-  flashId,
-  expandedSet,
-  onToggleExpand,
-  onVote,
-  onReply,
-  onEdit,
-  onDelete,
-  onRestore,
-  onSubmitReply,
-  onSubmitEdit,
-}: {
+                         comment,
+                         directChildren,
+                         depth,
+                         replyingId,
+                         editingId,
+                         currentUserId,
+                         canModerate,
+                         isAdmin,
+                         flashId,
+                         expandedSet,
+                         onToggleExpand,
+                         onVote,
+                         onReply,
+                         onEdit,
+                         onDelete,
+                         onRestore,
+                         onSubmitReply,
+                         onSubmitEdit,
+                       }: {
   comment: Comment;
   directChildren: Map<number, Comment[]>;
   depth: number;
@@ -394,220 +463,224 @@ function NestedComment({
   onSubmitEdit: (id: number, body: string) => Promise<boolean>;
 }) {
   const own = currentUserId != null && comment.user != null && comment.user.id === currentUserId;
-  const isRoot = depth === 0;
   const avatarSize = Math.max(22, 34 - depth * 2);
 
   return (
-    <article
-      className={[
-        styles.comment,
-        isRoot ? '' : styles.replyItem,
-        comment.id === flashId ? styles.flash : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      id={`comment-${comment.id}`}
-    >
-      <UserAvatar user={comment.user} size={avatarSize} />
-      <div className={styles.commentMain}>
-        <header className={styles.commentHead}>
-          {comment.user ? (
-            <Link
-              href={`/user/${encodeURIComponent(comment.user.username)}`}
-              className={styles.username}
-              title={`@${comment.user.username}`}
-            >
-              {comment.user.display_name || comment.user.username}
-            </Link>
-          ) : (
-            <span className={styles.usernameGone}>удалённый пользователь</span>
-          )}
-          <time
-            className={styles.time}
-            dateTime={comment.created_at}
-            title={new Date(comment.created_at).toLocaleString()}
-          >
-            {timeAgo(comment.created_at)}
-          </time>
-          {comment.updated_at && !comment.is_deleted ? (
-            <span className={styles.edited} title={new Date(comment.updated_at).toLocaleString()}>
-              {comment.edited_by_staff ? 'изменено модерацией' : 'изменено'}
-            </span>
-          ) : null}
-        </header>
-
-        {comment.is_deleted ? (
-          isAdmin ? (
-            <>
-              <div className={styles.deletedBody}>[удалено] — видно только администрации</div>
-              <CommentBody body={comment.body} />
-            </>
-          ) : (
-            <div className={styles.deletedBody}>[удалено]</div>
-          )
-        ) : editingId === comment.id ? (
-          <Composer
-            initial={comment.body}
-            submitLabel="Сохранить"
-            autoFocus
-            onSubmit={(b) => onSubmitEdit(comment.id, b)}
-            onCancel={() => onEdit(null)}
-          />
-        ) : (
-          <CommentBody body={comment.body} />
-        )}
-
-        {comment.is_deleted ? (
-          isAdmin ? (
-            <footer className={styles.actions}>
-              <button
-                type="button"
-                className={styles.actionBtn}
-                onClick={() => onRestore(comment)}
+      <article
+          className={[
+            styles.comment,
+            comment.id === flashId ? styles.flash : '',
+          ]
+              .filter(Boolean)
+              .join(' ')}
+          id={`comment-${comment.id}`}
+      >
+        <div className={styles.commentMain}>
+          <header className={styles.commentHead}>
+            <UserAvatar user={comment.user} size={avatarSize} />
+            <div className={styles.commentHeadText}>
+              {comment.user ? (
+                  <Link
+                      href={`/user/${encodeURIComponent(comment.user.username)}`}
+                      className={styles.username}
+                      title={`@${comment.user.username}`}
+                  >
+                    {comment.user.display_name || comment.user.username}
+                  </Link>
+              ) : (
+                  <span className={styles.usernameGone}>удалённый пользователь</span>
+              )}
+              <time
+                  className={styles.time}
+                  dateTime={comment.created_at}
+                  title={new Date(comment.created_at).toLocaleString()}
               >
-                <RotateCcw size={12} />
-                Восстановить
-              </button>
-            </footer>
-          ) : null
-        ) : editingId !== comment.id ? (
-          <footer className={styles.actions}>
+                {timeAgo(comment.created_at)}
+              </time>
+              {comment.updated_at && !comment.is_deleted ? (
+                  <span className={styles.edited} title={new Date(comment.updated_at).toLocaleString()}>
+                {comment.edited_by_staff ? 'изменено модерацией' : 'изменено'}
+              </span>
+              ) : null}
+            </div>
+          </header>
+
+          {comment.is_deleted ? (
+              isAdmin ? (
+                  <>
+                    <div className={styles.deletedBody}>[удалено] — видно только администрации</div>
+                    <CommentBody body={comment.body} />
+                  </>
+              ) : (
+                  <div className={styles.deletedBody}>[удалено]</div>
+              )
+          ) : editingId === comment.id ? (
+              <Composer
+                  initial={comment.body}
+                  submitLabel="Сохранить"
+                  autoFocus
+                  onSubmit={(b) => onSubmitEdit(comment.id, b)}
+                  onCancel={() => onEdit(null)}
+              />
+          ) : (
+              <CommentBody body={comment.body} />
+          )}
+
+          {comment.is_deleted ? (
+              isAdmin ? (
+                  <footer className={styles.actions}>
+                    <button
+                        type="button"
+                        className={styles.actionBtn}
+                        onClick={() => onRestore(comment)}
+                        aria-label="Восстановить"
+                    >
+                      <RotateCcw size={12} />
+                      <span className={styles.actionLabel}>Восстановить</span>
+                    </button>
+                  </footer>
+              ) : null
+          ) : editingId !== comment.id ? (
+              <footer className={styles.actions}>
             <span className={styles.votes}>
               <button
-                type="button"
-                className={
-                  comment.my_vote === 1
-                    ? `${styles.voteBtn} ${styles.voteActive}`
-                    : styles.voteBtn
-                }
-                onClick={() => onVote(comment, 1)}
-                aria-label="Голос за"
-                aria-pressed={comment.my_vote === 1}
+                  type="button"
+                  className={
+                    comment.my_vote === 1
+                        ? `${styles.voteBtn} ${styles.voteActive}`
+                        : styles.voteBtn
+                  }
+                  onClick={() => onVote(comment, 1)}
+                  aria-label="Голос за"
+                  aria-pressed={comment.my_vote === 1}
               >
                 <ArrowBigUp size={16} />
               </button>
               <span
-                className={
-                  comment.my_vote !== 0 ? `${styles.score} ${styles.scoreVoted}` : styles.score
-                }
+                  className={
+                    comment.my_vote !== 0 ? `${styles.score} ${styles.scoreVoted}` : styles.score
+                  }
               >
                 {comment.score}
               </span>
               <button
-                type="button"
-                className={
-                  comment.my_vote === -1
-                    ? `${styles.voteBtn} ${styles.voteActive}`
-                    : styles.voteBtn
-                }
-                onClick={() => onVote(comment, -1)}
-                aria-label="Голос против"
-                aria-pressed={comment.my_vote === -1}
+                  type="button"
+                  className={
+                    comment.my_vote === -1
+                        ? `${styles.voteBtn} ${styles.voteActive}`
+                        : styles.voteBtn
+                  }
+                  onClick={() => onVote(comment, -1)}
+                  aria-label="Голос против"
+                  aria-pressed={comment.my_vote === -1}
               >
                 <ArrowBigDown size={16} />
               </button>
             </span>
-            <button
-              type="button"
-              className={styles.actionBtn}
-              onClick={() => onReply(replyingId === comment.id ? null : comment.id)}
-            >
-              <CornerDownRight size={12} />
-              Ответить
-            </button>
-            {own || canModerate ? (
-              <button
-                type="button"
-                className={styles.actionBtn}
-                onClick={() => onEdit(editingId === comment.id ? null : comment.id)}
-                title={own ? undefined : 'Редактирование от модерации'}
-              >
-                <Pencil size={12} />
-                Изменить
-              </button>
-            ) : null}
-            {own || canModerate ? (
-              <button
-                type="button"
-                className={`${styles.actionBtn} ${styles.actionDanger}`}
-                onClick={() => onDelete(comment)}
-              >
-                <Trash2 size={12} />
-                Удалить
-              </button>
-            ) : null}
-            <ReportButton targetType="comment" targetId={comment.id} />
-          </footer>
-        ) : null}
-
-        {replyingId === comment.id ? (
-          <div className={styles.replyBox}>
-            <Composer
-              placeholder={
-                comment.user
-                  ? `Ответ для ${comment.user.username}…`
-                  : 'Напишите ответ…'
-              }
-              submitLabel="Ответить"
-              autoFocus
-              onSubmit={(b) => onSubmitReply(b, comment.id)}
-              onCancel={() => onReply(null)}
-            />
-          </div>
-        ) : null}
-
-        {depth < MAX_DEPTH && (() => {
-          const kids = directChildren.get(comment.id) ?? [];
-          if (kids.length === 0) return null;
-          const visibleKids = expandedSet.has(comment.id) ? kids : kids.slice(0, INITIAL_REPLIES_SHOWN);
-          const hiddenCount = kids.length - visibleKids.length;
-          return (
-            <div className={styles.nested}>
-              {visibleKids.map((child) => (
-                <div key={child.id} className={styles.nestedReply}>
-                  <NestedComment
-                    comment={child}
-                    directChildren={directChildren}
-                    depth={depth + 1}
-                    replyingId={replyingId}
-                    editingId={editingId}
-                    currentUserId={currentUserId}
-                    canModerate={canModerate}
-                    isAdmin={isAdmin}
-                    flashId={flashId}
-                    expandedSet={expandedSet}
-                    onToggleExpand={onToggleExpand}
-                    onVote={onVote}
-                    onReply={onReply}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onRestore={onRestore}
-                    onSubmitReply={onSubmitReply}
-                    onSubmitEdit={onSubmitEdit}
-                  />
-                </div>
-              ))}
-              {hiddenCount > 0 && (
                 <button
-                  type="button"
-                  className={styles.threadExpandBtn}
-                  onClick={() => onToggleExpand(comment.id)}
+                    type="button"
+                    className={styles.actionBtn}
+                    onClick={() => onReply(replyingId === comment.id ? null : comment.id)}
+                    aria-label="Ответить"
                 >
-                  Показать ещё {hiddenCount} {hiddenCount === 1 ? 'ответ' : hiddenCount < 5 ? 'ответа' : 'ответов'}
+                  <CornerDownRight size={12} />
+                  <span className={styles.actionLabel}>Ответить</span>
                 </button>
-              )}
-            </div>
-          );
-        })()}
-      </div>
-    </article>
+                {own || canModerate ? (
+                    <button
+                        type="button"
+                        className={styles.actionBtn}
+                        onClick={() => onEdit(editingId === comment.id ? null : comment.id)}
+                        title={own ? undefined : 'Редактирование от модерации'}
+                        aria-label="Изменить"
+                    >
+                      <Pencil size={12} />
+                      <span className={styles.actionLabel}>Изменить</span>
+                    </button>
+                ) : null}
+                {own || canModerate ? (
+                    <button
+                        type="button"
+                        className={`${styles.actionBtn} ${styles.actionDanger}`}
+                        onClick={() => onDelete(comment)}
+                        aria-label="Удалить"
+                    >
+                      <Trash2 size={12} />
+                      <span className={styles.actionLabel}>Удалить</span>
+                    </button>
+                ) : null}
+                <ReportButton targetType="comment" targetId={comment.id} compact />
+              </footer>
+          ) : null}
+
+          {replyingId === comment.id ? (
+              <div className={styles.replyBox}>
+                <Composer
+                    placeholder={
+                      comment.user
+                          ? `Ответ для ${comment.user.username}…`
+                          : 'Напишите ответ…'
+                    }
+                    submitLabel="Ответить"
+                    autoFocus
+                    onSubmit={(b) => onSubmitReply(b, comment.id)}
+                    onCancel={() => onReply(null)}
+                />
+              </div>
+          ) : null}
+
+          {depth < MAX_DEPTH && (() => {
+            const kids = directChildren.get(comment.id) ?? [];
+            if (kids.length === 0) return null;
+            const visibleKids = expandedSet.has(comment.id) ? kids : kids.slice(0, INITIAL_REPLIES_SHOWN);
+            const hiddenCount = kids.length - visibleKids.length;
+            return (
+                <div className={styles.nested}>
+                  {visibleKids.map((child) => (
+                      <div key={child.id} className={styles.nestedReply}>
+                        <NestedComment
+                            comment={child}
+                            directChildren={directChildren}
+                            depth={depth + 1}
+                            replyingId={replyingId}
+                            editingId={editingId}
+                            currentUserId={currentUserId}
+                            canModerate={canModerate}
+                            isAdmin={isAdmin}
+                            flashId={flashId}
+                            expandedSet={expandedSet}
+                            onToggleExpand={onToggleExpand}
+                            onVote={onVote}
+                            onReply={onReply}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onRestore={onRestore}
+                            onSubmitReply={onSubmitReply}
+                            onSubmitEdit={onSubmitEdit}
+                        />
+                      </div>
+                  ))}
+                  {hiddenCount > 0 && (
+                      <button
+                          type="button"
+                          className={styles.threadExpandBtn}
+                          onClick={() => onToggleExpand(comment.id)}
+                      >
+                        Показать ещё {hiddenCount} {hiddenCount === 1 ? 'ответ' : hiddenCount < 5 ? 'ответа' : 'ответов'}
+                      </button>
+                  )}
+                </div>
+            );
+          })()}
+        </div>
+      </article>
   );
 }
 
 export function CommentSection({
-  targetType,
-  targetId,
-}: {
+                                 targetType,
+                                 targetId,
+                               }: {
   targetType: CommentTargetType;
   targetId: number;
 }) {
@@ -926,112 +999,112 @@ export function CommentSection({
   }, [items]);
 
   return (
-    <section className={styles.section}>
-      <header className={styles.head}>
-        <h3 className={styles.heading}>
-          Комментарии <span className={styles.headCount}>{total}</span>
-        </h3>
-        <Tabs
-          tabs={SORT_TABS}
-          active={sort}
-          onChange={(k) => setSort(k as Sort)}
-        />
-      </header>
-
-      {user ? (
-        <div className={styles.postBox}>
-          <Composer
-            placeholder="Поделитесь впечатлениями… (спойлеры оборачивайте в ||двойные палочки||)"
-            submitLabel="Опубликовать"
-            onSubmit={(b) => post(b, null)}
-            mentionUsers={mentionUsers}
+      <section className={styles.section}>
+        <header className={styles.head}>
+          <h3 className={styles.heading}>
+            Комментарии <span className={styles.headCount}>{total}</span>
+          </h3>
+          <Tabs
+              tabs={SORT_TABS}
+              active={sort}
+              onChange={(k) => setSort(k as Sort)}
           />
-        </div>
-      ) : (
-        <div className={styles.loginPrompt}>
-          <LogIn size={15} />
-          <span>
+        </header>
+
+        {user ? (
+            <div className={styles.postBox}>
+              <Composer
+                  placeholder="Поделитесь впечатлениями… (спойлеры оборачивайте в ||двойные палочки||)"
+                  submitLabel="Опубликовать"
+                  onSubmit={(b) => post(b, null)}
+                  mentionUsers={mentionUsers}
+              />
+            </div>
+        ) : (
+            <div className={styles.loginPrompt}>
+              <LogIn size={15} />
+              <span>
             Присоединяйтесь к обсуждению —{' '}
-            <Link href="/auth/login" className={styles.loginLink}>
+                <Link href="/auth/login" className={styles.loginLink}>
               войдите
             </Link>{' '}
-            или{' '}
-            <Link href="/auth/register" className={styles.loginLink}>
+                или{' '}
+                <Link href="/auth/register" className={styles.loginLink}>
               создайте аккаунт
             </Link>
             .
           </span>
-        </div>
-      )}
-
-      {loading ? (
-        <Spinner />
-      ) : error ? (
-        <EmptyState icon={MessageSquare} title="Не удалось загрузить комментарии" body={error} />
-      ) : roots.length === 0 ? (
-        <EmptyState
-          icon={MessageSquare}
-          title="Комментариев пока нет"
-          body="Будьте первым, кто поделится впечатлениями."
-        />
-      ) : (
-        <>
-          <div className={styles.list}>
-            {roots.map((root) => (
-              <div key={root.id} className={styles.thread}>
-                <NestedComment
-                  comment={root}
-                  directChildren={directChildren}
-                  depth={0}
-                  replyingId={replyingId}
-                  editingId={editingId}
-                  currentUserId={user ? user.id : null}
-                  canModerate={isMod}
-                  isAdmin={isAdmin}
-                  flashId={flashId}
-                  expandedSet={expandedComments}
-                  onToggleExpand={toggleExpand}
-                  onVote={vote}
-                  onReply={toggleReply}
-                  onEdit={toggleEdit}
-                  onDelete={(c) => setToDelete(c)}
-                  onRestore={(c) => void restoreComment(c)}
-                  onSubmitReply={(b, parentId) => post(b, parentId)}
-                  onSubmitEdit={saveEdit}
-                />
-              </div>
-            ))}
-          </div>
-          {hasMore ? (
-            <div className={styles.moreWrap}>
-              <button
-                type="button"
-                className={styles.more}
-                onClick={() => void loadMore()}
-                disabled={loadingMore}
-              >
-                {loadingMore ? 'Загрузка…' : 'Показать ещё комментарии'}
-              </button>
             </div>
-          ) : null}
-        </>
-      )}
+        )}
 
-      <ConfirmDialog
-        open={toDelete != null}
-        onClose={() => setToDelete(null)}
-        onConfirm={() => {
-          if (toDelete) void doDelete(toDelete);
-        }}
-        title="Удалить комментарий"
-        body={
-          toDelete && user && toDelete.user && toDelete.user.id !== user.id
-            ? 'Удалить этот комментарий как модератор? Он будет заменён на [удалено] и скрыт от всех, кроме администрации.'
-            : 'Удалить ваш комментарий? Он будет заменён на [удалено] и скрыт от всех, кроме администрации.'
-        }
-        danger
-      />
-    </section>
+        {loading ? (
+            <Spinner />
+        ) : error ? (
+            <EmptyState icon={MessageSquare} title="Не удалось загрузить комментарии" body={error} />
+        ) : roots.length === 0 ? (
+            <EmptyState
+                icon={MessageSquare}
+                title="Комментариев пока нет"
+                body="Будьте первым, кто поделится впечатлениями."
+            />
+        ) : (
+            <>
+              <div className={styles.list}>
+                {roots.map((root) => (
+                    <div key={root.id} className={styles.thread}>
+                      <NestedComment
+                          comment={root}
+                          directChildren={directChildren}
+                          depth={0}
+                          replyingId={replyingId}
+                          editingId={editingId}
+                          currentUserId={user ? user.id : null}
+                          canModerate={isMod}
+                          isAdmin={isAdmin}
+                          flashId={flashId}
+                          expandedSet={expandedComments}
+                          onToggleExpand={toggleExpand}
+                          onVote={vote}
+                          onReply={toggleReply}
+                          onEdit={toggleEdit}
+                          onDelete={(c) => setToDelete(c)}
+                          onRestore={(c) => void restoreComment(c)}
+                          onSubmitReply={(b, parentId) => post(b, parentId)}
+                          onSubmitEdit={saveEdit}
+                      />
+                    </div>
+                ))}
+              </div>
+              {hasMore ? (
+                  <div className={styles.moreWrap}>
+                    <button
+                        type="button"
+                        className={styles.more}
+                        onClick={() => void loadMore()}
+                        disabled={loadingMore}
+                    >
+                      {loadingMore ? 'Загрузка…' : 'Показать ещё комментарии'}
+                    </button>
+                  </div>
+              ) : null}
+            </>
+        )}
+
+        <ConfirmDialog
+            open={toDelete != null}
+            onClose={() => setToDelete(null)}
+            onConfirm={() => {
+              if (toDelete) void doDelete(toDelete);
+            }}
+            title="Удалить комментарий"
+            body={
+              toDelete && user && toDelete.user && toDelete.user.id !== user.id
+                  ? 'Удалить этот комментарий как модератор? Он будет заменён на [удалено] и скрыт от всех, кроме администрации.'
+                  : 'Удалить ваш комментарий? Он будет заменён на [удалено] и скрыт от всех, кроме администрации.'
+            }
+            danger
+        />
+      </section>
   );
 }
 

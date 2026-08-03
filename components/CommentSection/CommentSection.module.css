@@ -125,6 +125,22 @@
   cursor: default;
 }
 
+.composerBtns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-basis: 100%;
+  min-width: 100%;
+  flex-shrink: 0;
+}
+
+/* Right-aligned wherever it lands — on its own line when the footer is too
+   narrow, or at the end of the tool row when there's room. */
+.composerSubmitAuto {
+  margin-left: auto;
+}
+
 /* ---------------------------------------------------------------- mention dropdown */
 
 .mentionDropdown {
@@ -177,8 +193,8 @@
 }
 
 .thread {
-  padding: 18px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .thread:last-child {
@@ -186,10 +202,19 @@
 }
 
 .comment {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
   border-radius: 10px;
+  animation: commentIn 0.3s ease;
+}
+
+@keyframes commentIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Arriving from a `#comment-N` link. Landing at the right scroll position is not
@@ -212,7 +237,6 @@
 }
 
 .commentMain {
-  flex: 1;
   min-width: 0;
 }
 
@@ -220,38 +244,23 @@
   margin-top: 14px;
   margin-left: 17px;
   padding-left: 22px;
-  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 1px solid rgba(222, 97, 97, 0.16);
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.replyItem {
-  gap: 10px;
-}
-
-/* ------------------------------------------------------------ nested tree */
-
 .nested {
   display: flex;
   flex-direction: column;
+  margin-top: 0.75rem;
+  margin-left: 0.2rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid rgba(222, 97, 97, 0.16);
 }
 
 .nestedReply {
   margin-top: 10px;
-  padding-left: 14px;
-  border-left: 1px solid rgba(222, 97, 97, 0.14);
-}
-
-.nestedReply > .comment {
-  gap: 10px;
-}
-
-/* Max visual nesting cap at ~8 levels — further levels don't indent */
-.nestedReply:nth-child(n + 9) {
-  margin-left: 0;
-  padding-left: 0;
-  border-left-color: transparent;
 }
 
 /* ------------------------------------------------------------ show more */
@@ -283,15 +292,24 @@
 
 .commentHead {
   display: flex;
-  align-items: baseline;
-  gap: 9px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: 4px;
+  min-width: 0;
+}
+
+.commentHeadText {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .username {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--text, #e8e8e8);
   text-decoration: none;
   transition: color 0.25s ease;
@@ -303,32 +321,71 @@
 
 .usernameGone {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-muted, #7a7a7a);
   font-style: italic;
 }
 
 .time {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted, #7a7a7a);
+  letter-spacing: 0.04em;
 }
 
 .edited {
   font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--text-muted, #6f6f6f);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 9999px;
-  padding: 1px 7px;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .body {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--text-secondary, #c2c2c2);
   word-break: break-word;
+}
+
+.bodyInner {
+  min-width: 0;
+}
+
+.bodyAnimated {
+  overflow: hidden;
+  position: relative;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bodyCollapsed {
+  mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+}
+
+.expandBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 3px 0;
+  border: none;
+  background: transparent;
+  color: var(--accent, #de6161);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.expandBtn:hover {
+  opacity: 1;
+  color: var(--accent-hover, #e67676);
 }
 
 .mention {
@@ -428,30 +485,32 @@ a.inlineMention:hover {
 .actionBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 9999px;
-  border: 1px solid transparent;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
   background: transparent;
   color: var(--text-muted, #8a8a8a);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
   cursor: pointer;
-  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .actionBtn:hover {
-  color: var(--text, #e8e8e8);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--accent, #de6161);
+  background: rgba(222, 97, 97, 0.07);
 }
 
 .actionDanger:hover {
-  color: #c98080;
-  border-color: rgba(168, 82, 82, 0.35);
-  background: rgba(168, 82, 82, 0.07);
+  color: #f08080;
+  background: rgba(240, 128, 128, 0.07);
+}
+
+.actionLabel {
+  white-space: nowrap;
 }
 
 .replyBox {
@@ -496,10 +555,7 @@ a.inlineMention:hover {
     margin-left: 8px;
     padding-left: 12px;
   }
-  .nestedReply {
-    margin-left: 12px;
-    padding-left: 10px;
-  }
+
   .threadExpandBtn {
     margin-left: 12px;
   }
@@ -509,8 +565,22 @@ a.inlineMention:hover {
     height: 32px;
   }
 
+  /* Icon+label buttons don't have room to wrap gracefully at this width,
+     so the label drops and the icon carries the action on its own. */
+  .actionLabel {
+    display: none;
+  }
+
   .actionBtn {
-    padding: 6px 12px;
+    padding: 6px;
+  }
+
+  .actions {
+    justify-content: flex-end;
+  }
+
+  .votes {
+    margin-right: auto;
   }
 
 }
@@ -521,23 +591,10 @@ a.inlineMention:hover {
     padding-left: 8px;
   }
 
-  .nestedReply {
-    margin-left: 6px;
-    padding-left: 6px;
-  }
 
-  .nestedReply:nth-child(n + 4) {
-    margin-left: 0;
-    padding-left: 0;
-    border-left-color: transparent;
-  }
 
   .threadExpandBtn {
     margin-left: 6px;
-  }
-
-  .comment {
-    gap: 8px;
   }
 
   .postBox {

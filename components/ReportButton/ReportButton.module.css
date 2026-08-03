@@ -21,6 +21,12 @@
   background: rgba(168, 82, 82, 0.07);
 }
 
+@media (max-width: 768px) {
+  .btnCompact span {
+    display: none;
+  }
+}
+
 .form {
   display: flex;
   flex-direction: column;

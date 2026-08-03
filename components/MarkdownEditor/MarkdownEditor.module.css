@@ -176,10 +176,10 @@
 }
 
 @media (max-width: 640px) {
-  /* 16px is the threshold below which iOS zooms the page on focus. */
-  .input {
-    min-height: 60px;
-    font-size: 16px;
+  /* Taller on phones — the on-screen keyboard eats vertical space. */
+  .slim .input,
+  .slim .preview {
+    min-height: 130px;
   }
 }
 

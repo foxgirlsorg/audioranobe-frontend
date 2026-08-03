@@ -14,9 +14,11 @@ const MAX_REASON = 1000;
 export function ReportButton({
   targetType,
   targetId,
+  compact = false,
 }: {
   targetType: string;
   targetId: number;
+  compact?: boolean;
 }) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -64,7 +66,7 @@ export function ReportButton({
     <>
       <button
         type="button"
-        className={styles.btn}
+        className={compact ? `${styles.btn} ${styles.btnCompact}` : styles.btn}
         onClick={openModal}
         title={'Пожаловаться модераторам'}
       >
