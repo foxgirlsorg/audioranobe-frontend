@@ -567,6 +567,15 @@
   transition: color 0.25s ease;
 }
 
+.narrItemVerified {
+  padding-right: 0.45rem;
+}
+
+.narrVerified {
+  margin-left: 0.1rem;
+  color: #de6161;
+}
+
 /* ---------- description ---------- */
 
 .descWrap {

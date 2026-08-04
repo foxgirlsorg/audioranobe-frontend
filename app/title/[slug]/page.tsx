@@ -53,6 +53,7 @@ import ImageViewer from '@/components/ImageViewer/ImageViewer';
 import Markdown from '@/components/Markdown/Markdown';
 import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDownloadButton/ArchiveDownloadButton';
 import AiBadge from '@/components/AiBadge/AiBadge';
+import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import styles from './page.module.css';
 
 const DESC_CLAMP_CHARS = 420;
@@ -461,7 +462,9 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
                   <Link
                     key={n.id}
                     href={`/narrator/${n.slug}`}
-                    className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}`}
+                    className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}${
+                      n.is_verified ? ` ${styles.narrItemVerified}` : ''
+                    }`}
                   >
                     {n.avatar_url ? (
                       <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
@@ -471,6 +474,9 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
                       </span>
                     )}
                     <span className={styles.narrName}>{n.name}</span>
+                    {n.is_verified ? (
+                      <VerifiedBadge size={12} className={styles.narrVerified} />
+                    ) : null}
                   </Link>
                 ))}
               </div>
