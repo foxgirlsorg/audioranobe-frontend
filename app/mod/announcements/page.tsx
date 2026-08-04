@@ -68,6 +68,7 @@ function EditorModal({
       open
       onClose={onClose}
       title={initial ? 'Редактировать объявление' : 'Новое объявление'}
+      size="wide"
     >
       <div className={styles.editor}>
         <label className={styles.field}>

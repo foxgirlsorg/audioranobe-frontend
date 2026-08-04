@@ -9,11 +9,13 @@ export function Modal({
   open,
   onClose,
   title,
+  size = 'default',
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
+  size?: 'default' | 'wide';
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -40,13 +42,13 @@ export function Modal({
 
   return createPortal(
     <div
-      className={styles.overlay}
+      className={`${styles.overlay}${size === 'wide' ? ` ${styles.overlayWide}` : ''}`}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className={styles.panel}
+        className={`${styles.panel}${size === 'wide' ? ` ${styles.panelWide}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Диалог'}

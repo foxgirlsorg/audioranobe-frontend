@@ -9,6 +9,12 @@
   margin-bottom: 2rem;
 }
 
+.topRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.4rem;
+}
+
 .pageTitle {
   margin-top: 0.45rem;
   font-size: clamp(1.6rem, 3.4vw, 2.3rem);
@@ -145,4 +151,60 @@
 
 .cardMore:hover {
   color: var(--accent, #de6161);
+}
+
+/* ---------- admin controls ---------- */
+
+.chipDraft {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.16rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(240, 180, 100, 0.35);
+  background: rgba(240, 180, 100, 0.1);
+  color: #e0b276;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.smallBtn {
+  padding: 0.42rem 0.85rem;
+  font-size: 11px;
+}
+
+/* ---------- editor modal ---------- */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
 }
