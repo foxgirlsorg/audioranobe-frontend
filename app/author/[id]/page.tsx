@@ -94,14 +94,14 @@ export default function AuthorPage({ params }: { params: { id: string } }) {
 
       {a.bio ? (
         <div className={`glass-panel ${styles.bioPanel}`}>
-          <span className="eyebrow">О себе</span>
+          <span className="eyebrow">Об авторе</span>
           <div className={styles.bio}>
             <Markdown source={a.bio} />
           </div>
         </div>
       ) : null}
 
-      <Section eyebrow="Каталог" title="Произведения" accent="тайтлы">
+      <Section eyebrow="Каталог" title="Произведения" accent="автора">
         {a.titles.length > 0 ? (
           <CardGrid>
             {a.titles.map((tc) => (
