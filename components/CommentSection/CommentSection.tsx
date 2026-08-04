@@ -28,8 +28,9 @@ import styles from './CommentSection.module.css';
 
 const PER_PAGE = 20;
 const MAX_BODY = 5000;
-const MAX_DEPTH = 8;
-const INITIAL_REPLIES_SHOWN = 3;
+const MAX_DEPTH = 5;
+const FOLD_THRESHOLD = 3; // wrap a subtree when it holds more than this many replies
+const REPLIES_PREVIEW = 2; // replies still shown before the wrap button
 const COLLAPSED_HEIGHT = 144;
 
 type Sort = 'new' | 'old' | 'top';
@@ -426,7 +427,9 @@ function Composer({
 function NestedComment({
                          comment,
                          directChildren,
+                         descendantCount,
                          depth,
+                         leaf = false,
                          replyingId,
                          editingId,
                          currentUserId,
@@ -445,7 +448,9 @@ function NestedComment({
                        }: {
   comment: Comment;
   directChildren: Map<number, Comment[]>;
+  descendantCount: Map<number, number>;
   depth: number;
+  leaf?: boolean;
   replyingId: number | null;
   editingId: number | null;
   currentUserId: number | null;
@@ -464,6 +469,7 @@ function NestedComment({
 }) {
   const own = currentUserId != null && comment.user != null && comment.user.id === currentUserId;
   const avatarSize = Math.max(22, 34 - depth * 2);
+  const canReply = depth < MAX_DEPTH;
 
   return (
       <article
@@ -577,6 +583,7 @@ function NestedComment({
                 <ArrowBigDown size={16} />
               </button>
             </span>
+            {canReply ? (
                 <button
                     type="button"
                     className={styles.actionBtn}
@@ -586,6 +593,7 @@ function NestedComment({
                   <CornerDownRight size={12} />
                   <span className={styles.actionLabel}>Ответить</span>
                 </button>
+            ) : null}
                 {own || canModerate ? (
                     <button
                         type="button"
@@ -629,19 +637,25 @@ function NestedComment({
               </div>
           ) : null}
 
-          {depth < MAX_DEPTH && (() => {
+          {!leaf && depth < MAX_DEPTH && (() => {
             const kids = directChildren.get(comment.id) ?? [];
             if (kids.length === 0) return null;
-            const visibleKids = expandedSet.has(comment.id) ? kids : kids.slice(0, INITIAL_REPLIES_SHOWN);
-            const hiddenCount = kids.length - visibleKids.length;
+            // Count every reply under this comment at any nesting depth — not
+            // just the direct children — so a long single chain folds too.
+            const totalBelow = descendantCount.get(comment.id) ?? kids.length;
+            const folded = !expandedSet.has(comment.id) && totalBelow > FOLD_THRESHOLD;
+            const shown = folded ? kids.slice(0, REPLIES_PREVIEW) : kids;
+            const hiddenCount = totalBelow - shown.length;
             return (
                 <div className={styles.nested}>
-                  {visibleKids.map((child) => (
+                  {shown.map((child) => (
                       <div key={child.id} className={styles.nestedReply}>
                         <NestedComment
                             comment={child}
                             directChildren={directChildren}
+                            descendantCount={descendantCount}
                             depth={depth + 1}
+                            leaf={folded}
                             replyingId={replyingId}
                             editingId={editingId}
                             currentUserId={currentUserId}
@@ -660,7 +674,7 @@ function NestedComment({
                         />
                       </div>
                   ))}
-                  {hiddenCount > 0 && (
+                  {folded && hiddenCount > 0 ? (
                       <button
                           type="button"
                           className={styles.threadExpandBtn}
@@ -668,7 +682,7 @@ function NestedComment({
                       >
                         Показать ещё {hiddenCount} {hiddenCount === 1 ? 'ответ' : hiddenCount < 5 ? 'ответа' : 'ответов'}
                       </button>
-                  )}
+                  ) : null}
                 </div>
             );
           })()}
@@ -763,7 +777,7 @@ export function CommentSection({
     }
   }
 
-  const { roots, directChildren, byId } = useMemo(() => {
+  const { roots, directChildren, byId, descendantCount } = useMemo(() => {
     const byId = new Map<number, Comment>();
     for (const c of items) byId.set(c.id, c);
 
@@ -805,7 +819,21 @@ export function CommentSection({
     }
 
     for (const arr of directChildren.values()) arr.sort((a, b) => a.id - b.id);
-    return { roots, directChildren, byId };
+
+      const descendantCount = new Map<number, number>();
+    const countDescendants = (id: number): number => {
+      const kids = directChildren.get(id);
+      if (!kids || kids.length === 0) return 0;
+      let total = 0;
+      for (const k of kids) total += 1 + countDescendants(k.id);
+      descendantCount.set(id, total);
+      return total;
+    };
+    for (const c of items) {
+      if (c.parent_id == null || !byId.has(c.parent_id)) countDescendants(c.id);
+    }
+
+    return { roots, directChildren, byId, descendantCount };
   }, [items, isAdmin]);
 
   const hasMore = page < Math.ceil(total / PER_PAGE);
@@ -1055,6 +1083,7 @@ export function CommentSection({
                       <NestedComment
                           comment={root}
                           directChildren={directChildren}
+                          descendantCount={descendantCount}
                           depth={0}
                           replyingId={replyingId}
                           editingId={editingId}
