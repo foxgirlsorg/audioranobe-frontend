@@ -127,6 +127,10 @@
   color: #fff;
 }
 
+.nameBadges {
+  margin-left: -0.4rem;
+}
+
 .headSub {
   color: var(--text-muted);
   font-size: 12px;

@@ -137,11 +137,17 @@
 }
 
 .by {
+  display: inline-flex;
+  align-items: center;
   font-size: 11px;
   color: var(--text-muted, #8a8a8a);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.byBadges {
+  margin-left: 4px;
 }
 
 .stats {

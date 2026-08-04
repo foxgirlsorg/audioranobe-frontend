@@ -63,6 +63,8 @@ export interface UserBrief {
   display_name: string;
   id: number;
   avatar_url: string | null;
+  role: Role;
+  is_developer: boolean;
 }
 
 /** `system` has no key: hand-written announcements are not opt-out. */
@@ -87,6 +89,7 @@ export interface UserPublic {
   avatar_url: string | null;
   cover_url: string | null;
   role: Role;
+  is_developer: boolean;
   created_at: string;
 }
 
@@ -368,7 +371,7 @@ export interface Report {
   reason: string;
   status: ReportStatus;
   resolution_note: string;
-  reporter: { id: number; username: string } | null;
+  reporter: UserBrief | null;
   target_preview: string;
   target_link: string;
   created_at: string;
@@ -377,7 +380,7 @@ export interface Report {
 
 export interface AuditEntry {
   id: number;
-  actor: { id: number; username: string } | null;
+  actor: UserBrief | null;
   action: string;
   entity_type: string;
   entity_id: number | null;
@@ -393,7 +396,7 @@ export interface ModRequest {
   payload: Record<string, unknown>;
   status: ModRequestStatus;
   review_note: string;
-  submitted_by: { id: number; username: string } | null;
+  submitted_by: UserBrief | null;
   entity: Record<string, unknown> | null;
   created_at: string;
   reviewed_at: string | null;
@@ -444,7 +447,7 @@ export interface ModNarrator {
   subscribers_count: number;
   created_at: string;
   deleted_at: string | null;
-  owner: { id: number; username: string } | null;
+  owner: { id: number; username: string; role: Role; is_developer: boolean } | null;
   admin_contact: string | null;
 }
 

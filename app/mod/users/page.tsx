@@ -30,6 +30,7 @@ function UsersContent() {
   const { user: me } = useAuth();
   const { toast } = useToast();
   const isAdmin = me?.role === 'admin';
+  const isModerator = me?.role === 'moderator' || isAdmin;
 
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
@@ -40,6 +41,7 @@ function UsersContent() {
   const [editEmail, setEditEmail] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editPassword, setEditPassword] = useState('');
+  const [editIsDeveloper, setEditIsDeveloper] = useState(false);
   const [imageBusy, setImageBusy] = useState<'avatar' | 'cover' | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
@@ -83,6 +85,7 @@ function UsersContent() {
     setEditEmail(u.email ?? '');
     setEditBio(u.bio || '');
     setEditPassword('');
+    setEditIsDeveloper(!!u.is_developer);
   };
 
   const saveEdit = async () => {
@@ -100,6 +103,7 @@ function UsersContent() {
                 ...(editPassword ? { password: editPassword } : {}),
               }
             : {}),
+          ...(isModerator ? { is_developer: editIsDeveloper } : {}),
         },
       });
       replaceRow(updated);
@@ -390,7 +394,7 @@ function UsersContent() {
                           <button
                             type="button"
                             className={`btn btn-ghost ${styles.smallBtn}`}
-                            disabled={self || busy}
+                            disabled={busy}
                             onClick={() => openEdit(u)}
                             aria-label={`Редактировать ${u.username}`}
                             title={'Редактировать'}
@@ -478,6 +482,15 @@ function UsersContent() {
                 />
               </label>
             </>
+          ) : null}
+
+          {isAdmin ? (
+            <Toggle
+              checked={editIsDeveloper}
+              onChange={(on) => setEditIsDeveloper(on)}
+              label={'Командный бейдж: разработчик'}
+              disabled={imageBusy !== null || busyId === toEdit?.id}
+            />
           ) : null}
           <button
             type="button"

@@ -28,6 +28,7 @@ import type { NarratorCard, SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import AddContentDialog from '@/components/AddContentDialog/AddContentDialog';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
+import UserBadges from '@/components/UserBadges/UserBadges';
 import UnverifiedEmailBanner from '@/components/UnverifiedEmailBanner/UnverifiedEmailBanner';
 import styles from './NavBar.module.css';
 
@@ -407,7 +408,10 @@ export default function NavBar() {
                     <div className={styles.userMenu}>
                       <div className={styles.menuHead}>
                         <span className={styles.menuEyebrow}>{'вы вошли как'}</span>
-                        <span className={styles.menuName}>{user.username}</span>
+                        <span className={styles.menuName}>
+                          {user.username}
+                          <UserBadges user={user} size={9} className={styles.badges}/>
+                        </span>
                       </div>
                       <div className={styles.menuSep} />
 

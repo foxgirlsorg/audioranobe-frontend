@@ -24,6 +24,7 @@ import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Markdown from '@/components/Markdown/Markdown';
 import MarkdownEditor, { type MarkdownEditorHandle } from '@/components/MarkdownEditor/MarkdownEditor';
+import UserBadges from '@/components/UserBadges/UserBadges';
 import styles from './CommentSection.module.css';
 
 const PER_PAGE = 20;
@@ -490,6 +491,9 @@ function NestedComment({
               ) : (
                   <span className={styles.usernameGone}>удалённый пользователь</span>
               )}
+              {comment.user ? (
+                  <UserBadges user={comment.user} size={8} />
+              ) : null}
               <time
                   className={styles.time}
                   dateTime={comment.created_at}

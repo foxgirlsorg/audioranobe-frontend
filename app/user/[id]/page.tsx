@@ -29,6 +29,7 @@ import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import CollectionCardC from '@/components/CollectionCardC/CollectionCardC';
 import SocialLinks from '@/components/SocialLinks/SocialLinks';
 import Markdown from '@/components/Markdown/Markdown';
+import UserBadges from '@/components/UserBadges/UserBadges';
 import styles from './page.module.css';
 
 const LIBRARY_STATUSES: { key: string; label: string }[] = [
@@ -257,11 +258,10 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
         </div>
 
         <div className={styles.headMain}>
-          <span className="eyebrow">Профиль слушателя</span>
+          <span className="eyebrow">{user.role === 'admin' ? 'администратор' : user.role === 'moderator' ? 'модератор' : 'слушатель'}</span>
           <h1 className={styles.name}>
             {user.display_name || user.username}
-            {user.role === 'admin' ? <span className="badge">Админ</span> : null}
-            {user.role === 'moderator' ? <span className="badge">Модератор</span> : null}
+            <UserBadges user={user} size={15} className={styles.nameBadges} />
           </h1>
           <div className={styles.headSub}>
             {user.display_name ? <span>@{user.username}</span> : null}

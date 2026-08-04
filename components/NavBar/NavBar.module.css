@@ -646,3 +646,6 @@
   object-fit: cover;
   flex: none;
 }
+.badges {
+  margin-left: 5px
+}
