@@ -104,6 +104,12 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     }
   }, [narrator]);
 
+  useEffect(() => {
+    if (narrator && !narrator.is_verified && !isMod && tab === 'posts') {
+      setTab('info');
+    }
+  }, [narrator, tab, isMod]);
+
   const loadMembers = useCallback(async () => {
     if (!narrator) return;
     try {
@@ -215,13 +221,15 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
       { key: 'info', label: 'Инфо' },
       { key: 'images', label: 'Изображения' },
     ];
-    list.push({ key: 'posts', label: 'Записи' });
+    if (isMod || narrator?.is_verified) {
+      list.push({ key: 'posts', label: 'Записи' });
+    }
     list.push({ key: 'stats', label: 'Статистика' });
     if (isOwner) {
       list.push({ key: 'transfer', label: 'Перенос' });
     }
     return list;
-  }, [canEdit, isOwner]);
+  }, [isMod, narrator?.is_verified, isOwner]);
 
   if (authLoading || !user || !ready) {
     return (
@@ -418,7 +426,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         </form>
       )}
 
-      {tab === 'posts' && (
+      {tab === 'posts' && (isMod || narrator.is_verified) && (
         <NarratorPosts narratorId={narrator.id} canEdit={canEdit} />
       )}
 

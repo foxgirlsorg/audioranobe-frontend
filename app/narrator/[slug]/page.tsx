@@ -191,9 +191,11 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
         </div>
       ) : null}
 
-      <Section eyebrow="Блог" title="Публичные" accent="записи">
-        <NarratorPosts narratorId={n.id} canEdit={n.can_edit} />
-      </Section>
+      {isMod || n.is_verified ? (
+        <Section eyebrow="Блог" title="Публичные" accent="записи">
+          <NarratorPosts narratorId={n.id} canEdit={n.can_edit} />
+        </Section>
+      ) : null}
 
       <div className={styles.comments}>
         <CommentSection targetType="narrator" targetId={n.id} />
