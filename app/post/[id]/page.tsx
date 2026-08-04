@@ -91,7 +91,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
         </header>
 
         <div className={styles.body}>
-          <Markdown source={post.body} />
+          <Markdown source={post.body} media="both" />
         </div>
       </article>
 

@@ -140,6 +140,7 @@ export default function NarratorPosts({
               onChange={setBody}
               maxLength={20000}
               placeholder={'**Жирный**, *курсив*, [ссылка](https://…), списки…'}
+              media="both"
             />
           </div>
           <div className={styles.editorFoot}>
@@ -172,7 +173,7 @@ export default function NarratorPosts({
               </header>
               <Collapsible maxHeight={220}>
                 <div className={styles.postBody}>
-                  <Markdown source={p.body} />
+                  <Markdown source={p.body} media="both" />
                 </div>
               </Collapsible>
               <footer className={styles.postFoot}>

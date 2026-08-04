@@ -93,7 +93,7 @@ export default function NewsPage() {
                 </h2>
                 {a.body ? (
                   <div className={styles.cardBody}>
-                    <Markdown source={a.body} />
+                    <Markdown source={a.body} media="both" />
                   </div>
                 ) : null}
                 <Link href={`/news/${a.slug}`} className={styles.cardMore}>

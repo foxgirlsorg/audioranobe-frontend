@@ -160,7 +160,7 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
         <div className={`glass-panel ${styles.bioPanel}`}>
           <span className="eyebrow">О себе</span>
           <div className={styles.bio}>
-            <Markdown source={n.bio} />
+            <Markdown source={n.bio} media="image" />
           </div>
         </div>
       ) : null}

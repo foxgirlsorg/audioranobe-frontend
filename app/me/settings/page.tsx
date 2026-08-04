@@ -481,6 +481,7 @@ export default function SettingsPage() {
             onChange={setBio}
             maxLength={2000}
             placeholder={'Расскажите что-нибудь…'}
+            media="image"
           />
         </div>
 

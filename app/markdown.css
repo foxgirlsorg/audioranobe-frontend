@@ -1174,6 +1174,34 @@
     border-radius: 8px;
 }
 
+/* A sized image pins its ratio and stays inside the column. */
+.markdown-body img[width] {
+    max-width: 100%;
+    height: auto;
+}
+
+/*
+ * @[youtube](ID) — a marked preprocessor turns the token into this box before
+ * parsing; Markdown.tsx only lets DOMPurify keep embeds pointed at YouTube.
+ */
+.markdown-body .md-video {
+    position: relative;
+    width: 100%;
+    margin: 0.75rem 0;
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+}
+
+.markdown-body .md-video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
 .markdown-body hr {
     height: 1px;
     background: linear-gradient(to right, rgba(222, 97, 97, 0.3), transparent);

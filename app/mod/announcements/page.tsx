@@ -86,6 +86,7 @@ function EditorModal({
             value={body}
             onChange={setBody}
             placeholder={'**Подробности**, [ссылки](https://…) — всё, что стоит знать сообществу…'}
+            media="both"
           />
         </div>
         <Toggle checked={published} onChange={setPublished} label="Опубликовано" />

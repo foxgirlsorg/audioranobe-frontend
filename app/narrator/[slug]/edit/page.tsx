@@ -334,6 +334,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
               onChange={setBio}
               maxLength={5000}
               placeholder="Расскажите слушателям об этом чтеце…"
+              media="image"
             />
           </div>
 

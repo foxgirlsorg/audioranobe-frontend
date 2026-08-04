@@ -276,7 +276,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
         <div className={`glass-panel ${styles.bioPanel}`}>
           <span className="eyebrow">О себе</span>
           <div className={styles.bio}>
-            <Markdown source={user.bio} />
+            <Markdown source={user.bio} media="image" />
           </div>
         </div>
       ) : null}

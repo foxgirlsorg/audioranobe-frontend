@@ -7,15 +7,18 @@ import {
   Eye,
   EyeOff,
   Heading,
+  Image as ImageIcon,
   Italic,
   Link2,
   List,
   ListOrdered,
   Quote,
   Strikethrough,
+  Youtube,
   type LucideIcon,
 } from 'lucide-react';
 import Markdown from '@/components/Markdown/Markdown';
+import Modal from '@/components/Modal/Modal';
 import styles from './MarkdownEditor.module.css';
 
 type Action =
@@ -45,6 +48,12 @@ const TOOLS: Tool[] = [
 const GROUP_ENDS = new Set(['spoiler', 'link']);
 
 const SLIM_KEYS = new Set(['bold', 'italic', 'strike', 'spoiler', 'link', 'quote']);
+
+/** Pulls a 11-char YouTube video id out of a watch/short/embed/youtu.be link. */
+function youtubeId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
 
 export interface MarkdownEditorHandle {
   textarea: HTMLTextAreaElement | null;
@@ -120,6 +129,7 @@ export default function MarkdownEditor({
   rows,
   autoFocus = false,
   variant = 'full',
+  media,
   handleRef,
   overlay,
   footer,
@@ -134,6 +144,7 @@ export default function MarkdownEditor({
   rows?: number;
   autoFocus?: boolean;
   variant?: 'full' | 'slim';
+  media?: 'image' | 'video' | 'both';
   handleRef?: React.MutableRefObject<MarkdownEditorHandle | null>;
   overlay?: React.ReactNode;
   footer?: React.ReactNode;
@@ -145,6 +156,9 @@ export default function MarkdownEditor({
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const [preview, setPreview] = useState(false);
   const pendingSel = useRef<[number, number] | null>(null);
+  const [urlPrompt, setUrlPrompt] = useState<'image' | 'video' | null>(null);
+  const [urlValue, setUrlValue] = useState('');
+  const [urlError, setUrlError] = useState('');
 
   useLayoutEffect(() => {
     const sel = pendingSel.current;
@@ -163,6 +177,41 @@ export default function MarkdownEditor({
     if (maxLength != null && res.value.length > maxLength) return;
     pendingSel.current = [res.start, res.end];
     onChange(res.value);
+  }
+
+  function insertAtCursor(text: string) {
+    const el = ref.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const next = value.slice(0, start) + text + value.slice(end);
+    if (maxLength != null && next.length > maxLength) return;
+    pendingSel.current = [start + text.length, start + text.length];
+    onChange(next);
+  }
+
+  function submitImage() {
+    const url = urlValue.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      setUrlError('Ссылка должна начинаться с http:// или https://');
+      return;
+    }
+    insertAtCursor(`![Описание](${url} "640xauto")`);
+    setUrlPrompt(null);
+    setUrlValue('');
+    setUrlError('');
+  }
+
+  function submitVideo() {
+    const id = youtubeId(urlValue.trim());
+    if (!id) {
+      setUrlError('Не удалось распознать ссылку на YouTube');
+      return;
+    }
+    insertAtCursor(`\n\n@[youtube](${id})\n\n`);
+    setUrlPrompt(null);
+    setUrlValue('');
+    setUrlError('');
   }
 
   useImperativeHandle(
@@ -234,11 +283,54 @@ export default function MarkdownEditor({
     </button>
   );
 
+  const mediaButtons = (
+    !slim && media ? (
+      <>
+        <span className={styles.sep} aria-hidden="true" />
+        {media === 'image' || media === 'both' ? (
+          <button
+            type="button"
+            className={styles.tool}
+            title="Вставить изображение (ссылка на картинку)"
+            aria-label="Вставить изображение"
+            disabled={preview}
+            onClick={() => {
+              setUrlValue('');
+              setUrlError('');
+              setUrlPrompt('image');
+            }}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <ImageIcon size={14} />
+          </button>
+        ) : null}
+        {media === 'video' || media === 'both' ? (
+          <button
+            type="button"
+            className={styles.tool}
+            title="Вставить видео с YouTube"
+            aria-label="Вставить видео с YouTube"
+            disabled={preview}
+            onClick={() => {
+              setUrlValue('');
+              setUrlError('');
+              setUrlPrompt('video');
+            }}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <Youtube size={14} />
+          </button>
+        ) : null}
+      </>
+    ) : null
+  );
+
   return (
     <div className={`${styles.editor} ${slim ? styles.slim : styles.full}`}>
       {slim ? null : (
         <div className={styles.toolbar}>
           {toolButtons}
+          {mediaButtons}
           <span className={styles.spacer} />
           {previewButton}
         </div>
@@ -248,7 +340,7 @@ export default function MarkdownEditor({
         {preview ? (
           <div className={styles.preview}>
             {value.trim() ? (
-              <Markdown source={value} compact />
+              <Markdown source={value} compact media={media} />
             ) : (
               <span className={styles.previewEmpty}>Нечего показать — текст пуст.</span>
             )}
@@ -291,6 +383,71 @@ export default function MarkdownEditor({
         <span className={styles.spacer} />
         {footer}
       </div>
+
+      <Modal
+        open={urlPrompt !== null}
+        onClose={() => {
+          setUrlPrompt(null);
+          setUrlValue('');
+          setUrlError('');
+        }}
+        title={urlPrompt === 'video' ? 'Вставить видео с YouTube' : 'Вставить изображение'}
+      >
+        <div className={styles.promptBody}>
+          {urlPrompt === 'video' ? (
+            <p className={styles.promptHint}>
+              Ссылка на видео YouTube. В текст встанет компактный плеер.
+            </p>
+          ) : (
+            <p className={styles.promptHint}>
+              Прямая ссылка на картинку. Ширина по умолчанию 640px — поменяйте её прямо в тексте,
+              если нужно (высота подстроится под пропорции картинки).
+            </p>
+          )}
+          <input
+            className={`input ${urlError ? styles.promptInputError : ''}`}
+            type="url"
+            value={urlValue}
+            autoFocus
+            placeholder={urlPrompt === 'video' ? 'https://youtu.be/…' : 'https://…'}
+            onChange={(e) => {
+              setUrlValue(e.target.value);
+              if (urlError) setUrlError('');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (urlPrompt === 'video') submitVideo();
+                else submitImage();
+              }
+            }}
+          />
+          {urlError ? <p className={styles.promptError}>{urlError}</p> : null}
+          <div className={styles.promptActions}>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                setUrlPrompt(null);
+                setUrlValue('');
+                setUrlError('');
+              }}
+            >
+              {'Отмена'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                if (urlPrompt === 'video') submitVideo();
+                else submitImage();
+              }}
+            >
+              {'Вставить'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

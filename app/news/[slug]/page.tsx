@@ -79,7 +79,7 @@ export default function NewsItemPage({ params }: { params: { slug: string } }) {
         </div>
         <h1 className={styles.title}>{item.title}</h1>
         <div className={styles.body}>
-          <Markdown source={item.body} />
+          <Markdown source={item.body} media="both" />
         </div>
       </article>
 
