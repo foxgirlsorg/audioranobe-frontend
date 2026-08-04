@@ -39,7 +39,7 @@ import { chapterFilePrefix, formatCount, formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Section from '@/components/Section/Section';
 import TabScroller from '@/components/TabScroller/TabScroller';
-import CardGrid from '@/components/CardGrid/CardGrid';
+import ScrollRail from '@/components/ScrollRail/ScrollRail';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import RatingStars from '@/components/RatingStars/RatingStars';
 import RatingBars from '@/components/RatingBars/RatingBars';
@@ -719,11 +719,13 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
 
       {title.similar.length > 0 ? (
         <Section eyebrow={'В том же духе'} title={'Похожие'} accent={'тайтлы'}>
-          <CardGrid>
+          <ScrollRail step={1}>
             {title.similar.map((s) => (
-              <TitleCardC key={s.id} title={s} />
+              <div key={s.id} data-rail-card>
+                <TitleCardC title={s} />
+              </div>
             ))}
-          </CardGrid>
+          </ScrollRail>
         </Section>
       ) : null}
 

@@ -217,7 +217,6 @@ function Composer({
   const textarea = useCallback(() => editorRef.current?.textarea ?? null, []);
 
   const [mentionAt, setMentionAt] = useState<number | null>(null);
-  const [mentionQuery, setMentionQuery] = useState('');
   const [mentionActiveIdx, setMentionActiveIdx] = useState(0);
   const [mentionPos, setMentionPos] = useState({ top: 0, left: 0 });
 
@@ -286,7 +285,6 @@ function Composer({
     const newVal = before + insert + after;
     setVal(newVal);
     setMentionAt(null);
-    setMentionQuery('');
     requestAnimationFrame(() => {
       el.focus();
       const newPos = atIdx + insert.length;
@@ -303,15 +301,12 @@ function Composer({
       const afterAt = v.slice(mentionAt + 1, pos);
       if (!afterAt || /\s/.test(afterAt) || afterAt.length >= 30) {
         setMentionAt(null);
-        setMentionQuery('');
       } else {
-        setMentionQuery(afterAt);
         updateMentionPosition();
       }
     } else if (typed && pos > 0 && v[pos - 1] === '@') {
 
       setMentionAt(pos - 1);
-      setMentionQuery('');
       updateMentionPosition();
     }
   }
@@ -342,7 +337,6 @@ function Composer({
       if (e.key === 'Escape') {
         e.preventDefault();
         setMentionAt(null);
-        setMentionQuery('');
         return;
       }
     }

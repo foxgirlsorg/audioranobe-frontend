@@ -10,8 +10,8 @@ import { usePlayer } from '@/lib/player';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate, formatDuration } from '@/lib/format';
 import Section from '@/components/Section/Section';
+import ScrollRail from '@/components/ScrollRail/ScrollRail';
 import CatalogGrid from '@/components/CatalogGrid/CatalogGrid';
-import CardGrid from '@/components/CardGrid/CardGrid';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -42,11 +42,13 @@ function TitleRail({ titles }: { titles: TitleCard[] }) {
     return <p className={styles.railEmpty}>Здесь пока пусто.</p>;
   }
   return (
-    <CardGrid>
+    <ScrollRail step={3}>
       {titles.map((t) => (
-        <TitleCardC key={t.id} title={t} />
+        <div key={t.id} data-rail-card>
+          <TitleCardC title={t} />
+        </div>
       ))}
-    </CardGrid>
+    </ScrollRail>
   );
 }
 

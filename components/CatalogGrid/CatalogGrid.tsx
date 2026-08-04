@@ -185,7 +185,7 @@ export default function CatalogGrid() {
       ) : (
         <>
           <div className={loading ? `${styles.grid} ${styles.gridLoading}` : styles.grid}>
-            <CardGrid>
+            <CardGrid fill>
               {items!.map((t) => (
                 <TitleCardC key={t.id} title={t} />
               ))}

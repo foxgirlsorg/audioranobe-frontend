@@ -1,7 +1,7 @@
 .card {
-  flex: 1 1 152px;
+  flex: 0 1 152px;
   min-width: 138px;
-  max-width: 204px;
+  width: 100%;
   display: block;
   text-decoration: none;
   color: inherit;

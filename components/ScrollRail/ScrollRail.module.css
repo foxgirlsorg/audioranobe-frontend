@@ -1,0 +1,113 @@
+
+.wrap {
+  position: relative;
+}
+
+.track {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 12px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.track > * {
+  flex: 0 0 152px;
+  width: 152px;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 480px) {
+  .track > * {
+    flex-basis: 125px;
+    width: 125px;
+  }
+}
+
+@property --rail-fade-start {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --rail-fade-end {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+.track {
+  --rail-fade-start: 0px;
+  --rail-fade-end: 0px;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--rail-fade-start),
+    #000 calc(100% - var(--rail-fade-end)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--rail-fade-start),
+    #000 calc(100% - var(--rail-fade-end)),
+    transparent 100%
+  );
+  transition:
+    --rail-fade-start 0.2s ease,
+    --rail-fade-end 0.2s ease;
+}
+
+.fadeStart .track {
+  --rail-fade-start: 5.5rem;
+}
+
+.fadeEnd .track {
+  --rail-fade-end: 5.5rem;
+}
+
+
+.btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 250px;
+
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn {
+    display: inline-flex;
+  }
+}
+
+.btnLeft {
+  left: 2px;
+}
+
+.btnRight {
+  right: 2px;
+}
+
+.btn:hover {
+  color: #de6161;
+}

@@ -3,8 +3,14 @@
 import React from 'react';
 import styles from './CardGrid.module.css';
 
-export function CardGrid({ children }: { children: React.ReactNode }) {
-  return <div className={styles.grid}>{children}</div>;
+export function CardGrid({
+  children,
+  fill = false,
+}: {
+  children: React.ReactNode;
+  fill?: boolean;
+}) {
+  return <div className={fill ? `${styles.grid} ${styles.gridFill}` : styles.grid}>{children}</div>;
 }
 
 export default CardGrid;
