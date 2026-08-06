@@ -298,6 +298,13 @@
   background: rgba(222, 97, 97, 0.45);
 }
 
+/* Collapse control sits at the bottom of a fully unwrapped subtree. */
+.threadCollapseBtn {
+  margin-top: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* --------------------------------------------------------------- comment */
 
 .commentHead {

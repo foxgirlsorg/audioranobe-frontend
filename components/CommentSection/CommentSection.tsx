@@ -424,7 +424,8 @@ function NestedComment({
                          directChildren,
                          descendantCount,
                          depth,
-                         leaf = false,
+                         forceOpen = false,
+                         previewIds = null,
                          replyingId,
                          editingId,
                          currentUserId,
@@ -445,7 +446,8 @@ function NestedComment({
   directChildren: Map<number, Comment[]>;
   descendantCount: Map<number, number>;
   depth: number;
-  leaf?: boolean;
+  forceOpen?: boolean;
+  previewIds?: Set<number> | null;
   replyingId: number | null;
   editingId: number | null;
   currentUserId: number | null;
@@ -465,6 +467,37 @@ function NestedComment({
   const own = currentUserId != null && comment.user != null && comment.user.id === currentUserId;
   const avatarSize = Math.max(22, 34 - depth * 2);
   const canReply = depth < MAX_DEPTH;
+
+  const renderChild = (
+      child: Comment,
+      opts: { forceOpen?: boolean; previewIds?: Set<number> | null },
+  ) => (
+      <div key={child.id} className={styles.nestedReply}>
+        <NestedComment
+            comment={child}
+            directChildren={directChildren}
+            descendantCount={descendantCount}
+            depth={depth + 1}
+            forceOpen={opts.forceOpen ?? false}
+            previewIds={opts.previewIds ?? null}
+            replyingId={replyingId}
+            editingId={editingId}
+            currentUserId={currentUserId}
+            canModerate={canModerate}
+            isAdmin={isAdmin}
+            flashId={flashId}
+            expandedSet={expandedSet}
+            onToggleExpand={onToggleExpand}
+            onVote={onVote}
+            onReply={onReply}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onRestore={onRestore}
+            onSubmitReply={onSubmitReply}
+            onSubmitEdit={onSubmitEdit}
+        />
+      </div>
+  );
 
   return (
       <article
@@ -635,44 +668,81 @@ function NestedComment({
               </div>
           ) : null}
 
-          {!leaf && depth < MAX_DEPTH && (() => {
+          {depth < MAX_DEPTH && (() => {
             const kids = directChildren.get(comment.id) ?? [];
             if (kids.length === 0) return null;
-            // Count every reply under this comment at any nesting depth — not
-            // just the direct children — so a long single chain folds too.
-            const totalBelow = descendantCount.get(comment.id) ?? kids.length;
-            const folded = !expandedSet.has(comment.id) && totalBelow > FOLD_THRESHOLD;
-            const shown = folded ? kids.slice(0, REPLIES_PREVIEW) : kids;
-            const hiddenCount = totalBelow - shown.length;
+
+            // Inside a folded preview: render only the pre-order slice handed
+            // down from the fold root, and show no controls of our own.
+            if (previewIds) {
+              const shown = kids.filter((k) => previewIds.has(k.id));
+              if (shown.length === 0) return null;
+              return (
+                  <div className={styles.nested}>
+                    {shown.map((child) => renderChild(child, { previewIds }))}
+                  </div>
+              );
+            }
+
+            // Count every reply the user can see under this comment at any depth
+            // — not just direct children — so a long single chain folds too.
+            const totalBelow = descendantCount.get(comment.id) ?? 0;
+            const foldable = !forceOpen && totalBelow > FOLD_THRESHOLD;
+
+            // Small subtree, or already unwrapped by an ancestor: render every
+            // child straight through (each may still fold on its own).
+            if (!foldable) {
+              return (
+                  <div className={styles.nested}>
+                    {kids.map((child) => renderChild(child, { forceOpen }))}
+                  </div>
+              );
+            }
+
+            // Fold root, unwrapped: open the whole tree as one unit with a single
+            // control at the bottom to wrap it all back.
+            if (expandedSet.has(comment.id)) {
+              return (
+                  <div className={styles.nested}>
+                    {kids.map((child) => renderChild(child, { forceOpen: true }))}
+                    <button
+                        type="button"
+                        className={`${styles.threadExpandBtn} ${styles.threadCollapseBtn}`}
+                        onClick={() => onToggleExpand(comment.id)}
+                    >
+                      Свернуть ветку
+                    </button>
+                  </div>
+              );
+            }
+
+            // Fold root, collapsed: walk the subtree in pre-order and reveal the
+            // first REPLIES_PREVIEW replies the user can see — no matter how deep
+            // they sit — keeping their nesting. Deleted comments are pulled in
+            // only as structure when a visible reply hangs beneath them, and
+            // never count toward the preview budget or the hidden tally.
+            const previewSet = new Set<number>();
+            let previewVisible = 0;
+            const walk = (id: number) => {
+              const ks = directChildren.get(id) ?? [];
+              for (const k of ks) {
+                if (previewVisible >= REPLIES_PREVIEW) return;
+                const kVisible = isAdmin || !k.is_deleted;
+                const kHasVisibleDesc = (descendantCount.get(k.id) ?? 0) > 0;
+                if (!kVisible && !kHasVisibleDesc) continue;
+                previewSet.add(k.id);
+                if (kVisible) previewVisible += 1;
+                walk(k.id);
+              }
+            };
+            walk(comment.id);
+
+            const shown = kids.filter((k) => previewSet.has(k.id));
+            const hiddenCount = totalBelow - previewVisible;
             return (
                 <div className={styles.nested}>
-                  {shown.map((child) => (
-                      <div key={child.id} className={styles.nestedReply}>
-                        <NestedComment
-                            comment={child}
-                            directChildren={directChildren}
-                            descendantCount={descendantCount}
-                            depth={depth + 1}
-                            leaf={folded}
-                            replyingId={replyingId}
-                            editingId={editingId}
-                            currentUserId={currentUserId}
-                            canModerate={canModerate}
-                            isAdmin={isAdmin}
-                            flashId={flashId}
-                            expandedSet={expandedSet}
-                            onToggleExpand={onToggleExpand}
-                            onVote={onVote}
-                            onReply={onReply}
-                            onEdit={onEdit}
-                            onDelete={onDelete}
-                            onRestore={onRestore}
-                            onSubmitReply={onSubmitReply}
-                            onSubmitEdit={onSubmitEdit}
-                        />
-                      </div>
-                  ))}
-                  {folded && hiddenCount > 0 ? (
+                  {shown.map((child) => renderChild(child, { previewIds: previewSet }))}
+                  {hiddenCount > 0 ? (
                       <button
                           type="button"
                           className={styles.threadExpandBtn}
@@ -818,12 +888,16 @@ export function CommentSection({
 
     for (const arr of directChildren.values()) arr.sort((a, b) => a.id - b.id);
 
-      const descendantCount = new Map<number, number>();
+      // Count only replies the current user can actually see. Deleted comments
+    // are invisible to everyone but admins, so including them in the "показать
+    // ещё N" tally would leak their existence — count them only for admins.
+    const descendantCount = new Map<number, number>();
+    const isVisible = (c: Comment) => isAdmin || !c.is_deleted;
     const countDescendants = (id: number): number => {
       const kids = directChildren.get(id);
       if (!kids || kids.length === 0) return 0;
       let total = 0;
-      for (const k of kids) total += 1 + countDescendants(k.id);
+      for (const k of kids) total += (isVisible(k) ? 1 : 0) + countDescendants(k.id);
       descendantCount.set(id, total);
       return total;
     };
