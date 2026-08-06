@@ -174,8 +174,26 @@
   background: rgba(222, 97, 97, 0.18);
 }
 
+.mentionItemText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
 .mentionItemName {
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mentionItemHandle {
+  font-size: 11px;
+  color: var(--text-muted, #9a9a9a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mentionItemMatch {

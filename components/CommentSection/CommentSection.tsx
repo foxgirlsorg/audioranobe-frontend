@@ -146,24 +146,46 @@ function MentionDropdown({
                            onSelect,
                            position,
                          }: {
-  users: { id: number; username: string; avatar_url: string | null }[];
+  users: { id: number; username: string; display_name?: string | null; avatar_url: string | null }[];
   query: string;
   activeIndex: number;
   onSelect: (username: string) => void;
   position: { top: number; left: number };
 }) {
+  // Match on both the handle and the display name, so someone typing a real
+  // name finds the user just as well as someone typing the @handle.
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    return q ? users.filter((u) => u.username.toLowerCase().includes(q)) : users;
+    if (!q) return users;
+    return users.filter(
+        (u) =>
+            u.username.toLowerCase().includes(q) ||
+            (u.display_name ?? '').toLowerCase().includes(q),
+    );
   }, [users, query]);
 
   if (filtered.length === 0) return null;
+
+  const highlight = (text: string, q: string) => {
+    const idx = q ? text.toLowerCase().indexOf(q) : -1;
+    if (idx < 0) return text;
+    return (
+        <>
+          {text.slice(0, idx)}
+          <span className={styles.mentionItemMatch}>{text.slice(idx, idx + q.length)}</span>
+          {text.slice(idx + q.length)}
+        </>
+    );
+  };
 
   return (
       <div className={styles.mentionDropdown} style={{ top: position.top, left: position.left }}>
         {filtered.slice(0, 8).map((u, i) => {
           const q = query.toLowerCase();
-          const idx = u.username.toLowerCase().indexOf(q);
+          const name = u.display_name || u.username;
+          // Show the @handle as a second line only when it differs from the
+          // display name — the inserted mention always uses the handle.
+          const showHandle = (u.display_name ?? '').trim() !== '' && u.display_name !== u.username;
           return (
               <div
                   key={u.id}
@@ -173,20 +195,13 @@ function MentionDropdown({
                     onSelect(u.username);
                   }}
               >
-                <UserAvatar user={{ username: u.username, avatar_url: u.avatar_url }} size={20} />
-                <span className={styles.mentionItemName}>
-              {idx >= 0 ? (
-                  <>
-                    {u.username.slice(0, idx)}
-                    <span className={styles.mentionItemMatch}>
-                    {u.username.slice(idx, idx + query.length)}
-                  </span>
-                    {u.username.slice(idx + query.length)}
-                  </>
-              ) : (
-                  u.username
-              )}
-            </span>
+                <UserAvatar user={{ username: u.username, avatar_url: u.avatar_url }} size={22} />
+                <span className={styles.mentionItemText}>
+                  <span className={styles.mentionItemName}>{highlight(name, q)}</span>
+                  {showHandle ? (
+                      <span className={styles.mentionItemHandle}>@{highlight(u.username, q)}</span>
+                  ) : null}
+                </span>
               </div>
           );
         })}
@@ -209,7 +224,7 @@ function Composer({
   onSubmit: (body: string) => Promise<boolean>;
   onCancel?: () => void;
   autoFocus?: boolean;
-  mentionUsers?: { id: number; username: string; avatar_url: string | null }[];
+  mentionUsers?: { id: number; username: string; display_name?: string | null; avatar_url: string | null }[];
 }) {
   const [val, setVal] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -230,7 +245,11 @@ function Composer({
     if (!showMention) return [];
     const q = mentionQ.toLowerCase();
     return q
-        ? mentionUsers.filter((u) => u.username.toLowerCase().includes(q))
+        ? mentionUsers.filter(
+            (u) =>
+                u.username.toLowerCase().includes(q) ||
+                (u.display_name ?? '').toLowerCase().includes(q),
+        )
         : mentionUsers;
   }, [showMention, mentionQ, mentionUsers]);
 
@@ -441,6 +460,7 @@ function NestedComment({
                          onRestore,
                          onSubmitReply,
                          onSubmitEdit,
+                         mentionUsers,
                        }: {
   comment: Comment;
   directChildren: Map<number, Comment[]>;
@@ -463,6 +483,7 @@ function NestedComment({
   onRestore: (c: Comment) => void;
   onSubmitReply: (body: string, parentId: number) => Promise<boolean>;
   onSubmitEdit: (id: number, body: string) => Promise<boolean>;
+  mentionUsers: { id: number; username: string; display_name?: string | null; avatar_url: string | null }[];
 }) {
   const own = currentUserId != null && comment.user != null && comment.user.id === currentUserId;
   const avatarSize = Math.max(22, 34 - depth * 2);
@@ -495,6 +516,7 @@ function NestedComment({
             onRestore={onRestore}
             onSubmitReply={onSubmitReply}
             onSubmitEdit={onSubmitEdit}
+            mentionUsers={mentionUsers}
         />
       </div>
   );
@@ -558,6 +580,7 @@ function NestedComment({
                   autoFocus
                   onSubmit={(b) => onSubmitEdit(comment.id, b)}
                   onCancel={() => onEdit(null)}
+                  mentionUsers={mentionUsers}
               />
           ) : (
               <CommentBody body={comment.body} />
@@ -657,13 +680,14 @@ function NestedComment({
                 <Composer
                     placeholder={
                       comment.user
-                          ? `Ответ для ${comment.user.username}…`
+                          ? `Ответ для ${comment.user.display_name || comment.user.username}…`
                           : 'Напишите ответ…'
                     }
                     submitLabel="Ответить"
                     autoFocus
                     onSubmit={(b) => onSubmitReply(b, comment.id)}
                     onCancel={() => onReply(null)}
+                    mentionUsers={mentionUsers}
                 />
               </div>
           ) : null}
@@ -1089,10 +1113,15 @@ export function CommentSection({
   }
 
   const mentionUsers = useMemo(() => {
-    const map = new Map<number, { id: number; username: string; avatar_url: string | null }>();
+    const map = new Map<number, { id: number; username: string; display_name?: string | null; avatar_url: string | null }>();
     for (const c of items) {
       if (c.user && !map.has(c.user.id)) {
-        map.set(c.user.id, { id: c.user.id, username: c.user.username, avatar_url: c.user.avatar_url ?? null });
+        map.set(c.user.id, {
+          id: c.user.id,
+          username: c.user.username,
+          display_name: c.user.display_name ?? null,
+          avatar_url: c.user.avatar_url ?? null,
+        });
       }
     }
     return Array.from(map.values());
@@ -1172,6 +1201,7 @@ export function CommentSection({
                           onRestore={(c) => void restoreComment(c)}
                           onSubmitReply={(b, parentId) => post(b, parentId)}
                           onSubmitEdit={saveEdit}
+                          mentionUsers={mentionUsers}
                       />
                     </div>
                 ))}

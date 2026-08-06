@@ -409,6 +409,14 @@
   white-space: nowrap;
 }
 
+.menuHandle {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .menuNarratorName {
   min-width: 0;
   overflow: hidden;
