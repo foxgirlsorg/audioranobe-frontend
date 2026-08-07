@@ -77,6 +77,7 @@ export interface NotificationPrefs {
   comment_reply: boolean;
   narrator_comment: boolean;
   mention: boolean;
+  friend_request: boolean;
   request_reviewed: boolean;
   entity_modified: boolean;
   entity_deleted: boolean;

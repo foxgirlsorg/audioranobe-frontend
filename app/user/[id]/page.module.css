@@ -489,6 +489,18 @@
   margin-top: 0.85rem;
 }
 
+/* The unfriend label is always icon-only; other friend-action labels collapse
+   to icon-only on narrow screens. */
+.friendLabelUnfriend {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .friendLabel {
+    display: none;
+  }
+}
+
 .friendGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));

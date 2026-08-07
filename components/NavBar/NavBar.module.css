@@ -581,6 +581,8 @@
 }
 
 .overlaySub {
+  display: flex;
+  align-items: center;
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.18em;

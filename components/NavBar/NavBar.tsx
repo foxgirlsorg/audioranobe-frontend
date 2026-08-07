@@ -25,6 +25,7 @@ import {
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
+import { FRIENDS_CHANGED } from '@/lib/friends';
 import type { NarratorCard, SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import AddContentDialog from '@/components/AddContentDialog/AddContentDialog';
@@ -158,9 +159,11 @@ export default function NavBar() {
     };
     load();
     const iv = window.setInterval(load, 30_000);
+    window.addEventListener(FRIENDS_CHANGED, load);
     return () => {
       alive = false;
       window.clearInterval(iv);
+      window.removeEventListener(FRIENDS_CHANGED, load);
     };
   }, [user, pathname]);
 

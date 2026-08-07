@@ -67,6 +67,11 @@ const PREF_DEFS: { key: keyof NotificationPrefs; label: string; hint: string }[]
     hint: 'Кто-то комментирует тайтл в озвучке вашей команды',
   },
   {
+    key: 'friend_request',
+    label: 'Заявки в друзья',
+    hint: 'Кто-то отправил вам заявку в друзья',
+  },
+  {
     key: 'request_reviewed',
     label: 'Решения по заявкам',
     hint: 'Модератор рассмотрел вашу заявку — одобрил или отклонил с причиной',

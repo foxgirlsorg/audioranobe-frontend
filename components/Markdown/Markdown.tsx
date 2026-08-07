@@ -32,6 +32,17 @@ marked.use({
   ],
 } as Parameters<typeof marked.use>[0]);
 
+// The preprocessors below build raw HTML that is injected via
+// dangerouslySetInnerHTML with no downstream sanitizer, so every interpolated
+// user value MUST be escaped here — otherwise e.g. an image's alt text can carry
+// an `onerror=` attribute and execute. `marked` escapes the values it renders
+// itself; this covers the HTML we hand-build before it.
+function esc(s: string): string {
+  return s.replace(/[&<>"']/g, (c) =>
+    c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;',
+  );
+}
+
 function headingId(text: string): string {
   return text
     .toLowerCase()
@@ -84,7 +95,7 @@ function preprocessMedia(md: string, media: 'image' | 'video' | 'both'): string 
         const size = h
           ? `width="${w}" height="${h}"`
           : `width="${w}"`;
-        return `<img src="${url}" alt="${alt}" ${size} loading="lazy">`;
+        return `<img src="${esc(url)}" alt="${esc(alt)}" ${size} loading="lazy">`;
       },
     );
   }
@@ -92,7 +103,7 @@ function preprocessMedia(md: string, media: 'image' | 'video' | 'both'): string 
     out = out.replace(
       YOUTUBE_ID_RE,
       (_m, id) =>
-        `\n\n<div class="md-video"><iframe src="https://www.youtube-nocookie.com/embed/${id}" ` +
+        `\n\n<div class="md-video"><iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}" ` +
         'title="YouTube" frameborder="0" ' +
         'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" ' +
         'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>\n\n',

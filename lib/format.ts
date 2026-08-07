@@ -68,3 +68,10 @@ export function chapterFilePrefix(n: number): string {
   const frac = Math.round((n - whole) * 1000) / 1000;
   return String(whole).padStart(3, '0') + (frac > 0 ? String(frac).slice(1) : '');
 }
+
+/** Up-to-two-letter avatar initials from a username. */
+export function initialsOf(username: string): string {
+  const parts = username.split(/[_\-.]+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return username.slice(0, 2).toUpperCase();
+}

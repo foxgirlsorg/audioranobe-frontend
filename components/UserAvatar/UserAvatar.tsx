@@ -3,13 +3,8 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { User as UserIcon } from 'lucide-react';
+import { initialsOf } from '@/lib/format';
 import styles from './UserAvatar.module.css';
-
-function initialsOf(username: string): string {
-  const parts = username.split(/[_\-.]+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return username.slice(0, 2).toUpperCase();
-}
 
 export function UserAvatar({
   user,

@@ -12,17 +12,12 @@ import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Tabs from '@/components/Tabs/Tabs';
 import UserBadges from '@/components/UserBadges/UserBadges';
-import { timeAgo } from '@/lib/format';
+import { initialsOf, timeAgo } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { emitFriendsChanged } from '@/lib/friends';
 import styles from './friends.module.css';
 
 type Tab = 'friends' | 'incoming' | 'outgoing';
-
-function initialsOf(username: string): string {
-  const parts = username.split(/[_\-.]+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return username.slice(0, 2).toUpperCase();
-}
 
 function PersonRow({
   user,
@@ -71,6 +66,7 @@ export default function FriendsPage() {
 
   const [data, setData] = useState<FriendsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>(initialTab);
   const [busyId, setBusyId] = useState<number | null>(null);
 
@@ -83,12 +79,13 @@ export default function FriendsPage() {
     try {
       const res = await api<FriendsData>('/me/friends');
       setData(res);
+      setError(null);
     } catch (e) {
-      toast(errMsg(e), 'error');
+      setError(errMsg(e));
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     if (user) void load();
@@ -106,6 +103,7 @@ export default function FriendsPage() {
     try {
       await api(path, { method });
       setData((d) => (d ? mutate(d) : d));
+      emitFriendsChanged();
       toast(okMsg, 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -147,7 +145,17 @@ export default function FriendsPage() {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className={styles.center}>
+        <EmptyState
+          icon={Users}
+          title="Не удалось загрузить друзей"
+          body={error ?? 'Попробуйте обновить страницу.'}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

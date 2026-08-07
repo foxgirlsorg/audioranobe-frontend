@@ -94,6 +94,11 @@ export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise
     throw new ApiError(0, 'Network error — could not reach the server');
   }
 
+  // Sliding-session renewal: the backend hands back a fresh token for active
+  // users (Auth::maybeRenew). Swap it into storage so the session keeps living.
+  const renewed = res.headers.get('X-Renewed-Token');
+  if (renewed) setToken(renewed);
+
   if (res.status === 204) return undefined as T;
 
   const text = await res.text();

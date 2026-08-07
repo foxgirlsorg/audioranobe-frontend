@@ -12,7 +12,6 @@ import {
   Heart,
   Users,
   UserPlus,
-  UserCheck,
   UserMinus,
   Clock,
   Check,
@@ -31,9 +30,10 @@ import {
   type UserComment,
   type UserProfile,
 } from '@/lib/types';
-import { formatDate, timeAgo } from '@/lib/format';
+import { formatDate, initialsOf, timeAgo } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
+import { emitFriendsChanged } from '@/lib/friends';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -78,12 +78,6 @@ const STAT_LABELS: { key: keyof UserProfile['stats']; label: string }[] = [
   { key: 'favorites', label: 'Избранное' },
   { key: 'comments', label: 'Комментарии' },
 ];
-
-function initialsOf(username: string): string {
-  const parts = username.split(/[_\-.]+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return username.slice(0, 2).toUpperCase();
-}
 
 function CommentBody({ body }: { body: string }) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
@@ -136,6 +130,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [friendStatus, setFriendStatus] = useState<FriendStatus>('none');
+  const [friendsCount, setFriendsCount] = useState(0);
   const [friendBusy, setFriendBusy] = useState(false);
   usePageTitle(profile ? profile.user.display_name || profile.user.username : null);
   const [loading, setLoading] = useState(true);
@@ -215,6 +210,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
         if (alive) {
           setProfile(p);
           setFriendStatus(p.friendship.status);
+          setFriendsCount(p.friendship.friends_count);
         }
       } catch (e) {
         if (!alive) return;
@@ -272,9 +268,13 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   ) => {
     if (friendBusy) return;
     setFriendBusy(true);
+    const prev = friendStatus;
     try {
       const res = await api<{ status: FriendStatus }>(path, { method });
       setFriendStatus(res.status);
+      if (res.status === 'friends' && prev !== 'friends') setFriendsCount((c) => c + 1);
+      else if (res.status !== 'friends' && prev === 'friends') setFriendsCount((c) => Math.max(0, c - 1));
+      emitFriendsChanged();
       toast(okMsg, 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -326,18 +326,22 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   type="button"
                   className="btn btn-primary"
                   disabled={friendBusy}
+                  aria-label="Добавить в друзья"
                   onClick={() => runFriend('POST', `/friends/${user.id}`, 'Заявка отправлена')}
                 >
-                  <UserPlus size={16} /> Добавить в друзья
+                  <UserPlus size={16} />
+                  <span className={styles.friendLabel}>Добавить в друзья</span>
                 </button>
               ) : friendStatus === 'outgoing' ? (
                 <button
                   type="button"
                   className="btn btn-ghost"
                   disabled={friendBusy}
+                  aria-label="Отменить заявку"
                   onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отменена')}
                 >
-                  <Clock size={16} /> Отменить заявку
+                  <Clock size={16} />
+                  <span className={styles.friendLabel}>Отменить заявку</span>
                 </button>
               ) : friendStatus === 'incoming' ? (
                 <>
@@ -345,17 +349,21 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                     type="button"
                     className="btn btn-primary"
                     disabled={friendBusy}
+                    aria-label="Принять заявку"
                     onClick={() => runFriend('POST', `/friends/${user.id}/accept`, 'Заявка принята')}
                   >
-                    <Check size={16} /> Принять заявку
+                    <Check size={16} />
+                    <span className={styles.friendLabel}>Принять заявку</span>
                   </button>
                   <button
                     type="button"
                     className="btn btn-ghost"
                     disabled={friendBusy}
+                    aria-label="Отклонить заявку"
                     onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отклонена')}
                   >
-                    <X size={16} /> Отклонить
+                    <X size={16} />
+                    <span className={styles.friendLabel}>Отклонить</span>
                   </button>
                 </>
               ) : friendStatus === 'friends' ? (
@@ -363,9 +371,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   type="button"
                   className="btn btn-ghost"
                   disabled={friendBusy}
+                  aria-label="Удалить из друзей"
                   onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Удалён из друзей')}
                 >
-                  <UserMinus size={16} /> Удалить из друзей
+                  <UserMinus size={16} />
+                  <span className={styles.friendLabelUnfriend}>Удалить из друзей</span>
                 </button>
               ) : null}
             </div>
@@ -389,7 +399,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             { key: 'favorites', label: 'Избранное', count: stats.favorites },
             { key: 'comments', label: 'Комментарии', count: stats.comments },
             { key: 'collections', label: 'Коллекции' },
-            { key: 'friends', label: 'Друзья', count: profile.friendship.friends_count },
+            { key: 'friends', label: 'Друзья', count: friendsCount },
           ]}
           active={tab}
           onChange={(k) => {
