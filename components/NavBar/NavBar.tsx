@@ -19,6 +19,7 @@ import {
   Settings,
   Shield,
   User,
+  Users,
   X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -81,6 +82,7 @@ export default function NavBar() {
   const [mobileQ, setMobileQ] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [myNarrators, setMyNarrators] = useState<NarratorCard[]>([]);
+  const [friendReq, setFriendReq] = useState(0);
 
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
   const userWrapRef = useRef<HTMLDivElement | null>(null);
@@ -138,6 +140,29 @@ export default function NavBar() {
       alive = false;
     };
   }, [user]);
+
+  // Pending incoming friend requests, shown as an accent badge. Polled, and
+  // refetched on navigation so accepting/declining on /me/friends reflects here.
+  useEffect(() => {
+    if (!user) {
+      setFriendReq(0);
+      return;
+    }
+    let alive = true;
+    const load = () => {
+      api<{ count: number }>('/me/friends/incoming-count')
+        .then((r) => {
+          if (alive) setFriendReq(r.count);
+        })
+        .catch(() => {});
+    };
+    load();
+    const iv = window.setInterval(load, 30_000);
+    return () => {
+      alive = false;
+      window.clearInterval(iv);
+    };
+  }, [user, pathname]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -258,6 +283,7 @@ export default function NavBar() {
   const userLinks = user
     ? [
         { href: `/user/${user.id}`, label: 'Профиль', icon: User },
+        { href: '/me/friends', label: 'Друзья', icon: Users },
         { href: '/me/history', label: 'История', icon: History },
         { href: '/me/requests', label: 'Мои заявки', icon: ClipboardList },
         ...(isMod ? [{ href: '/mod', label: 'Модерация', icon: Shield }] : []),
@@ -399,11 +425,20 @@ export default function NavBar() {
                     type="button"
                     className={styles.avatarBtn}
                     onClick={() => setUserMenuOpen((v) => !v)}
-                    aria-label={'Меню аккаунта'}
+                    aria-label={
+                      friendReq > 0
+                        ? `Меню аккаунта (заявок в друзья: ${friendReq})`
+                        : 'Меню аккаунта'
+                    }
                     aria-expanded={userMenuOpen}
                   >
                     {avatar()}
                   </button>
+                  {friendReq > 0 && (
+                    <span className={styles.friendBadge} aria-hidden="true">
+                      {friendReq > 99 ? '99+' : friendReq}
+                    </span>
+                  )}
                   {userMenuOpen && (
                     <div className={styles.userMenu}>
                       <div className={styles.menuHead}>
@@ -422,6 +457,9 @@ export default function NavBar() {
                         <Link key={l.href} href={l.href} className={styles.menuItem}>
                           <l.icon aria-hidden="true" />
                           {l.label}
+                          {l.href === '/me/friends' && friendReq > 0 ? (
+                            <span className={styles.menuBadge}>{friendReq}</span>
+                          ) : null}
                         </Link>
                       ))}
 
@@ -548,6 +586,9 @@ export default function NavBar() {
                 {userLinks.map((l) => (
                   <Link key={l.href} href={l.href} className={styles.overlaySub}>
                     {l.label}
+                    {l.href === '/me/friends' && friendReq > 0 ? (
+                      <span className={styles.menuBadge}>{friendReq}</span>
+                    ) : null}
                   </Link>
                 ))}
                 <button type="button" className={styles.overlaySub} onClick={doLogout}>

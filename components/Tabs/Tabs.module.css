@@ -47,6 +47,20 @@
   color: var(--accent, #de6161);
 }
 
+/* Idle attention state: accent-tinted even when the tab isn't active. */
+.alert {
+  color: var(--accent, #de6161);
+}
+
+.alert:hover {
+  color: var(--accent, #de6161);
+}
+
+.alert .count {
+  background: rgba(222, 97, 97, 0.18);
+  color: var(--accent, #de6161);
+}
+
 .count {
   font-size: 10px;
   font-weight: 700;

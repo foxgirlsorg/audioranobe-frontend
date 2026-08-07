@@ -8,6 +8,19 @@ interface Tab {
   key: string;
   label: string;
   count?: number;
+  // Tint the tab (and its count) with the accent colour even when it is not the
+  // active tab — used to flag a tab that needs attention, e.g. pending requests.
+  accent?: boolean;
+}
+
+function tabClass(t: Tab, active: string): string {
+  return [
+    styles.tab,
+    t.key === active ? styles.active : '',
+    t.accent ? styles.alert : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 function TabsBase({
@@ -27,7 +40,7 @@ function TabsBase({
           type="button"
           role="tab"
           aria-selected={t.key === active}
-          className={t.key === active ? `${styles.tab} ${styles.active}` : styles.tab}
+          className={tabClass(t, active)}
           onClick={() => onChange(t.key)}
         >
           {t.label}
@@ -80,7 +93,7 @@ function TabsWithUrl({
           type="button"
           role="tab"
           aria-selected={t.key === active}
-          className={t.key === active ? `${styles.tab} ${styles.active}` : styles.tab}
+          className={tabClass(t, active)}
           onClick={() => handleClick(t.key)}
         >
           {t.label}

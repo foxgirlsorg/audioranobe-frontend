@@ -50,7 +50,9 @@ export type NotificationType =
   | 'request_rejected'
   | 'entity_modified'
   | 'entity_deleted'
-  | 'narrator_post';
+  | 'narrator_post'
+  | 'friend_request'
+  | 'friend_accept';
 export type ReportStatus = 'open' | 'resolved' | 'dismissed';
 export type ReportTargetType = 'title' | 'narrator' | 'chapter' | 'comment' | 'user' | 'collection';
 export type JobStatus = 'queued' | 'processing' | 'done' | 'error';
@@ -468,6 +470,24 @@ export interface SearchSuggest {
   collections: { id: number; name: string; items_count: number }[];
 }
 
+export type FriendStatus = 'self' | 'none' | 'friends' | 'outgoing' | 'incoming';
+
+export interface Friendship {
+  status: FriendStatus;
+  friends_count: number;
+}
+
+export interface FriendRequestItem {
+  user: UserBrief;
+  created_at: string;
+}
+
+export interface FriendsData {
+  friends: UserBrief[];
+  incoming: FriendRequestItem[];
+  outgoing: FriendRequestItem[];
+}
+
 export interface UserProfile {
   user: UserPublic;
   stats: {
@@ -478,6 +498,7 @@ export interface UserProfile {
     comments: number;
     favorites: number;
   };
+  friendship: Friendship;
 }
 
 export interface NarratorStats {

@@ -3,20 +3,37 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BookOpen, Library, MessageSquare, UserX, ArrowBigUp, Heart } from 'lucide-react';
+import {
+  BookOpen,
+  Library,
+  MessageSquare,
+  UserX,
+  ArrowBigUp,
+  Heart,
+  Users,
+  UserPlus,
+  UserCheck,
+  UserMinus,
+  Clock,
+  Check,
+  X,
+} from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import {
   LIBRARY_STATUS_LABELS,
   LIBRARY_STATUS_VALUES,
   type CollectionCard,
+  type FriendStatus,
   type LibraryEntry,
   type Paginated,
   type TitleCard,
+  type UserBrief,
   type UserComment,
   type UserProfile,
 } from '@/lib/types';
 import { formatDate, timeAgo } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
+import { useToast, errMsg } from '@/lib/toast';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -115,18 +132,21 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: viewer } = useAuth();
+  const { toast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [friendStatus, setFriendStatus] = useState<FriendStatus>('none');
+  const [friendBusy, setFriendBusy] = useState(false);
   usePageTitle(profile ? profile.user.display_name || profile.user.username : null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const tabParam = searchParams.get('tab');
   const statusParam = searchParams.get('status');
-  const initialTab = (tabParam === 'comments' || tabParam === 'collections' || tabParam === 'favorites') ? tabParam : 'library';
+  const initialTab = (tabParam === 'comments' || tabParam === 'collections' || tabParam === 'favorites' || tabParam === 'friends') ? tabParam : 'library';
   const initialStatus = statusParam && LIBRARY_STATUSES.some(s => s.key === statusParam) ? statusParam : 'all';
 
-  const [tab, setTab] = useState<'library' | 'comments' | 'collections' | 'favorites'>(initialTab);
+  const [tab, setTab] = useState<'library' | 'comments' | 'collections' | 'favorites' | 'friends'>(initialTab);
   const [libStatus, setLibStatus] = useState(initialStatus);
 
   const username = profile?.user.username ?? '';
@@ -157,11 +177,19 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
       api<Paginated<CollectionCard>>('/collections', { params: { user: username, page } }),
     [username]
   );
+  const fetchFriends = useCallback(
+    (page: number) =>
+      api<Paginated<UserBrief>>(`/users/${encodeURIComponent(userRef)}/friends`, {
+        params: { page },
+      }),
+    [userRef]
+  );
 
   const library = useInfiniteList<LibraryEntry>(fetchLibrary);
   const comments = useInfiniteList<UserComment>(fetchComments);
   const favorites = useInfiniteList<TitleCard>(fetchFavorites);
   const collections = useInfiniteList<CollectionCard>(fetchCollections);
+  const friends = useInfiniteList<UserBrief>(fetchFriends);
 
   const updateUrl = useCallback((newTab: string, newStatus?: string) => {
     const sp = new URLSearchParams(searchParams.toString());
@@ -184,7 +212,10 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     (async () => {
       try {
         const p = await api<UserProfile>(`/users/${encodeURIComponent(userRef)}`);
-        if (alive) setProfile(p);
+        if (alive) {
+          setProfile(p);
+          setFriendStatus(p.friendship.status);
+        }
       } catch (e) {
         if (!alive) return;
         if (e instanceof ApiError && e.status === 404) setError('Такого пользователя не существует.');
@@ -234,6 +265,24 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   const handleEntryRemove = (titleId: number) =>
     library.remove((e) => e.title.id === titleId);
 
+  const runFriend = async (
+    method: 'POST' | 'DELETE',
+    path: string,
+    okMsg: string,
+  ) => {
+    if (friendBusy) return;
+    setFriendBusy(true);
+    try {
+      const res = await api<{ status: FriendStatus }>(path, { method });
+      setFriendStatus(res.status);
+      toast(okMsg, 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setFriendBusy(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.banner} aria-hidden="true">
@@ -269,6 +318,58 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             <span>{`На сайте с ${formatDate(user.created_at)}`}</span>
           </div>
           <SocialLinks urls={user.socials} />
+
+          {viewer && friendStatus !== 'self' ? (
+            <div className={styles.friendActions}>
+              {friendStatus === 'none' ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={friendBusy}
+                  onClick={() => runFriend('POST', `/friends/${user.id}`, 'Заявка отправлена')}
+                >
+                  <UserPlus size={16} /> Добавить в друзья
+                </button>
+              ) : friendStatus === 'outgoing' ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={friendBusy}
+                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отменена')}
+                >
+                  <Clock size={16} /> Отменить заявку
+                </button>
+              ) : friendStatus === 'incoming' ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={friendBusy}
+                    onClick={() => runFriend('POST', `/friends/${user.id}/accept`, 'Заявка принята')}
+                  >
+                    <Check size={16} /> Принять заявку
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    disabled={friendBusy}
+                    onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отклонена')}
+                  >
+                    <X size={16} /> Отклонить
+                  </button>
+                </>
+              ) : friendStatus === 'friends' ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={friendBusy}
+                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Удалён из друзей')}
+                >
+                  <UserMinus size={16} /> Удалить из друзей
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -288,6 +389,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             { key: 'favorites', label: 'Избранное', count: stats.favorites },
             { key: 'comments', label: 'Комментарии', count: stats.comments },
             { key: 'collections', label: 'Коллекции' },
+            { key: 'friends', label: 'Друзья', count: profile.friendship.friends_count },
           ]}
           active={tab}
           onChange={(k) => {
@@ -505,6 +607,65 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
           )}
         </div>
       ) : null}
+
+      {tab === 'friends' ? (
+        <div className={styles.tabBody}>
+          {friends.loading || !friends.items ? (
+            <div className={styles.center}>
+              <Spinner />
+            </div>
+          ) : friends.items.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Друзей пока нет"
+              body={
+                isOwnProfile
+                  ? 'У вас пока нет друзей. Найдите пользователей и отправьте заявку.'
+                  : `У ${user.display_name || user.username} пока нет друзей.`
+              }
+            />
+          ) : (
+            <>
+              <div className={styles.friendGrid}>
+                {friends.items.map((f) => (
+                  <FriendCard key={f.id} friend={f} />
+                ))}
+              </div>
+              <InfiniteScroll
+                hasMore={friends.hasMore}
+                loading={friends.loadingMore}
+                error={friends.moreError}
+                onLoad={friends.loadMore}
+                total={friends.total}
+                shown={friends.items.length}
+              />
+            </>
+          )}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function FriendCard({ friend }: { friend: UserBrief }) {
+  return (
+    <Link href={`/user/${friend.id}`} className={`glass-panel ${styles.friendCard}`}>
+      {friend.avatar_url ? (
+        <img src={friend.avatar_url} alt="" className={styles.friendAvatar} />
+      ) : (
+        <span className={`${styles.friendAvatar} ${styles.friendAvatarFallback}`}>
+          {initialsOf(friend.username)}
+        </span>
+      )}
+      <span className={styles.friendMeta}>
+        <span className={styles.friendName}>
+          {friend.display_name || friend.username}
+          <UserBadges user={friend} size={9} />
+        </span>
+        {friend.display_name && friend.display_name !== friend.username ? (
+          <span className={styles.friendHandle}>@{friend.username}</span>
+        ) : null}
+      </span>
+    </Link>
   );
 }

@@ -480,3 +480,76 @@
   color: var(--text-muted);
   margin-top: 0.15rem;
 }
+
+/* ---- Friends: header actions + friends tab grid ---- */
+.friendActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 0.85rem;
+}
+
+.friendGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.friendCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.friendCard:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.friendAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.friendAvatarFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(222, 97, 97, 0.14);
+  color: var(--accent, #de6161);
+  font-weight: 600;
+  font-size: 15px;
+  text-transform: uppercase;
+}
+
+.friendMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.friendName {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friendHandle {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

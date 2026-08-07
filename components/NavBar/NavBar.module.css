@@ -350,6 +350,38 @@
   border-color: var(--border-hover);
 }
 
+/* Accent count of pending incoming friend requests, over the avatar. */
+.friendBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--bg, #101014);
+}
+
+/* Accent count beside the "Друзья" menu item. */
+.menuBadge {
+  margin-left: auto;
+  min-width: 18px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(222, 97, 97, 0.16);
+  color: var(--accent, #de6161);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
 .avatarImg {
   width: 100%;
   height: 100%;

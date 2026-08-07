@@ -14,6 +14,8 @@ import {
   Newspaper,
   Pencil,
   Reply,
+  UserCheck,
+  UserPlus,
   XCircle,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
@@ -40,6 +42,8 @@ const TYPE_ICONS: Record<NotificationType, ComponentType<{ size?: number | strin
   entity_modified: Pencil,
   entity_deleted: FileX,
   narrator_post: Newspaper,
+  friend_request: UserPlus,
+  friend_accept: UserCheck,
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -55,6 +59,8 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   entity_modified: 'Объект изменён',
   entity_deleted: 'Объект удалён',
   narrator_post: 'Запись чтеца',
+  friend_request: 'Заявка в друзья',
+  friend_accept: 'Заявка принята',
 };
 
 function splitHeading(s: string): [string, string] {
