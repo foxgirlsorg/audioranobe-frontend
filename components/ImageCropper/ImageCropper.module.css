@@ -8,6 +8,39 @@
   border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
 }
 
+/* Crop guides — purely visual, never intercept cropper drags. */
+.circleGuide,
+.coverGuide {
+  position: absolute;
+  pointer-events: none;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+.circleGuide {
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* The full box is the mobile 3:1 crop; the inner band is PC's narrower slice.
+   The band shares the outer box's sides, so it only draws its own top/bottom
+   lines — no doubled vertical borders. Same neutral outline for both. */
+.coverGuide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.coverPcBand {
+  position: relative;
+  width: 100%;
+  border-top: 2px solid rgba(255, 255, 255, 0.6);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+  box-sizing: border-box;
+}
+
 .zoomRow {
   display: flex;
   align-items: center;

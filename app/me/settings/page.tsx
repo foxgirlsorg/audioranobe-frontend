@@ -965,6 +965,7 @@ export default function SettingsPage() {
         open={cropTarget === 'avatar'}
         onClose={() => setCropTarget(null)}
         aspect={1}
+        overlay="circle"
         title={'Обрезка аватара'}
         onCropped={(blob) => uploadImage('avatar', blob)}
       />
@@ -972,6 +973,7 @@ export default function SettingsPage() {
         open={cropTarget === 'cover'}
         onClose={() => setCropTarget(null)}
         aspect={3}
+        overlay="cover"
         title={'Обрезка обложки профиля'}
         onCropped={(blob) => uploadImage('cover', blob)}
       />

@@ -567,6 +567,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         open={cropper === 'avatar'}
         onClose={() => setCropper(null)}
         aspect={1}
+        overlay="circle"
         title="Аватар чтеца"
         onCropped={onCropped}
       />
@@ -574,6 +575,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         open={cropper === 'cover'}
         onClose={() => setCropper(null)}
         aspect={3 / 1}
+        overlay="cover"
         title="Обложка чтеца"
         onCropped={onCropped}
       />

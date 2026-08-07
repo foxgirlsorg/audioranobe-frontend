@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import { ImagePlus, ZoomIn, ZoomOut } from 'lucide-react';
 import { useToast, errMsg } from '@/lib/toast';
@@ -8,9 +8,15 @@ import Modal from '@/components/Modal/Modal';
 import styles from './ImageCropper.module.css';
 
 type Area = { x: number; y: number; width: number; height: number };
+type Rect = { left: number; top: number; width: number; height: number };
 
 const MAX_OUT_WIDTH = 1600;
 const JPEG_QUALITY = 0.9;
+
+// The cover crop keeps mobile's 3:1 (see callers); PC renders a narrower centred
+// slice of it. This is the aspect PC displays — used only to draw the guide band,
+// never to change what gets cropped.
+const COVER_PC_ASPECT = 4;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -31,6 +37,7 @@ export function ImageCropper({
   src,
   image,
   file,
+  overlay,
 }: {
   open: boolean;
   onClose: () => void;
@@ -40,8 +47,14 @@ export function ImageCropper({
   src?: string | null;
   image?: string | null;
   file?: File | Blob | null;
+  /** Guide drawn over the crop: a circle outline (avatars) or the PC/mobile
+   *  cover bands. The crop itself is unchanged — this is purely a preview. */
+  overlay?: 'circle' | 'cover';
 }) {
   const { toast } = useToast();
+  const cropAreaRef = useRef<HTMLDivElement | null>(null);
+  const [cropRect, setCropRect] = useState<Rect | null>(null);
+  const [loadTick, setLoadTick] = useState(0);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [areaPixels, setAreaPixels] = useState<Area | null>(null);
@@ -73,6 +86,68 @@ export function ImageCropper({
   }, [open]);
 
   const imgSrc = fileUrl ?? src ?? image ?? pickedUrl ?? null;
+
+  // Measure react-easy-crop's real crop box (it depends on media size, not just
+  // the aspect) so the guide lands exactly on the crop, not the whole container.
+  const measureCrop = useCallback(() => {
+    if (!overlay) return;
+    const area = cropAreaRef.current;
+    if (!area) return;
+    const cropEl = area.querySelector('[class*="reactEasyCrop_CropArea"]');
+    if (!cropEl) return;
+    const a = area.getBoundingClientRect();
+    const r = cropEl.getBoundingClientRect();
+    if (r.width < 4) return; // not laid out yet
+    const next: Rect = { left: r.left - a.left, top: r.top - a.top, width: r.width, height: r.height };
+    setCropRect((prev) =>
+      prev &&
+      Math.abs(prev.left - next.left) < 0.5 &&
+      Math.abs(prev.top - next.top) < 0.5 &&
+      Math.abs(prev.width - next.width) < 0.5 &&
+      Math.abs(prev.height - next.height) < 0.5
+        ? prev
+        : next
+    );
+  }, [overlay]);
+
+  // Re-measure on load, on modal open and on any container resize. Event-driven
+  // (not a rAF loop), so it also settles while the tab isn't compositing.
+  useEffect(() => {
+    if (!overlay || !imgSrc) {
+      setCropRect(null);
+      return;
+    }
+    const area = cropAreaRef.current;
+    if (!area) return;
+    // react-easy-crop settles its crop box over a few frames after layout/load
+    // without the container ever resizing, so neither a one-shot measure nor a
+    // container ResizeObserver catches the final size. Poll briefly until the
+    // box stops changing (fires even while the tab isn't compositing), then rely
+    // on the ResizeObserver for later user-driven resizes.
+    let lastKey = '';
+    let stable = 0;
+    measureCrop();
+    const poll = window.setInterval(() => {
+      measureCrop();
+      const cropEl = area.querySelector('[class*="reactEasyCrop_CropArea"]');
+      const r = cropEl?.getBoundingClientRect();
+      const key = r ? `${Math.round(r.width)}x${Math.round(r.height)}` : '';
+      if (key && key === lastKey) {
+        if (++stable >= 3) window.clearInterval(poll);
+      } else {
+        stable = 0;
+        lastKey = key;
+      }
+    }, 80);
+    const stop = window.setTimeout(() => window.clearInterval(poll), 2500);
+    const ro = new ResizeObserver(() => measureCrop());
+    ro.observe(area);
+    return () => {
+      window.clearInterval(poll);
+      window.clearTimeout(stop);
+      ro.disconnect();
+    };
+  }, [overlay, imgSrc, loadTick, measureCrop]);
 
   const onCropComplete = useCallback((_area: Area, pixels: Area) => {
     setAreaPixels(pixels);
@@ -136,7 +211,7 @@ export function ImageCropper({
     <Modal open={open} onClose={onClose} title={title ?? 'Обрезка изображения'}>
       {imgSrc ? (
         <>
-          <div className={styles.cropArea}>
+          <div className={styles.cropArea} ref={cropAreaRef}>
             <Cropper
               image={imgSrc}
               crop={crop}
@@ -145,8 +220,36 @@ export function ImageCropper({
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropComplete}
+              onMediaLoaded={() => setLoadTick((n) => n + 1)}
               showGrid={false}
             />
+            {overlay === 'circle' && cropRect ? (
+              <div
+                className={styles.circleGuide}
+                style={{
+                  left: cropRect.left,
+                  top: cropRect.top,
+                  width: cropRect.width,
+                  height: cropRect.height,
+                }}
+              />
+            ) : null}
+            {overlay === 'cover' && cropRect ? (
+              <div
+                className={styles.coverGuide}
+                style={{
+                  left: cropRect.left,
+                  top: cropRect.top,
+                  width: cropRect.width,
+                  height: cropRect.height,
+                }}
+              >
+                <div
+                  className={styles.coverPcBand}
+                  style={{ height: cropRect.width / COVER_PC_ASPECT }}
+                />
+              </div>
+            ) : null}
           </div>
           <div className={styles.zoomRow}>
             <ZoomOut size={15} className={styles.zoomIcon} />
