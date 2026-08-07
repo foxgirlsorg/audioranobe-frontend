@@ -11,6 +11,7 @@ import {
   Link2 as LinkIcon,
   KeyRound,
   MailWarning,
+  MessageSquare,
   ShieldAlert,
   ShieldCheck,
   User as UserIcon,
@@ -45,6 +46,13 @@ const PROVIDER_LABELS: Record<AuthProvider, string> = {
 };
 const MAX_SOCIAL_LEN = 200;
 
+interface CommentSubTitle {
+  id: number;
+  slug: string;
+  name: string;
+  comment_subscribed: boolean;
+}
+
 const PREF_DEFS: { key: keyof NotificationPrefs; label: string; hint: string }[] = [
   {
     key: 'new_chapter',
@@ -59,12 +67,7 @@ const PREF_DEFS: { key: keyof NotificationPrefs; label: string; hint: string }[]
   {
     key: 'comment_reply',
     label: 'Ответы на комментарии',
-    hint: 'Кто-то отвечает на ваш комментарий',
-  },
-  {
-    key: 'narrator_comment',
-    label: 'Комментарии к озвучкам',
-    hint: 'Кто-то комментирует тайтл в озвучке вашей команды',
+    hint: 'Кто-то отвечает на ваш комментарий или ответ',
   },
   {
     key: 'friend_request',
@@ -152,6 +155,9 @@ export default function SettingsPage() {
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [prefBusy, setPrefBusy] = useState<keyof NotificationPrefs | null>(null);
 
+  const [commentTitles, setCommentTitles] = useState<CommentSubTitle[] | null>(null);
+  const [subBusy, setSubBusy] = useState<number | null>(null);
+
   const hasPassword = user?.has_password ?? true;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
@@ -187,6 +193,21 @@ export default function SettingsPage() {
       setContent(user.content_prefs);
       setIdentities(user.identities ?? []);
     }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    api<{ items: CommentSubTitle[] }>('/me/comment-subscriptions')
+      .then((r) => {
+        if (alive) setCommentTitles(r.items ?? []);
+      })
+      .catch(() => {
+        if (alive) setCommentTitles([]);
+      });
+    return () => {
+      alive = false;
+    };
   }, [user]);
 
   useEffect(() => {
@@ -317,6 +338,25 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setPrefBusy(null);
+    }
+  }
+
+  async function toggleCommentSub(titleId: number, next: boolean) {
+    if (subBusy !== null) return;
+    setSubBusy(titleId);
+    setCommentTitles((list) =>
+      list ? list.map((t) => (t.id === titleId ? { ...t, comment_subscribed: next } : t)) : list
+    );
+    try {
+      await api(`/titles/${titleId}/comment-subscription`, { method: next ? 'PUT' : 'DELETE' });
+      toast(next ? 'Уведомления о комментариях включены' : 'Уведомления о комментариях выключены', 'ok');
+    } catch (e) {
+      setCommentTitles((list) =>
+        list ? list.map((t) => (t.id === titleId ? { ...t, comment_subscribed: !next } : t)) : list
+      );
+      toast(errMsg(e), 'error');
+    } finally {
+      setSubBusy(null);
     }
   }
 
@@ -674,6 +714,48 @@ export default function SettingsPage() {
           })}
         </div>
       </section>
+
+      {commentTitles && commentTitles.length > 0 ? (
+        <section className={`glass-panel ${styles.panel}`}>
+          <div className={styles.panelHead}>
+            <MessageSquare size={16} className={styles.panelIcon} />
+            <div>
+              <h2 className={styles.panelTitle}>{'Комментарии к вашим тайтлам'}</h2>
+              <p className={styles.panelHint}>
+                {'Получайте уведомление о каждом новом комментарии к тайтлам ваших чтецов. Ответы на ваши собственные комментарии не дублируются.'}
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.prefList}>
+            {commentTitles.map((t) => (
+              <div key={t.id} className={styles.prefRow}>
+                <div className={styles.prefText}>
+                  <Link href={`/title/${encodeURIComponent(t.slug)}`} className={styles.prefLabel}>
+                    {t.name}
+                  </Link>
+                  <span className={styles.prefHint}>{'Уведомлять о новых комментариях'}</span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={t.comment_subscribed}
+                  aria-label={`Уведомления о комментариях: ${t.name}`}
+                  className={
+                    t.comment_subscribed
+                      ? `${styles.switch} ${styles.switchOn}`
+                      : styles.switch
+                  }
+                  disabled={subBusy !== null}
+                  onClick={() => toggleCommentSub(t.id, !t.comment_subscribed)}
+                >
+                  <span className={styles.knob} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>

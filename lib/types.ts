@@ -270,6 +270,8 @@ export interface TitleFull extends TitleCard {
   author: AuthorBrief | null;
   can_edit: boolean;
   nsfw_restricted?: boolean;
+  /** Viewer opted into a notification for every new comment on this title. */
+  comment_subscribed: boolean;
 }
 
 export interface ChapterPlay {

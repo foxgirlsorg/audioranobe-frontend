@@ -66,6 +66,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const [isNsfw, setIsNsfw] = useState(false);
   const [nsfwLocked, setNsfwLocked] = useState(false);
   const [confirmNsfw, setConfirmNsfw] = useState(false);
+  const [commentSub, setCommentSub] = useState(false);
+  const [commentSubBusy, setCommentSubBusy] = useState(false);
   const formInit = useRef(false);
 
   const [form, setForm] = useState<Form>({
@@ -125,6 +127,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     setAiLocked(title.is_ai);
     setIsNsfw(title.is_nsfw);
     setNsfwLocked(title.is_nsfw);
+    setCommentSub(title.comment_subscribed);
     setNarrators(
       (title.narrators ?? []).map((n) => ({
         id: n.id,
@@ -184,6 +187,23 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     }
     setIsNsfw(false);
   };
+
+  async function toggleCommentSub(next: boolean) {
+    if (!title || commentSubBusy) return;
+    setCommentSubBusy(true);
+    setCommentSub(next);
+    try {
+      await api(`/titles/${title.id}/comment-subscription`, {
+        method: next ? 'PUT' : 'DELETE',
+      });
+      toast(next ? 'Уведомления о комментариях включены' : 'Уведомления о комментариях выключены');
+    } catch (err) {
+      setCommentSub(!next);
+      toast(errMsg(err), 'error');
+    } finally {
+      setCommentSubBusy(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -479,6 +499,18 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
           ) : null}
         </div>
       </form>
+
+      {tab === 'info' ? (
+        <section className={`glass-panel ${styles.formPanel}`}>
+          <Toggle
+            checked={commentSub}
+            disabled={commentSubBusy}
+            onChange={toggleCommentSub}
+            label="Уведомлять о новых комментариях"
+            hint="Присылать уведомление о каждом новом комментарии к этому тайтлу. Ответы на ваши собственные комментарии не дублируются."
+          />
+        </section>
+      ) : null}
 
       {tab === 'info' ? (
         <DangerZone
