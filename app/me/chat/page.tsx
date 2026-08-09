@@ -15,7 +15,9 @@ import {
   MessageCircle,
   Pencil,
   Send,
+  Sparkles,
   Trash2,
+  Type,
   X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -86,7 +88,7 @@ export default function ChatPage() {
 }
 
 function ChatInner() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isMod, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -110,6 +112,8 @@ function ChatInner() {
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [editing, setEditing] = useState<ChatMessage | null>(null);
+  // Mods/admins render rich by default; this opts a single message out of that.
+  const [plainText, setPlainText] = useState(true);
   const [highlight, setHighlight] = useState<number | null>(null);
 
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -199,19 +203,26 @@ function ChatInner() {
     };
   }, [user, selectedId, toast]);
 
-  // ---- poll the open thread for new messages ----
+  // ---- poll the open thread for new messages, and pick up edits/deletions
+  // of already-loaded ones (the default page always reflects current DB state) ----
   useEffect(() => {
     if (!user || selectedId === null) return;
     const tick = () => {
-      api<ChatThread>(`/me/chat/${selectedId}`, { params: { after: lastIdRef.current } })
+      api<ChatThread>(`/me/chat/${selectedId}`)
         .then((t) => {
+          const priorLastId = lastIdRef.current;
+          const brandNew = t.messages.filter((m) => m.id > priorLastId);
+          if (brandNew.length) {
+            lastIdRef.current = Math.max(priorLastId, ...brandNew.map((m) => m.id));
+          }
           setThread((prev) => {
             if (!prev) return prev;
-            const merged = t.messages.length ? [...prev.messages, ...t.messages] : prev.messages;
-            if (t.messages.length) lastIdRef.current = t.messages[t.messages.length - 1].id;
+            const freshMap = new Map(t.messages.map((m) => [m.id, m]));
+            const updated = prev.messages.map((m) => freshMap.get(m.id) ?? m);
+            const merged = brandNew.length ? [...updated, ...brandNew] : updated;
             return { ...prev, messages: merged, their_last_read_id: t.their_last_read_id, can_send: t.can_send };
           });
-          if (t.messages.length) loadList();
+          if (brandNew.length) loadList();
         })
         .catch(() => {});
     };
@@ -220,9 +231,12 @@ function ChatInner() {
   }, [user, selectedId, loadList]);
 
   // Group consecutive messages by day for Telegram-style sticky date pills.
+  // Deleted messages are dropped entirely here — they only ever resurface as a
+  // quoted "сообщение удалено" preview on whatever replied to them.
   const dayGroups = useMemo(() => {
     const gs: { day: string; items: ChatMessage[] }[] = [];
     for (const m of thread?.messages ?? []) {
+      if (m.is_deleted) continue;
       const d = dayKey(m.created_at);
       const last = gs[gs.length - 1];
       if (last && last.day === d) last.items.push(m);
@@ -296,6 +310,9 @@ function ChatInner() {
     setReplyTo(null);
     setEditing(msg);
     setText(msg.body);
+    setImageUrl(msg.image_url);
+    setShowImage(!!msg.image_url);
+    setPlainText(msg.plain_text);
     setMenu(null);
     requestAnimationFrame(() => {
       const el = inputRef.current;
@@ -308,7 +325,12 @@ function ChatInner() {
 
   const cancelCompose = () => {
     setReplyTo(null);
-    if (editing) setText('');
+    if (editing) {
+      setText('');
+      setImageUrl('');
+      setShowImage(false);
+      setPlainText(true);
+    }
     setEditing(null);
   };
 
@@ -322,8 +344,9 @@ function ChatInner() {
     const body = text.trim();
 
     if (editing) {
+      const img = imageUrl.trim();
       // Emptying an edit deletes the message instead of saving nothing.
-      if (!body && !editing.image_url) {
+      if (!body && !img) {
         void deleteMessage(editing.id);
         return;
       }
@@ -331,13 +354,16 @@ function ChatInner() {
       try {
         const updated = await api<ChatMessage>(`/me/chat/messages/${editing.id}`, {
           method: 'PATCH',
-          body: { body },
+          body: { body, image_url: img, plain_text: plainText },
         });
         setThread((prev) =>
           prev ? { ...prev, messages: prev.messages.map((m) => (m.id === updated.id ? updated : m)) } : prev
         );
         setEditing(null);
         setText('');
+        setImageUrl('');
+        setShowImage(false);
+        setPlainText(true);
         loadList();
       } catch (e) {
         toast(errMsg(e), 'error');
@@ -353,7 +379,7 @@ function ChatInner() {
     try {
       const msg = await api<ChatMessage>(`/me/chat/${selectedId}`, {
         method: 'POST',
-        body: { body, image_url: img, reply_to_id: replyTo?.id ?? null },
+        body: { body, image_url: img, reply_to_id: replyTo?.id ?? null, plain_text: plainText },
       });
       setThread((prev) => (prev ? { ...prev, messages: [...prev.messages, msg] } : prev));
       lastIdRef.current = Math.max(lastIdRef.current, msg.id);
@@ -362,6 +388,7 @@ function ChatInner() {
       setImageUrl('');
       setShowImage(false);
       setReplyTo(null);
+      setPlainText(true);
       loadList();
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -443,12 +470,19 @@ function ChatInner() {
     window.setTimeout(() => setHighlight((h) => (h === id ? null : h)), 1200);
   };
 
+  // Whether the context menu would have anything to offer for this message —
+  // mirrors the menu item conditions below, so an empty menu never opens.
+  const hasMenuActions = (msg: ChatMessage): boolean =>
+    !msg.is_deleted && !!(thread?.can_send || msg.body || msg.mine);
+
   // context menu triggers
   const openMenu = (e: React.MouseEvent, msg: ChatMessage) => {
     e.preventDefault();
+    if (!hasMenuActions(msg)) return;
     setMenu({ x: e.clientX, y: e.clientY, msg });
   };
   const onTouchStart = (e: React.TouchEvent, msg: ChatMessage) => {
+    if (!hasMenuActions(msg)) return;
     const t = e.touches[0];
     const x = t.clientX;
     const y = t.clientY;
@@ -462,8 +496,20 @@ function ChatInner() {
   };
 
   const renderMessage = (m: ChatMessage) => {
+    // dayGroups already drops deleted messages, so every message reaching here is live.
     const read = m.mine && !!thread && m.id <= thread.their_last_read_id;
-    const canReply = !m.is_deleted && !!thread?.can_send;
+    const canReply = !!thread?.can_send;
+    const meta = (
+      <>
+        {m.edited ? <Pencil size={9} className={styles.edited} /> : null}
+        <span className={styles.time}>{fmtTime(m.created_at)}</span>
+        {m.mine ? (read ? <CheckCheck size={13} className={styles.readTick} /> : <Check size={13} />) : null}
+      </>
+    );
+    // Plain text can carry the meta as a floated tail so it rides the last line
+    // of text (Telegram-style). Rich/markdown and image-only bodies can't host
+    // a nested float safely, so they keep it on its own row below.
+    const inlineMeta = !!m.body && m.format !== 'rich';
     return (
       <div key={m.id} id={`dm-msg-${m.id}`} className={`${styles.bubbleRow} ${m.mine ? styles.mine : styles.theirs}`}>
         {canReply ? (
@@ -492,29 +538,20 @@ function ChatInner() {
               </span>
             </button>
           ) : null}
-          {m.is_deleted ? (
-            <span className={styles.deleted}>сообщение удалено</span>
-          ) : (
-            <>
-              {m.image_url ? (
-                <img src={m.image_url} alt="" className={styles.bubbleImage} onClick={() => setViewerSrc(m.image_url)} />
-              ) : null}
-              {m.body ? (
-                m.format === 'rich' ? (
-                  <div className={styles.rich}><Markdown source={m.body} compact /></div>
-                ) : (
-                  <span className={styles.bubbleText}>{linkify(m.body)}</span>
-                )
-              ) : null}
-            </>
-          )}
-          <span className={styles.meta}>
-            {m.edited && !m.is_deleted ? <span className={styles.edited}>изм.</span> : null}
-            <span className={styles.time}>{fmtTime(m.created_at)}</span>
-            {m.mine && !m.is_deleted ? (
-              read ? <CheckCheck size={13} className={styles.readTick} /> : <Check size={13} />
-            ) : null}
-          </span>
+          {m.image_url ? (
+            <img src={m.image_url} alt="" className={styles.bubbleImage} onClick={() => setViewerSrc(m.image_url)} />
+          ) : null}
+          {m.body ? (
+            m.format === 'rich' ? (
+              <div className={styles.rich}><Markdown source={m.body} compact /></div>
+            ) : (
+              <span className={styles.bubbleText}>
+                {linkify(m.body)}
+                <span className={styles.metaInline}>{meta}</span>
+              </span>
+            )
+          ) : null}
+          {!inlineMeta ? <span className={styles.meta}>{meta}</span> : null}
         </div>
       </div>
     );
@@ -649,7 +686,7 @@ function ChatInner() {
                   </div>
                 ) : null}
 
-                {showImage && !editing ? (
+                {showImage ? (
                   <div className={styles.imageRow}>
                     <ImagePlus size={16} className={styles.imageIcon} />
                     <input
@@ -669,20 +706,29 @@ function ChatInner() {
                     </button>
                   </div>
                 ) : null}
-                {imageUrl.trim() && !editing ? (
+                {imageUrl.trim() ? (
                   <div className={styles.imagePreview}><img src={imageUrl.trim()} alt="" /></div>
                 ) : null}
 
                 <div className={styles.composerRow}>
-                  {!editing ? (
+                  <button
+                    type="button"
+                    className={`${styles.iconBtn} ${showImage ? styles.iconBtnOn : ''}`}
+                    onClick={() => setShowImage((v) => !v)}
+                    aria-label="Прикрепить изображение по ссылке"
+                    title="Прикрепить изображение по ссылке"
+                  >
+                    <ImagePlus size={18} />
+                  </button>
+                  {isMod ? (
                     <button
                       type="button"
-                      className={`${styles.iconBtn} ${showImage ? styles.iconBtnOn : ''}`}
-                      onClick={() => setShowImage((v) => !v)}
-                      aria-label="Прикрепить изображение по ссылке"
-                      title="Прикрепить изображение по ссылке"
+                      className={`${styles.iconBtn} ${styles.formatToggle}`}
+                      onClick={() => setPlainText((v) => !v)}
+                      aria-label={plainText ? 'Разрешить форматирование (markdown)' : 'Отправить как обычный текст'}
+                      title={plainText ? 'Разрешить форматирование (markdown)' : 'Отправить как обычный текст'}
                     >
-                      <ImagePlus size={18} />
+                      {plainText ? <Type size={18} /> : <Sparkles size={18} />}
                     </button>
                   ) : null}
                   <textarea

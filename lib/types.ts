@@ -143,6 +143,9 @@ export interface ChatMessage {
   image_url: string;
   /** 'plain' = escaped text; 'rich' = markdown (mods) / raw HTML (admins). */
   format: 'plain' | 'rich';
+  /** Whether the sender's role allows toggling this message off rich rendering. */
+  can_toggle_format: boolean;
+  plain_text: boolean;
   is_deleted: boolean;
   edited: boolean;
   reply_to: ChatReplyPreview | null;

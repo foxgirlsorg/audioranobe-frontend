@@ -341,6 +341,10 @@
   order: -1;
 }
 
+.theirs .replyQuick {
+  order: 1;
+}
+
 .bubbleRow:hover .replyQuick {
   opacity: 0.85;
 }
@@ -409,6 +413,13 @@
   line-height: 1.42;
   overflow-wrap: anywhere;
   word-break: break-word;
+  /* markdown.css defaults body text to --text-secondary (gray); chat bubbles
+     read better matching the plain-text bubble's full-white color. */
+  color: var(--text);
+}
+
+.rich :global(.markdown-body) {
+  color: inherit;
 }
 
 .rich > :global(*:first-child) {
@@ -470,8 +481,7 @@
 }
 
 .edited {
-  font-size: 10.5px;
-  font-style: italic;
+  flex-shrink: 0;
   color: var(--text-muted, #9a9a9a);
 }
 
@@ -563,17 +573,17 @@
 
 .bubbleImage {
   display: block;
-  max-width: min(280px, 100%);
+  /* A percentage here (min(280px, 100%)) is unresolvable during the browser's
+     intrinsic-size pass, which makes it fall back to an aspect-ratio-derived
+     width from max-height instead of the 280px cap — inflating the bubble and
+     leaving asymmetric right padding on image-only messages. vw is a definite
+     length so it avoids that; final layout is still bounded by .bubble's own
+     max-width and .messages' overflow-x: hidden. */
+  max-width: min(280px, 90vw);
   max-height: 300px;
   border-radius: 10px;
   margin-bottom: 4px;
   cursor: zoom-in;
-}
-
-.deleted {
-  font-style: italic;
-  color: var(--text-muted, #8a8a8a);
-  font-size: 13px;
 }
 
 .meta {
@@ -584,6 +594,22 @@
   margin-top: 2px;
   font-size: 10.5px;
   color: var(--text-muted, #9a9a9a);
+}
+
+/* Nested at the end of plain-text bubbleText content, this floats so the last
+   line of text wraps around it — same row when there's room, its own row
+   otherwise. Only usable inside inline text flow (not the standalone image
+   layout, which keeps .meta below the image). */
+.metaInline {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  margin-left: 6px;
+  font-size: 10.5px;
+  color: var(--text-muted, #9a9a9a);
+  white-space: nowrap;
 }
 
 .readTick {
@@ -633,6 +659,15 @@
 
 .iconBtn:hover,
 .iconBtnOn {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent, #de6161);
+}
+
+.formatToggle {
+  color: var(--accent, #de6161);
+}
+
+.formatToggle:hover {
   background: rgba(255, 255, 255, 0.06);
   color: var(--accent, #de6161);
 }
