@@ -4,22 +4,25 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import {
+  Bell,
   ClipboardList,
   Dices,
-  Heart,
   History,
   Library,
   LibraryBig,
+  LogIn,
   LogOut,
   Menu,
   MessageCircle,
   Mic,
+  Newspaper,
   PenLine,
   Plus,
   Search,
   Settings,
   Shield,
   User,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react';
@@ -64,9 +67,9 @@ function pluralTitles(n: number): string {
 }
 
 const NAV_LINKS = [
-  { href: '/catalog', label: 'Каталог' },
-  { href: '/collections', label: 'Коллекции' },
-  { href: '/news', label: 'Новости' },
+  { href: '/catalog', label: 'Каталог', icon: LibraryBig },
+  { href: '/collections', label: 'Коллекции', icon: Library },
+  { href: '/news', label: 'Новости', icon: Newspaper },
 ];
 
 export default function NavBar() {
@@ -82,14 +85,21 @@ export default function NavBar() {
   const [activeIdx, setActiveIdx] = useState(-1);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileQ, setMobileQ] = useState('');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [myNarrators, setMyNarrators] = useState<NarratorCard[]>([]);
   const [friendReq, setFriendReq] = useState(0);
+  // Badge counts for the burger's account section — the mobile breakpoint
+  // hides ChatButton/NotificationBell (their links are already in the burger,
+  // see userLinks below), so their counts are mirrored here with the same
+  // poll cadence those components use, to not lose the at-a-glance signal.
+  const [msgCount, setMsgCount] = useState(0);
+  const [notifCount, setNotifCount] = useState(0);
 
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
   const userWrapRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const seqRef = useRef(0);
 
   useEffect(() => {
@@ -103,6 +113,7 @@ export default function NavBar() {
     setSugOpen(false);
     setUserMenuOpen(false);
     setMobileOpen(false);
+    setMobileSearchOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -169,6 +180,54 @@ export default function NavBar() {
     };
   }, [user, pathname]);
 
+  // Unread message count, mirrored from ChatButton's own poll (same 20s
+  // cadence, same refetch-on-navigation so visiting the chat page clears it
+  // promptly) so the burger's "Сообщения" row still carries a badge on mobile,
+  // where ChatButton itself is hidden.
+  useEffect(() => {
+    if (!user) {
+      setMsgCount(0);
+      return;
+    }
+    let alive = true;
+    const load = () => {
+      api<{ count: number }>('/me/chat/unread-count')
+        .then((r) => {
+          if (alive) setMsgCount(r.count);
+        })
+        .catch(() => {});
+    };
+    load();
+    const iv = window.setInterval(load, 20_000);
+    return () => {
+      alive = false;
+      window.clearInterval(iv);
+    };
+  }, [user, pathname]);
+
+  // Unread notification count, mirrored from NotificationBell's own poll (same
+  // 30s cadence), for the same reason — its trigger is hidden on mobile.
+  useEffect(() => {
+    if (!user) {
+      setNotifCount(0);
+      return;
+    }
+    let alive = true;
+    const load = () => {
+      api<{ count: number }>('/me/notifications/unread-count')
+        .then((r) => {
+          if (alive) setNotifCount(r.count);
+        })
+        .catch(() => {});
+    };
+    load();
+    const iv = window.setInterval(load, 30_000);
+    return () => {
+      alive = false;
+      window.clearInterval(iv);
+    };
+  }, [user]);
+
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -180,13 +239,25 @@ export default function NavBar() {
   }, []);
 
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!mobileOpen && !mobileSearchOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, mobileSearchOpen]);
+
+  // The floating search's own way out, beyond its close button: Escape, and
+  // autofocus so typing can start immediately.
+  useEffect(() => {
+    if (!mobileSearchOpen) return;
+    mobileSearchInputRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileSearchOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [mobileSearchOpen]);
 
   const flatItems: SuggestItem[] = sug
     ? [
@@ -227,6 +298,7 @@ export default function NavBar() {
     setSugOpen(false);
     setActiveIdx(-1);
     inputRef.current?.blur();
+    setMobileSearchOpen(false);
     router.push(item.href);
   };
 
@@ -237,6 +309,7 @@ export default function NavBar() {
     setActiveIdx(-1);
     inputRef.current?.blur();
     setMobileOpen(false);
+    setMobileSearchOpen(false);
     router.push(`/catalog?q=${encodeURIComponent(trimmed)}`);
   };
 
@@ -264,6 +337,7 @@ export default function NavBar() {
     try {
       const { slug } = await api<{ slug: string }>('/titles/random');
       setMobileOpen(false);
+      setMobileSearchOpen(false);
       router.push(`/title/${slug}`);
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -287,13 +361,14 @@ export default function NavBar() {
 
   const userLinks = user
     ? [
-        { href: `/user/${user.id}`, label: 'Профиль', icon: User },
-        { href: '/me/chat', label: 'Сообщения', icon: MessageCircle },
-        { href: '/me/friends', label: 'Друзья', icon: Users },
-        { href: '/me/history', label: 'История', icon: History },
-        { href: '/me/requests', label: 'Мои заявки', icon: ClipboardList },
-        ...(isMod ? [{ href: '/mod', label: 'Модерация', icon: Shield }] : []),
-        { href: '/me/settings', label: 'Настройки', icon: Settings },
+        { href: `/user/${user.id}`, label: 'Профиль', icon: User, count: 0 },
+        { href: '/me/chat', label: 'Сообщения', icon: MessageCircle, count: msgCount },
+        { href: '/me/notifications', label: 'Уведомления', icon: Bell, count: notifCount },
+        { href: '/me/friends', label: 'Друзья', icon: Users, count: friendReq },
+        { href: '/me/history', label: 'История', icon: History, count: 0 },
+        { href: '/me/requests', label: 'Мои заявки', icon: ClipboardList, count: 0 },
+        ...(isMod ? [{ href: '/mod', label: 'Модерация', icon: Shield, count: 0 }] : []),
+        { href: '/me/settings', label: 'Настройки', icon: Settings, count: 0 },
       ]
     : [];
 
@@ -302,6 +377,72 @@ export default function NavBar() {
     setMobileOpen(false);
     setAddOpen(true);
   };
+
+  // Shared between the desktop dropdown and the mobile floating search — one
+  // suggestion renderer backed by the same q/sug state, so there is exactly
+  // one search implementation rather than two independently maintained ones.
+  const renderResults = () => (
+    <>
+      {flatItems.length === 0 && <div className={styles.emptySug}>{'Ничего не найдено'}</div>}
+      {SUGGEST_GROUPS.map((group) => {
+        const first = flatItems.findIndex((it) => it.kind === group.kind);
+        if (first === -1) return null;
+        const items = flatItems.filter((it) => it.kind === group.kind);
+        return (
+          <Fragment key={group.kind}>
+            <div className={styles.groupLabel}>{group.label}</div>
+            {items.map((it, i) => {
+              const idx = first + i;
+              return (
+                <button
+                  key={it.key}
+                  type="button"
+                  className={`${styles.item} ${activeIdx === idx ? styles.itemActive : ''}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => goToItem(it)}
+                  onMouseEnter={() => setActiveIdx(idx)}
+                  role="option"
+                  aria-selected={activeIdx === idx}
+                >
+                  {it.kind === 'title' ? (
+                    it.cover ? (
+                      <img className={styles.itemCover} src={it.cover} alt="" />
+                    ) : (
+                      <span className={styles.itemCover} />
+                    )
+                  ) : it.kind === 'narrator' ? (
+                    it.avatar ? (
+                      <img className={styles.itemAvatar} src={it.avatar} alt="" />
+                    ) : (
+                      <span className={styles.itemAvatar} />
+                    )
+                  ) : (
+                    <span className={styles.itemIcon}>
+                      {it.kind === 'author' ? <PenLine size={15} /> : <Library size={15} />}
+                    </span>
+                  )}
+                  <span className={styles.itemBody}>
+                    <span className={styles.itemName}>{it.name}</span>
+                    {it.sub ? <span className={styles.itemSub}>{it.sub}</span> : null}
+                  </span>
+                </button>
+              );
+            })}
+          </Fragment>
+        );
+      })}
+      {q.trim() && (
+        <button
+          type="button"
+          className={styles.allResults}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => submitSearch(q)}
+        >
+          {`Все результаты по запросу «${q.trim()}»`}
+        </button>
+      )}
+    </>
+  );
 
   return (
     <>
@@ -344,75 +485,14 @@ export default function NavBar() {
             />
             {sugOpen && sug && (
               <div className={styles.dropdown} role="listbox">
-                {flatItems.length === 0 && (
-                  <div className={styles.emptySug}>{'Ничего не найдено'}</div>
-                )}
-                {SUGGEST_GROUPS.map((group) => {
-                  const first = flatItems.findIndex((it) => it.kind === group.kind);
-                  if (first === -1) return null;
-                  const items = flatItems.filter((it) => it.kind === group.kind);
-                  return (
-                    <Fragment key={group.kind}>
-                      <div className={styles.groupLabel}>{group.label}</div>
-                      {items.map((it, i) => {
-                        const idx = first + i;
-                        return (
-                          <button
-                            key={it.key}
-                            type="button"
-                            className={`${styles.item} ${
-                              activeIdx === idx ? styles.itemActive : ''
-                            }`}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => goToItem(it)}
-                            onMouseEnter={() => setActiveIdx(idx)}
-                            role="option"
-                            aria-selected={activeIdx === idx}
-                          >
-                            {it.kind === 'title' ? (
-                              it.cover ? (
-                                <img className={styles.itemCover} src={it.cover} alt="" />
-                              ) : (
-                                <span className={styles.itemCover} />
-                              )
-                            ) : it.kind === 'narrator' ? (
-                              it.avatar ? (
-                                <img className={styles.itemAvatar} src={it.avatar} alt="" />
-                              ) : (
-                                <span className={styles.itemAvatar} />
-                              )
-                            ) : (
-                              <span className={styles.itemIcon}>
-                                {it.kind === 'author' ? <PenLine size={15} /> : <Library size={15} />}
-                              </span>
-                            )}
-                            <span className={styles.itemBody}>
-                              <span className={styles.itemName}>{it.name}</span>
-                              {it.sub ? <span className={styles.itemSub}>{it.sub}</span> : null}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </Fragment>
-                  );
-                })}
-                {q.trim() && (
-                  <button
-                    type="button"
-                    className={styles.allResults}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => submitSearch(q)}
-                  >
-                    {`Все результаты по запросу «${q.trim()}»`}
-                  </button>
-                )}
+                {renderResults()}
               </div>
             )}
           </div>
 
           <button
             type="button"
-            className={styles.iconBtn}
+            className={`${styles.iconBtn} ${styles.randomBtn}`}
             onClick={goRandom}
             title={'Случайный тайтл'}
             aria-label={'Случайный тайтл'}
@@ -420,12 +500,26 @@ export default function NavBar() {
             <Dices />
           </button>
 
+          <button
+            type="button"
+            className={`${styles.iconBtn} ${styles.mobileSearchBtn}`}
+            onClick={() => {
+              setMobileOpen(false);
+              setMobileSearchOpen(true);
+            }}
+            aria-label={'Поиск'}
+          >
+            <Search />
+          </button>
+
           <div className={styles.authArea}>
             {loading ? (
               <span className={styles.authGhost} aria-hidden="true" />
             ) : user ? (
               <>
-                <ChatButton />
+                <span className={styles.dmSlot}>
+                  <ChatButton />
+                </span>
                 <NotificationBell />
                 <div className={styles.userWrap} ref={userWrapRef}>
                   <button
@@ -464,8 +558,8 @@ export default function NavBar() {
                         <Link key={l.href} href={l.href} className={styles.menuItem}>
                           <l.icon aria-hidden="true" />
                           {l.label}
-                          {l.href === '/me/friends' && friendReq > 0 ? (
-                            <span className={styles.menuBadge}>{friendReq}</span>
+                          {l.count > 0 ? (
+                            <span className={styles.menuBadge}>{l.count > 99 ? '99+' : l.count}</span>
                           ) : null}
                         </Link>
                       ))}
@@ -525,7 +619,10 @@ export default function NavBar() {
           <button
             type="button"
             className={`${styles.iconBtn} ${styles.burger}`}
-            onClick={() => setMobileOpen(true)}
+            onClick={() => {
+              setMobileSearchOpen(false);
+              setMobileOpen(true);
+            }}
             aria-label={'Открыть меню'}
           >
             <Menu />
@@ -534,6 +631,43 @@ export default function NavBar() {
       </header>
 
       <UnverifiedEmailBanner />
+
+      {mobileSearchOpen && (
+        <div className={styles.searchOverlay} onClick={() => setMobileSearchOpen(false)}>
+          <div className={styles.searchPanel} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.searchPanelRow}>
+              <Search className={styles.searchIcon} aria-hidden="true" />
+              <input
+                ref={mobileSearchInputRef}
+                className={styles.searchPanelInput}
+                type="text"
+                placeholder={'Поиск тайтлов и чтецов…'}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={onSearchKeyDown}
+                aria-label={'Поиск'}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className={styles.iconBtn}
+                onClick={() => setMobileSearchOpen(false)}
+                aria-label={'Закрыть поиск'}
+              >
+                <X />
+              </button>
+            </div>
+            <div className={styles.searchPanelResults}>
+              {q.trim().length >= 2 ? (
+                renderResults()
+              ) : (
+                <div className={styles.emptySug}>{'Введите не менее 2 символов'}</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {mobileOpen && (
         <div className={styles.overlay}>
@@ -551,68 +685,40 @@ export default function NavBar() {
             </button>
           </div>
 
-          <form
-            className={styles.overlaySearch}
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitSearch(mobileQ);
-            }}
-          >
-            <input
-              className="input"
-              type="text"
-              placeholder={'Поиск тайтлов и чтецов…'}
-              value={mobileQ}
-              onChange={(e) => setMobileQ(e.target.value)}
-              aria-label={'Поиск'}
-            />
-            <button type="submit" className="btn btn-primary" aria-label={'Поиск'}>
-              <Search />
-            </button>
-          </form>
-
+          <div className={styles.groupLabel}>{'Разделы'}</div>
           <nav className={styles.overlayLinks} aria-label={'Мобильное меню'}>
             {NAV_LINKS.map((l) => (
               <Link key={l.href} href={l.href} className={styles.overlayLink}>
+                <l.icon aria-hidden="true" />
                 {l.label}
               </Link>
             ))}
             <button type="button" className={styles.overlayLink} onClick={goRandom}>
+              <Dices aria-hidden="true" />
               {'Случайный'}
             </button>
           </nav>
 
-          <div className={styles.overlaySep} />
-
-          <nav className={styles.overlaySubLinks} aria-label={'Аккаунт'}>
-            {user ? (
-              <>
-                <button type="button" className={styles.overlaySub} onClick={openAdd}>
-                  {'Добавить'}
-                </button>
-                {userLinks.map((l) => (
-                  <Link key={l.href} href={l.href} className={styles.overlaySub}>
-                    {l.label}
-                    {l.href === '/me/friends' && friendReq > 0 ? (
-                      <span className={styles.menuBadge}>{friendReq}</span>
-                    ) : null}
-                  </Link>
-                ))}
-                <button type="button" className={styles.overlaySub} onClick={doLogout}>
-                  {'Выйти'}
-                </button>
-              </>
-            ) : (
-              <>
+          {/* Signed in: account actions already live in the avatar dropdown,
+              which stays visible on mobile — repeating them here would just be
+              the same links twice. Signed out has no avatar to fall back to,
+              so Войти/Регистрация still need a home in the burger. */}
+          {!user ? (
+            <>
+              <div className={styles.overlaySep} />
+              <div className={styles.groupLabel}>{'Аккаунт'}</div>
+              <nav className={styles.overlaySubLinks} aria-label={'Аккаунт'}>
                 <Link href="/auth/login" className={styles.overlaySub}>
+                  <LogIn aria-hidden="true" />
                   {'Войти'}
                 </Link>
                 <Link href="/auth/register" className={styles.overlaySub}>
+                  <UserPlus aria-hidden="true" />
                   {'Регистрация'}
                 </Link>
-              </>
-            )}
-          </nav>
+              </nav>
+            </>
+          ) : null}
         </div>
       )}
 

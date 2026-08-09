@@ -317,6 +317,13 @@
   flex: none;
 }
 
+/* Pulls the bell icon closer to the DM icon, without changing the gap to the
+   avatar next to it. */
+.dmSlot {
+  display: flex;
+  margin-right: -0.25rem;
+}
+
 .authGhost {
   display: inline-block;
   width: 36px;
@@ -537,28 +544,42 @@
   flex: none;
 }
 
-.overlaySearch {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1.25rem;
+/* Section labels above each overlay group — same look as the search
+   dropdown's group headers (.groupLabel), just with room above them here. */
+.overlay .groupLabel {
+  margin-top: 2rem;
+}
+
+.overlay .groupLabel:first-of-type {
+  margin-top: 1.5rem;
 }
 
 .overlayLinks {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1.15rem;
-  margin-top: 2.25rem;
+  gap: 1.1rem;
+  margin-top: 0.9rem;
 }
 
 .overlayLink {
-  font-size: 1.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.3rem;
   font-weight: 300;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #fff;
   transition: color 0.2s ease;
   text-align: left;
+}
+
+.overlayLink svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--accent);
 }
 
 .overlayLink:hover {
@@ -569,7 +590,7 @@
   height: 1px;
   background: linear-gradient(to right, var(--accent), rgba(222, 97, 97, 0.2), transparent);
   opacity: 0.6;
-  margin: 2rem 0 1.5rem;
+  margin: 1.4rem 0;
   flex: none;
 }
 
@@ -577,23 +598,102 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.95rem;
+  gap: 0.9rem;
+  margin-top: 0.9rem;
 }
 
 .overlaySub {
   display: flex;
   align-items: center;
+  gap: 0.65rem;
   font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-secondary);
   transition: color 0.2s ease;
   text-align: left;
 }
 
+.overlaySub svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
 .overlaySub:hover {
   color: var(--accent-hover);
+}
+
+.overlaySub:hover svg {
+  color: var(--accent-hover);
+}
+
+/* ---------- floating mobile search ---------- */
+
+.searchOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 310;
+  background: rgba(12, 12, 14, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+  animation: overlay-in 0.2s ease;
+}
+
+.searchPanel {
+  width: 100%;
+  max-width: 560px;
+  margin-top: calc(var(--nav-height) + 0.75rem);
+  height: fit-content;
+  max-height: calc(100vh - var(--nav-height) - 1.5rem);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.searchPanelRow {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.6rem 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.searchPanelRow .searchIcon {
+  position: static;
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.searchPanelInput {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.searchPanelInput::placeholder {
+  color: var(--text-muted);
+}
+
+.searchPanelResults {
+  padding: 6px;
+  overflow-y: auto;
 }
 
 /* ---------- responsive ---------- */
@@ -631,6 +731,19 @@
   }
 }
 
+/* Hidden above the mobile break point; the media query below turns it on. */
+.mobileSearchBtn {
+  display: none;
+}
+
+/*
+ * True mobile: the avatar/chat/notifications cluster stays — those are quick
+ * shortcuts, not menus, and only the avatar's own dropdown duplicates the
+ * burger's account links (still true, but that dropdown isn't reachable by
+ * accident the way the old always-visible Dices button was). What moves out
+ * is just the random-title icon (now an overlay row) — a dedicated search
+ * icon takes its old spot, opening the floating search panel below.
+ */
 @media (max-width: 768px) {
   .inner {
     padding-inline: 1rem;
@@ -640,14 +753,18 @@
   .links,
   .search,
   .authBtns,
-  .navLang {
+  .navLang,
+  .randomBtn {
     display: none;
   }
 
   .logo {
     margin-right: auto;
+    font-size: 14px;
+    letter-spacing: 0.22em;
   }
 
+  .mobileSearchBtn,
   .burger {
     display: inline-flex;
     min-width: 44px;
