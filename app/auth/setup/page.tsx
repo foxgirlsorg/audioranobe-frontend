@@ -8,11 +8,13 @@ import { errMsg, useToast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth';
 import type { Me } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
+import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './page.module.css';
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
 
 export default function AuthSetupPage() {
+  useResolveAuth();
   const { user, loading, refresh } = useAuth();
   const router = useRouter();
   const { toast } = useToast();

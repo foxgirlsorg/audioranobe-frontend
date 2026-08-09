@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Check, ChevronRight, Copy } from 'lucide-react';
 import JsonBlock from '@/components/JsonBlock/JsonBlock';
 import { SAMPLES, SAMPLE_PATH, SAMPLE_QUERY } from './samples';
+import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './page.module.css';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
@@ -176,6 +177,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export default function ApiDocsPage() {
+  useResolveAuth();
   return (
     <div className={styles.wrap}>
       <span className="eyebrow">{'Для разработчиков'}</span>

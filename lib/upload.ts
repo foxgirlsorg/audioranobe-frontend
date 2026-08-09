@@ -1,5 +1,5 @@
 
-import { API_URL, ApiError, api, getToken } from '@/lib/api';
+import { API_URL, ApiError, api } from '@/lib/api';
 
 export interface UploadSession {
   id: number;
@@ -25,8 +25,7 @@ function putChunk(
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', `${API_URL}/panel/uploads/${uploadId}?offset=${offset}`);
-    const token = getToken();
-    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.withCredentials = true; // send the HttpOnly auth cookie
     xhr.setRequestHeader('Content-Type', 'application/octet-stream');
 
     xhr.upload.onprogress = (e) => {

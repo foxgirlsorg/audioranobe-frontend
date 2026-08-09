@@ -175,7 +175,7 @@ export default function ProviderAuth({
           setTg(null);
           setBusy(null);
           if (poll.token && poll.user) {
-            adoptSession(poll.token, poll.user);
+            adoptSession(poll.user);
             if (poll.user.needs_setup) router.push('/auth/setup');
           } else if (poll.identities) {
             onLinked?.(poll.identities);

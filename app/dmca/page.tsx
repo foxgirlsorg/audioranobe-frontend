@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { ArrowLeft, Send, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast, errMsg } from '@/lib/toast';
+import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './page.module.css';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function DmcaPage() {
+  useResolveAuth();
   const { toast } = useToast();
 
   const [name, setName] = useState('');

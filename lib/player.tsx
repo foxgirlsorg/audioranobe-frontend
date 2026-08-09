@@ -9,7 +9,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { api, API_URL, getToken } from '@/lib/api';
+import { api, API_URL } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import type { ChapterPlay } from '@/lib/types';
 
 interface PlayerContextValue {
@@ -50,6 +51,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const [sleepRemaining, setSleepRemaining] = useState<number | null>(null);
   const [buffered, setBuffered] = useState(0);
 
+  // Progress only persists for signed-in users. The cookie is HttpOnly so JS
+  // can't sniff the session — mirror the auth user into a ref the memoised
+  // saveProgress can read.
+  const { user } = useAuth();
+  const authedRef = useRef(false);
+  useEffect(() => {
+    authedRef.current = !!user;
+  }, [user]);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentRef = useRef<ChapterPlay | null>(null);
   const rateRef = useRef(1);
@@ -63,18 +73,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     const cur = currentRef.current;
     const audio = audioRef.current;
     if (!cur || !audio) return;
-    const token = getToken();
-    if (!token) return;
+    if (!authedRef.current) return;
     const pos = positionOverride !== undefined ? positionOverride : audio.currentTime;
     if (!Number.isFinite(pos)) return;
     try {
       fetch(`${API_URL}/me/progress/${cur.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ position: Math.max(0, pos) }),
+        credentials: 'include',
         keepalive,
       }).catch(() => {});
     } catch {

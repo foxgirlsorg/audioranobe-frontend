@@ -6,9 +6,11 @@ import { KeyRound } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/toast';
 import { useToast } from '@/lib/toast';
+import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from '../login/login.module.css';
 
 export default function ResetPage() {
+  useResolveAuth();
   const { toast } = useToast();
   const [token, setToken] = useState('');
   const [tokenRead, setTokenRead] = useState(false);

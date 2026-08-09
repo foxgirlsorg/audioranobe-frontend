@@ -6,9 +6,11 @@ import { Mail } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/toast';
 import { useToast } from '@/lib/toast';
+import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from '../login/login.module.css';
 
 export default function ForgotPage() {
+  useResolveAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);

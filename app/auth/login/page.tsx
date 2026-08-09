@@ -7,6 +7,7 @@ import { LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { errMsg } from '@/lib/toast';
 import { ProviderSection } from '@/components/ProviderAuth/ProviderAuth';
+import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './login.module.css';
 
 function safeNext(raw: string | null): string {
@@ -15,6 +16,7 @@ function safeNext(raw: string | null): string {
 }
 
 export default function LoginPage() {
+  useResolveAuth();
   const { user, loading, login } = useAuth();
   const router = useRouter();
 

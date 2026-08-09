@@ -2,8 +2,6 @@
 export const API_URL: string =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
-const TOKEN_KEY = 'audioranobe_token';
-
 export class ApiError extends Error {
   status: number;
   code?: string;
@@ -24,29 +22,31 @@ export function isForbiddenWord(e: unknown): e is ApiError {
   return e instanceof ApiError && e.code === 'forbidden_word';
 }
 
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function setToken(t: string | null): void {
-  if (typeof window === 'undefined') return;
-  try {
-    if (t) window.localStorage.setItem(TOKEN_KEY, t);
-    else window.localStorage.removeItem(TOKEN_KEY);
-  } catch {
-  }
-}
-
 export interface ApiOptions {
   method?: string;
   body?: any;
   formData?: FormData;
   params?: Record<string, any>;
+}
+
+// The backend piggybacks the current user onto every response as an X-Me header
+// (base64 Me JSON, empty when signed out) so the app learns auth state from
+// normal traffic instead of probing /me. AuthProvider registers here.
+type ViewerListener = (me: unknown | null) => void;
+let viewerListener: ViewerListener | null = null;
+
+export function onViewer(fn: ViewerListener | null): void {
+  viewerListener = fn;
+}
+
+function decodeViewer(header: string): unknown | null {
+  if (header === '') return null;
+  try {
+    const bytes = Uint8Array.from(atob(header), (c) => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    return null;
+  }
 }
 
 function buildQuery(params?: Record<string, any>): string {
@@ -71,8 +71,6 @@ export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise
   const url = API_URL + path + buildQuery(opts.params);
 
   const headers: Record<string, string> = {};
-  const token = getToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
 
   let body: BodyInit | undefined;
   let method = opts.method;
@@ -89,15 +87,20 @@ export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise
 
   let res: Response;
   try {
-    res = await fetch(url, { method, headers, body });
+    // credentials:'include' sends and stores the HttpOnly auth cookie, which is
+    // the whole session now — no token is read or held in JS. The backend
+    // slides the session forward by re-setting the cookie (Auth::maybeRenew).
+    res = await fetch(url, { method, headers, body, credentials: 'include' });
   } catch {
     throw new ApiError(0, 'Network error — could not reach the server');
   }
 
-  // Sliding-session renewal: the backend hands back a fresh token for active
-  // users (Auth::maybeRenew). Swap it into storage so the session keeps living.
-  const renewed = res.headers.get('X-Renewed-Token');
-  if (renewed) setToken(renewed);
+  // Learn who's signed in from ordinary responses. Auth endpoints set their own
+  // user state (and their X-Me reflects the pre-action session), so skip them.
+  if (viewerListener && !path.startsWith('/auth/')) {
+    const meHeader = res.headers.get('X-Me');
+    if (meHeader !== null) viewerListener(decodeViewer(meHeader));
+  }
 
   if (res.status === 204) return undefined as T;
 

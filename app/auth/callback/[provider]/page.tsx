@@ -56,7 +56,7 @@ export default function OAuthCallbackPage() {
         });
 
         if (res.token && res.user) {
-          adoptSession(res.token, res.user);
+          adoptSession(res.user);
           router.replace(res.user.needs_setup ? '/auth/setup' : '/');
           return;
         }

@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg } from '@/lib/toast';
 import Spinner from '@/components/Spinner/Spinner';
+import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './page.module.css';
 
 function VerifyInner() {
@@ -74,6 +75,7 @@ function VerifyInner() {
 }
 
 export default function VerifyPage() {
+  useResolveAuth();
   return (
     <Suspense fallback={null}>
       <VerifyInner />
