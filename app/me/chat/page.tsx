@@ -45,6 +45,13 @@ function fmtTime(iso: string): string {
 function dayKey(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
 }
+// Pill label: only show the year once the day is more than a year old.
+const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const overYear = Date.now() - d.getTime() > YEAR_MS;
+  return d.toLocaleDateString(undefined, overYear ? { day: 'numeric', month: 'long', year: 'numeric' } : { day: 'numeric', month: 'long' });
+}
 
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 
@@ -648,7 +655,7 @@ function ChatInner() {
                 ) : (
                   dayGroups.map((g) => (
                     <div key={g.day} className={styles.dayGroup}>
-                      <div className={styles.dayDivider}><span>{g.day}</span></div>
+                      <div className={styles.dayDivider}><span>{dayLabel(g.items[0].created_at)}</span></div>
                       {g.items.map(renderMessage)}
                     </div>
                   ))

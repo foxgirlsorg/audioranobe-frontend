@@ -308,13 +308,12 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary, #cfcfcf);
-  background: rgba(20, 20, 24, 0.72);
+  background: rgba(20, 20, 24, 0.5);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   padding: 4px 11px;
   border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 
 .bubbleRow {
