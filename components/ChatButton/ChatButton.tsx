@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useAway, scalePoll } from '@/lib/presence';
 import styles from './ChatButton.module.css';
 
 const POLL_MS = 20_000;
@@ -18,6 +19,7 @@ const POLL_MS = 20_000;
  */
 export default function ChatButton() {
   const { user } = useAuth();
+  const away = useAway();
   const pathname = usePathname();
   const [count, setCount] = useState(0);
 
@@ -35,12 +37,12 @@ export default function ChatButton() {
         .catch(() => {});
     };
     load();
-    const iv = window.setInterval(load, POLL_MS);
+    const iv = window.setInterval(load, scalePoll(POLL_MS, away));
     return () => {
       alive = false;
       window.clearInterval(iv);
     };
-  }, [user, pathname]);
+  }, [user, pathname, away]);
 
   if (!user) return null;
 

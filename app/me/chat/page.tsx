@@ -24,11 +24,13 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { initialsOf } from '@/lib/format';
+import { initialsOf, presenceLabel } from '@/lib/format';
+import { useAway, scalePoll } from '@/lib/presence';
 import type { ChatConversation, ChatMessage, ChatThread } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import UserBadges from '@/components/UserBadges/UserBadges';
+import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import Markdown from '@/components/Markdown/Markdown';
 import ImageViewer from '@/components/ImageViewer/ImageViewer';
 import styles from './page.module.css';
@@ -96,6 +98,7 @@ export default function ChatPage() {
 
 function ChatInner() {
   const { user, isMod, loading: authLoading } = useAuth();
+  const away = useAway();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -172,9 +175,9 @@ function ChatInner() {
   useEffect(() => {
     if (!user) return;
     loadList();
-    const iv = window.setInterval(loadList, LIST_POLL_MS);
+    const iv = window.setInterval(loadList, scalePoll(LIST_POLL_MS, away));
     return () => window.clearInterval(iv);
-  }, [user, loadList]);
+  }, [user, loadList, away]);
 
   // ---- open a thread when the ?u selection changes ----
   useEffect(() => {
@@ -227,15 +230,16 @@ function ChatInner() {
             const freshMap = new Map(t.messages.map((m) => [m.id, m]));
             const updated = prev.messages.map((m) => freshMap.get(m.id) ?? m);
             const merged = brandNew.length ? [...updated, ...brandNew] : updated;
-            return { ...prev, messages: merged, their_last_read_id: t.their_last_read_id, can_send: t.can_send };
+            // Refresh the header's presence (online/away/last-seen) each tick.
+            return { ...prev, user: t.user, messages: merged, their_last_read_id: t.their_last_read_id, can_send: t.can_send };
           });
           if (brandNew.length) loadList();
         })
         .catch(() => {});
     };
-    const iv = window.setInterval(tick, THREAD_POLL_MS);
+    const iv = window.setInterval(tick, scalePoll(THREAD_POLL_MS, away));
     return () => window.clearInterval(iv);
-  }, [user, selectedId, loadList]);
+  }, [user, selectedId, loadList, away]);
 
   // Group consecutive messages by day for Telegram-style sticky date pills.
   // Deleted messages are dropped entirely here — they only ever resurface as a
@@ -589,12 +593,15 @@ function ChatInner() {
                 className={`${styles.convRow} ${c.user.id === selectedId ? styles.convActive : ''}`}
                 onClick={() => select(c.user.id)}
               >
-                <span className={styles.avatar}>
-                  {c.user.avatar_url ? (
-                    <img src={c.user.avatar_url} alt="" />
-                  ) : (
-                    <span className={styles.avatarFallback}>{initialsOf(c.user.username)}</span>
-                  )}
+                <span className={styles.avatarWrap}>
+                  <span className={styles.avatar}>
+                    {c.user.avatar_url ? (
+                      <img src={c.user.avatar_url} alt="" />
+                    ) : (
+                      <span className={styles.avatarFallback}>{initialsOf(c.user.username)}</span>
+                    )}
+                  </span>
+                  <PresenceDot status={c.user.presence} lastSeenAt={c.user.last_seen_at} size={12} className={styles.presenceDot} />
                 </span>
                 <span className={styles.convMain}>
                   <span className={styles.convTop}>
@@ -631,16 +638,24 @@ function ChatInner() {
                 <ArrowLeft size={18} />
               </button>
               <Link href={`/user/${thread.user.id}`} className={styles.threadUser}>
-                <span className={styles.avatarSm}>
-                  {thread.user.avatar_url ? (
-                    <img src={thread.user.avatar_url} alt="" />
-                  ) : (
-                    <span className={styles.avatarFallback}>{initialsOf(thread.user.username)}</span>
-                  )}
+                <span className={styles.avatarWrap}>
+                  <span className={styles.avatarSm}>
+                    {thread.user.avatar_url ? (
+                      <img src={thread.user.avatar_url} alt="" />
+                    ) : (
+                      <span className={styles.avatarFallback}>{initialsOf(thread.user.username)}</span>
+                    )}
+                  </span>
+                  <PresenceDot status={thread.user.presence} lastSeenAt={thread.user.last_seen_at} size={12} className={styles.presenceDot} />
                 </span>
-                <span className={styles.threadName}>
-                  {thread.user.display_name || thread.user.username}
-                  <UserBadges user={thread.user} size={11} />
+                <span className={styles.threadHeadText}>
+                  <span className={styles.threadName}>
+                    {thread.user.display_name || thread.user.username}
+                    <UserBadges user={thread.user} size={11} />
+                  </span>
+                  <span className={`${styles.threadPresence} ${styles[`presence_${thread.user.presence}`]}`}>
+                    {presenceLabel(thread.user.presence, thread.user.last_seen_at)}
+                  </span>
                 </span>
               </Link>
             </header>

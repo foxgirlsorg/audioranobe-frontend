@@ -214,6 +214,43 @@
   text-overflow: ellipsis;
 }
 
+/* avatar + status dot overlay, shared by the list rows and the thread header */
+.avatarWrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.presenceDot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.threadHeadText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.threadPresence {
+  font-size: 11.5px;
+  line-height: 1.2;
+  color: var(--text-muted, #8a8a8a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.presence_online {
+  color: #4bcf7a;
+}
+
+.presence_away {
+  color: #e0a13c;
+}
+
 /* Wrapper anchors the floating jump-to-latest button to the message area (above
    the composer) regardless of the composer's changing height. */
 .messagesWrap {

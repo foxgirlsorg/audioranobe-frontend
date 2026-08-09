@@ -30,7 +30,9 @@ import {
   type UserComment,
   type UserProfile,
 } from '@/lib/types';
-import { formatDate, initialsOf, timeAgo } from '@/lib/format';
+import { formatDate, initialsOf, timeAgo, presenceLabel } from '@/lib/format';
+import { useAway, scalePoll } from '@/lib/presence';
+import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { emitFriendsChanged } from '@/lib/friends';
@@ -48,6 +50,8 @@ import SocialLinks from '@/components/SocialLinks/SocialLinks';
 import Markdown from '@/components/Markdown/Markdown';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import styles from './page.module.css';
+
+const PRESENCE_MS = 30_000;
 
 const LIBRARY_STATUSES: { key: string; label: string }[] = [
   { key: 'all', label: 'Все' },
@@ -126,6 +130,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: viewer } = useAuth();
+  const away = useAway();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -225,6 +230,31 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     };
   }, [userRef]);
 
+  // Keep the header's presence fresh without a full reload: re-fetch just the
+  // profile's user and patch presence/last_seen. Slows down when the viewer is away.
+  useEffect(() => {
+    if (!profile) return;
+    let alive = true;
+    const tick = () => {
+      api<UserProfile>(`/users/${encodeURIComponent(userRef)}`)
+        .then((p) => {
+          if (!alive) return;
+          setProfile((prev) =>
+            prev
+              ? { ...prev, user: { ...prev.user, presence: p.user.presence, last_seen_at: p.user.last_seen_at } }
+              : prev
+          );
+        })
+        .catch(() => {});
+    };
+    const iv = window.setInterval(tick, scalePoll(PRESENCE_MS, away));
+    return () => {
+      alive = false;
+      window.clearInterval(iv);
+    };
+    // profile presence identity is enough to (re)start the poll once loaded.
+  }, [userRef, profile?.user.id, away]);
+
   if (loading) {
     return (
       <div className={styles.center}>
@@ -304,6 +334,12 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
           ) : (
             <span className={styles.avatarInitials}>{initialsOf(user.username)}</span>
           )}
+          <PresenceDot
+            status={user.presence}
+            lastSeenAt={user.last_seen_at}
+            size={15}
+            className={styles.presenceDot}
+          />
         </div>
 
         <div className={styles.headMain}>
@@ -314,6 +350,8 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
           </h1>
           <div className={styles.headSub}>
             {user.display_name ? <span>@{user.username}</span> : null}
+            <span className={styles.metaDot} aria-hidden="true" />
+            <span>{presenceLabel(user.presence, user.last_seen_at)}</span>
             <span className={styles.metaDot} aria-hidden="true" />
             <span>{`На сайте с ${formatDate(user.created_at)}`}</span>
           </div>

@@ -357,6 +357,16 @@
   border-color: var(--border-hover);
 }
 
+/* Viewer's own online status, tucked onto the avatar's lower-right, with a rim
+   the color of the avatar border (width floors at the 2px default). */
+.presenceDot {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  pointer-events: none;
+  --presence-ring-c: var(--border);
+}
+
 /* Accent count of pending incoming friend requests, over the avatar. */
 .friendBadge {
   position: absolute;

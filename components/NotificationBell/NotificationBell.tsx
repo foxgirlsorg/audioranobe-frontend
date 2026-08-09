@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useAway, scalePoll } from '@/lib/presence';
 import { timeAgo } from '@/lib/format';
 import type { Notification, Paginated } from '@/lib/types';
 import styles from './NotificationBell.module.css';
@@ -15,6 +16,7 @@ const POLL_MS = 30_000;
 export default function NotificationBell() {
   const router = useRouter();
   const { user } = useAuth();
+  const away = useAway();
 
   const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -37,12 +39,12 @@ export default function NotificationBell() {
         .catch(() => {});
     };
     load();
-    const iv = window.setInterval(load, POLL_MS);
+    const iv = window.setInterval(load, scalePoll(POLL_MS, away));
     return () => {
       alive = false;
       window.clearInterval(iv);
     };
-  }, [user]);
+  }, [user, away]);
 
   useEffect(() => {
     if (!open) return;

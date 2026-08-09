@@ -1,0 +1,25 @@
+.dot {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+/* The ring reads as the avatar's own rim: each context sets --presence-ring-w
+   and --presence-ring-c to match its pfp border (falling back to a cutout in
+   the panel background for borderless avatars). */
+.ring {
+  box-shadow: 0 0 0 var(--presence-ring-w, 2px) var(--presence-ring-c, var(--surface-strong, rgba(18, 18, 22, 0.9)));
+}
+
+.online {
+  background: #3fbf6a;
+}
+
+.away {
+  background: #e0a13c;
+}
+
+.offline {
+  background: var(--text-muted, #8a8a8a);
+}

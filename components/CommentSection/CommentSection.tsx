@@ -533,7 +533,12 @@ function NestedComment({
       >
         <div className={styles.commentMain}>
           <header className={styles.commentHead}>
-            <UserAvatar user={comment.user} size={avatarSize} />
+            <UserAvatar
+              user={comment.user}
+              size={avatarSize}
+              presence={comment.user?.presence ?? null}
+              lastSeenAt={comment.user?.last_seen_at}
+            />
             <div className={styles.commentHeadText}>
               {comment.user ? (
                   <Link

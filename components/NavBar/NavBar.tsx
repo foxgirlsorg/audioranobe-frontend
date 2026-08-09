@@ -28,11 +28,13 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useAway, scalePoll } from '@/lib/presence';
 import { errMsg, useToast } from '@/lib/toast';
 import { FRIENDS_CHANGED } from '@/lib/friends';
 import type { NarratorCard, SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import ChatButton from '@/components/ChatButton/ChatButton';
+import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import AddContentDialog from '@/components/AddContentDialog/AddContentDialog';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import UserBadges from '@/components/UserBadges/UserBadges';
@@ -76,6 +78,7 @@ export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout, isMod } = useAuth();
+  const away = useAway();
   const { toast } = useToast();
 
   const [scrolled, setScrolled] = useState(false);
@@ -198,12 +201,12 @@ export default function NavBar() {
         .catch(() => {});
     };
     load();
-    const iv = window.setInterval(load, 20_000);
+    const iv = window.setInterval(load, scalePoll(20_000, away));
     return () => {
       alive = false;
       window.clearInterval(iv);
     };
-  }, [user, pathname]);
+  }, [user, pathname, away]);
 
   // Unread notification count, mirrored from NotificationBell's own poll (same
   // 30s cadence), for the same reason — its trigger is hidden on mobile.
@@ -221,12 +224,12 @@ export default function NavBar() {
         .catch(() => {});
     };
     load();
-    const iv = window.setInterval(load, 30_000);
+    const iv = window.setInterval(load, scalePoll(30_000, away));
     return () => {
       alive = false;
       window.clearInterval(iv);
     };
-  }, [user]);
+  }, [user, away]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -535,6 +538,7 @@ export default function NavBar() {
                   >
                     {avatar()}
                   </button>
+                  <PresenceDot status={away ? 'away' : 'online'} size={9} className={styles.presenceDot} />
                   {friendReq > 0 && (
                     <span className={styles.friendBadge} aria-hidden="true">
                       {friendReq > 99 ? '99+' : friendReq}

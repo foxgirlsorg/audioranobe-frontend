@@ -34,3 +34,17 @@ a.avatar:hover {
 .deleted {
   opacity: 0.6;
 }
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  /* Ring color matches the avatar border; width floors at the 2px default. */
+  --presence-ring-c: var(--border, rgba(255, 255, 255, 0.08));
+}

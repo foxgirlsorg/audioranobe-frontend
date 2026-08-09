@@ -60,6 +60,8 @@ export type ModRequestAction = 'create' | 'update' | 'delete' | 'transfer';
 export type ModRequestStatus = 'pending' | 'approved' | 'rejected';
 export type ModRequestEntityType = 'narrator' | 'title' | 'chapter' | 'author';
 
+export type PresenceStatus = 'online' | 'away' | 'offline';
+
 export interface UserBrief {
   username: string;
   display_name: string;
@@ -67,6 +69,9 @@ export interface UserBrief {
   avatar_url: string | null;
   role: Role;
   is_developer: boolean;
+  /** Derived server-side; 'offline' on briefs whose query omits presence cols. */
+  presence: PresenceStatus;
+  last_seen_at: string | null;
 }
 
 /** `system` has no key: hand-written announcements are not opt-out. */
@@ -94,6 +99,8 @@ export interface UserPublic {
   role: Role;
   is_developer: boolean;
   created_at: string;
+  presence: PresenceStatus;
+  last_seen_at: string | null;
 }
 
 export type AuthProvider = 'google' | 'discord' | 'telegram';
@@ -106,7 +113,10 @@ export interface Identity {
   created_at: string;
 }
 
-export interface Me extends UserPublic {
+// Me deliberately drops presence/last_seen_at: the backend strips them from the
+// Me payload (and X-Me header) to keep it stable. The viewer's own online dot
+// comes from local activity state, not the server.
+export interface Me extends Omit<UserPublic, 'presence' | 'last_seen_at'> {
   email: string | null;
   has_password: boolean;
   identities: Identity[];

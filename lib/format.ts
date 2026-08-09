@@ -47,6 +47,44 @@ export function timeAgo(iso: string): string {
   return formatDate(iso);
 }
 
+/**
+ * "Last seen" moment (RU), coarsening with age so only what's needed shows:
+ * today/yesterday → time, within a week → weekday + time, older → day+month,
+ * a past year → day+month+year. VK-style.
+ */
+export function lastSeen(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const now = new Date();
+  const time = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', hour12: false });
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(now) - startOfDay(d)) / 86_400_000);
+
+  if (dayDiff <= 0) return `сегодня в ${time}`;
+  if (dayDiff === 1) return `вчера в ${time}`;
+  if (dayDiff < 7) {
+    const weekday = d.toLocaleDateString(locale(), { weekday: 'long' });
+    return `${weekday}, ${time}`;
+  }
+  if (d.getFullYear() === now.getFullYear()) {
+    return d.toLocaleDateString(locale(), { day: 'numeric', month: 'long' });
+  }
+  return d.toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/**
+ * Human presence label (RU). Uses the "был(а)" parenthetical convention so it
+ * reads for any gender. `away` = signed in but idle/backgrounded.
+ */
+export function presenceLabel(
+  status: 'online' | 'away' | 'offline',
+  lastSeenAt?: string | null
+): string {
+  if (status === 'online') return 'в сети';
+  if (status === 'away') return 'нет на месте';
+  return lastSeenAt ? `был(а) в сети ${lastSeen(lastSeenAt)}` : 'не в сети';
+}
+
 export function formatCount(n: number): string {
   if (!Number.isFinite(n)) return '0';
   if (Math.abs(n) < 1000) return String(n);

@@ -10,6 +10,7 @@ import CookiesBanner from '@/components/CookiesBanner/CookiesBanner';
 import Footer from '@/components/Footer/Footer';
 import Player from '@/components/Player/Player';
 import DragScroll from '@/components/DragScroll/DragScroll';
+import PresencePinger from '@/components/PresencePinger/PresencePinger';
 
 export const metadata: Metadata = {
   title: 'AudioRanobe — аудиокниги',
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <PlayerProvider>
               <div className="noise" aria-hidden="true" />
               <DragScroll />
+              <PresencePinger />
               <NavBar />
               <BannedBanner />
               <CookiesBanner />
