@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Check, Clock, UserMinus, Users, X } from 'lucide-react';
@@ -55,6 +55,14 @@ function PersonRow({
 }
 
 export default function FriendsPage() {
+  return (
+    <Suspense fallback={<div className={styles.center}><Spinner size={34} /></div>}>
+      <FriendsInner />
+    </Suspense>
+  );
+}
+
+function FriendsInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
