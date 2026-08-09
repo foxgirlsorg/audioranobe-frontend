@@ -195,6 +195,9 @@ export default function ApiDocsPage() {
         <p className={styles.note}>
           {'Ответы — JSON в UTF-8; ошибки приходят как {"error": "текст"} с соответствующим HTTP-статусом.'}
         </p>
+        <p className={styles.note}>
+          {'Все эндпоинты ниже — публичные GET: авторизация не нужна, запросы можно слать с любого домена.'}
+        </p>
 
         <h2 className={styles.panelTitle}>{'Пример запроса'}</h2>
         <div className={styles.codeRow}>
