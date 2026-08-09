@@ -12,6 +12,7 @@ import {
   LibraryBig,
   LogOut,
   Menu,
+  MessageCircle,
   Mic,
   PenLine,
   Plus,
@@ -28,6 +29,7 @@ import { errMsg, useToast } from '@/lib/toast';
 import { FRIENDS_CHANGED } from '@/lib/friends';
 import type { NarratorCard, SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
+import ChatButton from '@/components/ChatButton/ChatButton';
 import AddContentDialog from '@/components/AddContentDialog/AddContentDialog';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import UserBadges from '@/components/UserBadges/UserBadges';
@@ -286,6 +288,7 @@ export default function NavBar() {
   const userLinks = user
     ? [
         { href: `/user/${user.id}`, label: 'Профиль', icon: User },
+        { href: '/me/chat', label: 'Сообщения', icon: MessageCircle },
         { href: '/me/friends', label: 'Друзья', icon: Users },
         { href: '/me/history', label: 'История', icon: History },
         { href: '/me/requests', label: 'Мои заявки', icon: ClipboardList },
@@ -422,6 +425,7 @@ export default function NavBar() {
               <span className={styles.authGhost} aria-hidden="true" />
             ) : user ? (
               <>
+                <ChatButton />
                 <NotificationBell />
                 <div className={styles.userWrap} ref={userWrapRef}>
                   <button

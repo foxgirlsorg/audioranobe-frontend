@@ -158,6 +158,9 @@ export default function SettingsPage() {
   const [commentTitles, setCommentTitles] = useState<CommentSubTitle[] | null>(null);
   const [subBusy, setSubBusy] = useState<number | null>(null);
 
+  const [dmFriendsOnly, setDmFriendsOnly] = useState(false);
+  const [dmBusy, setDmBusy] = useState(false);
+
   const hasPassword = user?.has_password ?? true;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
@@ -192,6 +195,7 @@ export default function SettingsPage() {
       setPrefs(user.notification_prefs);
       setContent(user.content_prefs);
       setIdentities(user.identities ?? []);
+      setDmFriendsOnly(user.dm_privacy === 'friends');
     }
   }, [user]);
 
@@ -338,6 +342,23 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setPrefBusy(null);
+    }
+  }
+
+  async function toggleDmPrivacy() {
+    if (dmBusy) return;
+    const next = !dmFriendsOnly;
+    setDmBusy(true);
+    setDmFriendsOnly(next);
+    try {
+      await api<Me>('/me', { method: 'PATCH', body: { dm_privacy: next ? 'friends' : 'all' } });
+      await refresh();
+      toast('Настройки личных сообщений сохранены', 'ok');
+    } catch (e) {
+      setDmFriendsOnly(!next);
+      toast(errMsg(e), 'error');
+    } finally {
+      setDmBusy(false);
     }
   }
 
@@ -712,6 +733,38 @@ export default function SettingsPage() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      <section className={`glass-panel ${styles.panel}`}>
+        <div className={styles.panelHead}>
+          <MessageSquare size={16} className={styles.panelIcon} />
+          <div>
+            <h2 className={styles.panelTitle}>{'Личные сообщения'}</h2>
+            <p className={styles.panelHint}>{'Кто может писать вам напрямую.'}</p>
+          </div>
+        </div>
+
+        <div className={styles.prefList}>
+          <div className={styles.prefRow}>
+            <div className={styles.prefText}>
+              <span className={styles.prefLabel}>{'Только друзья могут писать мне'}</span>
+              <span className={styles.prefHint}>
+                {'Новые сообщения смогут отправлять только пользователи из вашего списка друзей. Модераторы и администрация — всегда.'}
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={dmFriendsOnly}
+              aria-label={'Только друзья могут писать мне'}
+              className={dmFriendsOnly ? `${styles.switch} ${styles.switchOn}` : styles.switch}
+              disabled={dmBusy}
+              onClick={toggleDmPrivacy}
+            >
+              <span className={styles.knob} />
+            </button>
+          </div>
         </div>
       </section>
 

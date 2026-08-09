@@ -549,6 +549,17 @@ button.pill:hover,
     padding-top: calc(var(--nav-total) + 1.25rem);
   }
 
+  /* Direct-messages page goes fullscreen below the navbar on phones: no page
+     padding, no footer. Toggled by a body class from /me/chat. */
+  body.dm-fullscreen main.container {
+    max-width: none;
+    padding: var(--nav-total) 0 0;
+  }
+
+  body.dm-fullscreen footer {
+    display: none;
+  }
+
   .card-grid {
     gap: 1.25rem;
   }

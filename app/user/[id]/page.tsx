@@ -321,6 +321,14 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
           {viewer && friendStatus !== 'self' ? (
             <div className={styles.friendActions}>
+              <Link
+                href={`/me/chat?u=${user.id}`}
+                className="btn btn-ghost"
+                aria-label="Написать сообщение"
+              >
+                <MessageSquare size={16} />
+                <span className={styles.friendLabel}>Написать</span>
+              </Link>
               {friendStatus === 'none' ? (
                 <button
                   type="button"

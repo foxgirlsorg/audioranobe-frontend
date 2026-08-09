@@ -120,6 +120,56 @@ export interface Me extends UserPublic {
   notification_prefs: NotificationPrefs;
   content_prefs: ContentPrefs;
   narrators_count: number;
+  /** Who may DM the user: everyone, or accepted friends only (staff bypass). */
+  dm_privacy: DmPrivacy;
+}
+
+export type DmPrivacy = 'all' | 'friends';
+
+export interface ChatReplyPreview {
+  id: number;
+  author: string;
+  excerpt: string;
+  is_deleted: boolean;
+  mine: boolean;
+}
+
+export interface ChatMessage {
+  id: number;
+  conversation_id: number;
+  sender_id: number | null;
+  mine: boolean;
+  body: string;
+  image_url: string;
+  /** 'plain' = escaped text; 'rich' = markdown (mods) / raw HTML (admins). */
+  format: 'plain' | 'rich';
+  is_deleted: boolean;
+  edited: boolean;
+  reply_to: ChatReplyPreview | null;
+  created_at: string;
+}
+
+export interface ChatConversation {
+  user: UserBrief;
+  last_message: {
+    body: string;
+    image_url: string;
+    mine: boolean;
+    is_deleted: boolean;
+    created_at: string;
+  } | null;
+  last_message_at: string | null;
+  unread: number;
+}
+
+export interface ChatThread {
+  user: UserBrief;
+  me_id: number;
+  can_send: boolean;
+  block_reason: string;
+  their_last_read_id: number;
+  messages: ChatMessage[];
+  has_more: boolean;
 }
 
 export interface ContentPrefs {
