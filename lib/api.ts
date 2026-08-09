@@ -32,8 +32,17 @@ export interface ApiOptions {
 // The backend piggybacks the current user onto every response as an X-Me header
 // (base64 Me JSON, empty when signed out) so the app learns auth state from
 // normal traffic instead of probing /me. AuthProvider registers here.
+//
+// lastMeHeader guards against a feedback loop: every call notifying the
+// listener triggers a React state update, which can re-render components
+// whose effects depend on the user and fire more API calls — each carrying
+// its own X-Me — amplifying into a flood that exhausts the browser's
+// connection pool. The header is a byte-stable encoding of the same user
+// data, so a plain string compare is enough to only notify on an actual
+// change (sign-in, sign-out, or a profile edit), not on every response.
 type ViewerListener = (me: unknown | null) => void;
 let viewerListener: ViewerListener | null = null;
+let lastMeHeader: string | null = null;
 
 export function onViewer(fn: ViewerListener | null): void {
   viewerListener = fn;
@@ -97,9 +106,12 @@ export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise
 
   // Learn who's signed in from ordinary responses. Auth endpoints set their own
   // user state (and their X-Me reflects the pre-action session), so skip them.
-  if (viewerListener && !path.startsWith('/auth/')) {
+  if (!path.startsWith('/auth/')) {
     const meHeader = res.headers.get('X-Me');
-    if (meHeader !== null) viewerListener(decodeViewer(meHeader));
+    if (meHeader !== null && meHeader !== lastMeHeader) {
+      lastMeHeader = meHeader;
+      viewerListener?.(decodeViewer(meHeader));
+    }
   }
 
   if (res.status === 204) return undefined as T;
