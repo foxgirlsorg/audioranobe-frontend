@@ -317,8 +317,6 @@ export default function NavBar() {
       <span className={styles.avatarFallback}>{user?.username?.charAt(0) || '?'}</span>
     );
 
-  // Shared between the desktop dropdown and the portalled mobile sidebar —
-  // one menu implementation, two containers (see render below).
   const renderAccountMenuContent = () =>
     !user ? null : (
       <>
@@ -334,28 +332,8 @@ export default function NavBar() {
         </div>
         <div className={styles.menuSep} />
 
-        {/* Below the breakpoint where the top nav (Каталог/Коллекции/
-            Новости) and its random-title button disappear, they live
-            here instead — the account menu replaces the burger for
-            signed-in users rather than duplicating it. */}
-        <div className={styles.menuMobileOnly}>
-          {NAV_LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={styles.menuItem}
-              onClick={closeUserMenu}
-            >
-              <l.icon aria-hidden="true" />
-              {l.label}
-            </Link>
-          ))}
-          <button type="button" className={styles.menuItem} onClick={goRandom}>
-            <Dices aria-hidden="true" />
-            {'Случайный'}
-          </button>
-          <div className={styles.menuSep} />
-        </div>
+
+
 
         {userLinks.map((l) => (
           <Link key={l.href} href={l.href} className={styles.menuItem}>
@@ -366,7 +344,25 @@ export default function NavBar() {
             ) : null}
           </Link>
         ))}
+        <div className={styles.menuMobileOnly}>
+          <div className={styles.menuSep} />
+          {NAV_LINKS.map((l) => (
+              <Link
+                  key={l.href}
+                  href={l.href}
+                  className={styles.menuItem}
+                  onClick={closeUserMenu}
+              >
+                <l.icon aria-hidden="true" />
+                {l.label}
+              </Link>
+          ))}
+          <button type="button" className={styles.menuItem} onClick={goRandom}>
+            <Dices aria-hidden="true" />
+            {'Случайный'}
+          </button>
 
+        </div>
         <div className={styles.menuSep} />
         <button type="button" className={styles.menuItem} onClick={openAdd}>
           <Plus aria-hidden="true" />
@@ -386,9 +382,10 @@ export default function NavBar() {
                 {n.is_verified ? <VerifiedBadge size={13} className={styles.menuVerified} /> : null}
               </Link>
             ))}
-            <div className={styles.menuSep} />
+
           </>
         ) : null}
+        <div className={styles.menuSep} />
         <button type="button" className={styles.menuItem} onClick={doLogout}>
           <LogOut aria-hidden="true" />
           {'Выйти'}
