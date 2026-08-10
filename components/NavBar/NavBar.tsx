@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Skeleton from 'react-loading-skeleton';
 import {
@@ -116,6 +116,27 @@ export default function NavBar() {
 
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+    const [userMenuClosing, setUserMenuClosing] = useState(false);
+  const userMenuOpenRef = useRef(false);
+  const userMenuCloseTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    userMenuOpenRef.current = userMenuOpen;
+  }, [userMenuOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (userMenuCloseTimerRef.current) window.clearTimeout(userMenuCloseTimerRef.current);
+    };
+  }, []);
+
+  const closeUserMenu = useCallback(() => {
+    if (!userMenuOpenRef.current) return;
+    setUserMenuOpen(false);
+    setUserMenuClosing(true);
+    if (userMenuCloseTimerRef.current) window.clearTimeout(userMenuCloseTimerRef.current);
+    userMenuCloseTimerRef.current = window.setTimeout(() => setUserMenuClosing(false), 280);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -135,10 +156,10 @@ export default function NavBar() {
 
   useEffect(() => {
     setSugOpen(false);
-    setUserMenuOpen(false);
+    closeUserMenu();
     setMobileOpen(false);
     setMobileSearchOpen(false);
-  }, [pathname]);
+  }, [pathname, closeUserMenu]);
 
   useEffect(() => {
     const query = q.trim();
@@ -169,11 +190,11 @@ export default function NavBar() {
       const insideUserMenu =
         (userWrapRef.current && userWrapRef.current.contains(target)) ||
         (mobileMenuRef.current && mobileMenuRef.current.contains(target));
-      if (!insideUserMenu) setUserMenuOpen(false);
+      if (!insideUserMenu) closeUserMenu();
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
-  }, []);
+  }, [closeUserMenu]);
 
   useEffect(() => {
     if (!mobileOpen && !mobileSearchOpen) return;
@@ -282,7 +303,7 @@ export default function NavBar() {
   };
 
   const doLogout = () => {
-    setUserMenuOpen(false);
+    closeUserMenu();
     setMobileOpen(false);
     logout();
     toast('Вы вышли из аккаунта');
@@ -323,7 +344,7 @@ export default function NavBar() {
               key={l.href}
               href={l.href}
               className={styles.menuItem}
-              onClick={() => setUserMenuOpen(false)}
+              onClick={closeUserMenu}
             >
               <l.icon aria-hidden="true" />
               {l.label}
@@ -389,7 +410,7 @@ export default function NavBar() {
     : [];
 
   const openAdd = () => {
-    setUserMenuOpen(false);
+    closeUserMenu();
     setMobileOpen(false);
     setAddOpen(true);
   };
@@ -464,7 +485,7 @@ export default function NavBar() {
     <>
       <header
         className={`${styles.nav} ${
-          scrolled || (isMobile && userMenuOpen) ? styles.scrolled : ''
+          scrolled || (isMobile && (userMenuOpen || userMenuClosing)) ? styles.scrolled : ''
         }`}
       >
         <div className={styles.inner}>
@@ -548,7 +569,13 @@ export default function NavBar() {
                     type="button"
                     className={styles.avatarBtn}
                     onClick={() => {
-                      setUserMenuOpen((v) => !v);
+                      if (userMenuOpen) {
+                        closeUserMenu();
+                      } else {
+                        if (userMenuCloseTimerRef.current) window.clearTimeout(userMenuCloseTimerRef.current);
+                        setUserMenuClosing(false);
+                        setUserMenuOpen(true);
+                      }
                       ensureNarrators();
                     }}
                     aria-label={
@@ -575,16 +602,26 @@ export default function NavBar() {
                 {/* True mobile: a full-height sidebar portalled to <body>, so its
                     position:fixed is relative to the viewport rather than to
                     .nav's containing block (a backdrop-filter on .scrolled
-                    otherwise hijacks it — see mobileMenuRef above). */}
-                {userMenuOpen && isMobile && mounted
+                    otherwise hijacks it — see mobileMenuRef above). It stays
+                    mounted and toggles a class so CSS can animate both the
+                    slide-in and the slide-out; pointer-events/visibility flip
+                    back to hidden once the exit transition ends. */}
+                {isMobile && mounted
                   ? createPortal(
                       <>
                         <div
-                          className={styles.userMenuBackdrop}
-                          onClick={() => setUserMenuOpen(false)}
+                          className={`${styles.userMenuBackdrop} ${
+                            userMenuOpen ? styles.userMenuBackdropOpen : ''
+                          }`}
+                          onClick={closeUserMenu}
                           aria-hidden="true"
                         />
-                        <div className={styles.userMenuMobile} ref={mobileMenuRef}>
+                        <div
+                          className={`${styles.userMenuMobile} ${
+                            userMenuOpen ? styles.userMenuMobileOpen : ''
+                          }`}
+                          ref={mobileMenuRef}
+                        >
                           {renderAccountMenuContent()}
                         </div>
                       </>,

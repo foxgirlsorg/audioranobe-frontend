@@ -811,7 +811,10 @@
  * version everywhere except right at the top of the page.
  */
 /* Dims and blurs the page behind the sidebar — also the tap-to-close target,
-   backing up the outside-mousedown handler with an explicit affordance. */
+   backing up the outside-mousedown handler with an explicit affordance. The
+   overlay stays mounted on mobile, so open/close are both plain transitions
+   rather than mount-time keyframes: the closed state is hidden with opacity +
+   visibility (visibility flips late so the fade-out is visible). */
 .userMenuBackdrop {
   position: fixed;
   inset: 0;
@@ -820,21 +823,25 @@
   background: rgba(8, 8, 10, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  animation: user-menu-backdrop-in 0.25s ease;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }
 
-@keyframes user-menu-backdrop-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.userMenuBackdropOpen {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.25s ease;
 }
 
 /* Same translucent-blur treatment as .nav's own .scrolled state (which the
    header forces on while this is open — see NavBar.tsx) so the sidebar reads
-   as the navbar continuing downward rather than an unrelated floating card. */
+   as the navbar continuing downward rather than an unrelated floating card.
+   Slides out by dropping .userMenuMobileOpen: the base class already sits at
+   translateX(100%), so removing the modifier animates it back off-screen and
+   visibility hides it once the transition completes. */
 .userMenuMobile {
   position: fixed;
   top: var(--nav-total, 72px);
@@ -849,16 +856,17 @@
   -webkit-backdrop-filter: blur(16px);
   box-shadow: -16px 0 40px rgba(0, 0, 0, 0.5);
   overflow-y: auto;
-  animation: user-menu-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.28s;
 }
 
-@keyframes user-menu-slide-in {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+.userMenuMobileOpen {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (max-width: 480px) {
