@@ -19,7 +19,7 @@ import CardGrid from '@/components/CardGrid/CardGrid';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import CommentSection from '@/components/CommentSection/CommentSection';
 import NarratorPosts from '@/components/NarratorPosts/NarratorPosts';
-import ImageViewer from '@/components/ImageViewer/ImageViewer';
+import { PhotoView } from 'react-photo-view';
 import Markdown from '@/components/Markdown/Markdown';
 import Collapsible from '@/components/Collapsible/Collapsible';
 import AiBadge from '@/components/AiBadge/AiBadge';
@@ -34,8 +34,6 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
-  const [avatarOpen, setAvatarOpen] = useState(false);
-  const [coverOpen, setCoverOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -91,14 +89,11 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
     <div className={styles.page}>
       <div className={styles.banner} aria-hidden="true">
         {n.cover_url ? (
-          <button
-            type="button"
-            className={styles.bannerBtn}
-            onClick={() => setCoverOpen(true)}
-            aria-label="Увеличить баннер"
-          >
-            <img src={n.cover_url} alt="" className={styles.bannerImg} />
-          </button>
+          <PhotoView src={n.cover_url}>
+            <button type="button" className={styles.bannerBtn} aria-label="Увеличить баннер">
+              <img src={n.cover_url} alt="" className={styles.bannerImg} />
+            </button>
+          </PhotoView>
         ) : (
           <div className={styles.bannerEmpty}>
             <span className={styles.bannerGlow} />
@@ -111,14 +106,11 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
       <header className={styles.head}>
         <div className={styles.avatar}>
           {n.avatar_url ? (
-            <button
-              type="button"
-              className={styles.avatarBtn}
-              onClick={() => setAvatarOpen(true)}
-              aria-label="Увеличить аватар"
-            >
-              <img src={n.avatar_url} alt={n.name} className={styles.avatarImg} />
-            </button>
+            <PhotoView src={n.avatar_url}>
+              <button type="button" className={styles.avatarBtn} aria-label="Увеличить аватар">
+                <img src={n.avatar_url} alt={n.name} className={styles.avatarImg} />
+              </button>
+            </PhotoView>
           ) : (
             <Mic2 size={40} className={styles.avatarIcon} />
           )}
@@ -203,19 +195,6 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
       <div className={styles.comments}>
         <CommentSection targetType="narrator" targetId={n.id} initialComments={n.comments} />
       </div>
-
-      <ImageViewer
-        src={n.avatar_url}
-        alt={n.name}
-        open={avatarOpen}
-        onClose={() => setAvatarOpen(false)}
-      />
-      <ImageViewer
-        src={n.cover_url}
-        alt={`Баннер ${n.name}`}
-        open={coverOpen}
-        onClose={() => setCoverOpen(false)}
-      />
     </div>
   );
 }

@@ -1,0 +1,63 @@
+/* Foxgirl-themed overrides for react-photo-view — dark glass to match the
+   rest of the site. Buttons stay background-free by design: only the icon
+   color shifts on hover/active, same restraint as the player's icon buttons. */
+
+.PhotoView-Slider__Backdrop {
+  background: rgba(10, 10, 11, 0.92) !important;
+}
+
+.PhotoView-Slider__BannerWrap {
+  height: 56px;
+  padding: 0 0.5rem;
+  justify-content: flex-end !important;
+  background: linear-gradient(to bottom, rgba(10, 10, 11, 0.7), transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.PhotoView-Slider__Counter {
+  display: none;
+}
+
+.PhotoView-Slider__BannerRight {
+  gap: 2px;
+}
+
+.PhotoView-Slider__toolbarIcon {
+  width: 38px;
+  height: 38px;
+  padding: 9px;
+  box-sizing: border-box;
+  fill: var(--text-secondary);
+  opacity: 1;
+  border-radius: 8px;
+  transition: fill 0.2s ease, background 0.2s ease;
+}
+
+.PhotoView-Slider__toolbarIcon:hover {
+  fill: var(--accent-hover);
+  background: transparent;
+}
+
+.PhotoView-Slider__ArrowLeft,
+.PhotoView-Slider__ArrowRight {
+  opacity: 1;
+}
+
+.PhotoView-Slider__ArrowLeft svg,
+.PhotoView-Slider__ArrowRight svg {
+  background: transparent;
+  fill: var(--text-secondary);
+  opacity: 0.85;
+  transition: fill 0.2s ease, opacity 0.2s ease;
+}
+
+.PhotoView-Slider__ArrowLeft:hover svg,
+.PhotoView-Slider__ArrowRight:hover svg {
+  fill: var(--accent-hover);
+  opacity: 1;
+}
+
+.PhotoView-Portal {
+  --react-photo-view-loading-fill: var(--accent);
+}

@@ -120,7 +120,7 @@ components/                     # ~55 UI components, one folder each with its CS
 ├── CommentSection/             # Threaded comments with Markdown
 ├── TitleContentManager/        # Volume/chapter management + uploads
 ├── ArchiveDownloadButton/      # Client-side ZIP export (see below)
-├── ImageCropper/, ImageViewer/ # Avatar & artwork cropping, lightbox
+├── ImageCropper/                # Avatar & artwork cropping (lightbox: react-photo-view, wired in app/layout.tsx)
 ├── MarkdownEditor/, Markdown/  # Authoring and rendering user content
 ├── Toast/                      # Toast presentation (state lives in lib/toast.tsx)
 └── ...

@@ -33,7 +33,7 @@ import EmptyState from '@/components/EmptyState/EmptyState';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import Markdown from '@/components/Markdown/Markdown';
-import ImageViewer from '@/components/ImageViewer/ImageViewer';
+import { PhotoView } from 'react-photo-view';
 import styles from './page.module.css';
 
 const LIST_POLL_MS = 15_000;
@@ -118,7 +118,6 @@ function ChatInner() {
   const [showImage, setShowImage] = useState(false);
   const [sending, setSending] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [viewerSrc, setViewerSrc] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
@@ -551,7 +550,9 @@ function ChatInner() {
             </button>
           ) : null}
           {m.image_url ? (
-            <img src={m.image_url} alt="" className={styles.bubbleImage} onClick={() => setViewerSrc(m.image_url)} />
+            <PhotoView src={m.image_url}>
+              <img src={m.image_url} alt="" className={styles.bubbleImage} />
+            </PhotoView>
           ) : null}
           {m.body ? (
             m.format === 'rich' ? (
@@ -822,8 +823,6 @@ function ChatInner() {
         document.body
         )
         : null}
-
-      <ImageViewer src={viewerSrc} open={viewerSrc !== null} onClose={() => setViewerSrc(null)} />
     </div>
   );
 }

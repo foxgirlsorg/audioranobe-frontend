@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
+import 'react-photo-view/dist/react-photo-view.css';
 import './globals.css';
 import './markdown.css';
+import './photo-view.css';
+import { PhotoProvider } from '@/components/PhotoViewProvider/PhotoViewProvider';
 import { AuthProvider } from '@/lib/auth';
 import { ConfigProvider } from '@/lib/config';
 import { BadgesProvider } from '@/lib/badges';
@@ -45,7 +48,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <NavBar />
                     <BannedBanner />
                     <CookiesBanner />
-                    <main className="container">{children}</main>
+                    <PhotoProvider>
+                      <main className="container">{children}</main>
+                    </PhotoProvider>
                     <Footer />
                     <Player />
                   </PlayerProvider>

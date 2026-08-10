@@ -49,7 +49,7 @@ import FavoriteButton from '@/components/FavoriteButton/FavoriteButton';
 import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
-import ImageViewer from '@/components/ImageViewer/ImageViewer';
+import { PhotoView } from 'react-photo-view';
 import Markdown from '@/components/Markdown/Markdown';
 import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDownloadButton/ArchiveDownloadButton';
 import AiBadge from '@/components/AiBadge/AiBadge';
@@ -92,7 +92,6 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
   const [tagsOpen, setTagsOpen] = useState(false);
   const [tagsClipped, setTagsClipped] = useState(false);
   const tagsRef = useRef<HTMLParagraphElement | null>(null);
-  const [coverOpen, setCoverOpen] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
@@ -305,18 +304,15 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
                 />
               </div>
             ) : title.cover_url ? (
-              <button
-                type="button"
-                className={styles.coverBtn}
-                onClick={() => setCoverOpen(true)}
-                aria-label="Увеличить обложку"
-              >
-                <img
-                  src={title.cover_url}
-                  alt={`Обложка «${title.name}»`}
-                  className={styles.cover}
-                />
-              </button>
+              <PhotoView src={title.cover_url}>
+                <button type="button" className={styles.coverBtn} aria-label="Увеличить обложку">
+                  <img
+                    src={title.cover_url}
+                    alt={`Обложка «${title.name}»`}
+                    className={styles.cover}
+                  />
+                </button>
+              </PhotoView>
             ) : (
               <div className={styles.coverFallback}>
                 <Headphones size={40} />
@@ -738,13 +734,6 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
       <div className={styles.comments}>
         <CommentSection targetType="title" targetId={title.id} initialComments={title.comments} />
       </div>
-
-      <ImageViewer
-        src={title.cover_url}
-        alt={`Обложка «${title.name}»`}
-        open={coverOpen && !restricted}
-        onClose={() => setCoverOpen(false)}
-      />
     </div>
   );
 }

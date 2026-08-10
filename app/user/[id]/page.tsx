@@ -49,6 +49,7 @@ import SocialLinks from '@/components/SocialLinks/SocialLinks';
 import Markdown from '@/components/Markdown/Markdown';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import Collapsible from '@/components/Collapsible/Collapsible';
+import { PhotoView } from 'react-photo-view';
 import styles from './page.module.css';
 
 const LIBRARY_STATUSES: { key: string; label: string }[] = [
@@ -302,7 +303,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
       <header className={styles.head}>
         <div className={styles.avatar}>
           {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.username} className={styles.avatarImg} />
+            <PhotoView src={user.avatar_url}>
+              <button type="button" className={styles.avatarBtn} aria-label="Увеличить аватар">
+                <img src={user.avatar_url} alt={user.username} className={styles.avatarImg} />
+              </button>
+            </PhotoView>
           ) : (
             <span className={styles.avatarInitials}>{initialsOf(user.username)}</span>
           )}
