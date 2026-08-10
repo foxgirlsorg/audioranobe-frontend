@@ -1,26 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
 
 /**
- * Client-side online presence.
+ * Client-side activity state — no network. Presence on the server is passive
+ * (any request marks you seen for 5 minutes), so this only drives (a) the
+ * viewer's OWN status dot and (b) slowing background polls while idle/unfocused.
  *
- * A single module-level manager tracks whether the viewer is "away" — the tab
- * is hidden, or there has been no input for IDLE_MS — and heartbeats the server
- * every PING_MS with the current state. Components subscribe via useAway() to
- * render the viewer's own dot and to slow their polling while away.
+ * "away" means the window is hidden, not the focused window (covers a second
+ * monitor showing the site unfocused), or there has been no input for IDLE_MS.
  */
 
-export const PING_MS = 30_000;
 const IDLE_MS = 60_000;
-/** Multiplier applied to background polls (messages, notifications) while away. */
+/** Multiplier applied to background polls (chat/notifications) while away. */
 const AWAY_POLL_FACTOR = 4;
 
 let away = false;
-let started = false;
 let idleTimer: number | null = null;
-let pingTimer: number | null = null;
+let started = false;
+let stop: (() => void) | null = null;
+let subscribers = 0;
 const listeners = new Set<(away: boolean) => void>();
 
 export function isAway(): boolean {
@@ -32,24 +31,20 @@ export function scalePoll(baseMs: number, isAwayNow: boolean): number {
   return isAwayNow ? baseMs * AWAY_POLL_FACTOR : baseMs;
 }
 
-function notify(): void {
-  for (const fn of listeners) fn(away);
-}
-
-function ping(): void {
-  api('/me/presence', { method: 'POST', body: { status: away ? 'away' : 'online' } }).catch(() => {});
-}
-
-function setAway(next: boolean): void {
-  if (next === away) return;
-  away = next;
-  notify();
-  // Flip promptly rather than waiting for the next scheduled heartbeat.
-  ping();
+function focused(): boolean {
+  try {
+    return document.hasFocus();
+  } catch {
+    return true;
+  }
 }
 
 function recompute(): void {
-  setAway(document.hidden || idleTimer === null);
+  const next = document.hidden || !focused() || idleTimer === null;
+  if (next !== away) {
+    away = next;
+    for (const fn of listeners) fn(away);
+  }
 }
 
 function markActive(): void {
@@ -63,53 +58,47 @@ function markActive(): void {
 
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'] as const;
 
-/**
- * Begin heartbeating. Called once the viewer is known to be signed in; safe to
- * call repeatedly (no-ops after the first). Returns a stop function.
- */
-export function startPresence(): () => void {
-  if (started) return stopPresence;
+function start(): void {
+  if (started) return;
   started = true;
 
   const onActivity = () => markActive();
   const onVisibility = () => recompute();
+  const onFocus = () => markActive();
+  const onBlur = () => recompute();
 
-  for (const ev of ACTIVITY_EVENTS) {
-    window.addEventListener(ev, onActivity, { passive: true });
-  }
+  for (const ev of ACTIVITY_EVENTS) window.addEventListener(ev, onActivity, { passive: true });
   document.addEventListener('visibilitychange', onVisibility);
-
+  window.addEventListener('focus', onFocus);
+  window.addEventListener('blur', onBlur);
   markActive();
-  ping();
-  pingTimer = window.setInterval(ping, PING_MS);
 
-  const stop = () => {
+  stop = () => {
     for (const ev of ACTIVITY_EVENTS) window.removeEventListener(ev, onActivity);
     document.removeEventListener('visibilitychange', onVisibility);
-    if (pingTimer !== null) window.clearInterval(pingTimer);
+    window.removeEventListener('focus', onFocus);
+    window.removeEventListener('blur', onBlur);
     if (idleTimer !== null) window.clearTimeout(idleTimer);
-    pingTimer = null;
     idleTimer = null;
     started = false;
   };
-  cleanup = stop;
-  return stop;
 }
 
-let cleanup: (() => void) | null = null;
-export function stopPresence(): void {
-  cleanup?.();
-  cleanup = null;
-}
-
-/** Subscribe to the viewer's own away state. */
+/** Subscribe to the viewer's own away state; starts tracking on first use. */
 export function useAway(): boolean {
   const [value, setValue] = useState(away);
   useEffect(() => {
+    subscribers += 1;
+    if (subscribers === 1) start();
     setValue(away);
     listeners.add(setValue);
     return () => {
       listeners.delete(setValue);
+      subscribers -= 1;
+      if (subscribers === 0 && stop) {
+        stop();
+        stop = null;
+      }
     };
   }, []);
   return value;

@@ -31,7 +31,6 @@ import {
   type UserProfile,
 } from '@/lib/types';
 import { formatDate, initialsOf, timeAgo, presenceLabel } from '@/lib/format';
-import { useAway, scalePoll } from '@/lib/presence';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
@@ -50,8 +49,6 @@ import SocialLinks from '@/components/SocialLinks/SocialLinks';
 import Markdown from '@/components/Markdown/Markdown';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import styles from './page.module.css';
-
-const PRESENCE_MS = 30_000;
 
 const LIBRARY_STATUSES: { key: string; label: string }[] = [
   { key: 'all', label: 'Все' },
@@ -130,7 +127,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: viewer } = useAuth();
-  const away = useAway();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -229,31 +225,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
       alive = false;
     };
   }, [userRef]);
-
-  // Keep the header's presence fresh without a full reload: re-fetch just the
-  // profile's user and patch presence/last_seen. Slows down when the viewer is away.
-  useEffect(() => {
-    if (!profile) return;
-    let alive = true;
-    const tick = () => {
-      api<UserProfile>(`/users/${encodeURIComponent(userRef)}`)
-        .then((p) => {
-          if (!alive) return;
-          setProfile((prev) =>
-            prev
-              ? { ...prev, user: { ...prev.user, presence: p.user.presence, last_seen_at: p.user.last_seen_at } }
-              : prev
-          );
-        })
-        .catch(() => {});
-    };
-    const iv = window.setInterval(tick, scalePoll(PRESENCE_MS, away));
-    return () => {
-      alive = false;
-      window.clearInterval(iv);
-    };
-    // profile presence identity is enough to (re)start the poll once loaded.
-  }, [userRef, profile?.user.id, away]);
 
   if (loading) {
     return (
