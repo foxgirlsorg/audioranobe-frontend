@@ -96,7 +96,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
       </article>
 
       <div className={styles.comments}>
-        <CommentSection targetType="post" targetId={post.id} />
+        <CommentSection targetType="post" targetId={post.id} initialComments={post.comments} />
       </div>
     </div>
   );

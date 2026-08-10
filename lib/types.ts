@@ -310,6 +310,8 @@ export interface NarratorFull extends NarratorCard {
   admin_contact: string | null;
   can_edit: boolean;
   my_role: 'owner' | 'editor' | null;
+  /** First page of comments, embedded to save a separate request on load. */
+  comments?: Paginated<Comment>;
 }
 
 export interface TitleFull extends TitleCard {
@@ -335,6 +337,8 @@ export interface TitleFull extends TitleCard {
   nsfw_restricted?: boolean;
   /** Viewer opted into a notification for every new comment on this title. */
   comment_subscribed: boolean;
+  /** First page of comments, embedded to save a separate request on load. */
+  comments?: Paginated<Comment>;
 }
 
 export interface ChapterPlay {
@@ -420,6 +424,8 @@ export interface Announcement {
   is_published: boolean;
   is_hidden: boolean;
   created_at: string;
+  /** First page of comments, embedded to save a separate request on load. */
+  comments?: Paginated<Comment>;
 }
 
 export interface NarratorPost {
@@ -430,6 +436,8 @@ export interface NarratorPost {
   is_hidden: boolean;
   created_at: string;
   updated_at: string;
+  /** First page of comments, embedded to save a separate request on load. */
+  comments?: Paginated<Comment>;
 }
 
 export interface Report {

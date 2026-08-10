@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 import './markdown.css';
 import { AuthProvider } from '@/lib/auth';
+import { ConfigProvider } from '@/lib/config';
+import { BadgesProvider } from '@/lib/badges';
+import { MyNarratorsProvider } from '@/lib/narrators';
 import { ToastProvider } from '@/lib/toast';
 import { PlayerProvider } from '@/lib/player';
 import NavBar from '@/components/NavBar/NavBar';
@@ -10,7 +13,6 @@ import CookiesBanner from '@/components/CookiesBanner/CookiesBanner';
 import Footer from '@/components/Footer/Footer';
 import Player from '@/components/Player/Player';
 import DragScroll from '@/components/DragScroll/DragScroll';
-import PresencePinger from '@/components/PresencePinger/PresencePinger';
 
 export const metadata: Metadata = {
   title: 'AudioRanobe — аудиокниги',
@@ -23,19 +25,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <body>
         <AuthProvider>
-          <ToastProvider>
-            <PlayerProvider>
-              <div className="noise" aria-hidden="true" />
-              <DragScroll />
-              <PresencePinger />
-              <NavBar />
-              <BannedBanner />
-              <CookiesBanner />
-              <main className="container">{children}</main>
-              <Footer />
-              <Player />
-            </PlayerProvider>
-          </ToastProvider>
+          <ConfigProvider>
+            <BadgesProvider>
+              <MyNarratorsProvider>
+                <ToastProvider>
+                  <PlayerProvider>
+                    <div className="noise" aria-hidden="true" />
+                    <DragScroll />
+                    <NavBar />
+                    <BannedBanner />
+                    <CookiesBanner />
+                    <main className="container">{children}</main>
+                    <Footer />
+                    <Player />
+                  </PlayerProvider>
+                </ToastProvider>
+              </MyNarratorsProvider>
+            </BadgesProvider>
+          </ConfigProvider>
         </AuthProvider>
       </body>
     </html>

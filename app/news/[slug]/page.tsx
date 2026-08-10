@@ -84,7 +84,7 @@ export default function NewsItemPage({ params }: { params: { slug: string } }) {
       </article>
 
       <div className={styles.comments}>
-        <CommentSection targetType="announcement" targetId={item.id} />
+        <CommentSection targetType="announcement" targetId={item.id} initialComments={item.comments} />
       </div>
     </div>
   );

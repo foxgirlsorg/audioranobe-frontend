@@ -1,29 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { MailWarning } from 'lucide-react';
-import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useConfig } from '@/lib/config';
 import styles from './UnverifiedEmailBanner.module.css';
 
 export default function UnverifiedEmailBanner() {
   const { user } = useAuth();
-  const [mailEnabled, setMailEnabled] = useState(false);
+  const mailEnabled = useConfig()?.email_verification ?? false;
   const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    api<{ email_verification: boolean }>('/config')
-      .then((c) => {
-        if (alive) setMailEnabled(!!c.email_verification);
-      })
-      .catch(() => {
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   const shown = !!user && !user.email_verified && !user.is_banned && mailEnabled;
 

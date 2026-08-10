@@ -7,6 +7,7 @@ import { TelegramIcon } from '@/components/SocialLinks/brands';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { useAuth } from '@/lib/auth';
+import { useConfig } from '@/lib/config';
 import type { AuthProvider, Identity, Me } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import styles from './ProviderAuth.module.css';
@@ -61,20 +62,8 @@ function Mark({ provider }: { provider: AuthProvider }) {
 }
 
 export function useAuthProviders(): AuthProvider[] {
-  const [providers, setProviders] = useState<AuthProvider[]>([]);
-  useEffect(() => {
-    let alive = true;
-    api<{ auth_providers?: AuthProvider[] }>('/config')
-      .then((c) => {
-        if (alive) setProviders(c.auth_providers ?? []);
-      })
-      .catch(() => {
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-  return providers;
+  // Backed by the shared ConfigProvider — no per-caller /config fetch.
+  return useConfig()?.auth_providers ?? [];
 }
 
 export function ProviderSection({ mode }: { mode: 'login' | 'link' }) {

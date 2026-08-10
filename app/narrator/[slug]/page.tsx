@@ -198,7 +198,7 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
       ) : null}
 
       <div className={styles.comments}>
-        <CommentSection targetType="narrator" targetId={n.id} />
+        <CommentSection targetType="narrator" targetId={n.id} initialComments={n.comments} />
       </div>
 
       <ImageViewer

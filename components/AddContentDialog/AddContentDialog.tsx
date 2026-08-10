@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { BookPlus, Mic2, PenLine } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useMyNarrators } from '@/lib/narrators';
 import { errMsg, useToast } from '@/lib/toast';
 import {
   RELEASE_STATUS_LABELS,
   STATUS_VALUES,
   type Author,
-  type NarratorCard,
   type NarratorFull,
   type Paginated,
   type ReleaseStatus,
@@ -103,7 +103,8 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
   const router = useRouter();
   const { toast } = useToast();
 
-  const [narrators, setNarrators] = useState<NarratorCard[]>([]);
+  // Shared with the navbar dropdown: loaded once, reused here.
+  const { narrators, ensureLoaded } = useMyNarrators();
   const [narratorIds, setNarratorIds] = useState<number[]>([]);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -116,14 +117,15 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api<NarratorCard[]>('/panel/narrators')
-      .then((list) => {
-        const arr = Array.isArray(list) ? list : [];
-        setNarrators(arr);
-        if (arr.length > 0) setNarratorIds([arr[0].id]);
-      })
-      .catch((e) => setError(errMsg(e)));
-  }, []);
+    ensureLoaded();
+  }, [ensureLoaded]);
+
+  // Default to the first team once the list is available.
+  useEffect(() => {
+    if (narrators.length > 0 && narratorIds.length === 0) {
+      setNarratorIds([narrators[0].id]);
+    }
+  }, [narrators, narratorIds.length]);
 
   const toggleNarrator = (id: number) =>
     setNarratorIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));

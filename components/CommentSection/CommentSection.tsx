@@ -791,27 +791,38 @@ function NestedComment({
 export function CommentSection({
                                  targetType,
                                  targetId,
+                                 initialComments,
                                }: {
   targetType: CommentTargetType;
   targetId: number;
+  /** First page (default 'new' sort) embedded in the entity response, so the
+   *  section renders without a separate /comments request on load. */
+  initialComments?: Paginated<Comment>;
 }) {
   const { user, isMod } = useAuth();
   const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
 
-  const [items, setItems] = useState<Comment[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [items, setItems] = useState<Comment[]>(initialComments?.items ?? []);
+  const [total, setTotal] = useState(initialComments?.total ?? 0);
+  const [page, setPage] = useState(initialComments?.page ?? 1);
   const [sort, setSort] = useState<Sort>('new');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialComments);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [replyingId, setReplyingId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<Comment | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set());
+  // The embedded page is the default-'new' first page; use it for the initial
+  // render and skip that one fetch. Any sort/target change still fetches.
+  const skipInitialFetch = useRef(!!initialComments);
 
   useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError('');

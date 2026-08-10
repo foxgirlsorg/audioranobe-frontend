@@ -736,7 +736,7 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
       ) : null}
 
       <div className={styles.comments}>
-        <CommentSection targetType="title" targetId={title.id} />
+        <CommentSection targetType="title" targetId={title.id} initialComments={title.comments} />
       </div>
 
       <ImageViewer

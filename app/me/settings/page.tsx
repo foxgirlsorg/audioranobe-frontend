@@ -17,6 +17,7 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useConfig } from '@/lib/config';
 import type {
   AuthProvider,
   ContentPrefs,
@@ -111,26 +112,13 @@ export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [emailVerificationOn, setEmailVerificationOn] = useState(false);
+  const emailVerificationOn = useConfig()?.email_verification ?? false;
   const [resending, setResending] = useState(false);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [socials, setSocials] = useState<string[]>([]);
   const [savingProfile, setSavingProfile] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    api<{ email_verification: boolean }>('/config')
-      .then((c) => {
-        if (alive) setEmailVerificationOn(!!c.email_verification);
-      })
-      .catch(() => {
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   async function resendVerification() {
     setResending(true);

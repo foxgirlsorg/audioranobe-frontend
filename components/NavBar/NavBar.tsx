@@ -28,10 +28,11 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { useAway, scalePoll } from '@/lib/presence';
+import { useAway } from '@/lib/presence';
+import { useBadges } from '@/lib/badges';
+import { useMyNarrators } from '@/lib/narrators';
 import { errMsg, useToast } from '@/lib/toast';
-import { FRIENDS_CHANGED } from '@/lib/friends';
-import type { NarratorCard, SearchSuggest } from '@/lib/types';
+import type { SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import ChatButton from '@/components/ChatButton/ChatButton';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
@@ -79,6 +80,10 @@ export default function NavBar() {
   const pathname = usePathname();
   const { user, loading, logout, isMod } = useAuth();
   const away = useAway();
+  // All three badge counts come from the shared BadgesProvider poll (one request
+  // for the whole navbar), instead of this component mirroring ChatButton's and
+  // NotificationBell's polls plus its own friend-request poll.
+  const { messages: msgCount, notifications: notifCount, friend_requests: friendReq } = useBadges();
   const { toast } = useToast();
 
   const [scrolled, setScrolled] = useState(false);
@@ -90,14 +95,9 @@ export default function NavBar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [myNarrators, setMyNarrators] = useState<NarratorCard[]>([]);
-  const [friendReq, setFriendReq] = useState(0);
-  // Badge counts for the burger's account section — the mobile breakpoint
-  // hides ChatButton/NotificationBell (their links are already in the burger,
-  // see userLinks below), so their counts are mirrored here with the same
-  // poll cadence those components use, to not lose the at-a-glance signal.
-  const [msgCount, setMsgCount] = useState(0);
-  const [notifCount, setNotifCount] = useState(0);
+  // Lazily loaded (and shared with the add-content dialog) — fetched when the
+  // account menu first opens, not at startup.
+  const { narrators: myNarrators, ensureLoaded: ensureNarrators } = useMyNarrators();
 
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
   const userWrapRef = useRef<HTMLDivElement | null>(null);
@@ -140,96 +140,6 @@ export default function NavBar() {
     }, 300);
     return () => window.clearTimeout(timeout);
   }, [q]);
-
-  useEffect(() => {
-    if (!user) {
-      setMyNarrators([]);
-      return;
-    }
-    let alive = true;
-    api<NarratorCard[]>('/panel/narrators')
-      .then((list) => {
-        if (alive) setMyNarrators(Array.isArray(list) ? list : []);
-      })
-      .catch(() => {
-      });
-    return () => {
-      alive = false;
-    };
-  }, [user]);
-
-  // Pending incoming friend requests, shown as an accent badge. Polled, and
-  // refetched on navigation so accepting/declining on /me/friends reflects here.
-  useEffect(() => {
-    if (!user) {
-      setFriendReq(0);
-      return;
-    }
-    let alive = true;
-    const load = () => {
-      api<{ count: number }>('/me/friends/incoming-count')
-        .then((r) => {
-          if (alive) setFriendReq(r.count);
-        })
-        .catch(() => {});
-    };
-    load();
-    const iv = window.setInterval(load, 30_000);
-    window.addEventListener(FRIENDS_CHANGED, load);
-    return () => {
-      alive = false;
-      window.clearInterval(iv);
-      window.removeEventListener(FRIENDS_CHANGED, load);
-    };
-  }, [user, pathname]);
-
-  // Unread message count, mirrored from ChatButton's own poll (same 20s
-  // cadence, same refetch-on-navigation so visiting the chat page clears it
-  // promptly) so the burger's "Сообщения" row still carries a badge on mobile,
-  // where ChatButton itself is hidden.
-  useEffect(() => {
-    if (!user) {
-      setMsgCount(0);
-      return;
-    }
-    let alive = true;
-    const load = () => {
-      api<{ count: number }>('/me/chat/unread-count')
-        .then((r) => {
-          if (alive) setMsgCount(r.count);
-        })
-        .catch(() => {});
-    };
-    load();
-    const iv = window.setInterval(load, scalePoll(20_000, away));
-    return () => {
-      alive = false;
-      window.clearInterval(iv);
-    };
-  }, [user, pathname, away]);
-
-  // Unread notification count, mirrored from NotificationBell's own poll (same
-  // 30s cadence), for the same reason — its trigger is hidden on mobile.
-  useEffect(() => {
-    if (!user) {
-      setNotifCount(0);
-      return;
-    }
-    let alive = true;
-    const load = () => {
-      api<{ count: number }>('/me/notifications/unread-count')
-        .then((r) => {
-          if (alive) setNotifCount(r.count);
-        })
-        .catch(() => {});
-    };
-    load();
-    const iv = window.setInterval(load, scalePoll(30_000, away));
-    return () => {
-      alive = false;
-      window.clearInterval(iv);
-    };
-  }, [user, away]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -528,7 +438,10 @@ export default function NavBar() {
                   <button
                     type="button"
                     className={styles.avatarBtn}
-                    onClick={() => setUserMenuOpen((v) => !v)}
+                    onClick={() => {
+                      setUserMenuOpen((v) => !v);
+                      ensureNarrators();
+                    }}
                     aria-label={
                       friendReq > 0
                         ? `Меню аккаунта (заявок в друзья: ${friendReq})`

@@ -6,45 +6,23 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { useAway, scalePoll } from '@/lib/presence';
+import { useBadges } from '@/lib/badges';
 import { timeAgo } from '@/lib/format';
 import type { Notification, Paginated } from '@/lib/types';
 import styles from './NotificationBell.module.css';
 
-const POLL_MS = 30_000;
-
 export default function NotificationBell() {
   const router = useRouter();
   const { user } = useAuth();
-  const away = useAway();
+  // Count comes from the shared BadgesProvider poll; patch/refresh keep it in
+  // sync after the user reads notifications.
+  const { notifications: count, patch, refresh } = useBadges();
 
-  const [count, setCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!user) {
-      setCount(0);
-      return;
-    }
-    let alive = true;
-    const load = () => {
-      api<{ count: number }>('/me/notifications/unread-count')
-        .then((r) => {
-          if (alive) setCount(r.count);
-        })
-        .catch(() => {});
-    };
-    load();
-    const iv = window.setInterval(load, scalePoll(POLL_MS, away));
-    return () => {
-      alive = false;
-      window.clearInterval(iv);
-    };
-  }, [user, away]);
 
   useEffect(() => {
     if (!open) return;
@@ -76,18 +54,19 @@ export default function NotificationBell() {
   };
 
   const markAllRead = async () => {
+    patch({ notifications: 0 });
+    setItems([]);
     try {
       await api('/me/notifications/read', { method: 'POST', body: {} });
-      setCount(0);
-      setItems([]);
     } catch {
+      refresh();
     }
   };
 
   const onItemClick = (n: Notification) => {
     if (!n.is_read) {
-      api('/me/notifications/read', { method: 'POST', body: { ids: [n.id] } }).catch(() => {});
-      setCount((c) => Math.max(0, c - 1));
+      api('/me/notifications/read', { method: 'POST', body: { ids: [n.id] } }).catch(() => refresh());
+      patch({ notifications: Math.max(0, count - 1) });
       setItems((prev) => (prev ? prev.filter((x) => x.id !== n.id) : prev));
     }
     if (n.link) {

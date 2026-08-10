@@ -1,48 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
-import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { useAway, scalePoll } from '@/lib/presence';
+import { useBadges } from '@/lib/badges';
 import styles from './ChatButton.module.css';
 
-const POLL_MS = 20_000;
-
 /**
- * Navbar entry point for direct messages: an icon linking to /me/chat with a
- * count badge. DMs deliberately do NOT go through the notification system, so
- * this polls its own unread-count endpoint. Refetches on navigation so opening
- * a chat clears the badge promptly.
+ * Navbar entry point for direct messages: an icon linking to /me/chat with an
+ * unread badge. The count comes from the shared BadgesProvider poll (one
+ * request for all navbar badges), which refreshes on navigation so opening a
+ * chat clears the badge promptly.
  */
 export default function ChatButton() {
   const { user } = useAuth();
-  const away = useAway();
-  const pathname = usePathname();
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!user) {
-      setCount(0);
-      return;
-    }
-    let alive = true;
-    const load = () => {
-      api<{ count: number }>('/me/chat/unread-count')
-        .then((r) => {
-          if (alive) setCount(r.count);
-        })
-        .catch(() => {});
-    };
-    load();
-    const iv = window.setInterval(load, scalePoll(POLL_MS, away));
-    return () => {
-      alive = false;
-      window.clearInterval(iv);
-    };
-  }, [user, pathname, away]);
+  const { messages } = useBadges();
 
   if (!user) return null;
 
@@ -50,10 +22,10 @@ export default function ChatButton() {
     <Link
       href="/me/chat"
       className={styles.btn}
-      aria-label={count > 0 ? `Сообщения (непрочитанных: ${count})` : 'Сообщения'}
+      aria-label={messages > 0 ? `Сообщения (непрочитанных: ${messages})` : 'Сообщения'}
     >
       <MessageCircle />
-      {count > 0 && <span className={styles.badge}>{count > 99 ? '99+' : count}</span>}
+      {messages > 0 && <span className={styles.badge}>{messages > 99 ? '99+' : messages}</span>}
     </Link>
   );
 }
