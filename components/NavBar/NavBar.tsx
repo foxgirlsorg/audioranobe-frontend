@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { Fragment, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Bell,
   ClipboardList,
@@ -101,9 +102,28 @@ export default function NavBar() {
 
   const searchWrapRef = useRef<HTMLDivElement | null>(null);
   const userWrapRef = useRef<HTMLDivElement | null>(null);
+  // The mobile account menu is portalled straight to <body> (see below) so its
+  // position:fixed sidebar isn't hostage to .nav's backdrop-filter, which
+  // creates its own containing block for fixed descendants once scrolled —
+  // that's what made the old nested version fall apart past the top of the
+  // page. Portalled content lives outside userWrapRef's DOM subtree, so the
+  // outside-click handler needs this second ref to still recognize it.
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const seqRef = useRef(0);
+
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const mq = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -145,7 +165,10 @@ export default function NavBar() {
     const onDown = (e: MouseEvent) => {
       const target = e.target as Node;
       if (searchWrapRef.current && !searchWrapRef.current.contains(target)) setSugOpen(false);
-      if (userWrapRef.current && !userWrapRef.current.contains(target)) setUserMenuOpen(false);
+      const insideUserMenu =
+        (userWrapRef.current && userWrapRef.current.contains(target)) ||
+        (mobileMenuRef.current && mobileMenuRef.current.contains(target));
+      if (!insideUserMenu) setUserMenuOpen(false);
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
@@ -272,6 +295,85 @@ export default function NavBar() {
       <span className={styles.avatarFallback}>{user?.username?.charAt(0) || '?'}</span>
     );
 
+  // Shared between the desktop dropdown and the portalled mobile sidebar —
+  // one menu implementation, two containers (see render below).
+  const renderAccountMenuContent = () =>
+    !user ? null : (
+      <>
+        <div className={styles.menuHead}>
+          <span className={styles.menuEyebrow}>{'вы вошли как'}</span>
+          <span className={styles.menuName}>
+            {user.display_name || user.username}
+            <UserBadges user={user} size={9} className={styles.badges} />
+          </span>
+          {user.display_name && user.display_name !== user.username ? (
+            <span className={styles.menuHandle}>@{user.username}</span>
+          ) : null}
+        </div>
+        <div className={styles.menuSep} />
+
+        {/* Below the breakpoint where the top nav (Каталог/Коллекции/
+            Новости) and its random-title button disappear, they live
+            here instead — the account menu replaces the burger for
+            signed-in users rather than duplicating it. */}
+        <div className={styles.menuMobileOnly}>
+          {NAV_LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={styles.menuItem}
+              onClick={() => setUserMenuOpen(false)}
+            >
+              <l.icon aria-hidden="true" />
+              {l.label}
+            </Link>
+          ))}
+          <button type="button" className={styles.menuItem} onClick={goRandom}>
+            <Dices aria-hidden="true" />
+            {'Случайный'}
+          </button>
+          <div className={styles.menuSep} />
+        </div>
+
+        {userLinks.map((l) => (
+          <Link key={l.href} href={l.href} className={styles.menuItem}>
+            <l.icon aria-hidden="true" />
+            {l.label}
+            {l.count > 0 ? (
+              <span className={styles.menuBadge}>{l.count > 99 ? '99+' : l.count}</span>
+            ) : null}
+          </Link>
+        ))}
+
+        <div className={styles.menuSep} />
+        <button type="button" className={styles.menuItem} onClick={openAdd}>
+          <Plus aria-hidden="true" />
+          {'Добавить'}
+        </button>
+        {myNarrators.length > 0 ? (
+          <>
+            <div className={styles.menuSep} />
+            {myNarrators.map((n) => (
+              <Link key={n.id} href={`/narrator/${n.slug}`} className={styles.menuItem}>
+                {n.avatar_url ? (
+                  <img src={n.avatar_url} alt="" className={styles.menuAvatar} />
+                ) : (
+                  <Mic aria-hidden="true" />
+                )}
+                <span className={styles.menuNarratorName}>{n.name}</span>
+                {n.is_verified ? <VerifiedBadge size={13} className={styles.menuVerified} /> : null}
+              </Link>
+            ))}
+            <div className={styles.menuSep} />
+          </>
+        ) : null}
+        <button type="button" className={styles.menuItem} onClick={doLogout}>
+          <LogOut aria-hidden="true" />
+          {'Выйти'}
+        </button>
+      </>
+    );
+
   const userLinks = user
     ? [
         { href: `/user/${user.id}`, label: 'Профиль', icon: User, count: 0 },
@@ -359,7 +461,11 @@ export default function NavBar() {
 
   return (
     <>
-      <header className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
+      <header
+        className={`${styles.nav} ${
+          scrolled || (isMobile && userMenuOpen) ? styles.scrolled : ''
+        }`}
+      >
         <div className={styles.inner}>
           <Link href="/" className={styles.logo} aria-label={'Главная AudioRanobe'}>
             AUDIO<span className={styles.logoAccent}>RANOBE</span>
@@ -457,69 +563,31 @@ export default function NavBar() {
                       {friendReq > 99 ? '99+' : friendReq}
                     </span>
                   )}
-                  {userMenuOpen && (
-                    <div className={styles.userMenu}>
-                      <div className={styles.menuHead}>
-                        <span className={styles.menuEyebrow}>{'вы вошли как'}</span>
-                        <span className={styles.menuName}>
-                          {user.display_name || user.username}
-                          <UserBadges user={user} size={9} className={styles.badges}/>
-                        </span>
-                        {user.display_name && user.display_name !== user.username ? (
-                          <span className={styles.menuHandle}>@{user.username}</span>
-                        ) : null}
-                      </div>
-                      <div className={styles.menuSep} />
-
-                      {userLinks.map((l) => (
-                        <Link key={l.href} href={l.href} className={styles.menuItem}>
-                          <l.icon aria-hidden="true" />
-                          {l.label}
-                          {l.count > 0 ? (
-                            <span className={styles.menuBadge}>{l.count > 99 ? '99+' : l.count}</span>
-                          ) : null}
-                        </Link>
-                      ))}
-
-                      <div className={styles.menuSep} />
-                      <button type="button" className={styles.menuItem} onClick={openAdd}>
-                        <Plus aria-hidden="true" />
-                        {'Добавить'}
-                      </button>
-                      {myNarrators.length > 0 ? (
-                          <>
-                            <div className={styles.menuSep} />
-                            {myNarrators.map((n) => (
-                                <Link
-                                    key={n.id}
-                                    href={`/narrator/${n.slug}`}
-                                    className={styles.menuItem}
-                                >
-                                  {n.avatar_url ? (
-                                      <img
-                                          src={n.avatar_url}
-                                          alt=""
-                                          className={styles.menuAvatar}
-                                      />
-                                  ) : (
-                                      <Mic aria-hidden="true" />
-                                  )}
-                                  <span className={styles.menuNarratorName}>{n.name}</span>
-                                  {n.is_verified ? (
-                                      <VerifiedBadge size={13} className={styles.menuVerified} />
-                                  ) : null}
-                                </Link>
-                            ))}
-                            <div className={styles.menuSep} />
-                          </>
-                      ) : null}
-                      <button type="button" className={styles.menuItem} onClick={doLogout}>
-                        <LogOut aria-hidden="true" />
-                        {'Выйти'}
-                      </button>
-                    </div>
+                  {/* Desktop/tablet: anchored dropdown, normal flow inside userWrap. */}
+                  {userMenuOpen && !isMobile && (
+                    <div className={styles.userMenu}>{renderAccountMenuContent()}</div>
                   )}
                 </div>
+
+                {/* True mobile: a full-height sidebar portalled to <body>, so its
+                    position:fixed is relative to the viewport rather than to
+                    .nav's containing block (a backdrop-filter on .scrolled
+                    otherwise hijacks it — see mobileMenuRef above). */}
+                {userMenuOpen && isMobile && mounted
+                  ? createPortal(
+                      <>
+                        <div
+                          className={styles.userMenuBackdrop}
+                          onClick={() => setUserMenuOpen(false)}
+                          aria-hidden="true"
+                        />
+                        <div className={styles.userMenuMobile} ref={mobileMenuRef}>
+                          {renderAccountMenuContent()}
+                        </div>
+                      </>,
+                      document.body
+                    )
+                  : null}
               </>
             ) : (
               <div className={styles.authBtns}>
@@ -533,17 +601,22 @@ export default function NavBar() {
             )}
           </div>
 
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${styles.burger}`}
-            onClick={() => {
-              setMobileSearchOpen(false);
-              setMobileOpen(true);
-            }}
-            aria-label={'Открыть меню'}
-          >
-            <Menu />
-          </button>
+          {/* Signed in: the burger's contents (Разделы + Случайный) live in the
+              account menu instead — see userLinks below. Signed out has no
+              avatar to hold them, so the burger stays. */}
+          {!user ? (
+            <button
+              type="button"
+              className={`${styles.iconBtn} ${styles.burger}`}
+              onClick={() => {
+                setMobileSearchOpen(false);
+                setMobileOpen(true);
+              }}
+              aria-label={'Открыть меню'}
+            >
+              <Menu />
+            </button>
+          ) : null}
         </div>
       </header>
 

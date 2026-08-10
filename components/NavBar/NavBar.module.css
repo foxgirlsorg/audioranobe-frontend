@@ -432,6 +432,10 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  /* However tall the menu grows (narrators, the mobile-only nav copy, …), it
+     never runs past the viewport — it scrolls internally instead. */
+  max-height: calc(100vh - var(--nav-total, 72px) - 24px);
+  overflow-y: auto;
 }
 
 .menuHead {
@@ -520,6 +524,12 @@
 /* ---------- burger + mobile overlay ---------- */
 
 .burger {
+  display: none;
+}
+
+/* Mirrors .burger's own breakpoint: the account menu's copy of Разделы +
+   Случайный only appears once the top nav is gone, so it's never a duplicate. */
+.menuMobileOnly {
   display: none;
 }
 
@@ -718,6 +728,14 @@
   .links {
     display: none;
   }
+
+  /* Matches .links' own breakpoint exactly — the account menu's copy of
+     Разделы + Случайный must appear the instant the top nav disappears, not
+     at the (much narrower) point the burger shows up. Leaving a gap between
+     the two meant a stretch of viewport widths with no way to reach them. */
+  .menuMobileOnly {
+    display: contents;
+  }
 }
 
 /*
@@ -781,6 +799,68 @@
     min-height: 44px;
     align-items: center;
     justify-content: center;
+  }
+
+}
+
+/*
+ * True mobile: a separate block, not a squeezed-down .userMenu — a 214px
+ * popover reading "вы вошли как" plus catalog links plus every narrator you
+ * own doesn't fit anchored to a thumb-sized avatar. Portalled to <body> (see
+ * NavBar.tsx) rather than nested in .userWrap, so this position:fixed sidebar
+ * is anchored to the viewport even once .nav picks up its .scrolled
+ * backdrop-filter — a filter/backdrop-filter on an ancestor creates its own
+ * containing block for fixed descendants, which silently broke the nested
+ * version everywhere except right at the top of the page.
+ */
+/* Dims and blurs the page behind the sidebar — also the tap-to-close target,
+   backing up the outside-mousedown handler with an explicit affordance. */
+.userMenuBackdrop {
+  position: fixed;
+  inset: 0;
+  top: var(--nav-total, 72px);
+  z-index: 240;
+  background: rgba(8, 8, 10, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: user-menu-backdrop-in 0.25s ease;
+}
+
+@keyframes user-menu-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Same translucent-blur treatment as .nav's own .scrolled state (which the
+   header forces on while this is open — see NavBar.tsx) so the sidebar reads
+   as the navbar continuing downward rather than an unrelated floating card. */
+.userMenuMobile {
+  position: fixed;
+  top: var(--nav-total, 72px);
+  right: 0;
+  bottom: 0;
+  z-index: 250;
+  width: min(300px, 84vw);
+  padding: 6px;
+  background: rgba(16, 16, 18, 0.75);
+  border-left: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: -16px 0 40px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+  animation: user-menu-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes user-menu-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
   }
 }
 
