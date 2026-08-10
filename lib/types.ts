@@ -113,25 +113,40 @@ export interface Identity {
   created_at: string;
 }
 
-// Me deliberately drops presence/last_seen_at: the backend strips them from the
-// Me payload (and X-Me header) to keep it stable. The viewer's own online dot
-// comes from local activity state, not the server.
-export interface Me extends Omit<UserPublic, 'presence' | 'last_seen_at'> {
+// Viewer = the slim identity/flags the backend ships in the X-Me header on every
+// response, and what the auth context carries. Deliberately excludes the big
+// fields (bio, socials, identities, prefs) — a large bio would overflow the
+// proxy's response-header buffer. Those live only on Me (fetched from GET /me).
+export interface Viewer {
+  id: number;
+  username: string;
+  /** Raw value (may be empty); callers fall back to username themselves. */
+  display_name: string;
+  avatar_url: string | null;
+  cover_url: string | null;
+  role: Role;
+  is_developer: boolean;
+  created_at: string;
   email: string | null;
   has_password: boolean;
-  identities: Identity[];
-  display_name: string;
   needs_setup: boolean;
   is_banned: boolean;
   ban_reason: string | null;
   skip_moderation: boolean;
   accepted_cookies: boolean;
   email_verified: boolean;
+  /** Who may DM the user: everyone, or accepted friends only (staff bypass). */
+  dm_privacy: DmPrivacy;
+}
+
+// Me = Viewer + the heavy profile fields, returned by GET /me (never in a header).
+export interface Me extends Viewer {
+  bio: string;
+  socials: string[];
+  identities: Identity[];
   notification_prefs: NotificationPrefs;
   content_prefs: ContentPrefs;
   narrators_count: number;
-  /** Who may DM the user: everyone, or accepted friends only (staff bypass). */
-  dm_privacy: DmPrivacy;
 }
 
 export type DmPrivacy = 'all' | 'friends';

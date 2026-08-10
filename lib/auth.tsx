@@ -9,10 +9,13 @@ import React, {
   useState,
 } from 'react';
 import { api, ApiError, onViewer } from '@/lib/api';
-import type { Me } from '@/lib/types';
+import type { Me, Viewer } from '@/lib/types';
 
 interface AuthContextValue {
-  user: Me | null;
+  // Slim Viewer: it comes from the X-Me header on every response. The heavy
+  // profile fields (bio, socials, prefs, identities) live on Me — fetch GET /me
+  // where they're needed (the settings page).
+  user: Viewer | null;
   loading: boolean;
   login(login: string, password: string): Promise<void>;
   register(
@@ -31,7 +34,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }): JSX.Element {
-  const [user, setUser] = useState<Me | null>(null);
+  const [user, setUser] = useState<Viewer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     // response and pick up auth state from the page's own data requests (the
     // home page's /home, a title's /titles/:slug, etc.).
     onViewer((me) => {
-      setUser((me as Me | null) ?? null);
+      setUser((me as Viewer | null) ?? null);
       setLoading(false);
     });
     return () => {

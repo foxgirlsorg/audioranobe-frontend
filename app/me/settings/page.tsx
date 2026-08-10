@@ -178,12 +178,18 @@ export default function SettingsPage() {
       seededRef.current = true;
       setUsername(user.username);
       setDisplayName(user.display_name);
-      setBio(user.bio);
-      setSocials(user.socials ?? []);
-      setPrefs(user.notification_prefs);
-      setContent(user.content_prefs);
-      setIdentities(user.identities ?? []);
       setDmFriendsOnly(user.dm_privacy === 'friends');
+      // bio / socials / prefs / identities are Me-only (not in the slim X-Me
+      // viewer the context carries), so fetch the full profile once here.
+      api<Me>('/me')
+        .then((me) => {
+          setBio(me.bio);
+          setSocials(me.socials ?? []);
+          setPrefs(me.notification_prefs);
+          setContent(me.content_prefs);
+          setIdentities(me.identities ?? []);
+        })
+        .catch((e) => toast(errMsg(e), 'error'));
     }
   }, [user]);
 
