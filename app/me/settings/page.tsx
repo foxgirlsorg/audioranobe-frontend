@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useConfig } from '@/lib/config';
+import { LIMITS } from '@/lib/limits';
 import type {
   AuthProvider,
   ContentPrefs,
@@ -539,7 +540,7 @@ export default function SettingsPage() {
           <MarkdownEditor
             value={bio}
             onChange={setBio}
-            maxLength={2000}
+            maxLength={LIMITS.bio}
             placeholder={'Расскажите что-нибудь…'}
             media="image"
           />
@@ -649,6 +650,7 @@ export default function SettingsPage() {
                 id="settings-oldpw"
                 className="input"
                 type="password"
+                maxLength={LIMITS.password}
                 value={oldPw}
                 onChange={(e) => setOldPw(e.target.value)}
                 autoComplete="current-password"
@@ -663,6 +665,7 @@ export default function SettingsPage() {
               id="settings-newpw"
               className="input"
               type="password"
+              maxLength={LIMITS.password}
               value={newPw}
               onChange={(e) => setNewPw(e.target.value)}
               autoComplete="new-password"
@@ -676,6 +679,7 @@ export default function SettingsPage() {
               id="settings-newpw2"
               className="input"
               type="password"
+              maxLength={LIMITS.password}
               value={newPw2}
               onChange={(e) => setNewPw2(e.target.value)}
               autoComplete="new-password"
@@ -885,6 +889,7 @@ export default function SettingsPage() {
             id="settings-newemail"
             className="input"
             type="email"
+            maxLength={LIMITS.email}
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
             autoComplete="email"
@@ -898,6 +903,7 @@ export default function SettingsPage() {
                 id="settings-emailpw"
                 className="input"
                 type="password"
+                maxLength={LIMITS.password}
                 value={emailPw}
                 onChange={(e) => setEmailPw(e.target.value)}
                 autoComplete="current-password"
@@ -1063,6 +1069,7 @@ export default function SettingsPage() {
               id="settings-delpw"
               className="input"
               type="password"
+              maxLength={LIMITS.password}
               value={delPw}
               onChange={(e) => setDelPw(e.target.value)}
               autoComplete="current-password"

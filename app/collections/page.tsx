@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Library, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
+import { LIMITS } from '@/lib/limits';
 import type { CollectionCard, CollectionFull, Paginated } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -190,7 +191,7 @@ export default function CollectionsPage() {
               id="col-name"
               type="text"
               className="input"
-              maxLength={100}
+              maxLength={LIMITS.collectionName}
               required
               autoFocus
               placeholder="Например: Уютная осенняя подборка"
@@ -206,7 +207,7 @@ export default function CollectionsPage() {
               id="col-desc"
               className="textarea"
               rows={4}
-              maxLength={2000}
+              maxLength={LIMITS.collectionDescription}
               placeholder="Что объединяет эти тайтлы? (необязательно)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}

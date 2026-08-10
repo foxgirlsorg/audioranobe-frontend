@@ -25,6 +25,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { initialsOf, presenceLabel } from '@/lib/format';
+import { LIMITS } from '@/lib/limits';
 import { useAway, scalePoll } from '@/lib/presence';
 import type { ChatConversation, ChatMessage, ChatThread } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
@@ -714,6 +715,7 @@ function ChatInner() {
                     <input
                       className={styles.imageInput}
                       type="url"
+                      maxLength={LIMITS.dmImageUrl}
                       placeholder="Ссылка на изображение (https://…)"
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}

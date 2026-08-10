@@ -50,7 +50,7 @@ export function SocialsEditor({
               type="url"
               className={invalid ? `${styles.input} ${styles.invalid}` : styles.input}
               value={u}
-              maxLength={MAX_LEN + 20}
+              maxLength={MAX_LEN}
               placeholder="https://…"
               onChange={(e) => setAt(i, e.target.value)}
               aria-invalid={invalid}

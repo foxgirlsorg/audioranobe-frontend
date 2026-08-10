@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BookPlus, Mic2, PenLine } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { LIMITS } from '@/lib/limits';
 import { useMyNarrators } from '@/lib/narrators';
 import { errMsg, useToast } from '@/lib/toast';
 import {
@@ -271,6 +272,7 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
         <MarkdownEditor
           value={description}
           onChange={setDescription}
+          maxLength={LIMITS.titleDescription}
           placeholder="О чём эта книга? **Markdown** поддерживается."
         />
       </div>

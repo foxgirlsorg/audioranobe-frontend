@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { LIMITS } from '@/lib/limits';
 import { errMsg } from '@/lib/toast';
 import { ProviderSection } from '@/components/ProviderAuth/ProviderAuth';
 import { useResolveAuth } from '@/lib/useResolveAuth';
@@ -82,6 +83,7 @@ export default function LoginPage() {
               className={errors.login ? `input ${styles.inputError}` : 'input'}
               type="text"
               autoComplete="username"
+              maxLength={LIMITS.email}
               value={loginValue}
               onChange={(e) => {
                 setLoginValue(e.target.value);
@@ -102,6 +104,7 @@ export default function LoginPage() {
               className={errors.password ? `input ${styles.inputError}` : 'input'}
               type="password"
               autoComplete="current-password"
+              maxLength={LIMITS.password}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { LIMITS } from '@/lib/limits';
 import { errMsg, useToast } from '@/lib/toast';
 import type { Genre, Paginated } from '@/lib/types';
 import styles from './GenrePicker.module.css';
@@ -142,6 +143,7 @@ export default function GenrePicker({
           ref={inputRef}
           className={styles.input}
           type="text"
+          maxLength={LIMITS.genreName}
           value={query}
           placeholder={selected.length === 0 ? placeholder : ''}
           onChange={(e) => {

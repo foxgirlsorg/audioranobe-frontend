@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
+import { LIMITS } from '@/lib/limits';
 import type { CollectionFull, SearchSuggest } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -419,7 +420,7 @@ export default function CollectionDetailPage() {
                   <textarea
                     className="textarea"
                     rows={3}
-                    maxLength={1000}
+                    maxLength={LIMITS.collectionNote}
                     autoFocus
                     placeholder={'Короткая заметка об этом тайтле…'}
                     value={noteDraft}
@@ -501,7 +502,7 @@ export default function CollectionDetailPage() {
               id="edit-name"
               type="text"
               className="input"
-              maxLength={100}
+              maxLength={LIMITS.collectionName}
               required
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
@@ -515,7 +516,7 @@ export default function CollectionDetailPage() {
               id="edit-desc"
               className="textarea"
               rows={4}
-              maxLength={2000}
+              maxLength={LIMITS.collectionDescription}
               value={editDesc}
               onChange={(e) => setEditDesc(e.target.value)}
             />

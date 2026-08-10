@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
 import type { AuthorFull } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
@@ -149,7 +150,7 @@ export default function AuthorEditPage({ params }: { params: { id: string } }) {
             className={nameError ? `input ${styles.inputError}` : 'input'}
             type="text"
             value={name}
-            maxLength={120}
+            maxLength={LIMITS.authorName}
             onChange={(e) => {
               setName(e.target.value);
               if (nameError) setNameError('');
@@ -164,7 +165,7 @@ export default function AuthorEditPage({ params }: { params: { id: string } }) {
           <MarkdownEditor
             value={bio}
             onChange={setBio}
-            maxLength={5000}
+            maxLength={LIMITS.authorBio}
             placeholder="Расскажите об этом авторе…"
           />
         </div>

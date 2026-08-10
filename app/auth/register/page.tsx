@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserPlus, Check } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { LIMITS } from '@/lib/limits';
 import { errMsg } from '@/lib/toast';
 import { ProviderSection } from '@/components/ProviderAuth/ProviderAuth';
 import { useResolveAuth } from '@/lib/useResolveAuth';
@@ -134,6 +135,7 @@ export default function RegisterPage() {
               className={errors.username ? `input ${styles.inputError}` : 'input'}
               type="text"
               autoComplete="username"
+              maxLength={LIMITS.username}
               value={username}
               onChange={(e) => {
                 setUsername(e.target.value);
@@ -185,6 +187,7 @@ export default function RegisterPage() {
               className={errors.email ? `input ${styles.inputError}` : 'input'}
               type="email"
               autoComplete="email"
+              maxLength={LIMITS.email}
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -205,6 +208,7 @@ export default function RegisterPage() {
               className={errors.password ? `input ${styles.inputError}` : 'input'}
               type="password"
               autoComplete="new-password"
+              maxLength={LIMITS.password}
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -225,6 +229,7 @@ export default function RegisterPage() {
               className={errors.confirm ? `input ${styles.inputError}` : 'input'}
               type="password"
               autoComplete="new-password"
+              maxLength={LIMITS.password}
               value={confirm}
               onChange={(e) => {
                 setConfirm(e.target.value);

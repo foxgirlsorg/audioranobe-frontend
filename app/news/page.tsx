@@ -14,6 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { LIMITS } from '@/lib/limits';
 import type { Announcement, Paginated } from '@/lib/types';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
@@ -86,7 +87,7 @@ function EditorModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={'Что нового?'}
-            maxLength={200}
+            maxLength={LIMITS.announcementTitle}
           />
         </label>
         <div className={styles.field}>
@@ -94,6 +95,7 @@ function EditorModal({
           <MarkdownEditor
             value={body}
             onChange={setBody}
+            maxLength={LIMITS.announcementBody}
             placeholder={'**Подробности**, [ссылки](https://…) — всё, что стоит знать сообществу…'}
             media="both"
           />

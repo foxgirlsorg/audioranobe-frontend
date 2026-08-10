@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
 import {
   NARRATION_STATUS_LABELS,
@@ -457,6 +458,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
           <MarkdownEditor
             value={form.desc}
             onChange={(desc) => setForm((f) => ({ ...f, desc }))}
+            maxLength={LIMITS.titleDescription}
             placeholder="О чём эта книга? **Markdown** поддерживается."
           />
         </div>

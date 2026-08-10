@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Send, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
 import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './page.module.css';
@@ -114,6 +115,7 @@ export default function DmcaPage() {
               id="dmca-name"
               className={`input ${errors.name ? styles.inputError : ''}`}
               type="text"
+              maxLength={LIMITS.dmcaName}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={'Иван Иванов'}
@@ -130,6 +132,7 @@ export default function DmcaPage() {
               id="dmca-email"
               className={`input ${errors.email ? styles.inputError : ''}`}
               type="email"
+              maxLength={LIMITS.dmcaEmail}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={'you@example.com'}
@@ -146,6 +149,7 @@ export default function DmcaPage() {
               id="dmca-country"
               className={`input ${errors.country ? styles.inputError : ''}`}
               type="text"
+              maxLength={LIMITS.dmcaCountry}
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               placeholder={'Россия'}
@@ -163,6 +167,7 @@ export default function DmcaPage() {
                 <input
                   className={`input ${errors.content_url ? styles.inputError : ''}`}
                   type="url"
+                  maxLength={LIMITS.dmcaUrl}
                   value={url}
                   onChange={(e) => updateList(setContentUrls, i, e.target.value)}
                   placeholder={'https://audioranobe.com/title/example'}
@@ -192,6 +197,7 @@ export default function DmcaPage() {
                 <input
                   className={`input ${errors.original_url ? styles.inputError : ''}`}
                   type="url"
+                  maxLength={LIMITS.dmcaUrl}
                   value={url}
                   onChange={(e) => updateList(setOriginalUrls, i, e.target.value)}
                   placeholder={'https://…'}
@@ -221,6 +227,7 @@ export default function DmcaPage() {
             <textarea
               id="dmca-proof"
               className={`textarea ${errors.proof_url ? styles.inputError : ''}`}
+              maxLength={LIMITS.dmcaUrl}
               value={proofUrl}
               onChange={(e) => setProofUrl(e.target.value)}
               placeholder={'Ссылка на страницу автора, договор, скан документа или иное подтверждение…'}
@@ -236,6 +243,7 @@ export default function DmcaPage() {
             <textarea
               id="dmca-desc"
               className={`textarea ${errors.description ? styles.inputError : ''}`}
+              maxLength={LIMITS.dmcaDescription}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={'Опишите, каким образом нарушены ваши авторские права…'}

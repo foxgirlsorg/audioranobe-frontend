@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ImagePlus, Mic } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
 import type { NarratorFull, NarratorStats, UserBrief } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
@@ -303,7 +304,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
               className={nameError ? `input ${styles.inputError}` : 'input'}
               type="text"
               value={name}
-              maxLength={120}
+              maxLength={LIMITS.narratorName}
               onChange={(e) => {
                 setName(e.target.value);
                 if (nameError) setNameError('');
@@ -332,7 +333,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
             <MarkdownEditor
               value={bio}
               onChange={setBio}
-              maxLength={5000}
+              maxLength={LIMITS.narratorBio}
               placeholder="Расскажите слушателям об этом чтеце…"
               media="image"
             />
