@@ -5,6 +5,7 @@
 
 .track {
   display: flex;
+  flex-wrap: nowrap;
   gap: 1.25rem;
   overflow-x: auto;
   overflow-y: hidden;

@@ -224,6 +224,7 @@
 
 .rail {
   display: flex;
+  flex-wrap: nowrap;
   gap: 1.1rem;
   overflow-x: auto;
   padding: 2px 2px 12px;
@@ -387,7 +388,9 @@
   }
 
   .continueCard {
-    flex-basis: 285px;
+    /* Nearly fills the visible track (container padding is 1rem/side here),
+       leaving a peek of the next card as a scroll hint when there's more. */
+    flex-basis: min(480px, calc(100vw - 6rem));
   }
 
   .railItem {
@@ -408,7 +411,8 @@
   }
 
   .continueCard {
-    flex-basis: 260px;
+    /* Container padding is 0.75rem/side at this width. */
+    flex-basis: calc(100vw - 4.5rem);
     padding: 0.65rem;
   }
 
