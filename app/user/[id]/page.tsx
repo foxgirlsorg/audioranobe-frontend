@@ -48,6 +48,7 @@ import CollectionCardC from '@/components/CollectionCardC/CollectionCardC';
 import SocialLinks from '@/components/SocialLinks/SocialLinks';
 import Markdown from '@/components/Markdown/Markdown';
 import UserBadges from '@/components/UserBadges/UserBadges';
+import Collapsible from '@/components/Collapsible/Collapsible';
 import styles from './page.module.css';
 
 const LIBRARY_STATUSES: { key: string; label: string }[] = [
@@ -408,7 +409,9 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
         <div className={`glass-panel ${styles.bioPanel}`}>
           <span className="eyebrow">О себе</span>
           <div className={styles.bio}>
-            <Markdown source={user.bio} media="image" />
+            <Collapsible maxHeight={300}>
+              <Markdown source={user.bio} media="image" />
+            </Collapsible>
           </div>
         </div>
       ) : null}

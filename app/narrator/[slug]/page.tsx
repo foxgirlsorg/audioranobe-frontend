@@ -21,6 +21,7 @@ import CommentSection from '@/components/CommentSection/CommentSection';
 import NarratorPosts from '@/components/NarratorPosts/NarratorPosts';
 import ImageViewer from '@/components/ImageViewer/ImageViewer';
 import Markdown from '@/components/Markdown/Markdown';
+import Collapsible from '@/components/Collapsible/Collapsible';
 import AiBadge from '@/components/AiBadge/AiBadge';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import styles from './page.module.css';
@@ -160,7 +161,9 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
         <div className={`glass-panel ${styles.bioPanel}`}>
           <span className="eyebrow">О себе</span>
           <div className={styles.bio}>
-            <Markdown source={n.bio} media="image" />
+            <Collapsible maxHeight={300}>
+              <Markdown source={n.bio} media="image" />
+            </Collapsible>
           </div>
         </div>
       ) : null}
