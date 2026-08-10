@@ -432,12 +432,14 @@
   .controls {
     order: 2;
     flex: 1;
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .extras {
     order: 3;
-    flex: none;
+    flex: 1 1 100%;
+    justify-content: center;
+    gap: 10px;
   }
 
   .volumeSlider {
@@ -457,6 +459,16 @@
   .time {
     min-width: 34px;
     font-size: 10px;
+  }
+
+  .menu {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: 92px;
+    transform: translateX(-50%);
+    width: calc(100vw - 1.6rem);
+    max-width: 320px;
   }
 }
 
@@ -565,15 +577,20 @@
   align-items: center;
   gap: 0.5rem;
   max-width: 640px;
+  width: 100%;
   text-align: center;
 }
 
 .stageTitle {
+  max-width: 100%;
   font-size: clamp(1.2rem, 3vw, 1.9rem);
   font-weight: 300;
   letter-spacing: 0.01em;
   color: #fff;
   text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stageTitle:hover {
@@ -581,8 +598,42 @@
 }
 
 .stageChapter {
+  max-width: 100%;
   font-size: 13px;
   color: var(--text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.stageChapterStatic .stageChapterTrack {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.stageChapterMarquee .stageChapterTrack {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.stageChapterMarquee .stageChapterTrack {
+  animation: chapter-marquee 12s linear infinite;
+  animation-delay: 1.5s;
+}
+
+.stageChapterMarquee .stageChapterTrack span {
+  padding-right: 3em;
+}
+
+@keyframes chapter-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 /* On a short viewport the artwork is the first thing to give way. */

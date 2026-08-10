@@ -56,8 +56,11 @@ export default function Player() {
   const [scrub, setScrub] = useState<number | null>(null);
   const [menu, setMenu] = useState<'rate' | 'sleep' | null>(null);
   const [full, setFull] = useState(false);
+  const [chapterOverflow, setChapterOverflow] = useState(false);
   const extrasRef = useRef<HTMLDivElement | null>(null);
   const lastVolumeRef = useRef(1);
+  const stageChapterRef = useRef<HTMLSpanElement | null>(null);
+  const stageChapterTrackRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
     if (!menu) return;
@@ -85,6 +88,14 @@ export default function Player() {
   useEffect(() => {
     if (!current) setFull(false);
   }, [current]);
+
+  useEffect(() => {
+    if (!full) return;
+    const el = stageChapterRef.current;
+    const track = stageChapterTrackRef.current;
+    if (!el || !track) return;
+    setChapterOverflow(track.scrollWidth / 2 > el.clientWidth);
+  }, [full, current]);
 
   if (!current) return null;
 
@@ -137,7 +148,25 @@ export default function Player() {
             <Link href={`/title/${current.title.slug}`} className={styles.stageTitle}>
               {current.title.name}
             </Link>
-            <span className={styles.stageChapter}>{chapterLabel}</span>
+            <span
+              className={
+                chapterOverflow
+                  ? `${styles.stageChapter} ${styles.stageChapterMarquee}`
+                  : `${styles.stageChapter} ${styles.stageChapterStatic}`
+              }
+              ref={stageChapterRef}
+            >
+              {chapterOverflow ? (
+                <span className={styles.stageChapterTrack} ref={stageChapterTrackRef}>
+                  <span>{chapterLabel}</span>
+                  <span>{chapterLabel}</span>
+                </span>
+              ) : (
+                <span className={styles.stageChapterTrack} ref={stageChapterTrackRef}>
+                  {chapterLabel}
+                </span>
+              )}
+            </span>
           </div>
         </div>
       ) : null}
