@@ -153,6 +153,11 @@
   margin-bottom: 0.4rem;
 }
 
+/* Transparent to layout: its dot+text stay direct flex items of .headSub. */
+.joinedSince {
+  display: contents;
+}
+
 /* The same separator the narrator header uses — a literal "•" sits on the text
    baseline at a different weight and read as a third fact rather than a divider. */
 .metaDot {
@@ -480,6 +485,12 @@
   .statChip {
     padding: 0.45rem 0.85rem;
     min-width: 64px;
+  }
+
+  /* Username + presence already fill the line at this width; the join date
+     is the least essential of the three facts, so it's dropped here. */
+  .joinedSince {
+    display: none;
   }
 }
 
