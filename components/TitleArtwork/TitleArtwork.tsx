@@ -25,7 +25,7 @@ export default function TitleArtwork({
     const kind = cropper;
     if (!kind) return;
     const fd = new FormData();
-    fd.append('file', blob, `${kind}.jpg`);
+    fd.append('file', blob, `${kind}.webp`);
     setSaving(true);
     try {
       await api(`/panel/titles/${title.id}/${kind}`, { formData: fd });
@@ -103,6 +103,8 @@ export default function TitleArtwork({
         onClose={() => setCropper(null)}
         aspect={cropper === 'bg' ? 3 : 2 / 3}
         title={cropper === 'bg' ? 'Обрезка фона' : 'Обрезка обложки'}
+        maxWidth={2048}
+        maxHeight={2048}
         onCropped={onCropped}
       />
     </div>

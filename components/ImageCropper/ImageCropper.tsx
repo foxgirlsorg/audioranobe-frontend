@@ -10,8 +10,7 @@ import styles from './ImageCropper.module.css';
 type Area = { x: number; y: number; width: number; height: number };
 type Rect = { left: number; top: number; width: number; height: number };
 
-const MAX_OUT_WIDTH = 1600;
-const JPEG_QUALITY = 0.9;
+const WEBP_QUALITY = 0.85;
 
 // The cover crop keeps mobile's 3:1 (see callers); PC renders a narrower centred
 // slice of it. This is the aspect PC displays — used only to draw the guide band,
@@ -38,6 +37,8 @@ export function ImageCropper({
   image,
   file,
   overlay,
+  maxWidth = 2048,
+  maxHeight = Infinity,
 }: {
   open: boolean;
   onClose: () => void;
@@ -50,6 +51,10 @@ export function ImageCropper({
   /** Guide drawn over the crop: a circle outline (avatars) or the PC/mobile
    *  cover bands. The crop itself is unchanged — this is purely a preview. */
   overlay?: 'circle' | 'cover';
+  /** Output pixel cap, matching the server-side limit for this upload kind
+   *  (see backend/src/lib/Img.php). Pass Infinity for an uncapped dimension. */
+  maxWidth?: number;
+  maxHeight?: number;
 }) {
   const { toast } = useToast();
   const cropAreaRef = useRef<HTMLDivElement | null>(null);
@@ -175,7 +180,7 @@ export function ImageCropper({
       const img = await loadImage(imgSrc).catch(() => {
         throw new Error('Не удалось загрузить изображение');
       });
-      const scale = Math.min(1, MAX_OUT_WIDTH / areaPixels.width);
+      const scale = Math.min(1, maxWidth / areaPixels.width, maxHeight / areaPixels.height);
       const w = Math.max(1, Math.round(areaPixels.width * scale));
       const h = Math.max(1, Math.round(areaPixels.height * scale));
       const canvas = document.createElement('canvas');
@@ -195,7 +200,7 @@ export function ImageCropper({
         h
       );
       const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY)
+        canvas.toBlob(resolve, 'image/webp', WEBP_QUALITY)
       );
       if (!blob) throw new Error('Не удалось экспортировать изображение');
       onCropped(blob);

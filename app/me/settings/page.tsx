@@ -277,7 +277,7 @@ export default function SettingsPage() {
     setUploading(kind);
     try {
       const fd = new FormData();
-      fd.append('file', blob, `${kind}.jpg`);
+      fd.append('file', blob, `${kind}.webp`);
       await api<Me>(kind === 'avatar' ? '/me/avatar' : '/me/cover', { formData: fd });
       await refresh();
       toast(kind === 'avatar' ? 'Аватар обновлён' : 'Обложка обновлена', 'ok');
@@ -1020,6 +1020,8 @@ export default function SettingsPage() {
         aspect={1}
         overlay="circle"
         title={'Обрезка аватара'}
+        maxWidth={1024}
+        maxHeight={1024}
         onCropped={(blob) => uploadImage('avatar', blob)}
       />
       <ImageCropper
@@ -1028,6 +1030,8 @@ export default function SettingsPage() {
         aspect={3}
         overlay="cover"
         title={'Обрезка обложки профиля'}
+        maxWidth={2048}
+        maxHeight={2048}
         onCropped={(blob) => uploadImage('cover', blob)}
       />
 

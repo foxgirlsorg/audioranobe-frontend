@@ -185,7 +185,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
   async function onCropped(blob: Blob) {
     if (!narrator || !cropper) return;
     const fd = new FormData();
-    fd.append('file', blob, `${cropper}.jpg`);
+    fd.append('file', blob, `${cropper}.webp`);
     try {
       await api(`/panel/narrators/${narrator.id}/${cropper}`, { formData: fd });
       toast(cropper === 'avatar' ? 'Аватар обновлён' : 'Обложка обновлена');
@@ -570,6 +570,8 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         aspect={1}
         overlay="circle"
         title="Аватар чтеца"
+        maxWidth={1024}
+        maxHeight={1024}
         onCropped={onCropped}
       />
       <ImageCropper
@@ -578,6 +580,8 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         aspect={3 / 1}
         overlay="cover"
         title="Обложка чтеца"
+        maxWidth={2048}
+        maxHeight={2048}
         onCropped={onCropped}
       />
     </div>

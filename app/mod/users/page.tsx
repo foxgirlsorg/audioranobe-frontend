@@ -6,6 +6,7 @@ import { ImagePlus, KeyRound, MailCheck, Pencil, Search, Trash2, Users } from 'l
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
+import { resizeToWebp } from '@/lib/image';
 import { formatDate } from '@/lib/format';
 import type { Me, Paginated, Role } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
@@ -197,8 +198,12 @@ function UsersContent() {
     if (!toEdit) return;
     setImageBusy(kind);
     try {
+      const resized =
+        kind === 'avatar'
+          ? await resizeToWebp(file, 1024, 1024)
+          : await resizeToWebp(file, 2048, 2048);
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', resized, `${kind}.webp`);
       const updated = await api<Me>(`/mod/users/${toEdit.id}/${kind}`, { formData: fd });
       replaceRow(updated);
       setToEdit(updated);
