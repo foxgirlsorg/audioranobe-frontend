@@ -21,6 +21,7 @@ import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Select from '@/components/Select/Select';
+import CatalogGridSkeleton from './CatalogGridSkeleton';
 import styles from './CatalogGrid.module.css';
 
 const LIMIT = 50;
@@ -162,9 +163,7 @@ export default function CatalogGrid() {
       </div>
 
       {loading && !items ? (
-        <div className={styles.center}>
-          <Spinner size={34} />
-        </div>
+        <CatalogGridSkeleton />
       ) : error ? (
         <div className={styles.center}>
           <EmptyState icon={AlertTriangle} title="Не удалось загрузить каталог" body={error} />

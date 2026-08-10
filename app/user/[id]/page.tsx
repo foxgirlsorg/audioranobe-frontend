@@ -37,6 +37,7 @@ import { useToast, errMsg } from '@/lib/toast';
 import { emitFriendsChanged } from '@/lib/friends';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Spinner from '@/components/Spinner/Spinner';
+import Skeleton from 'react-loading-skeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import LibraryRow from '@/components/LibraryRow/LibraryRow';
 import Tabs from '@/components/Tabs/Tabs';
@@ -51,6 +52,7 @@ import UserBadges from '@/components/UserBadges/UserBadges';
 import Collapsible from '@/components/Collapsible/Collapsible';
 import { PhotoView } from 'react-photo-view';
 import styles from './page.module.css';
+import sectionStyles from "@/components/Section/Section.module.css";
 
 const LIBRARY_STATUSES: { key: string; label: string }[] = [
   { key: 'all', label: 'Все' },
@@ -120,6 +122,48 @@ function CommentBody({ body }: { body: string }) {
         )
       )}
     </p>
+  );
+}
+
+
+function UserPageSkeleton() {
+  return (
+    <div className={styles.page}>
+      <div className={styles.banner} aria-hidden="true">
+        <Skeleton height="100%" style={{ display: 'block' }} />
+      </div>
+      <header className={styles.head}>
+        <div className={styles.avatar}>
+          <Skeleton circle width="100%" height="100%" />
+        </div>
+        <div className={styles.headMain}>
+          <Skeleton width={90} height={11} />
+          <h1 className={styles.name}>
+            <Skeleton width={200} height={26} />
+          </h1>
+          <div className={styles.headSub}>
+            <Skeleton width={180} height={13} />
+          </div>
+        </div>
+      </header>
+      <section className={sectionStyles.section}>
+        <Skeleton width="100%" height={200} />
+      </section>
+      <section className={sectionStyles.section}>
+        <Skeleton width="60%"  height={50} />
+        <Skeleton width="60%"  height={50} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+        <Skeleton width="100%"  height={100} />
+
+      </section>
+    </div>
   );
 }
 
@@ -229,11 +273,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   }, [userRef]);
 
   if (loading) {
-    return (
-      <div className={styles.center}>
-        <Spinner size={34} />
-      </div>
-    );
+    return <UserPageSkeleton />;
   }
 
   if (error || !profile) {

@@ -8,7 +8,7 @@ import type { NarratorFull } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { formatCount, formatDate } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
-import Spinner from '@/components/Spinner/Spinner';
+import Skeleton from 'react-loading-skeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import SocialLinks from '@/components/SocialLinks/SocialLinks';
@@ -25,6 +25,53 @@ import Collapsible from '@/components/Collapsible/Collapsible';
 import AiBadge from '@/components/AiBadge/AiBadge';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import styles from './page.module.css';
+import sectionStyles from "@/components/Section/Section.module.css";
+import CatalogGridSkeleton from "@/components/CatalogGrid/CatalogGridSkeleton";
+
+function SectionHeaderSkeleton({ eyebrowWidth = 140, titleWidth = 220 }) {
+  return (
+      <header className={sectionStyles.header}>
+        <div className={sectionStyles.eyebrow}>
+          <Skeleton width={eyebrowWidth} />
+        </div>
+        <h2 className={sectionStyles.title}>
+          <Skeleton width={titleWidth} />
+        </h2>
+      </header>
+  );
+}
+
+function NarratorPageSkeleton() {
+  return (
+    <div className={styles.page}>
+      <div className={styles.banner} aria-hidden="true">
+        <Skeleton height="100%" style={{ display: 'block' }} />
+      </div>
+      <header className={styles.head}>
+        <div className={styles.avatar}>
+          <Skeleton circle width="100%" height="100%" />
+        </div>
+        <div className={styles.headMain}>
+          <Skeleton width={70} height={11} />
+          <div className={styles.name}>
+            <Skeleton width={220} height={28} />
+          </div>
+          <div className={styles.metaRow}>
+            <Skeleton width={220} height={13} />
+          </div>
+        </div>
+
+      </header>
+      <section className={sectionStyles.section}>
+      <Skeleton width="100%" height={200} />
+      </section>
+      <section className={sectionStyles.section}>
+        <SectionHeaderSkeleton eyebrowWidth={100} titleWidth={180} />
+        <CatalogGridSkeleton count={12} />
+      </section>
+    </div>
+  );
+}
 
 export default function NarratorPage({ params }: { params: { slug: string } }) {
   const slug = decodeURIComponent(params.slug);
@@ -64,11 +111,7 @@ export default function NarratorPage({ params }: { params: { slug: string } }) {
   }, [slug]);
 
   if (loading) {
-    return (
-      <div className={styles.center}>
-        <Spinner size={34} />
-      </div>
-    );
+    return <NarratorPageSkeleton />;
   }
 
   if (error || !narrator) {

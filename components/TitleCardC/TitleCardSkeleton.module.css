@@ -1,0 +1,7 @@
+/* react-loading-skeleton's wrapping span needs to be told to actually fill
+   the aspect-ratio box it sits in — by default it only sizes to line-height. */
+.coverFill {
+  display: block;
+  height: 100%;
+  line-height: 0;
+}

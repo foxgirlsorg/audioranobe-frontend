@@ -325,11 +325,8 @@
 }
 
 .authGhost {
-  display: inline-block;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
+  display: inline-flex;
+  line-height: 0;
 }
 
 .authBtns {

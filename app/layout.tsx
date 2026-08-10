@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import 'react-photo-view/dist/react-photo-view.css';
+import 'react-loading-skeleton/dist/skeleton.css';
 import './globals.css';
 import './markdown.css';
 import './photo-view.css';
+import { SkeletonTheme } from 'react-loading-skeleton';
 import { PhotoProvider } from '@/components/PhotoViewProvider/PhotoViewProvider';
 import { AuthProvider } from '@/lib/auth';
 import { ConfigProvider } from '@/lib/config';
@@ -48,9 +50,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <NavBar />
                     <BannedBanner />
                     <CookiesBanner />
-                    <PhotoProvider>
-                      <main className="container">{children}</main>
-                    </PhotoProvider>
+                    <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
+                      <PhotoProvider>
+                        <main className="container">{children}</main>
+                      </PhotoProvider>
+                    </SkeletonTheme>
                     <Footer />
                     <Player />
                   </PlayerProvider>

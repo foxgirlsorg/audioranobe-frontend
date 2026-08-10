@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Megaphone, Play, UserPlus, X } from 'lucide-react';
+import Skeleton from 'react-loading-skeleton';
 import { api } from '@/lib/api';
 import type { HomeData, TitleCard } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
@@ -10,10 +11,13 @@ import { usePlayer } from '@/lib/player';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate, formatDuration } from '@/lib/format';
 import Section from '@/components/Section/Section';
+import sectionStyles from '@/components/Section/Section.module.css';
 import ScrollRail from '@/components/ScrollRail/ScrollRail';
+import railStyles from '@/components/ScrollRail/ScrollRail.module.css';
 import CatalogGrid from '@/components/CatalogGrid/CatalogGrid';
+import CatalogGridSkeleton from '@/components/CatalogGrid/CatalogGridSkeleton';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
-import Spinner from '@/components/Spinner/Spinner';
+import TitleCardSkeleton from '@/components/TitleCardC/TitleCardSkeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import styles from './page.module.css';
 
@@ -49,6 +53,75 @@ function TitleRail({ titles }: { titles: TitleCard[] }) {
         </div>
       ))}
     </ScrollRail>
+  );
+}
+
+function RailSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className={railStyles.track}>
+      {Array.from({ length: count }, (_, i) => (
+        <TitleCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+function SectionHeaderSkeleton({ eyebrowWidth = 140, titleWidth = 220 }) {
+  return (
+    <header className={sectionStyles.header}>
+      <div className={sectionStyles.eyebrow}>
+        <Skeleton width={eyebrowWidth} />
+      </div>
+      <h2 className={sectionStyles.title}>
+        <Skeleton width={titleWidth} />
+      </h2>
+    </header>
+  );
+}
+
+function ContinueCardSkeleton() {
+  return (
+    <div className={styles.continueCard}>
+      <div className={styles.continueCover}>
+        <Skeleton height="100%" style={{ display: 'block' }} />
+      </div>
+      <div className={styles.continueInfo}>
+        <div className={styles.continueName}>
+          <Skeleton />
+        </div>
+        <div className={styles.continueChapter}>
+          <Skeleton width="70%" />
+        </div>
+        <div className={styles.progressTrack} />
+        <div className={styles.continueFoot}>
+          <Skeleton width={70} height={11} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div className={styles.page}>
+      <section className={sectionStyles.section}>
+        <SectionHeaderSkeleton eyebrowWidth={260} titleWidth={160} />
+        <div className={styles.rail}>
+          <ContinueCardSkeleton />
+          <ContinueCardSkeleton />
+        </div>
+      </section>
+
+      <section className={sectionStyles.section}>
+        <SectionHeaderSkeleton eyebrowWidth={120} titleWidth={200} />
+        <RailSkeleton />
+      </section>
+
+      <section className={sectionStyles.section}>
+        <SectionHeaderSkeleton eyebrowWidth={100} titleWidth={180} />
+        <CatalogGridSkeleton count={12} />
+      </section>
+    </div>
   );
 }
 
@@ -103,11 +176,7 @@ export default function HomePage() {
   };
 
   if (loading) {
-    return (
-      <div className={styles.center}>
-        <Spinner size={34} />
-      </div>
-    );
+    return <HomeSkeleton />;
   }
 
   if (error || !data) {

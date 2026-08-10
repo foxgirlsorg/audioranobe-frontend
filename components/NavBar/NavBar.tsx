@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Skeleton from 'react-loading-skeleton';
 import {
   Bell,
   ClipboardList,
@@ -533,7 +534,9 @@ export default function NavBar() {
 
           <div className={styles.authArea}>
             {loading ? (
-              <span className={styles.authGhost} aria-hidden="true" />
+              <span className={styles.authGhost} aria-hidden="true">
+                <Skeleton circle width={36} height={36} baseColor="#232326" highlightColor="#302f34" />
+              </span>
             ) : user ? (
               <>
                 <span className={styles.dmSlot}>

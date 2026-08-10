@@ -47,7 +47,7 @@ import CommentSection from '@/components/CommentSection/CommentSection';
 import LibraryWidget from '@/components/LibraryWidget/LibraryWidget';
 import FavoriteButton from '@/components/FavoriteButton/FavoriteButton';
 import StatusBadge from '@/components/StatusBadge/StatusBadge';
-import Spinner from '@/components/Spinner/Spinner';
+import Skeleton from 'react-loading-skeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import { PhotoView } from 'react-photo-view';
 import Markdown from '@/components/Markdown/Markdown';
@@ -75,6 +75,28 @@ function sharedNarrationStatus(
   if (narrators.length === 0) return null;
   const first = narrators[0].narration_status;
   return narrators.every((n) => n.narration_status === first) ? first : null;
+}
+
+function TitlePageSkeleton() {
+  return (
+    <div className={styles.page}>
+      <header className={styles.hero}>
+        <div className={styles.coverCol}>
+          <div className={styles.coverPanel}>
+            <Skeleton height="100%" style={{ display: 'block' }} />
+          </div>
+        </div>
+        <div className={styles.infoCol}>
+          <div className={styles.name}>
+            <Skeleton width="70%" />
+          </div>
+          <Skeleton width={180} height={14} />
+          <Skeleton width="95%" count={3} />
+          <Skeleton width={130} height={38} borderRadius={10} />
+        </div>
+      </header>
+    </div>
+  );
 }
 
 export default function TitlePage({ params }: { params: { slug: string } }) {
@@ -240,11 +262,7 @@ export default function TitlePage({ params }: { params: { slug: string } }) {
   if (missing) notFound();
 
   if (loading) {
-    return (
-      <div className={styles.loadingWrap}>
-        <Spinner size={34} />
-      </div>
-    );
+    return <TitlePageSkeleton />;
   }
 
   if (error || !title) {

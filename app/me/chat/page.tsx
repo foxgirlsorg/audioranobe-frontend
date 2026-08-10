@@ -29,6 +29,7 @@ import { LIMITS } from '@/lib/limits';
 import { useAway, scalePoll } from '@/lib/presence';
 import type { ChatConversation, ChatMessage, ChatThread } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
+import Skeleton from 'react-loading-skeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
@@ -89,9 +90,52 @@ function linkify(text: string): ReactNode[] {
 
 type Menu = { x: number; y: number; msg: ChatMessage };
 
+function ConvRowSkeleton() {
+  return (
+    <div className={styles.convRow}>
+      <span className={styles.avatarWrap}>
+        <span className={styles.avatar}>
+          <Skeleton circle width="100%" height="100%" />
+        </span>
+      </span>
+      <div className={styles.convMain}>
+        <div className={styles.convTop}>
+          <Skeleton width="55%" height={14} />
+        </div>
+        <Skeleton width="75%" height={12} />
+      </div>
+    </div>
+  );
+}
+
+function ConvListSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <>
+      {Array.from({ length: count }, (_, i) => (
+        <ConvRowSkeleton key={i} />
+      ))}
+    </>
+  );
+}
+
+function ChatPageSkeleton() {
+  return (
+    <div className={styles.page}>
+      <aside className={styles.sidebar}>
+        <header className={styles.sidebarHead}>
+          <h1 className={styles.sidebarTitle}>Сообщения</h1>
+        </header>
+        <div className={styles.convList}>
+          <ConvListSkeleton />
+        </div>
+      </aside>
+    </div>
+  );
+}
+
 export default function ChatPage() {
   return (
-    <Suspense fallback={<div className={styles.center}><Spinner size={34} /></div>}>
+    <Suspense fallback={<ChatPageSkeleton />}>
       <ChatInner />
     </Suspense>
   );
@@ -571,7 +615,7 @@ function ChatInner() {
   };
 
   if (authLoading || !user) {
-    return <div className={styles.center}><Spinner size={34} /></div>;
+    return <ChatPageSkeleton />;
   }
 
   return (
@@ -582,7 +626,7 @@ function ChatInner() {
         </header>
         <div className={styles.convList}>
           {convos === null ? (
-            <div className={styles.center}><Spinner /></div>
+            <ConvListSkeleton />
           ) : convos.length === 0 ? (
             <p className={styles.emptyHint}>
               У вас пока нет переписок. Откройте профиль пользователя и нажмите «Написать».
