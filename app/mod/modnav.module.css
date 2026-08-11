@@ -31,6 +31,9 @@
 }
 
 .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   padding: 0.42rem 1rem;
   border-radius: 9999px;
   border: 1px solid var(--border);
@@ -42,6 +45,10 @@
   text-transform: uppercase;
   white-space: nowrap;
   transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+}
+
+.tab svg {
+  flex-shrink: 0;
 }
 
 .tab:hover {

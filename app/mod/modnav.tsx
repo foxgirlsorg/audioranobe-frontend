@@ -3,27 +3,44 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShieldOff } from 'lucide-react';
+import {
+  ShieldOff,
+  LayoutDashboard,
+  Inbox,
+  Flag,
+  Users,
+  Mic,
+  BookMarked,
+  Feather,
+  Shield,
+  Filter,
+  Lock,
+  Trash2,
+  Megaphone,
+  Radio,
+  ScrollText,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import Spinner from '@/components/Spinner/Spinner';
 import TabScroller from '@/components/TabScroller/TabScroller';
 import styles from './modnav.module.css';
 
-const TABS: { href: string; label: string; adminOnly?: boolean }[] = [
-  { href: '/mod', label: 'Обзор' },
-  { href: '/mod/queue', label: 'Очередь' },
-  { href: '/mod/reports', label: 'Жалобы' },
-  { href: '/mod/users', label: 'Пользователи' },
-  { href: '/mod/narrators', label: 'Чтецы' },
-  { href: '/mod/genres', label: 'Теги', adminOnly: true },
-  { href: '/mod/authors', label: 'Авторы', adminOnly: true },
-  { href: '/mod/dmca', label: 'DMCA', adminOnly: true },
-  { href: '/mod/words', label: 'Стоп-слова', adminOnly: true },
-  { href: '/mod/usernames', label: 'Имена', adminOnly: true },
-  { href: '/mod/trash', label: 'Корзина', adminOnly: true },
-  { href: '/mod/announcements', label: 'Объявления', adminOnly: true },
-  { href: '/mod/broadcast', label: 'Рассылка' },
-  { href: '/mod/audit', label: 'Аудит', adminOnly: true },
+const TABS: { href: string; label: string; icon: LucideIcon; adminOnly?: boolean }[] = [
+  { href: '/mod', label: 'Обзор', icon: LayoutDashboard },
+  { href: '/mod/queue', label: 'Очередь', icon: Inbox },
+  { href: '/mod/reports', label: 'Жалобы', icon: Flag },
+  { href: '/mod/users', label: 'Пользователи', icon: Users },
+  { href: '/mod/narrators', label: 'Чтецы', icon: Mic },
+  { href: '/mod/genres', label: 'Теги', icon: BookMarked, adminOnly: true },
+  { href: '/mod/authors', label: 'Авторы', icon: Feather, adminOnly: true },
+  { href: '/mod/dmca', label: 'DMCA', icon: Shield, adminOnly: true },
+  { href: '/mod/words', label: 'Стоп-слова', icon: Filter, adminOnly: true },
+  { href: '/mod/usernames', label: 'Имена', icon: Lock, adminOnly: true },
+  { href: '/mod/trash', label: 'Корзина', icon: Trash2, adminOnly: true },
+  { href: '/mod/announcements', label: 'Объявления', icon: Megaphone, adminOnly: true },
+  { href: '/mod/broadcast', label: 'Рассылка', icon: Radio },
+  { href: '/mod/audit', label: 'Аудит', icon: ScrollText, adminOnly: true },
 ];
 
 export function splitHeading(heading: string): { title: string; accent?: string } {
@@ -42,6 +59,7 @@ export function ModNav() {
       {TABS.filter((tab) => !tab.adminOnly || isAdmin).map((tab) => {
         const active =
           tab.href === '/mod' ? pathname === '/mod' : (pathname ?? '').startsWith(tab.href);
+        const Icon = tab.icon;
         return (
           <Link
             key={tab.href}
@@ -49,6 +67,7 @@ export function ModNav() {
             className={active ? `${styles.tab} ${styles.active}` : styles.tab}
             aria-current={active ? 'page' : undefined}
           >
+            <Icon size={13} aria-hidden="true" />
             {tab.label}
           </Link>
         );
