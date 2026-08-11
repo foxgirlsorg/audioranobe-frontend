@@ -113,3 +113,27 @@ export function initialsOf(username: string): string {
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return username.slice(0, 2).toUpperCase();
 }
+
+/** Markdown source reduced to a flat, single-line summary for meta descriptions. */
+export function plainSummary(markdown: string, maxLen = 200): string {
+  const text = markdown
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\|\|([\s\S]*?)\|\|/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}>+\s?/gm, '')
+    .replace(/^\s{0,3}([-*+]|\d+[.)])\s+/gm, '')
+    .replace(/(\*\*\*|___)([^*_]+)\1/g, '$2')
+    .replace(/(\*\*|__)([^*_]+)\1/g, '$2')
+    .replace(/(\*|_)([^*_]+)\1/g, '$2')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (text.length <= maxLen) return text;
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
