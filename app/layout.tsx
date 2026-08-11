@@ -5,6 +5,7 @@ import './globals.css';
 import './markdown.css';
 import './photo-view.css';
 import { SkeletonTheme } from 'react-loading-skeleton';
+import UmamiProvider from 'next-umami';
 import { PhotoProvider } from '@/components/PhotoViewProvider/PhotoViewProvider';
 import { AuthProvider } from '@/lib/auth';
 import { ConfigProvider } from '@/lib/config';
@@ -48,34 +49,51 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+function AppProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <ConfigProvider>
+        <BadgesProvider>
+          <MyNarratorsProvider>
+            <ToastProvider>
+              <PlayerProvider>
+                <div className="noise" aria-hidden="true" />
+                <DragScroll />
+                <NavBar />
+                <BannedBanner />
+                <CookiesBanner />
+                <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
+                  <PhotoProvider>
+                    <main className="container">{children}</main>
+                  </PhotoProvider>
+                </SkeletonTheme>
+                <Footer />
+                <Player />
+              </PlayerProvider>
+            </ToastProvider>
+          </MyNarratorsProvider>
+        </BadgesProvider>
+      </ConfigProvider>
+    </AuthProvider>
+  );
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
       <body>
-        <AuthProvider>
-          <ConfigProvider>
-            <BadgesProvider>
-              <MyNarratorsProvider>
-                <ToastProvider>
-                  <PlayerProvider>
-                    <div className="noise" aria-hidden="true" />
-                    <DragScroll />
-                    <NavBar />
-                    <BannedBanner />
-                    <CookiesBanner />
-                    <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
-                      <PhotoProvider>
-                        <main className="container">{children}</main>
-                      </PhotoProvider>
-                    </SkeletonTheme>
-                    <Footer />
-                    <Player />
-                  </PlayerProvider>
-                </ToastProvider>
-              </MyNarratorsProvider>
-            </BadgesProvider>
-          </ConfigProvider>
-        </AuthProvider>
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ? (
+          <UmamiProvider
+            websiteId={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+            src="/stats/script.js"
+            hostUrl="/stats"
+            domains={process.env.NEXT_PUBLIC_UMAMI_DOMAINS}
+          >
+            <AppProviders>{children}</AppProviders>
+          </UmamiProvider>
+        ) : (
+          <AppProviders>{children}</AppProviders>
+        )}
       </body>
     </html>
   );
