@@ -588,6 +588,7 @@ export interface UserProfile {
     favorites: number;
   };
   friendship: Friendship;
+  can_message: boolean;
 }
 
 export interface NarratorStats {

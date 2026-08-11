@@ -75,7 +75,7 @@
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 1.5rem;
   padding: 0 2rem;
   margin-top: -54px;
@@ -140,7 +140,23 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 0.55rem;
   padding-bottom: 0.35rem;
+}
+
+/* Social links + friend actions live outside .head so they can break out to
+   full container width on mobile instead of being squeezed into the narrow
+   column beside the avatar. Indented to sit under the name on desktop. */
+.headExtra {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+  padding: 0 2rem 0 calc(2rem + 124px + 1.5rem);
+}
+
+.headExtra:empty {
+  display: none;
 }
 
 .name {
@@ -167,7 +183,6 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 0.4rem;
 }
 
 /* Transparent to layout: its dot+text stay direct flex items of .headSub. */
@@ -467,9 +482,7 @@
   }
 
   .head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.9rem;
+    gap: 1rem;
     padding: 0 0.75rem;
     margin-top: -46px;
   }
@@ -477,6 +490,10 @@
   .avatar {
     width: 92px;
     height: 92px;
+  }
+
+  .headExtra {
+    padding: 0 0.75rem;
   }
 
   .bioPanel {
@@ -490,8 +507,13 @@
   }
 
   .head {
+    gap: 0.85rem;
     padding: 0 0.5rem;
     margin-top: -36px;
+  }
+
+  .headExtra {
+    padding: 0 0.5rem;
   }
 
   .avatar {
@@ -523,19 +545,69 @@
 .friendActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 0.85rem;
+  align-items: center;
+  gap: 1.1rem;
 }
 
-/* The unfriend label is always icon-only; other friend-action labels collapse
-   to icon-only on narrow screens. */
+/* The secondary friend actions (DM, cancel, decline, unfriend) read as plain
+   labels next to the primary pill button, not as buttons of their own — no
+   background in any state, and padding tight enough that it doesn't look like
+   a margin around the text. */
+.ghostAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.ghostAction:hover,
+.ghostAction:focus-visible,
+.ghostAction:active {
+  background: none;
+  color: var(--accent-hover);
+}
+
+.ghostAction:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* The unfriend label is always icon-only — deliberate, not a responsive
+   collapse (that button stays a small icon at every width). */
 .friendLabelUnfriend {
   display: none;
 }
 
-@media (max-width: 640px) {
-  .friendLabel {
-    display: none;
+/* One row spanning the full width — there's room now that these aren't
+   squeezed into the column beside the avatar. Each control shares the row
+   equally; its label ellipsizes rather than wrapping or breaking the row if
+   it doesn't fit. */
+@media (max-width: 768px) {
+  .friendActions {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .friendActions > a,
+  .friendActions > button {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .friendActions .friendLabel {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

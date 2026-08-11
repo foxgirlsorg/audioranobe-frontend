@@ -288,7 +288,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     );
   }
 
-  const { user, stats } = profile;
+  const { user, stats, can_message } = profile;
 
   const canEditLibrary =
     viewer != null && (viewer.id === user.id || viewer.role === 'admin');
@@ -376,79 +376,84 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
               <span>{`На сайте с ${formatDate(user.created_at)}`}</span>
             </span>
           </div>
-          <SocialLinks urls={user.socials} />
+        </div>
+      </header>
 
-          {viewer && friendStatus !== 'self' ? (
-            <div className={styles.friendActions}>
+      <div className={styles.headExtra}>
+        <SocialLinks urls={user.socials} />
+
+        {viewer && friendStatus !== 'self' ? (
+          <div className={styles.friendActions}>
+            {can_message ? (
               <Link
                 href={`/me/chat?u=${user.id}`}
-                className="btn btn-ghost"
+                className={styles.ghostAction}
                 aria-label="Написать сообщение"
               >
                 <MessageSquare size={16} />
                 <span className={styles.friendLabel}>Написать</span>
               </Link>
-              {friendStatus === 'none' ? (
+            ) : null}
+            {friendStatus === 'none' ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={friendBusy}
+                aria-label="Добавить в друзья"
+                onClick={() => runFriend('POST', `/friends/${user.id}`, 'Заявка отправлена')}
+              >
+                <UserPlus size={16} />
+                <span className={styles.friendLabel}>Добавить в друзья</span>
+              </button>
+            ) : friendStatus === 'outgoing' ? (
+              <button
+                type="button"
+                className={styles.ghostAction}
+                disabled={friendBusy}
+                aria-label="Отменить заявку"
+                onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отменена')}
+              >
+                <Clock size={16} />
+                <span className={styles.friendLabel}>Отменить заявку</span>
+              </button>
+            ) : friendStatus === 'incoming' ? (
+              <>
                 <button
                   type="button"
                   className="btn btn-primary"
                   disabled={friendBusy}
-                  aria-label="Добавить в друзья"
-                  onClick={() => runFriend('POST', `/friends/${user.id}`, 'Заявка отправлена')}
+                  aria-label="Принять заявку"
+                  onClick={() => runFriend('POST', `/friends/${user.id}/accept`, 'Заявка принята')}
                 >
-                  <UserPlus size={16} />
-                  <span className={styles.friendLabel}>Добавить в друзья</span>
+                  <Check size={16} />
+                  <span className={styles.friendLabel}>Принять заявку</span>
                 </button>
-              ) : friendStatus === 'outgoing' ? (
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className={styles.ghostAction}
                   disabled={friendBusy}
-                  aria-label="Отменить заявку"
-                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отменена')}
+                  aria-label="Отклонить заявку"
+                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отклонена')}
                 >
-                  <Clock size={16} />
-                  <span className={styles.friendLabel}>Отменить заявку</span>
+                  <X size={16} />
+                  <span className={styles.friendLabel}>Отклонить</span>
                 </button>
-              ) : friendStatus === 'incoming' ? (
-                <>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={friendBusy}
-                    aria-label="Принять заявку"
-                    onClick={() => runFriend('POST', `/friends/${user.id}/accept`, 'Заявка принята')}
-                  >
-                    <Check size={16} />
-                    <span className={styles.friendLabel}>Принять заявку</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    disabled={friendBusy}
-                    aria-label="Отклонить заявку"
-                    onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отклонена')}
-                  >
-                    <X size={16} />
-                    <span className={styles.friendLabel}>Отклонить</span>
-                  </button>
-                </>
-              ) : friendStatus === 'friends' ? (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  disabled={friendBusy}
-                  aria-label="Удалить из друзей"
-                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Удалён из друзей')}
-                >
-                  <UserMinus size={16} />
-                  <span className={styles.friendLabelUnfriend}>Удалить из друзей</span>
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </header>
+              </>
+            ) : friendStatus === 'friends' ? (
+              <button
+                type="button"
+                className={styles.ghostAction}
+                disabled={friendBusy}
+                aria-label="Удалить из друзей"
+                onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Удалён из друзей')}
+              >
+                <UserMinus size={16} />
+                <span className={styles.friendLabelUnfriend}>Удалить из друзей</span>
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       {user.bio ? (
         <div className={`glass-panel ${styles.bioPanel}`}>
