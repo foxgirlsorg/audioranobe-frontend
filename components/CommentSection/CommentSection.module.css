@@ -643,7 +643,6 @@ a.inlineMention:hover {
   }
 }
 
-/* Long words, URLs and pasted hashes must wrap instead of stretching the row. */
 .body {
   overflow-wrap: anywhere;
   word-break: break-word;

@@ -29,17 +29,12 @@ export interface ApiOptions {
   params?: Record<string, any>;
 }
 
-// The backend piggybacks the current user onto every response as an X-Me header
-// (base64 Me JSON, empty when signed out) so the app learns auth state from
-// normal traffic instead of probing /me. AuthProvider registers here.
+// Every response carries the current user as an X-Me header (base64 Me JSON,
+// empty when signed out). AuthProvider registers here via onViewer.
 //
-// lastMeHeader guards against a feedback loop: every call notifying the
-// listener triggers a React state update, which can re-render components
-// whose effects depend on the user and fire more API calls — each carrying
-// its own X-Me — amplifying into a flood that exhausts the browser's
-// connection pool. The header is a byte-stable encoding of the same user
-// data, so a plain string compare is enough to only notify on an actual
-// change (sign-in, sign-out, or a profile edit), not on every response.
+// lastMeHeader dedupes: the listener is only notified when the header value
+// actually changes, not on every response — notifying unconditionally can
+// feed back into more API calls and flood the connection pool.
 type ViewerListener = (me: unknown | null) => void;
 let viewerListener: ViewerListener | null = null;
 let lastMeHeader: string | null = null;

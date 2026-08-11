@@ -43,8 +43,6 @@ export default function RegisterPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState('');
-  // The server refuses a second account on one address; the form offers the way
-  // out it is pointing at rather than making the reader find it.
   const [emailTaken, setEmailTaken] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 

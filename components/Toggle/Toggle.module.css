@@ -1,7 +1,5 @@
 /* The site's on/off switch. See Toggle.tsx. */
 
-/* Centred, not top-aligned: with a label and a hint the switch belongs between
-   the two lines rather than beside the first one. */
 .wrap {
   display: inline-flex;
   align-items: center;

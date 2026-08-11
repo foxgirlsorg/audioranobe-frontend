@@ -400,7 +400,6 @@ function ChatInner() {
 
     if (editing) {
       const img = imageUrl.trim();
-      // Emptying an edit deletes the message instead of saving nothing.
       if (!body && !img) {
         void deleteMessage(editing.id);
         return;

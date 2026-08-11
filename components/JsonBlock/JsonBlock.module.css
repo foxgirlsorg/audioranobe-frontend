@@ -54,9 +54,6 @@
 }
 
 /* ---------------------------------------------------------------- tokens */
-/* Hues sit around the coral accent rather than a stock editor theme, so the
-   blocks read as part of the page. All checked against the panel background
-   for contrast; the dimmest (punctuation) is decorative only. */
 
 .key {
   color: #e0919b;

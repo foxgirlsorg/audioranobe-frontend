@@ -1085,10 +1085,6 @@
   }
 }
 
-/*
- * Per-volume archive download: the same icon affordance as a chapter's .dlBtn,
- * sitting in the volume's meta row rather than on a line of its own.
- */
 .volDownload {
   display: inline-flex;
   align-items: center;
@@ -1116,11 +1112,6 @@
 
 /* ---------- quick info ---------- */
 
-/*
- * Replaces the byline + status pills + meta chips. A wrapping row of
- * label-over-value columns: every fact reads the same way, and the row reflows
- * instead of three separate blocks each wrapping on their own.
- */
 /* The scrolling row inside TabScroller: one line, never wrapping. */
 .quickInfo {
   gap: 1.75rem;
@@ -1128,9 +1119,6 @@
 
 .quickInfoWrap {
   width: 100%;
-  /* The edge fades are a mask on the strip (see TabScroller.module.css), so
-     they fade the facts themselves rather than painting --bg over the blurred
-     cover behind them. */
   margin-inline: -2px;
 }
 
@@ -1211,8 +1199,6 @@
   color: var(--text-muted);
 }
 
-/* One line, because the toggle takes the second: the block is never taller than
-   two lines whether the tags fit or not. */
 .tagsClamped {
   display: -webkit-box;
   -webkit-line-clamp: 1;

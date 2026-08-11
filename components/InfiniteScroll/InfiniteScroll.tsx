@@ -8,10 +8,6 @@ import styles from './InfiniteScroll.module.css';
 /**
  * The foot of an infinite list: a sentinel that asks for the next page when it
  * scrolls into view, and a retry button when that request failed.
- *
- * The observer is armed with a generous margin so the next page is already on
- * its way before the reader reaches the end, and disarmed while an error is
- * showing — otherwise a failing endpoint would be hammered once per scroll tick.
  */
 export default function InfiniteScroll({
   hasMore,

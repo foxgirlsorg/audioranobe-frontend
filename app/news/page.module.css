@@ -100,8 +100,6 @@
   line-height: 1.7;
   white-space: pre-line;
   overflow-wrap: break-word;
-  /* A listing is a listing: a long post gets four lines and a «читать» link,
-     rather than pushing every item below it off the screen. */
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;

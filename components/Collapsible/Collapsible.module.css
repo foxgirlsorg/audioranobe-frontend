@@ -11,9 +11,6 @@
   min-width: 0;
 }
 
-/* A mask rather than a gradient overlay: the post sits on a glass panel whose
-   backdrop is whatever is behind it, so a fade painted in any one colour would
-   be a band across the panel instead of the text trailing off. */
 .clipped {
   overflow: hidden;
   -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);

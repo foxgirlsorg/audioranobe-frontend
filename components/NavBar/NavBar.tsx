@@ -82,9 +82,6 @@ export default function NavBar() {
   const pathname = usePathname();
   const { user, loading, logout, isMod } = useAuth();
   const away = useAway();
-  // All three badge counts come from the shared BadgesProvider poll (one request
-  // for the whole navbar), instead of this component mirroring ChatButton's and
-  // NotificationBell's polls plus its own friend-request poll.
   const { messages: msgCount, notifications: notifCount, friend_requests: friendReq } = useBadges();
   const { toast } = useToast();
 
@@ -412,9 +409,6 @@ export default function NavBar() {
     setAddOpen(true);
   };
 
-  // Shared between the desktop dropdown and the mobile floating search — one
-  // suggestion renderer backed by the same q/sug state, so there is exactly
-  // one search implementation rather than two independently maintained ones.
   const renderResults = () => (
     <>
       {flatItems.length === 0 && <div className={styles.emptySug}>{'Ничего не найдено'}</div>}
@@ -590,19 +584,11 @@ export default function NavBar() {
                       {friendReq > 99 ? '99+' : friendReq}
                     </span>
                   )}
-                  {/* Desktop/tablet: anchored dropdown, normal flow inside userWrap. */}
                   {userMenuOpen && !isMobile && (
                     <div className={styles.userMenu}>{renderAccountMenuContent()}</div>
                   )}
                 </div>
 
-                {/* True mobile: a full-height sidebar portalled to <body>, so its
-                    position:fixed is relative to the viewport rather than to
-                    .nav's containing block (a backdrop-filter on .scrolled
-                    otherwise hijacks it — see mobileMenuRef above). It stays
-                    mounted and toggles a class so CSS can animate both the
-                    slide-in and the slide-out; pointer-events/visibility flip
-                    back to hidden once the exit transition ends. */}
                 {isMobile && mounted
                   ? createPortal(
                       <>
@@ -638,9 +624,6 @@ export default function NavBar() {
             )}
           </div>
 
-          {/* Signed in: the burger's contents (Разделы + Случайный) live in the
-              account menu instead — see userLinks below. Signed out has no
-              avatar to hold them, so the burger stays. */}
           {!user ? (
             <button
               type="button"
@@ -726,10 +709,6 @@ export default function NavBar() {
             </button>
           </nav>
 
-          {/* Signed in: account actions already live in the avatar dropdown,
-              which stays visible on mobile — repeating them here would just be
-              the same links twice. Signed out has no avatar to fall back to,
-              so Войти/Регистрация still need a home in the burger. */}
           {!user ? (
             <>
               <div className={styles.overlaySep} />

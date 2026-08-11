@@ -76,12 +76,9 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   color: var(--text);
-  /* A long base URL or curl line scrolls inside the box instead of widening
-     the page on a phone. */
   overflow-x: auto;
   white-space: nowrap;
 }
-
 
 .copy {
   flex: none;

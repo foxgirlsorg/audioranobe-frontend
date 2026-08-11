@@ -1,8 +1,3 @@
-/*
- * Deliberately NOT the coral accent. Everything else on the site is some tint of
- * #de6161; this one has to read as a warning rather than as decoration, so it
- * gets its own red and a solid fill.
- */
 .badge {
   display: inline-flex;
   align-items: center;

@@ -349,8 +349,6 @@
   background: rgba(95, 191, 127, 0.08);
 }
 
-/* Hint under a form field — smaller and dimmer than .panelHint, which sits in
-   a panel header rather than beneath an input. */
 .fieldHint {
   font-size: 11.5px;
   line-height: 1.6;

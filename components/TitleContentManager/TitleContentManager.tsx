@@ -170,12 +170,8 @@ export default function TitleContentManager({
     }
   }, [title]);
 
-  // Counted server-side across the whole title, not over the page: the running
-  // jobs may well be on a page nobody is looking at.
   const activeJobs = jobs?.active ?? 0;
 
-  // One request per tick for the page on screen, rather than one per job or one
-  // for every job the title has ever had.
   useEffect(() => {
     if (activeJobs === 0) return;
     const t = window.setInterval(async () => {

@@ -25,10 +25,6 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.svg' },
 };
 
-// viewportFit: 'cover' lets the page draw under the notch/home-indicator area
-// on iOS/Android so env(safe-area-inset-*) actually resolves to a real value
-// instead of 0 — needed so the fixed player bar can pad itself above the
-// gesture nav bar instead of sitting flush against it.
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,

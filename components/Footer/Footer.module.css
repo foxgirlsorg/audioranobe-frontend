@@ -4,13 +4,6 @@
   background: rgba(14, 14, 16, 0.5);
 }
 
-/*
- * Clearance for the docked player bar. It used to live on <body>, which put the
- * gap *below* the footer — so with a player on you could scroll past the end of
- * the page into a strip of empty background. Growing the footer instead keeps
- * the document ending where the footer ends: its last 100-odd pixels simply sit
- * behind the bar.
- */
 :global(body.has-player) .footer {
   padding-bottom: calc(var(--player-height) + 12px);
 }
@@ -153,8 +146,6 @@
     width: 100%;
   }
 
-  /* Two even columns rather than three uneven ones squeezed onto a phone; the
-     contacts, whose labels are longest, take the full width underneath. */
   .cols {
     display: grid;
     grid-template-columns: 1fr 1fr;

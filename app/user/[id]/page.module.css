@@ -144,9 +144,6 @@
   padding-bottom: 0.35rem;
 }
 
-/* Social links + friend actions live outside .head so they can break out to
-   full container width on mobile instead of being squeezed into the narrow
-   column beside the avatar. Indented to sit under the name on desktop. */
 .headExtra {
   display: flex;
   flex-direction: column;
@@ -190,8 +187,6 @@
   display: contents;
 }
 
-/* The same separator the narrator header uses — a literal "•" sits on the text
-   baseline at a different weight and read as a third fact rather than a divider. */
 .metaDot {
   width: 3px;
   height: 3px;
@@ -282,16 +277,7 @@
   margin-top: 1.5rem;
 }
 
-/* ---------- library status rail ----------
-   Deliberately not a second <Tabs>: stacking two identical pill bars made the
-   secondary filter compete with the section tabs above it. Flat chips on a
-   hairline rule keep the hierarchy readable — same accent, a third of the
-   visual weight. */
-
-/* One row, always: on a narrow screen the rail scrolls sideways instead of
-   wrapping onto a second line, which pushed the list down and broke the
-   hairline rule in two. Scrollbar hidden — the chips themselves are the
-   affordance. */
+/* ---------- library status rail ---------- */
 .statusRail {
   display: flex;
   align-items: center;
@@ -381,8 +367,6 @@
   border-color: var(--border-hover);
 }
 
-/* The accent belongs to the target name, but the whole card is the link now, so
-   hovering anywhere has to light it up — otherwise only the name looks clickable. */
 .commentCard:hover .commentTarget {
   color: var(--accent-hover);
 }
@@ -587,10 +571,6 @@
   display: none;
 }
 
-/* One row spanning the full width — there's room now that these aren't
-   squeezed into the column beside the avatar. Each control shares the row
-   equally; its label ellipsizes rather than wrapping or breaking the row if
-   it doesn't fit. */
 @media (max-width: 768px) {
   .friendActions {
     flex-wrap: nowrap;

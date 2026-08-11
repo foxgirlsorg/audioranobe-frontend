@@ -7,13 +7,7 @@ import type { Paginated } from '@/lib/types';
 /**
  * A paginated endpoint read as one growing list.
  *
- * `fetchPage` must be a useCallback: its identity is the reset signal, so a
- * changed filter or search term starts the list over rather than appending
- * someone else's rows to it.
- *
- * A failure to load *more* is kept apart from a failure to load the first page:
- * the first is a retry button under rows the reader can still use, the second is
- * an empty screen.
+ * `fetchPage` must be a useCallback: its identity is used as the reset signal.
  */
 export function useInfiniteList<T>(fetchPage: (page: number) => Promise<Paginated<T>>) {
   const [items, setItems] = useState<T[] | null>(null);

@@ -56,11 +56,6 @@
   color: var(--accent, #de6161);
 }
 
-/*
- * Icon-only variant: just the heart and its tally, no chrome. It sits beside a
- * filled primary button, and a second bordered pill there read as a second
- * equally-important action rather than as a count you can click.
- */
 .compact {
   gap: 6px;
   padding: 0.65rem 0.35rem;

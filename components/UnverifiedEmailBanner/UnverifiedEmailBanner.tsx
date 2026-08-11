@@ -14,9 +14,6 @@ export default function UnverifiedEmailBanner() {
 
   const shown = !!user && !user.email_verified && !user.is_banned && mailEnabled;
 
-  // The banner is fixed under the nav bar, so the page has to be told how far
-  // down to start. Measured rather than assumed: the text wraps to two lines on
-  // a phone.
   useEffect(() => {
     const el = ref.current;
     if (!shown || !el) {

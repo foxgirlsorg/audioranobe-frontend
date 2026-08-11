@@ -1113,7 +1113,6 @@
    AudioRanobe additions on top of the vendored sheet.
    ========================================================================== */
 
-/* Links and mentions follow the accent rather than GitHub's blue. */
 .markdown-body a {
     transition: color 0.2s ease;
 }
@@ -1132,11 +1131,6 @@
     text-decoration: underline;
 }
 
-/*
- * ||Spoiler|| — a marked extension, so it nests inside any inline markdown.
- * Blurred and unselectable until clicked; Markdown.tsx flips .md-spoiler-open
- * on the clicked element (delegated, because the HTML is set imperatively).
- */
 .markdown-body .md-spoiler {
     padding: 0 0.15em;
     border-radius: 3px;

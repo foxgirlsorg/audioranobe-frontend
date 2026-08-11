@@ -369,8 +369,6 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
             {user.display_name ? <span>@{user.username}</span> : null}
             <span className={styles.metaDot} aria-hidden="true" />
             <span>{presenceLabel(user.presence, user.last_seen_at)}</span>
-            {/* Cut on mobile — with username/presence already competing for one
-                line, the join date is the least essential fact here. */}
             <span className={styles.joinedSince}>
               <span className={styles.metaDot} aria-hidden="true" />
               <span>{`На сайте с ${formatDate(user.created_at)}`}</span>

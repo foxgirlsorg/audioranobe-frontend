@@ -137,11 +137,6 @@
   border-top: 1px solid var(--border);
 }
 
-/*
- * The slim variant has no toolbar of its own — the icons share the footer with
- * the counter and the submit button, so the box reads as a textarea with a
- * single row of controls rather than a form.
- */
 .slimTools {
   display: inline-flex;
   align-items: center;

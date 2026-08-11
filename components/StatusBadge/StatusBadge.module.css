@@ -12,8 +12,6 @@
   line-height: 1.6;
 }
 
-/* Muted, translucent semantic tones — deliberately quieter than the brand accent. */
-
 .amber {
   color: #d4b26a;
   background: rgba(201, 162, 82, 0.1);

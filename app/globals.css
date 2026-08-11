@@ -1,12 +1,3 @@
-/*
- * Inter, self-hosted from /public/fonts. Two variable files covering the whole
- * weight axis, so `font-weight: 300` (display headings) and `700` (micro-labels)
- * come from the same download rather than separate static cuts.
- *
- * The italic face is a separate @font-face, so the browser only fetches it if
- * italic text is actually rendered. The filenames contain a comma, which url()
- * cannot take unquoted.
- */
 @font-face {
   font-family: 'Inter';
   src: url('/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
@@ -102,10 +93,6 @@ body.has-notice {
   --nav-total: calc(var(--nav-height) + var(--notice-height));
 }
 
-/* While a horizontal rail is being dragged (see components/DragScroll). The
-   cursor is forced past the link and button rules the pointer is travelling
-   over, so the whole gesture reads as one grab rather than flickering between
-   a hand and a pointer. */
 body.drag-scrolling,
 body.drag-scrolling * {
   cursor: grabbing !important;

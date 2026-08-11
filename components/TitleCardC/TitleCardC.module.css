@@ -99,8 +99,6 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
 }
 
-/* Matched to AiBadge, deliberately — the two sit shoulder to shoulder, and any
-   difference in padding, radius or type size reads as a mistake at that size. */
 .nsfwBadge {
   display: inline-flex;
   align-items: center;

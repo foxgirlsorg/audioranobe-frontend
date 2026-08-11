@@ -75,12 +75,6 @@
 
 /* ---------- search ---------- */
 
-/*
- * Fixed width, deliberately. It used to be capped at a vw fraction, so between
- * about 1044px and the mobile breakpoint the field shrank a little further with
- * every pixel until the placeholder no longer fit. Below 1044 the primary links
- * go instead — they are one tap away in the burger, the search box is not.
- */
 .search {
   position: relative;
   margin-left: auto;
@@ -715,12 +709,6 @@
 
 /* ---------- responsive ---------- */
 
-/*
- * Measured: logo + links + a 300px search + the signed-out auth buttons need a
- * 1172px viewport. Below that the links go rather than the search — they are one
- * tap away in the burger, and a search field that shrinks with every pixel stops
- * fitting its own placeholder long before the breakpoint.
- */
 @media (max-width: 1179px) {
   .links {
     display: none;
@@ -800,21 +788,6 @@
 
 }
 
-/*
- * True mobile: a separate block, not a squeezed-down .userMenu — a 214px
- * popover reading "вы вошли как" plus catalog links plus every narrator you
- * own doesn't fit anchored to a thumb-sized avatar. Portalled to <body> (see
- * NavBar.tsx) rather than nested in .userWrap, so this position:fixed sidebar
- * is anchored to the viewport even once .nav picks up its .scrolled
- * backdrop-filter — a filter/backdrop-filter on an ancestor creates its own
- * containing block for fixed descendants, which silently broke the nested
- * version everywhere except right at the top of the page.
- */
-/* Dims and blurs the page behind the sidebar — also the tap-to-close target,
-   backing up the outside-mousedown handler with an explicit affordance. The
-   overlay stays mounted on mobile, so open/close are both plain transitions
-   rather than mount-time keyframes: the closed state is hidden with opacity +
-   visibility (visibility flips late so the fade-out is visible). */
 .userMenuBackdrop {
   position: fixed;
   inset: 0;
@@ -836,12 +809,6 @@
   transition: opacity 0.25s ease;
 }
 
-/* Same translucent-blur treatment as .nav's own .scrolled state (which the
-   header forces on while this is open — see NavBar.tsx) so the sidebar reads
-   as the navbar continuing downward rather than an unrelated floating card.
-   Slides out by dropping .userMenuMobileOpen: the base class already sits at
-   translateX(100%), so removing the modifier animates it back off-screen and
-   visibility hides it once the transition completes. */
 .userMenuMobile {
   position: fixed;
   top: var(--nav-total, 72px);

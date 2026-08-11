@@ -172,7 +172,6 @@
   }
 }
 
-/* "Только завершённые" — a checkbox row rather than another select. */
 .checkRow {
   display: flex;
   align-items: flex-start;

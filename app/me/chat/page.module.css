@@ -609,12 +609,6 @@
 
 .bubbleImage {
   display: block;
-  /* A percentage here (min(280px, 100%)) is unresolvable during the browser's
-     intrinsic-size pass, which makes it fall back to an aspect-ratio-derived
-     width from max-height instead of the 280px cap — inflating the bubble and
-     leaving asymmetric right padding on image-only messages. vw is a definite
-     length so it avoids that; final layout is still bounded by .bubble's own
-     max-width and .messages' overflow-x: hidden. */
   max-width: min(280px, 90vw);
   max-height: 300px;
   border-radius: 10px;
@@ -632,10 +626,6 @@
   color: var(--text-muted, #9a9a9a);
 }
 
-/* Nested at the end of plain-text bubbleText content, this floats so the last
-   line of text wraps around it — same row when there's room, its own row
-   otherwise. Only usable inside inline text flow (not the standalone image
-   layout, which keeps .meta below the image). */
 .metaInline {
   float: right;
   display: inline-flex;

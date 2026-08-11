@@ -105,8 +105,6 @@
   animation: selectIn 0.14s var(--ease-smooth);
 }
 
-/* Flipped when there is no room below (see the layout effect in Select.tsx);
-   the inline style supplies `bottom` instead of `top`. */
 .menuUp {
   transform-origin: bottom;
 }

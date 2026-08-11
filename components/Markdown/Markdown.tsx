@@ -32,11 +32,8 @@ marked.use({
   ],
 } as Parameters<typeof marked.use>[0]);
 
-// The preprocessors below build raw HTML that is injected via
-// dangerouslySetInnerHTML with no downstream sanitizer, so every interpolated
-// user value MUST be escaped here — otherwise e.g. an image's alt text can carry
-// an `onerror=` attribute and execute. `marked` escapes the values it renders
-// itself; this covers the HTML we hand-build before it.
+// Every interpolated user value in the preprocessors below MUST be escaped
+// via this function before being injected into raw HTML.
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) =>
     c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;',

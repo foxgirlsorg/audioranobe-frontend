@@ -32,11 +32,10 @@ const ZERO: Badges = { messages: 0, notifications: 0, friend_requests: 0 };
 const BadgesContext = createContext<BadgesValue | null>(null);
 
 /**
- * One poll for every navbar badge (messages, notifications, friend requests).
- * Replaces the five separate/duplicated count polls those components used to run
- * — a single GET /me/summary, shared via context. Skips entirely while the tab
- * is hidden (backgrounded tabs make zero requests) and catches up on
- * visibility, navigation, and friend-graph changes.
+ * One poll for every navbar badge (messages, notifications, friend requests),
+ * via a single GET /me/summary shared through context. Skips entirely while
+ * the tab is hidden and catches up on visibility, navigation, and
+ * friend-graph changes.
  */
 export function BadgesProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const { user } = useAuth();
