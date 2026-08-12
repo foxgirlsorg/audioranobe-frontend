@@ -154,6 +154,19 @@ export default function TitlePageClient({
     void load();
   }, [load]);
 
+  // The SSR response may have been served from Cloudflare's public cache
+  // (can_edit: false, my_rating/my_library/my_favorite: null) even for the
+  // page owner.  Once auth resolves and we know who the viewer is, silently
+  // re-fetch so those user-specific fields reflect the real session.
+  const didUserRefetch = useRef(false);
+  useEffect(() => {
+    if (!user || didUserRefetch.current) return;
+    didUserRefetch.current = true;
+    api<TitleFull>(`/titles/${encodeURIComponent(slug)}`)
+      .then(setTitle)
+      .catch(() => {}); // best-effort; stale data is better than an error flash
+  }, [user, slug]);
+
   usePageTitle(title?.name);
 
   useEffect(() => {
