@@ -41,6 +41,11 @@ let lastMeHeader: string | null = null;
 
 export function onViewer(fn: ViewerListener | null): void {
   viewerListener = fn;
+  // Reset the dedup guard whenever the listener is cleared.  If the
+  // AuthProvider unmounts and remounts (e.g. React StrictMode double-invoke
+  // or a future layout change), the next API response must fire the listener
+  // even when it carries the same X-Me value as the previous one.
+  if (fn === null) lastMeHeader = null;
 }
 
 function decodeViewer(header: string): unknown | null {

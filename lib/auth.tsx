@@ -38,16 +38,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // The session lives in an HttpOnly cookie JS can't read. Rather than probe
-    // /me on boot, we listen for the X-Me header the backend attaches to every
-    // response and pick up auth state from the page's own data requests (the
-    // home page's /home, a title's /titles/:slug, etc.).
+    // Primary path: every credentialed API response ships an X-Me header.
+    // This listener fires and resolves loading without an extra round-trip.
     onViewer((me) => {
       setUser((me as Viewer | null) ?? null);
       setLoading(false);
     });
+
+    // Fallback: on SSR pages (title pages, narrator pages, …) the client
+    // component skips its initial fetch because the server already returned
+    // data.  ConfigProvider's /config call uses publicCache which suppresses
+    // X-Me.  BadgesProvider won't poll until user is set.  Nothing else fires
+    // on mount — so the primary listener never gets called and loading stays
+    // true forever, hiding the NavBar and freezing /edit pages.
+    //
+    // setTimeout(0) runs after all synchronous effects in this render cycle.
+    // If an API call returns X-Me in the meantime (normal SPA navigation), the
+    // listener above already set loading = false; the /me call below is a
+    // harmless no-op since setLoading / setUser are idempotent.
+    const t = window.setTimeout(async () => {
+      try {
+        const me = await api<Me>('/me');
+        setUser((me as Viewer | null) ?? null);
+      } catch {
+        // 401 = not logged in; network error = treat as logged out.
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    }, 0);
+
     return () => {
       onViewer(null);
+      window.clearTimeout(t);
     };
   }, []);
 
