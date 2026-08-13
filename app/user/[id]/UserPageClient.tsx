@@ -283,6 +283,19 @@ export default function UserPageClient({
     };
   }, [userRef]);
 
+  const didViewerRefetch = useRef(false);
+  useEffect(() => {
+    if (!viewer || didViewerRefetch.current) return;
+    didViewerRefetch.current = true;
+    api<UserProfile>(`/users/${encodeURIComponent(userRef)}`)
+      .then((p) => {
+        setProfile(p);
+        setFriendStatus(p.friendship.status);
+        setFriendsCount(p.friendship.friends_count);
+      })
+      .catch(() => {});
+  }, [viewer, userRef]);
+
   if (loading) {
     return <UserPageSkeleton />;
   }

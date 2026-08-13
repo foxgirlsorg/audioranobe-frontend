@@ -121,6 +121,18 @@ export default function NarratorPageClient({
     };
   }, [slug]);
 
+  const didUserRefetch = useRef(false);
+  useEffect(() => {
+    if (!user || didUserRefetch.current) return;
+    didUserRefetch.current = true;
+    api<NarratorFull>(`/narrators/${encodeURIComponent(slug)}`)
+      .then((n) => {
+        setNarrator(n);
+        setCanEdit(n.can_edit);
+      })
+      .catch(() => {});
+  }, [user, slug]);
+
   if (loading) {
     return <NarratorPageSkeleton />;
   }
