@@ -391,7 +391,7 @@ export default function UserPageClient({
       <div className={styles.headExtra}>
         <SocialLinks urls={user.socials} />
 
-        {viewer && friendStatus !== 'self' ? (
+        {viewer && !isOwnProfile ? (
           <div className={styles.friendActions}>
             {can_message ? (
               <Link
