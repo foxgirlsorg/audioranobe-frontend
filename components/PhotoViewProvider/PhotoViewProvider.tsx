@@ -7,7 +7,7 @@
 // the toolbar so app/layout.tsx (a server component) never has to pass a
 // function prop across the boundary.
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { PhotoProvider as BasePhotoProvider } from 'react-photo-view';
 import { ZoomIn, ZoomOut, RotateCw, Download } from 'lucide-react';
 import styles from './PhotoViewProvider.module.css';
@@ -15,10 +15,26 @@ import styles from './PhotoViewProvider.module.css';
 export { PhotoView } from 'react-photo-view';
 
 export function PhotoProvider({ children }: { children: React.ReactNode }) {
+  // react-photo-view has no history awareness: back/forward changes the route
+  // underneath it, but the modal itself has no imperative close API, so it's
+  // left floating over whatever page navigation landed on. Closing it mirrors
+  // pressing Escape — the one path the library already uses to dismiss itself.
+  const visibleRef = useRef(false);
+  useEffect(() => {
+    const onPopState = () => {
+      if (visibleRef.current) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   return (
     <BasePhotoProvider
       maskOpacity={1}
       bannerVisible
+      onVisibleChange={(visible) => {
+        visibleRef.current = visible;
+      }}
       toolbarRender={({ scale, onScale, rotate, onRotate, images, index }) => {
         const src = images[index]?.src;
         return (
