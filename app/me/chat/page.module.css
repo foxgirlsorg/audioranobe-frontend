@@ -247,10 +247,6 @@
   color: #4bcf7a;
 }
 
-.presence_away {
-  color: #e0a13c;
-}
-
 /* Wrapper anchors the floating jump-to-latest button to the message area (above
    the composer) regardless of the composer's changing height. */
 .messagesWrap {

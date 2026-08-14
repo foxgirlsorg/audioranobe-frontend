@@ -74,14 +74,10 @@ export function lastSeen(iso: string): string {
 
 /**
  * Human presence label (RU). Uses the "был(а)" parenthetical convention so it
- * reads for any gender. `away` = signed in but idle/backgrounded.
+ * reads for any gender.
  */
-export function presenceLabel(
-  status: 'online' | 'away' | 'offline',
-  lastSeenAt?: string | null
-): string {
+export function presenceLabel(status: 'online' | 'offline', lastSeenAt?: string | null): string {
   if (status === 'online') return 'в сети';
-  if (status === 'away') return 'нет на месте';
   return lastSeenAt ? `был(а) в сети ${lastSeen(lastSeenAt)}` : 'не в сети';
 }
 

@@ -61,7 +61,7 @@ export type ModRequestAction = 'create' | 'update' | 'delete' | 'transfer';
 export type ModRequestStatus = 'pending' | 'approved' | 'rejected';
 export type ModRequestEntityType = 'narrator' | 'title' | 'chapter' | 'author';
 
-export type PresenceStatus = 'online' | 'away' | 'offline';
+export type PresenceStatus = 'online' | 'offline';
 
 export interface UserBrief {
   username: string;

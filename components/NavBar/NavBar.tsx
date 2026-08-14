@@ -30,7 +30,6 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { useAway } from '@/lib/presence';
 import { useBadges } from '@/lib/badges';
 import { useMyNarrators } from '@/lib/narrators';
 import { errMsg, useToast } from '@/lib/toast';
@@ -82,7 +81,6 @@ export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, logout, isMod } = useAuth();
-  const away = useAway();
   const { messages: msgCount, notifications: notifCount, friend_requests: friendReq } = useBadges();
   const { toast } = useToast();
   const { request: requestNarration, pendingSlug: narrPending } = useRequestNarration();
@@ -608,7 +606,7 @@ export default function NavBar() {
                   >
                     {avatar()}
                   </button>
-                  <PresenceDot status={away ? 'away' : 'online'} size={9} className={styles.presenceDot} />
+                  <PresenceDot status="online" size={9} className={styles.presenceDot} />
                   {friendReq > 0 && (
                     <span className={styles.friendBadge} aria-hidden="true">
                       {friendReq > 99 ? '99+' : friendReq}

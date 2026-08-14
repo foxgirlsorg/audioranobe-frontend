@@ -4,10 +4,10 @@ import { presenceLabel } from '@/lib/format';
 import styles from './PresenceDot.module.css';
 
 /**
- * The status dot: green (online), amber (away), gray (offline). Offline is
- * hidden by default — callers that want a persistent placeholder pass
- * showOffline. Designed to sit as an overlay on an avatar (position it via the
- * parent) or inline next to a label.
+ * The status dot: green (online), gray (offline). Offline is hidden by
+ * default — callers that want a persistent placeholder pass showOffline.
+ * Designed to sit as an overlay on an avatar (position it via the parent) or
+ * inline next to a label.
  */
 export default function PresenceDot({
   status,
