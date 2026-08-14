@@ -137,6 +137,10 @@ export default function TitleContentManager({
 
   const [selected, setSelected] = useState<number[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkEditVolume, setBulkEditVolume] = useState('');
+  const [bulkEditChangeNarr, setBulkEditChangeNarr] = useState(false);
+  const [bulkEditNarrIds, setBulkEditNarrIds] = useState<number[]>([]);
   const [selectionAction, setSelectionAction] = useState<
     'approve' | 'reject' | 'delete' | 'purge' | null
   >(null);
@@ -455,6 +459,37 @@ export default function TitleContentManager({
     }
   }
 
+  async function submitBulkEdit() {
+    if (selected.length === 0) return;
+    const body: { chapter_ids: number[]; volume_id?: number; narrator_ids?: number[] } = {
+      chapter_ids: selected,
+    };
+    if (bulkEditVolume) body.volume_id = Number(bulkEditVolume);
+    if (bulkEditChangeNarr) body.narrator_ids = bulkEditNarrIds;
+    if (body.volume_id === undefined && body.narrator_ids === undefined) {
+      toast('Выберите том или отметьте смену чтецов', 'error');
+      return;
+    }
+    setBulkBusy(true);
+    try {
+      const res = await api<{ updated: number }>(`/panel/titles/${titleId}/chapters/bulk-edit`, {
+        method: 'POST',
+        body,
+      });
+      toast(`Изменено глав: ${res?.updated ?? selected.length}`);
+      setBulkEditOpen(false);
+      setBulkEditVolume('');
+      setBulkEditChangeNarr(false);
+      setBulkEditNarrIds([]);
+      setSelected([]);
+      await onReload();
+    } catch (err) {
+      toast(errMsg(err), 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
   async function submitBulkReview() {
     if (!bulkReview) return;
     const { decision, volume, ids } = bulkReview;
@@ -661,6 +696,20 @@ export default function TitleContentManager({
                 </button>
               </>
             ) : null}
+            <button
+              type="button"
+              className="btn"
+              disabled={bulkBusy}
+              onClick={() => {
+                setBulkEditVolume('');
+                setBulkEditChangeNarr(false);
+                setBulkEditNarrIds([]);
+                setBulkEditOpen(true);
+              }}
+            >
+              <Layers size={15} />
+              Том / чтецы
+            </button>
             <button
               type="button"
               className="btn btn-danger"
@@ -1360,6 +1409,66 @@ export default function TitleContentManager({
         }
         danger
       />
+
+      <Modal
+        open={bulkEditOpen}
+        onClose={() => setBulkEditOpen(false)}
+        title="Изменить выбранные главы"
+      >
+        <div className={styles.reviewDialog}>
+          <p className={styles.reviewBody}>
+            {`Изменения применятся к выбранным главам (${selected.length}) одним запросом.`}
+          </p>
+          <div className={styles.bulkField}>
+            <label className={styles.label} htmlFor="be-volume">
+              Переместить в том
+            </label>
+            <Select
+              id="be-volume"
+              block
+              value={bulkEditVolume}
+              placeholder="— не менять —"
+              disabled={title.volumes.length === 0}
+              options={title.volumes.map((v) => ({
+                value: String(v.id),
+                label: `Том ${v.number}${v.name ? ` — ${v.name}` : ''}`,
+              }))}
+              onChange={setBulkEditVolume}
+            />
+          </div>
+          {title.narrators.length > 0 ? (
+            <div className={styles.bulkField}>
+              <Toggle
+                checked={bulkEditChangeNarr}
+                onChange={setBulkEditChangeNarr}
+                label="Изменить чтецов"
+                hint="Заменит список чтецов у выбранных глав"
+              />
+              {bulkEditChangeNarr ? (
+                <ChapterNarratorPicker
+                  all={title.narrators}
+                  value={bulkEditNarrIds}
+                  onChange={setBulkEditNarrIds}
+                />
+              ) : null}
+            </div>
+          ) : null}
+          <div className={styles.bulkRow}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={bulkBusy}
+              onClick={() => void submitBulkEdit()}
+            >
+              <Check size={15} />
+              Применить
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => setBulkEditOpen(false)}>
+              Отмена
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={bulkReview !== null}
