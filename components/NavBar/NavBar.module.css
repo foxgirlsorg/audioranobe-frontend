@@ -129,6 +129,44 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   max-height: 70vh;
   overflow-y: auto;
+  transform-origin: top;
+  animation: menu-in 0.16s var(--ease-smooth);
+}
+
+.dropdownOut {
+  animation: menu-out 0.14s var(--ease-smooth) forwards;
+}
+
+/* Shared by .dropdown (search suggestions) and .userMenu (account menu) below —
+   CSS Modules scopes keyframe names per file, so both animate off this one
+   pair rather than a global definition. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes menu-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown,
+  .dropdownOut {
+    animation: none;
+  }
 }
 
 .groupLabel {
@@ -427,6 +465,19 @@
      never runs past the viewport — it scrolls internally instead. */
   max-height: calc(100vh - var(--nav-total, 72px) - 24px);
   overflow-y: auto;
+  transform-origin: top right;
+  animation: menu-in 0.16s var(--ease-smooth);
+}
+
+.userMenuOut {
+  animation: menu-out 0.14s var(--ease-smooth) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .userMenu,
+  .userMenuOut {
+    animation: none;
+  }
 }
 
 .menuHead {
@@ -538,12 +589,32 @@
   animation: overlay-in 0.25s ease;
 }
 
+.overlayOut {
+  animation: overlay-out 0.2s ease forwards;
+}
+
 @keyframes overlay-in {
   from {
     opacity: 0;
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .overlayOut {
+    animation: none;
   }
 }
 
@@ -655,6 +726,17 @@
   justify-content: center;
   padding: 0 1rem;
   animation: overlay-in 0.2s ease;
+}
+
+.searchOverlayOut {
+  animation: overlay-out 0.16s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchOverlay,
+  .searchOverlayOut {
+    animation: none;
+  }
 }
 
 .searchPanel {

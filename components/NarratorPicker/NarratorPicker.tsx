@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Mic, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import type { NarratorCard, Paginated } from '@/lib/types';
 import styles from '@/components/GenrePicker/GenrePicker.module.css';
 
@@ -65,6 +66,7 @@ export default function NarratorPicker({
     () => results.filter((n) => !selectedIds.includes(n.id)).slice(0, 20),
     [results, selectedIds]
   );
+  const dropdownMounted = useAnimatedPresence(open, 140);
 
   const add = (n: NarratorRef) => {
     if (!selectedIds.includes(n.id)) onChange([...value, n]);
@@ -128,8 +130,8 @@ export default function NarratorPicker({
         />
       </div>
 
-      {open ? (
-        <div className={styles.dropdown} role="listbox">
+      {dropdownMounted ? (
+        <div className={`${styles.dropdown} ${open ? '' : styles.dropdownOut}`} role="listbox">
           {matches.length === 0 ? (
             <div className={styles.option} aria-disabled="true">
               <span>{loading ? 'Ищем…' : 'Ничего не найдено'}</span>

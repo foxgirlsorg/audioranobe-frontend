@@ -53,6 +53,41 @@
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  transform-origin: top right;
+  animation: menu-in 0.16s var(--ease-smooth);
+}
+
+.menuOut {
+  animation: menu-out 0.14s var(--ease-smooth) forwards;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes menu-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .menuOut {
+    animation: none;
+  }
 }
 
 .head {

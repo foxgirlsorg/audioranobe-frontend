@@ -5,6 +5,7 @@ import { Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { LIMITS } from '@/lib/limits';
 import { errMsg, useToast } from '@/lib/toast';
+import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import type { Genre, Paginated } from '@/lib/types';
 import styles from './GenrePicker.module.css';
 
@@ -77,6 +78,8 @@ export default function GenrePicker({
 
   const exactExists = genres.some((g) => g.name.trim().toLowerCase() === q);
   const canCreate = allowCreate && q.length > 0 && !exactExists;
+  const dropdownShown = open && (matches.length > 0 || canCreate);
+  const dropdownMounted = useAnimatedPresence(dropdownShown, 140);
 
   const add = (g: Genre) => {
     if (!value.includes(g.id)) onChange([...value, g.id]);
@@ -156,8 +159,8 @@ export default function GenrePicker({
         />
       </div>
 
-      {open && (matches.length > 0 || canCreate) ? (
-        <div className={styles.dropdown} role="listbox">
+      {dropdownMounted ? (
+        <div className={`${styles.dropdown} ${dropdownShown ? '' : styles.dropdownOut}`} role="listbox">
           {matches.map((g) => (
             <button key={g.id} type="button" className={styles.option} onClick={() => add(g)}>
               <span>{g.name}</span>

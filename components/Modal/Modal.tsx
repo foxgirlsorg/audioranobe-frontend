@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import styles from './Modal.module.css';
 
 export function Modal({
@@ -19,6 +20,7 @@ export function Modal({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const showMounted = useAnimatedPresence(open, 180);
 
   useEffect(() => {
     setMounted(true);
@@ -38,17 +40,21 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!mounted || !open) return null;
+  if (!mounted || !showMounted) return null;
 
   return createPortal(
     <div
-      className={`${styles.overlay}${size === 'wide' ? ` ${styles.overlayWide}` : ''}`}
+      className={[styles.overlay, size === 'wide' ? styles.overlayWide : '', open ? '' : styles.overlayOut]
+        .filter(Boolean)
+        .join(' ')}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className={`${styles.panel}${size === 'wide' ? ` ${styles.panelWide}` : ''}`}
+        className={[styles.panel, size === 'wide' ? styles.panelWide : '', open ? '' : styles.panelOut]
+          .filter(Boolean)
+          .join(' ')}
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Диалог'}

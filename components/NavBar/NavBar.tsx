@@ -34,6 +34,7 @@ import { useBadges } from '@/lib/badges';
 import { useMyNarrators } from '@/lib/narrators';
 import { errMsg, useToast } from '@/lib/toast';
 import { useRequestNarration } from '@/lib/requestNarration';
+import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import type { SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import ChatButton from '@/components/ChatButton/ChatButton';
@@ -116,6 +117,13 @@ export default function NavBar() {
     const [userMenuClosing, setUserMenuClosing] = useState(false);
   const userMenuOpenRef = useRef(false);
   const userMenuCloseTimerRef = useRef<number | null>(null);
+
+  // Keeps each popup mounted a beat past its own close so its exit animation
+  // can play instead of the element just vanishing.
+  const sugMounted = useAnimatedPresence(sugOpen && !!sug, 140);
+  const userMenuMounted = useAnimatedPresence(userMenuOpen && !isMobile, 140);
+  const mobileOverlayMounted = useAnimatedPresence(mobileOpen, 200);
+  const mobileSearchMounted = useAnimatedPresence(mobileSearchOpen, 160);
 
   useEffect(() => {
     userMenuOpenRef.current = userMenuOpen;
@@ -543,8 +551,11 @@ export default function NavBar() {
               autoComplete="off"
               spellCheck={false}
             />
-            {sugOpen && sug && (
-              <div className={styles.dropdown} role="listbox">
+            {sugMounted && (
+              <div
+                className={`${styles.dropdown} ${sugOpen && sug ? '' : styles.dropdownOut}`}
+                role="listbox"
+              >
                 {renderResults()}
               </div>
             )}
@@ -612,8 +623,14 @@ export default function NavBar() {
                       {friendReq > 99 ? '99+' : friendReq}
                     </span>
                   )}
-                  {userMenuOpen && !isMobile && (
-                    <div className={styles.userMenu}>{renderAccountMenuContent()}</div>
+                  {userMenuMounted && (
+                    <div
+                      className={`${styles.userMenu} ${
+                        userMenuOpen && !isMobile ? '' : styles.userMenuOut
+                      }`}
+                    >
+                      {renderAccountMenuContent()}
+                    </div>
                   )}
                 </div>
 
@@ -670,8 +687,11 @@ export default function NavBar() {
 
       <UnverifiedEmailBanner />
 
-      {mobileSearchOpen && (
-        <div className={styles.searchOverlay} onClick={() => setMobileSearchOpen(false)}>
+      {mobileSearchMounted && (
+        <div
+          className={`${styles.searchOverlay} ${mobileSearchOpen ? '' : styles.searchOverlayOut}`}
+          onClick={() => setMobileSearchOpen(false)}
+        >
           <div className={styles.searchPanel} onClick={(e) => e.stopPropagation()}>
             <div className={styles.searchPanelRow}>
               <Search className={styles.searchIcon} aria-hidden="true" />
@@ -707,8 +727,8 @@ export default function NavBar() {
         </div>
       )}
 
-      {mobileOpen && (
-        <div className={styles.overlay}>
+      {mobileOverlayMounted && (
+        <div className={`${styles.overlay} ${mobileOpen ? '' : styles.overlayOut}`}>
           <div className={styles.overlayHead}>
             <Link href="/" className={styles.logo} onClick={() => setMobileOpen(false)}>
               AUDIO<span className={styles.logoAccent}>RANOBE</span>

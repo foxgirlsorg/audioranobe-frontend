@@ -27,6 +27,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { initialsOf, presenceLabel } from '@/lib/format';
 import { LIMITS } from '@/lib/limits';
 import { useAway, scalePoll } from '@/lib/presence';
+import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import type { ChatConversation, ChatMessage, ChatThread } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import Skeleton from 'react-loading-skeleton';
@@ -163,6 +164,12 @@ function ChatInner() {
   const [sending, setSending] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [menu, setMenu] = useState<Menu | null>(null);
+  const menuMounted = useAnimatedPresence(!!menu, 130);
+  // Remembered so the menu can keep rendering at its last position/message
+  // while it plays its exit animation instead of vanishing with `menu` itself.
+  const lastMenuRef = useRef<Menu | null>(null);
+  if (menu) lastMenuRef.current = menu;
+  const renderedMenu = menu ?? lastMenuRef.current;
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [editing, setEditing] = useState<ChatMessage | null>(null);
@@ -838,33 +845,36 @@ function ChatInner() {
         )}
       </section>
 
-      {menu && typeof document !== 'undefined'
+      {menuMounted && renderedMenu && typeof document !== 'undefined'
         ? createPortal(
         <div
-          className={styles.menu}
-          style={{ top: Math.min(menu.y, window.innerHeight - 180), left: Math.min(menu.x, window.innerWidth - 190) }}
+          className={`${styles.menu} ${menu ? '' : styles.menuOut}`}
+          style={{
+            top: Math.min(renderedMenu.y, window.innerHeight - 180),
+            left: Math.min(renderedMenu.x, window.innerWidth - 190),
+          }}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          {thread?.can_send && !menu.msg.is_deleted ? (
-            <button type="button" className={styles.menuItem} onClick={() => startReply(menu.msg)}>
+          {thread?.can_send && !renderedMenu.msg.is_deleted ? (
+            <button type="button" className={styles.menuItem} onClick={() => startReply(renderedMenu.msg)}>
               <CornerUpLeft size={15} /> Ответить
             </button>
           ) : null}
-          {menu.msg.body && !menu.msg.is_deleted ? (
-            <button type="button" className={styles.menuItem} onClick={() => copyText(menu.msg)}>
+          {renderedMenu.msg.body && !renderedMenu.msg.is_deleted ? (
+            <button type="button" className={styles.menuItem} onClick={() => copyText(renderedMenu.msg)}>
               <Copy size={15} /> Копировать
             </button>
           ) : null}
-          {menu.msg.mine && !menu.msg.is_deleted ? (
-            <button type="button" className={styles.menuItem} onClick={() => startEdit(menu.msg)}>
+          {renderedMenu.msg.mine && !renderedMenu.msg.is_deleted ? (
+            <button type="button" className={styles.menuItem} onClick={() => startEdit(renderedMenu.msg)}>
               <Pencil size={15} /> Изменить
             </button>
           ) : null}
-          {menu.msg.mine && !menu.msg.is_deleted ? (
+          {renderedMenu.msg.mine && !renderedMenu.msg.is_deleted ? (
             <button
               type="button"
               className={`${styles.menuItem} ${styles.menuDanger}`}
-              onClick={() => deleteMessage(menu.msg.id)}
+              onClick={() => deleteMessage(renderedMenu.msg.id)}
             >
               <Trash2 size={15} /> Удалить
             </button>

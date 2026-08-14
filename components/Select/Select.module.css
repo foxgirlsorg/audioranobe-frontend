@@ -105,6 +105,10 @@
   animation: selectIn 0.14s var(--ease-smooth);
 }
 
+.menuOut {
+  animation: selectOut 0.12s var(--ease-smooth) forwards;
+}
+
 .menuUp {
   transform-origin: bottom;
 }
@@ -120,8 +124,20 @@
   }
 }
 
+@keyframes selectOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .menu {
+  .menu,
+  .menuOut {
     animation: none;
   }
 }

@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useBadges } from '@/lib/badges';
 import { timeAgo } from '@/lib/format';
+import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import type { Notification, Paginated } from '@/lib/types';
 import styles from './NotificationBell.module.css';
 
@@ -21,6 +22,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const menuMounted = useAnimatedPresence(open, 140);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -94,8 +96,8 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {open && (
-        <div className={styles.menu}>
+      {menuMounted && (
+        <div className={`${styles.menu} ${open ? '' : styles.menuOut}`}>
           <div className={styles.head}>
             <span className={styles.headLabel}>{'Уведомления'}</span>
             <button

@@ -81,6 +81,41 @@
   border-radius: 10px;
   background: #1b1b1b;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  transform-origin: top;
+  animation: menu-in 0.16s var(--ease-smooth);
+}
+
+.dropdownOut {
+  animation: menu-out 0.14s var(--ease-smooth) forwards;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes menu-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown,
+  .dropdownOut {
+    animation: none;
+  }
 }
 
 .option {

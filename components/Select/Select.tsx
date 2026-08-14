@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
+import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import styles from './Select.module.css';
 
 export interface SelectOption<T extends string = string> {
@@ -44,6 +45,7 @@ export default function Select<T extends string = string>({
   );
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const dropdownMounted = useAnimatedPresence(open, 130);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -79,10 +81,10 @@ export default function Select<T extends string = string>({
   }, [open, close]);
 
   useLayoutEffect(() => {
-    if (!open || !btnRef.current) {
-      setPos(null);
-      return;
-    }
+    // Leaves `pos` in place on close (rather than nulling it) so the menu can
+    // keep rendering at its last position while useAnimatedPresence keeps it
+    // mounted for the exit animation.
+    if (!open || !btnRef.current) return;
     const r = btnRef.current.getBoundingClientRect();
     const needed = Math.min(options.length * 38 + 8, 280);
     const up = r.bottom + needed > window.innerHeight && r.top > needed;
@@ -210,12 +212,18 @@ export default function Select<T extends string = string>({
         <ChevronDown size={14} className={open ? styles.chevOpen : styles.chev} />
       </button>
 
-      {open && mounted && pos
+      {dropdownMounted && mounted && pos
         ? createPortal(
             <ul
               id={listId}
               ref={listRef}
-              className={pos.up ? `${styles.menu} ${styles.menuUp}` : styles.menu}
+              className={[
+                styles.menu,
+                pos.up ? styles.menuUp : '',
+                open ? '' : styles.menuOut,
+              ]
+                .filter(Boolean)
+                .join(' ')}
               style={{
                 left: pos.left,
                 width: pos.width,
