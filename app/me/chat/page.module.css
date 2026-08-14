@@ -819,6 +819,27 @@
     display: inline-flex;
   }
 
+  /* The global navbar is hidden in thread view (see globals.css), so the thread
+     reclaims the navbar's slice of the viewport. */
+  .page.threadOpen {
+    height: 100dvh;
+  }
+
+  /* List view keeps the global navbar as its only bar, so the sidebar title
+     drops its bar styling and reads as a light inline label above the list. */
+  .sidebarHead {
+    padding: 12px 16px 4px;
+    border-bottom: 0;
+  }
+
+  .sidebarTitle {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted, #7b8087);
+  }
+
   .page.threadOpen .sidebar {
     display: none;
   }

@@ -505,7 +505,7 @@ export default function NavBar() {
   return (
     <>
       <header
-        className={`${styles.nav} ${
+        className={`${styles.nav} site-header ${
           scrolled || (isMobile && (userMenuOpen || userMenuClosing)) ? styles.scrolled : ''
         }`}
       >

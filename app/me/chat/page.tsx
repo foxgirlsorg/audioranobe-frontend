@@ -190,6 +190,13 @@ function ChatInner() {
     return () => document.body.classList.remove('dm-fullscreen');
   }, []);
 
+  // On mobile the thread view hides the global navbar so the thread's own header
+  // is the single top bar. The layout reacts to this body class (see globals.css).
+  useEffect(() => {
+    document.body.classList.toggle('dm-thread', selectedId !== null);
+    return () => document.body.classList.remove('dm-thread');
+  }, [selectedId]);
+
   // Grow the composer to fit the text, up to MAX_ROWS lines, then scroll.
   const autoGrow = useCallback(() => {
     const el = inputRef.current;

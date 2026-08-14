@@ -547,6 +547,28 @@ button.pill:hover,
     display: none;
   }
 
+  /* body's min-height: 100vh sizes to the large (toolbar-hidden) viewport,
+     while the page below is 100dvh; the gap between them let the whole chat be
+     dragged up by ~a toolbar's height on real phones. Pin the body to the live
+     viewport and let the message list be the only thing that scrolls. */
+  body.dm-fullscreen {
+    min-height: 0;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Inside an open thread the thread's own header is the single top bar, so the
+     global navbar and any pinned notice step aside and the page takes the full
+     viewport height. */
+  body.dm-thread .site-header,
+  body.dm-thread .site-notice {
+    display: none;
+  }
+
+  body.dm-thread.dm-fullscreen main.container {
+    padding-top: 0;
+  }
+
   .card-grid {
     gap: 1.25rem;
   }

@@ -37,7 +37,7 @@ export default function UnverifiedEmailBanner() {
   if (!shown) return null;
 
   return (
-    <div className={styles.banner} role="status" ref={ref}>
+    <div className={`${styles.banner} site-notice`} role="status" ref={ref}>
       <MailWarning size={16} className={styles.icon} />
       <span className={styles.text}>
         Почта не подтверждена — вы не сможете восстановить пароль в случае его потери.{' '}
