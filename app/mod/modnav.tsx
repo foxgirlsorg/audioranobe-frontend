@@ -19,6 +19,8 @@ import {
   Megaphone,
   Radio,
   ScrollText,
+  BookHeadphones,
+  ListChecks,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
@@ -40,6 +42,8 @@ const TABS: { href: string; label: string; icon: LucideIcon; adminOnly?: boolean
   { href: '/mod/trash', label: 'Корзина', icon: Trash2, adminOnly: true },
   { href: '/mod/announcements', label: 'Объявления', icon: Megaphone, adminOnly: true },
   { href: '/mod/broadcast', label: 'Рассылка', icon: Radio },
+  { href: '/mod/tasks', label: 'Задачи', icon: ListChecks },
+  { href: '/mod/narration', label: 'Озвучка', icon: BookHeadphones, adminOnly: true },
   { href: '/mod/audit', label: 'Аудит', icon: ScrollText, adminOnly: true },
 ];
 
