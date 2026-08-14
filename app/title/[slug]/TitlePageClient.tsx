@@ -121,6 +121,7 @@ export default function TitlePageClient({
   const [tagsClipped, setTagsClipped] = useState(false);
   const tagsRef = useRef<HTMLParagraphElement | null>(null);
   const [canEdit, setCanEdit] = useState(initialTitle?.can_edit ?? false);
+  const [reNarrating, setReNarrating] = useState<number | null>(null);
   const skipInitialFetch = useRef(initialTitle !== null);
 
   useEffect(() => {
@@ -228,6 +229,19 @@ export default function TitlePageClient({
     document.body.appendChild(a);
     a.click();
     a.remove();
+  }
+
+  async function reNarrate(ch: ChapterRow) {
+    if (reNarrating) return;
+    setReNarrating(ch.id);
+    try {
+      await api(`/mod/chapters/${ch.id}/re-narrate`, { method: 'POST' });
+      toast(`Глава ${ch.number} отправлена на переозвучку`, 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setReNarrating(null);
+    }
   }
 
   function archiveItems(volumes: Volume[], foldered: boolean): ArchiveItem[] {
@@ -591,6 +605,18 @@ export default function TitlePageClient({
         </aside>
       </header>
 
+      {title.narration_pending ? (
+        <div className={styles.narrationBanner}>
+          <Headphones size={17} aria-hidden="true" />
+          <div className={styles.narrationBannerBody}>
+            <strong>Идёт ИИ-озвучка</strong>
+            <span>
+              Главы появляются по мере готовности — уже озвученные можно слушать, остальные в работе.
+            </span>
+          </div>
+        </div>
+      ) : null}
+
       <Section eyebrow={'Слушать'} title={'Тома и'} accent={'главы'}>
         {chaptersTotal === 0 ? (
           <EmptyState
@@ -719,8 +745,20 @@ export default function TitlePageClient({
                                   {ch.mod_status !== 'approved' ? (
                                     <StatusBadge status={ch.mod_status} />
                                   ) : null}
-                                  {ch.audio_status !== 'ready' ? (
+                                  {ch.audio_status !== 'ready' && (canEdit || ch.audio_status !== 'none') ? (
                                     <StatusBadge status={ch.audio_status} />
+                                  ) : null}
+                                  {isMod && title.is_imported ? (
+                                    <button
+                                      type="button"
+                                      className={styles.reNarrateBtn}
+                                      onClick={() => void reNarrate(ch)}
+                                      disabled={reNarrating === ch.id}
+                                      title={'Переозвучить главу'}
+                                      aria-label={`Переозвучить главу ${ch.number}`}
+                                    >
+                                      <RefreshCw size={12} className={reNarrating === ch.id ? styles.spin : undefined} />
+                                    </button>
                                   ) : null}
                                   {ch.duration_seconds > 0 ? (
                                     <span className={styles.chDur}>

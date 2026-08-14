@@ -62,6 +62,11 @@ const PREF_DEFS: { key: keyof NotificationPrefs; label: string; hint: string }[]
     hint: 'Выходит новая глава тайтла из вашей библиотеки',
   },
   {
+    key: 'narration_ready',
+    label: 'Озвучка готова',
+    hint: 'Заказанная вами озвучка готова к прослушиванию',
+  },
+  {
     key: 'narrator_release',
     label: 'Релизы чтецов',
     hint: 'Чтец, на которого вы подписаны, публикует что-то новое',

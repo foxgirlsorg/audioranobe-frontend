@@ -52,7 +52,8 @@ export type NotificationType =
   | 'entity_deleted'
   | 'narrator_post'
   | 'friend_request'
-  | 'friend_accept';
+  | 'friend_accept'
+  | 'narration_ready';
 export type ReportStatus = 'open' | 'resolved' | 'dismissed';
 export type ReportTargetType = 'title' | 'narrator' | 'chapter' | 'comment' | 'user' | 'collection';
 export type JobStatus = 'queued' | 'processing' | 'done' | 'error';
@@ -86,6 +87,7 @@ export interface NotificationPrefs {
   request_reviewed: boolean;
   entity_modified: boolean;
   entity_deleted: boolean;
+  narration_ready: boolean;
 }
 
 export interface UserPublic {
@@ -350,6 +352,10 @@ export interface TitleFull extends TitleCard {
   author: AuthorBrief | null;
   can_edit: boolean;
   nsfw_restricted?: boolean;
+  /** True for an imported title still narrating — drives the "in progress" banner. */
+  narration_pending?: boolean;
+  /** True for an imported (AI-narrated) title — enables mod re-narrate controls. */
+  is_imported?: boolean;
   /** Viewer opted into a notification for every new comment on this title. */
   comment_subscribed: boolean;
   /** First page of comments, embedded to save a separate request on load. */
@@ -552,11 +558,60 @@ export interface HomeData {
   new_titles: TitleCard[];
 }
 
+/** A title not in the catalog yet — AI narration can be requested. */
+export interface RequestableTitle {
+  ref: string;
+  name: string;
+  cover_url: string | null;
+  year: number | null;
+  status: string;
+}
+
 export interface SearchSuggest {
   titles: { id: number; slug: string; name: string; author: AuthorBrief | null; cover_url: string | null }[];
   narrators: { id: number; slug: string; name: string; avatar_url: string | null }[];
   authors: { id: number; slug: string; name: string; titles_count: number }[];
   collections: { id: number; name: string; items_count: number }[];
+  external?: RequestableTitle[];
+}
+
+/** Whether the viewer can order a narration now (GET /titles/request-narration). */
+export interface OrderStatus {
+  authenticated: boolean;
+  enabled?: boolean;
+  can_order: boolean;
+  next_at: string | null;
+}
+
+/** A narration queue task (GET /mod/narration-jobs). */
+export interface NarrationJob {
+  id: number;
+  title: { id: number; slug: string; name: string };
+  volume: string;
+  number: number;
+  name: string;
+  status: JobStatus;
+  attempts: number;
+  error: string;
+  chapter_id: number | null;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface NarrationJobList extends Paginated<NarrationJob> {
+  counts: { queued: number; processing: number; done: number; error: number };
+}
+
+/** Admin narration settings (GET/PUT /admin/narration-settings). */
+export interface NarrationSettings {
+  enabled: boolean;
+  narrator_id: number | null;
+  speaker: string;
+  sample_rate: number;
+  batch_size: number;
+  batch_threshold: number;
+  poll_interval_minutes: number;
+  has_token: boolean;
 }
 
 export type FriendStatus = 'self' | 'none' | 'friends' | 'outgoing' | 'incoming';

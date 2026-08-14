@@ -44,6 +44,7 @@ const TYPE_ICONS: Record<NotificationType, ComponentType<{ size?: number | strin
   narrator_post: Newspaper,
   friend_request: UserPlus,
   friend_accept: UserCheck,
+  narration_ready: Headphones,
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -61,6 +62,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   narrator_post: 'Запись чтеца',
   friend_request: 'Заявка в друзья',
   friend_accept: 'Заявка принята',
+  narration_ready: 'Озвучка готова',
 };
 
 function splitHeading(s: string): [string, string] {

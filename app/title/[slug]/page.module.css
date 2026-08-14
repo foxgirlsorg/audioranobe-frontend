@@ -1220,3 +1220,66 @@
 .tagsToggle:hover {
   color: var(--accent-hover);
 }
+
+.narrationBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  margin-bottom: 18px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent);
+}
+
+.narrationBannerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.narrationBannerBody strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.narrationBannerBody span {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.reNarrateBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.reNarrateBtn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.reNarrateBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.spin {
+  animation: title-spin 0.9s linear infinite;
+}
+
+@keyframes title-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

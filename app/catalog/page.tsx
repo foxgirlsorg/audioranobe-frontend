@@ -16,11 +16,13 @@ import {
   STATUS_VALUES,
   type Genre,
   type Paginated,
+  type RequestableTitle,
   type TitleCard,
 } from '@/lib/types';
 import { errMsg } from '@/lib/toast';
 import { formatCount } from '@/lib/format';
 import CardGrid from '@/components/CardGrid/CardGrid';
+import RequestableTitles from '@/components/RequestableTitles/RequestableTitles';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import Pagination from '@/components/Pagination/Pagination';
 import Spinner from '@/components/Spinner/Spinner';
@@ -29,6 +31,8 @@ import GenrePicker from '@/components/GenrePicker/GenrePicker';
 import Select, { type SelectOption } from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
+
+type CatalogData = Paginated<TitleCard> & { external?: RequestableTitle[] };
 
 const SORT_OPTIONS: SelectOption[] = [
   { value: 'popular', label: 'По прослушиваниям' },
@@ -72,7 +76,7 @@ function CatalogInner() {
   const selectedGenreIds = genres
     .filter((g) => genreSlugs.includes(g.slug))
     .map((g) => g.id);
-  const [data, setData] = useState<Paginated<TitleCard> | null>(null);
+  const [data, setData] = useState<CatalogData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
@@ -132,7 +136,7 @@ function CatalogInner() {
     let alive = true;
     setLoading(true);
     setError(null);
-    api<Paginated<TitleCard>>('/titles', {
+    api<CatalogData>('/titles', {
       params: {
         q,
         genre,
@@ -411,6 +415,10 @@ function CatalogInner() {
               </div>
             </>
           )}
+
+          {data?.external && data.external.length > 0 ? (
+            <RequestableTitles items={data.external} />
+          ) : null}
         </div>
       </div>
     </div>

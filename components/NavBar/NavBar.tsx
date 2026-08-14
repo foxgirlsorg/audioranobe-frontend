@@ -34,6 +34,7 @@ import { useAway } from '@/lib/presence';
 import { useBadges } from '@/lib/badges';
 import { useMyNarrators } from '@/lib/narrators';
 import { errMsg, useToast } from '@/lib/toast';
+import { useRequestNarration } from '@/lib/requestNarration';
 import type { SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
 import ChatButton from '@/components/ChatButton/ChatButton';
@@ -84,6 +85,7 @@ export default function NavBar() {
   const away = useAway();
   const { messages: msgCount, notifications: notifCount, friend_requests: friendReq } = useBadges();
   const { toast } = useToast();
+  const { request: requestNarration, pendingSlug: narrPending } = useRequestNarration();
 
   const [scrolled, setScrolled] = useState(false);
   const [q, setQ] = useState('');
@@ -459,6 +461,34 @@ export default function NavBar() {
           </Fragment>
         );
       })}
+      {sug?.external && sug.external.length > 0 ? (
+        <>
+          <div className={styles.groupLabel}>{'Заказать озвучку'}</div>
+          {sug.external.map((e) => (
+            <button
+              key={e.ref}
+              type="button"
+              className={styles.item}
+              onMouseDown={(ev) => ev.preventDefault()}
+              onClick={() => requestNarration(e.ref)}
+              disabled={narrPending !== null}
+            >
+              {e.cover_url ? (
+                <img className={styles.itemCover} src={e.cover_url} alt="" />
+              ) : (
+                <span className={styles.itemCover} />
+              )}
+              <span className={styles.itemBody}>
+                <span className={styles.itemName}>{e.name}</span>
+                <span className={styles.itemSub}>
+                  {narrPending === e.ref ? 'Заказываем…' : 'заказать ИИ-озвучку'}
+                </span>
+              </span>
+            </button>
+          ))}
+        </>
+      ) : null}
+
       {q.trim() && (
         <button
           type="button"
