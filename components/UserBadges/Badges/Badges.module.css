@@ -1,6 +1,23 @@
 .badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   vertical-align: middle;
   flex-shrink: 0;
-  width: auto;
+}
+
+.badge svg {
+  display: block;
+}
+
+.admin {
+  color: var(--accent);
+}
+
+.moderator {
+  color: #e0b64e;
+}
+
+.developer {
+  color: #6ea8e0;
 }

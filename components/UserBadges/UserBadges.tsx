@@ -20,7 +20,7 @@ export default function UserBadges({
 
   if (isStaff) {
     badges.push({
-      key: 'staff',
+      key: role === 'admin' ? 'admin' : 'moderator',
       title: role === 'admin' ? 'Администратор' : 'Модератор',
     });
   }
