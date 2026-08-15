@@ -113,6 +113,7 @@ function ReportsContent() {
   return (
     <div>
       <Tabs
+        variant="pill"
         tabs={STATUS_TABS}
         active={tab}
         onChange={(k) => {

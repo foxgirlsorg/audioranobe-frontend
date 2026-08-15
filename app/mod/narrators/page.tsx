@@ -102,6 +102,7 @@ function NarratorsContent() {
       </p>
 
       <Tabs
+        variant="pill"
         tabs={TABS}
         active={status}
         onChange={(k) => {

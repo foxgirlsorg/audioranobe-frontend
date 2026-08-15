@@ -11,6 +11,7 @@ import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import Pagination from '@/components/Pagination/Pagination';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
+import Tabs from '@/components/Tabs/Tabs';
 import styles from './page.module.css';
 
 const FILTERS: { key: '' | JobStatus; label: string }[] = [
@@ -69,25 +70,23 @@ function TasksInner() {
   };
 
   const counts = data?.counts;
+  const tabs = FILTERS.map((f) => ({
+    key: f.key || 'all',
+    label: f.label,
+    count: f.key && counts ? counts[f.key] : undefined,
+  }));
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.tabs}>
-        {FILTERS.map((f) => (
-          <button
-            key={f.key || 'all'}
-            type="button"
-            className={status === f.key ? `${styles.tab} ${styles.tabActive}` : styles.tab}
-            onClick={() => {
-              setStatus(f.key);
-              setPage(1);
-            }}
-          >
-            {f.label}
-            {counts && f.key ? <span className={styles.tabCount}>{counts[f.key]}</span> : null}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        variant="pill"
+        tabs={tabs}
+        active={status || 'all'}
+        onChange={(k) => {
+          setStatus(k === 'all' ? '' : (k as JobStatus));
+          setPage(1);
+        }}
+      />
 
       {loading && !data ? (
         <div className={styles.center}>

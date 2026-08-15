@@ -27,13 +27,15 @@ function TabsBase({
   tabs,
   active,
   onChange,
+  variant,
 }: {
   tabs: Tab[];
   active: string;
   onChange: (key: string) => void;
+  variant?: 'pill';
 }) {
   return (
-    <div className={styles.tabs} role="tablist">
+    <div className={variant === 'pill' ? `${styles.tabs} ${styles.pill}` : styles.tabs} role="tablist">
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -56,11 +58,13 @@ function TabsWithUrl({
   active,
   onChange,
   urlParam,
+  variant,
 }: {
   tabs: Tab[];
   active: string;
   onChange: (key: string) => void;
   urlParam: string;
+  variant?: 'pill';
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -86,7 +90,7 @@ function TabsWithUrl({
   );
 
   return (
-    <div className={styles.tabs} role="tablist">
+    <div className={variant === 'pill' ? `${styles.tabs} ${styles.pill}` : styles.tabs} role="tablist">
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -104,7 +108,13 @@ function TabsWithUrl({
   );
 }
 
-export function Tabs(props: { tabs: Tab[]; active: string; onChange: (key: string) => void; urlParam?: string }) {
+export function Tabs(props: {
+  tabs: Tab[];
+  active: string;
+  onChange: (key: string) => void;
+  urlParam?: string;
+  variant?: 'pill';
+}) {
   if (props.urlParam) {
     return (
       <React.Suspense fallback={<div className={styles.tabs} />}>
@@ -112,7 +122,9 @@ export function Tabs(props: { tabs: Tab[]; active: string; onChange: (key: strin
       </React.Suspense>
     );
   }
-  return <TabsBase tabs={props.tabs} active={props.active} onChange={props.onChange} />;
+  return (
+    <TabsBase tabs={props.tabs} active={props.active} onChange={props.onChange} variant={props.variant} />
+  );
 }
 
 export default Tabs;

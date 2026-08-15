@@ -248,6 +248,7 @@ function QueueContent() {
   return (
     <div>
       <Tabs
+        variant="pill"
         tabs={TYPE_TABS}
         active={type}
         onChange={setType}

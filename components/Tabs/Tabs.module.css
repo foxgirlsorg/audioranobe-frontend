@@ -75,3 +75,51 @@
   background: rgba(222, 97, 97, 0.18);
   color: var(--accent, #de6161);
 }
+
+.pill {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.pill .tab {
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.pill .tab:hover {
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+.pill .active,
+.pill .active:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.pill .count {
+  font-size: 11px;
+  padding: 1px 7px;
+  background: color-mix(in srgb, var(--text-muted) 20%, transparent);
+  color: var(--text-secondary);
+  letter-spacing: normal;
+}
+
+.pill .active .count {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
