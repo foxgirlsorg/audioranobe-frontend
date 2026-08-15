@@ -14,11 +14,6 @@
   font-display: swap;
 }
 
-/* ==========================================================================
-   AudioRanobe design system — dark, cinematic, glassy. See contracts/STYLE.md.
-   Every page agent uses these tokens + utility classes; module CSS only for
-   component-specific layout.
-   ========================================================================== */
 
 :root {
   --accent: #de6161;
