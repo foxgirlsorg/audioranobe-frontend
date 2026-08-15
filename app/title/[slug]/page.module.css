@@ -1251,6 +1251,76 @@
   color: var(--text-secondary);
 }
 
+.claimBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  margin-bottom: 18px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.claimBannerIcon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.claimBannerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.claimBannerBody strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.claimBannerBody span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.claimBannerBtn {
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.claimBannerBtn:hover {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+}
+
+@media (max-width: 560px) {
+  .claimBanner {
+    flex-wrap: wrap;
+  }
+
+  .claimBannerBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .reNarrateBtn {
   display: inline-grid;
   place-items: center;

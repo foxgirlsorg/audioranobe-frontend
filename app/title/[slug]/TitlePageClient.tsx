@@ -54,6 +54,7 @@ import Markdown from '@/components/Markdown/Markdown';
 import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDownloadButton/ArchiveDownloadButton';
 import AiBadge from '@/components/AiBadge/AiBadge';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
+import { SUPPORT_URL } from '@/lib/support';
 import styles from './page.module.css';
 
 const DESC_CLAMP_CHARS = 420;
@@ -614,6 +615,27 @@ export default function TitlePageClient({
               Главы появляются по мере готовности — уже озвученные можно слушать, остальные в работе.
             </span>
           </div>
+        </div>
+      ) : null}
+
+      {title.is_ai ? (
+        <div className={styles.claimBanner}>
+          <Mic size={17} aria-hidden="true" className={styles.claimBannerIcon} />
+          <div className={styles.claimBannerBody}>
+            <strong>Озвучиваете эту книгу?</strong>
+            <span>
+              Этот тайтл озвучен синтезированным голосом. Если вы чтец и озвучили
+              эту книгу сами — напишите в поддержку, и мы передадим тайтл вам.
+            </span>
+          </div>
+          <a
+            href={SUPPORT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.claimBannerBtn}
+          >
+            Связаться с поддержкой
+          </a>
         </div>
       ) : null}
 
