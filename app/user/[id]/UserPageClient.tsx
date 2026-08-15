@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -16,6 +16,7 @@ import {
   Clock,
   Check,
   X,
+  ShieldBan,
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import {
@@ -30,8 +31,9 @@ import {
   type UserComment,
   type UserProfile,
 } from '@/lib/types';
-import { formatDate, initialsOf, timeAgo, presenceLabel } from '@/lib/format';
+import { formatDate, initialsOf, timeAgo } from '@/lib/format';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
+import PresenceLabel from '@/components/PresenceLabel/PresenceLabel';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { emitFriendsChanged } from '@/lib/friends';
@@ -126,26 +128,86 @@ function CommentBody({ body }: { body: string }) {
 }
 
 
+function ProfileMeta({ user }: { user: UserProfile['user'] }) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const mq = window.matchMedia('(min-width: 769px)');
+
+      const update = (force: boolean) => {
+      const items = Array.from(el.children) as HTMLElement[];
+      const firstTop = items[0]?.offsetTop ?? 0;
+      items.forEach((it) => it.classList.toggle(styles.metaNoSep, it.offsetTop > firstTop));
+
+      const joined = items[items.length - 1];
+      if (!joined) return;
+
+      if (!mq.matches) {
+        joined.classList.remove(styles.metaHidden);
+        return;
+      }
+
+      if (joined.classList.contains(styles.metaHidden) && !force) return;
+
+      joined.classList.remove(styles.metaHidden);
+      const wraps = joined.offsetTop > items[0].offsetTop;
+      joined.classList.toggle(styles.metaHidden, wraps);
+    };
+
+    update(false);
+    const ro = new ResizeObserver(() => update(false));
+    ro.observe(el);
+    const onExternal = () => update(true);
+    window.addEventListener('resize', onExternal);
+    mq.addEventListener('change', onExternal);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', onExternal);
+      mq.removeEventListener('change', onExternal);
+    };
+  }, []);
+
+  return (
+    <span ref={ref} className={styles.metaSub}>
+      {user.display_name ? <span className={styles.metaHandle}>@{user.username}</span> : null}
+      {user.role === 'admin' ? (
+        <span className={styles.metaRole}> Администратор</span>
+      ) : user.role === 'moderator' ? (
+        <span className={styles.metaRole}>Модератор</span>
+      ) : (
+        ''
+      )}
+      <PresenceLabel status={user.presence} lastSeenAt={user.last_seen_at} className={styles.metaPresence} />
+      <span className={styles.metaJoined}>{`На сайте с ${formatDate(user.created_at)}`}</span>
+    </span>
+  );
+}
+
+
 function UserPageSkeleton() {
   return (
     <div className={styles.page}>
-      <div className={styles.banner} aria-hidden="true">
-        <Skeleton height="100%" style={{ display: 'block' }} />
-      </div>
-      <header className={styles.head}>
-        <div className={styles.avatar}>
-          <Skeleton circle width="100%" height="100%" />
+      <div className={styles.profileHead}>
+        <div className={styles.banner} aria-hidden="true">
+          <Skeleton height="100%" style={{ display: 'block' }} />
         </div>
-        <div className={styles.headMain}>
-          <Skeleton width={90} height={11} />
-          <h1 className={styles.name}>
-            <Skeleton width={200} height={26} />
-          </h1>
-          <div className={styles.headSub}>
-            <Skeleton width={180} height={13} />
+        <div className={styles.dock}>
+          <div className={styles.dockAvatar}>
+            <Skeleton circle width="100%" height="100%" />
+          </div>
+          <div className={styles.dockId}>
+            <div className={styles.dockName}>
+              <Skeleton width={200} height={26} />
+            </div>
+            <div className={styles.meta}>
+              <Skeleton width={220} height={13} />
+            </div>
           </div>
         </div>
-      </header>
+      </div>
       <section className={sectionStyles.section}>
         <Skeleton width="100%" height={200} />
       </section>
@@ -352,139 +414,148 @@ export default function UserPageClient({
 
   return (
     <div className={styles.page}>
-      <div className={styles.banner} aria-hidden="true">
-        {user.cover_url ? (
-          <img src={user.cover_url} alt="" className={styles.bannerImg} />
-        ) : (
-          <div className={styles.bannerEmpty}>
-            <span className={styles.bannerGlow} />
-            <img src="/foxgirl_user.svg" className={styles.bannerFoxgirl} alt=""/>
-          </div>
-        )}
-        <div className={styles.bannerShade} />
-      </div>
-
-      <header className={styles.head}>
-        <div className={styles.avatar}>
-          {user.avatar_url ? (
-            <PhotoView src={user.avatar_url}>
-              <button type="button" className={styles.avatarBtn} aria-label="Увеличить аватар">
-                <img src={user.avatar_url} alt={user.username} className={styles.avatarImg} />
-              </button>
-            </PhotoView>
+      <div className={styles.profileHead}>
+        <div className={styles.banner} aria-hidden="true">
+          {user.cover_url ? (
+            <img src={user.cover_url} alt="" className={styles.bannerImg} />
           ) : (
-            <span className={styles.avatarInitials}>{initialsOf(user.username)}</span>
+            <div className={styles.bannerEmpty}>
+              <span className={styles.bannerGlow} />
+              <img src="/foxgirl_user.svg" className={styles.bannerFoxgirl} alt=""/>
+            </div>
           )}
-          <PresenceDot
-            status={user.presence}
-            lastSeenAt={user.last_seen_at}
-            size={15}
-            className={styles.presenceDot}
-          />
+          <div className={styles.bannerShade} />
         </div>
 
-        <div className={styles.headMain}>
-          <span className="eyebrow">{user.role === 'admin' ? 'администратор' : user.role === 'moderator' ? 'модератор' : 'слушатель'}</span>
-          <h1 className={styles.name}>
-            {user.display_name || user.username}
-            <UserBadges user={user} size={15} className={styles.nameBadges} />
-          </h1>
-          <div className={styles.headSub}>
-            {user.display_name ? <span>@{user.username}</span> : null}
-            <span className={styles.metaDot} aria-hidden="true" />
-            <span>{presenceLabel(user.presence, user.last_seen_at)}</span>
-            <span className={styles.joinedSince}>
-              <span className={styles.metaDot} aria-hidden="true" />
-              <span>{`На сайте с ${formatDate(user.created_at)}`}</span>
+        <div className={styles.dock}>
+          <div className={styles.dockAvatar}>
+            {user.avatar_url ? (
+              <PhotoView src={user.avatar_url}>
+                <button type="button" className={styles.avatarBtn} aria-label="Увеличить аватар">
+                  <img src={user.avatar_url} alt={user.username} className={styles.avatarImg} />
+                </button>
+              </PhotoView>
+            ) : (
+              <span className={styles.avatarInitials}>{initialsOf(user.username)}</span>
+            )}
+            <PresenceDot
+              status={user.presence}
+              lastSeenAt={user.last_seen_at}
+              className={styles.presenceDot}
+            />
+          </div>
+
+          <div className={styles.dockId}>
+            <div className={styles.dockName}>
+              <h1 className={styles.dockNameH1}>{user.display_name || user.username}</h1>
+              <UserBadges user={user} size={20} className={styles.nameBadges} />
+            </div>
+
+            <div className={styles.meta}>
+              <ProfileMeta user={user} />
+            </div>
+          </div>
+
+          {viewer && !isOwnProfile ? (
+            <div className={styles.dockActions}>
+              {can_message ? (
+                <Link
+                  href={`/me/chat?u=${user.id}`}
+                  className={`${styles.actBtn} ${styles.actGhost}`}
+                  aria-label="Написать сообщение"
+                >
+                  <MessageSquare size={16} />
+                  <span className={styles.friendLabel}>Написать</span>
+                </Link>
+              ) : null}
+              {friendStatus === 'none' ? (
+                <button
+                  type="button"
+                  className={`${styles.actBtn} ${styles.actPrimary}`}
+                  disabled={friendBusy}
+                  aria-label="Добавить в друзья"
+                  onClick={() => runFriend('POST', `/friends/${user.id}`, 'Заявка отправлена')}
+                >
+                  <UserPlus size={16} />
+                  <span className={styles.friendLabel}>Добавить в друзья</span>
+                </button>
+              ) : friendStatus === 'outgoing' ? (
+                <button
+                  type="button"
+                  className={`${styles.actBtn} ${styles.actGhost}`}
+                  disabled={friendBusy}
+                  aria-label="Отменить заявку"
+                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отменена')}
+                >
+                  <Clock size={16} />
+                  <span className={styles.friendLabel}>Отменить заявку</span>
+                </button>
+              ) : friendStatus === 'incoming' ? (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.actBtn} ${styles.actPrimary}`}
+                    disabled={friendBusy}
+                    aria-label="Принять заявку"
+                    onClick={() => runFriend('POST', `/friends/${user.id}/accept`, 'Заявка принята')}
+                  >
+                    <Check size={16} />
+                    <span className={styles.friendLabel}>Принять заявку</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actBtn} ${styles.actGhost}`}
+                    disabled={friendBusy}
+                    aria-label="Отклонить заявку"
+                    onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отклонена')}
+                  >
+                    <X size={16} />
+                    <span className={styles.friendLabel}>Отклонить</span>
+                  </button>
+                </>
+              ) : friendStatus === 'friends' ? (
+                <button
+                  type="button"
+                  className={`${styles.actBtn} ${styles.actGhost}`}
+                  disabled={friendBusy}
+                  aria-label="Удалить из друзей"
+                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Удалён из друзей')}
+                >
+                  <UserMinus size={16} />
+                  <span className={styles.friendLabelUnfriend}>Удалить из друзей</span>
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {user.is_banned ? (
+        <div className={styles.banBanner} role="alert">
+          <ShieldBan size={17} aria-hidden="true" className={styles.banBannerIcon} />
+          <div className={styles.banBannerBody}>
+            <strong>Пользователь заблокирован</strong>
+            <span>
+              Этот аккаунт заблокирован администрацией и не может публиковать
+              комментарии, сообщения и другой контент.
             </span>
           </div>
         </div>
-      </header>
+      ) : null}
 
-      <div className={styles.headExtra}>
-        <SocialLinks urls={user.socials} />
-
-        {viewer && !isOwnProfile ? (
-          <div className={styles.friendActions}>
-            {can_message ? (
-              <Link
-                href={`/me/chat?u=${user.id}`}
-                className={styles.ghostAction}
-                aria-label="Написать сообщение"
-              >
-                <MessageSquare size={16} />
-                <span className={styles.friendLabel}>Написать</span>
-              </Link>
-            ) : null}
-            {friendStatus === 'none' ? (
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={friendBusy}
-                aria-label="Добавить в друзья"
-                onClick={() => runFriend('POST', `/friends/${user.id}`, 'Заявка отправлена')}
-              >
-                <UserPlus size={16} />
-                <span className={styles.friendLabel}>Добавить в друзья</span>
-              </button>
-            ) : friendStatus === 'outgoing' ? (
-              <button
-                type="button"
-                className={styles.ghostAction}
-                disabled={friendBusy}
-                aria-label="Отменить заявку"
-                onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отменена')}
-              >
-                <Clock size={16} />
-                <span className={styles.friendLabel}>Отменить заявку</span>
-              </button>
-            ) : friendStatus === 'incoming' ? (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  disabled={friendBusy}
-                  aria-label="Принять заявку"
-                  onClick={() => runFriend('POST', `/friends/${user.id}/accept`, 'Заявка принята')}
-                >
-                  <Check size={16} />
-                  <span className={styles.friendLabel}>Принять заявку</span>
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghostAction}
-                  disabled={friendBusy}
-                  aria-label="Отклонить заявку"
-                  onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Заявка отклонена')}
-                >
-                  <X size={16} />
-                  <span className={styles.friendLabel}>Отклонить</span>
-                </button>
-              </>
-            ) : friendStatus === 'friends' ? (
-              <button
-                type="button"
-                className={styles.ghostAction}
-                disabled={friendBusy}
-                aria-label="Удалить из друзей"
-                onClick={() => runFriend('DELETE', `/friends/${user.id}`, 'Удалён из друзей')}
-              >
-                <UserMinus size={16} />
-                <span className={styles.friendLabelUnfriend}>Удалить из друзей</span>
-              </button>
-            ) : null}
+      {user.bio || (user.socials && user.socials.length > 0) ? (
+        <div className={`glass-panel ${styles.aboutCard}`}>
+          <div className={styles.aboutTop}>
+            <span className="eyebrow">{user.bio ? 'О себе' : 'Ссылки'}</span>
+            <SocialLinks urls={user.socials} />
           </div>
-        ) : null}
-      </div>
-
-      {user.bio ? (
-        <div className={`glass-panel ${styles.bioPanel}`}>
-          <span className="eyebrow">О себе</span>
-          <div className={styles.bio}>
-            <Collapsible maxHeight={300}>
-              <Markdown source={user.bio} media="image" />
-            </Collapsible>
-          </div>
+          {user.bio ? (
+            <div className={styles.bio}>
+              <Collapsible maxHeight={300}>
+                <Markdown source={user.bio} media="image" />
+              </Collapsible>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

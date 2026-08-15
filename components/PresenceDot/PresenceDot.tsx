@@ -12,7 +12,7 @@ import styles from './PresenceDot.module.css';
 export default function PresenceDot({
   status,
   lastSeenAt,
-  size = 10,
+  size,
   ring = true,
   showOffline = false,
   className = '',

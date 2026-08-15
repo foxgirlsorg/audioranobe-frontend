@@ -15,10 +15,12 @@ export function ReportButton({
   targetType,
   targetId,
   compact = false,
+  className = '',
 }: {
   targetType: string;
   targetId: number;
   compact?: boolean;
+  className?: string;
 }) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -66,7 +68,7 @@ export function ReportButton({
     <>
       <button
         type="button"
-        className={compact ? `${styles.btn} ${styles.btnCompact}` : styles.btn}
+        className={compact ? `${styles.btn} ${styles.btnCompact} ${className}` : `${styles.btn} ${className}`}
         onClick={openModal}
         title={'Пожаловаться модераторам'}
       >

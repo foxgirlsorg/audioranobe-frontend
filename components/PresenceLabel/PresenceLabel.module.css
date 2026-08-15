@@ -1,0 +1,14 @@
+/* Full label on desktop; the compact one kicks in only on mobile (≤768px). */
+.compact {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .full {
+    display: none;
+  }
+
+  .compact {
+    display: inline;
+  }
+}

@@ -1,5 +1,3 @@
-/* Narrator public page — wide banner, overlapping avatar, glass bio panel. */
-
 .center {
   display: flex;
   justify-content: center;
@@ -89,36 +87,50 @@
   );
 }
 
-/* ---------- head ---------- */
+/* ---------- profile head (docked bar) ---------- */
 
-.head {
+.profileHead {
   position: relative;
+}
+
+.dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1;
   display: flex;
   align-items: flex-end;
-  gap: 1.5rem;
-  padding: 0 2rem;
-  margin-top: -58px;
+  gap: 1.25rem;
+  padding: 1.1rem 1.75rem;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: linear-gradient(
+    0deg,
+    rgba(11, 11, 13, 0.95) 0%,
+    rgba(11, 11, 13, 0.5) 74%,
+    transparent 100%
+  );
 }
 
-.avatar {
+.dockAvatar {
+  position: relative;
   flex-shrink: 0;
-  width: 132px;
-  height: 132px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--surface-solid);
   border: 3px solid rgba(24, 24, 26, 0.95);
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .avatarImg {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
 .avatarBtn {
@@ -138,33 +150,32 @@
   opacity: 0.9;
 }
 
-.avatarBtn .avatarImg {
-  width: 100%;
-  height: 100%;
-}
-
 .avatarIcon {
   color: var(--text-muted);
 }
 
-.headMain {
+.dockId {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  padding-bottom: 0.35rem;
+  gap: 0.35rem;
+  padding-bottom: 0.15rem;
 }
 
-.name {
+.dockName {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  flex-wrap: nowrap;
+  gap: 0.55rem;
+  min-width: 0;
+
+}
+
+.dockNameH1 {
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
   font-weight: 300;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: #fff;
 }
 
@@ -177,6 +188,7 @@
   border-radius: 8px;
   color: var(--text-muted);
   flex-shrink: 0;
+  margin-left: auto;
   transition: color 0.2s ease, background 0.2s ease;
 }
 
@@ -185,50 +197,157 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-.metaRow {
+.meta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  gap: 0.4rem 0.55rem;
+  min-width: 0;
+  color: rgba(230, 230, 232, 0.82);
+  font-size: 12.5px;
 }
 
-.metaItem {
+.metaSub {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.metaSub > * + *::before {
+  content: "·";
+  margin: 0 0.4rem;
+  color: rgba(230, 230, 232, 0.4);
+}
+
+.metaItem,
+.metaJoined {
   white-space: nowrap;
 }
 
-.metaDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  opacity: 0.6;
+.rolePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-hover);
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
-.headActions {
+.dockActions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding-bottom: 0.6rem;
   flex-shrink: 0;
 }
 
-/* ---------- bio ---------- */
+.dockActions .reportBtn {
+  flex: 0 0 auto;
+}
 
-.bioPanel {
-  margin-top: 1.75rem;
+/* ---------- about (bio + links) ---------- */
+
+.aboutCard {
+  margin-top: 1.25rem;
   padding: 1.4rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.7rem;
+}
+
+.aboutTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  flex-wrap: wrap;
+}
+
+.aboutTop :global(.eyebrow) {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .bio {
   font-size: 14.5px;
+}
+
+/* ---------- claim banner ---------- */
+
+.claimBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  margin-top: 1.75rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.claimBannerIcon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.claimBannerBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.claimBannerBody strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.claimBannerBody span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.claimBannerBtn {
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.claimBannerBtn:hover {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+}
+
+@media (max-width: 560px) {
+  .claimBanner {
+    flex-wrap: wrap;
+  }
+
+  .claimBannerBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ---------- comments ---------- */
@@ -242,27 +361,80 @@
 @media (max-width: 768px) {
   .banner {
     height: 170px;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
 
-  .head {
+  .dock {
+    position: static;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.4rem 0.8rem;
+    padding: 0.7rem 0.85rem 0.85rem;
+    margin-top: 0;
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 var(--radius) var(--radius);
+    background: var(--surface-solid);
+  }
+
+  .dockAvatar {
+    width: 58px;
+    height: 58px;
+    margin-top: 0;
+    border-color: var(--surface-solid);
+  }
+
+  .dockId {
+    flex: 1 1 0;
+    padding-bottom: 0;
+    gap: 0.25rem;
+  }
+
+  .dockName {
+    gap: 0.4rem;
+  }
+
+  .dockNameH1 {
+    font-size: 1.3rem;
+  }
+
+  .meta {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
-    padding: 0 0.75rem;
-    margin-top: -48px;
+    gap: 0.2rem;
+    color: var(--text-muted);
   }
 
-  .avatar {
-    width: 96px;
-    height: 96px;
+  .metaSub {
+    color: var(--text-secondary);
   }
 
-  .headActions {
-    padding-bottom: 0;
+  .metaSub > * + *::before {
+    color: var(--text-muted);
+  }
+
+  .metaJoined {
+    display: none;
+  }
+
+  .dockActions {
+    flex: 1 1 100%;
     flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.35rem;
   }
 
-  .bioPanel {
+  .dockActions > * {
+    flex: 1 1 auto;
+  }
+
+  .aboutTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+
+  .aboutCard {
     padding: 1.1rem 1.2rem;
   }
 }
@@ -272,14 +444,8 @@
     height: 130px;
   }
 
-  .head {
-    padding: 0 0.5rem;
-    margin-top: -36px;
-  }
-
-  .avatar {
-    width: 80px;
-    height: 80px;
+  .dockNameH1 {
+    font-size: 1.15rem;
   }
 }
 

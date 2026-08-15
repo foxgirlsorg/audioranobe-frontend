@@ -72,13 +72,15 @@ export function lastSeen(iso: string): string {
   return d.toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-/**
- * Human presence label (RU). Uses the "был(а)" parenthetical convention so it
- * reads for any gender.
- */
+
 export function presenceLabel(status: 'online' | 'offline', lastSeenAt?: string | null): string {
   if (status === 'online') return 'в сети';
   return lastSeenAt ? `был(а) в сети ${lastSeen(lastSeenAt)}` : 'не в сети';
+}
+
+export function presenceLabelCompact(status: 'online' | 'offline', lastSeenAt?: string | null): string {
+  if (status === 'online') return 'в сети';
+  return lastSeenAt ? `${lastSeen(lastSeenAt)}` : 'не в сети';
 }
 
 export function formatCount(n: number): string {

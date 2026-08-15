@@ -24,7 +24,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { initialsOf, presenceLabel } from '@/lib/format';
+import { initialsOf } from '@/lib/format';
 import { LIMITS } from '@/lib/limits';
 import { useAway, scalePoll } from '@/lib/presence';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
@@ -34,6 +34,7 @@ import Skeleton from 'react-loading-skeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
+import PresenceLabel from '@/components/PresenceLabel/PresenceLabel';
 import Markdown from '@/components/Markdown/Markdown';
 import { PhotoView } from 'react-photo-view';
 import styles from './page.module.css';
@@ -712,9 +713,11 @@ function ChatInner() {
                     {thread.user.display_name || thread.user.username}
                     <UserBadges user={thread.user} size={11} />
                   </span>
-                  <span className={`${styles.threadPresence} ${styles[`presence_${thread.user.presence}`]}`}>
-                    {presenceLabel(thread.user.presence, thread.user.last_seen_at)}
-                  </span>
+                  <PresenceLabel
+                    status={thread.user.presence}
+                    lastSeenAt={thread.user.last_seen_at}
+                    className={`${styles.threadPresence} ${styles[`presence_${thread.user.presence}`]}`}
+                  />
                 </span>
               </Link>
             </header>

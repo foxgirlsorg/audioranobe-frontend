@@ -8,6 +8,7 @@ import type { NarratorFull } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { formatCount, formatDate } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { SUPPORT_URL } from '@/lib/support';
 import Skeleton from 'react-loading-skeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import StatusBadge from '@/components/StatusBadge/StatusBadge';
@@ -44,24 +45,24 @@ function SectionHeaderSkeleton({ eyebrowWidth = 140, titleWidth = 220 }) {
 function NarratorPageSkeleton() {
   return (
     <div className={styles.page}>
-      <div className={styles.banner} aria-hidden="true">
-        <Skeleton height="100%" style={{ display: 'block' }} />
+      <div className={styles.profileHead}>
+        <div className={styles.banner} aria-hidden="true">
+          <Skeleton height="100%" style={{ display: 'block' }} />
+        </div>
+        <div className={styles.dock}>
+          <div className={styles.dockAvatar}>
+            <Skeleton circle width="100%" height="100%" />
+          </div>
+          <div className={styles.dockId}>
+            <div className={styles.dockName}>
+              <Skeleton width={220} height={28} />
+            </div>
+            <div className={styles.meta}>
+              <Skeleton width={220} height={13} />
+            </div>
+          </div>
+        </div>
       </div>
-      <header className={styles.head}>
-        <div className={styles.avatar}>
-          <Skeleton circle width="100%" height="100%" />
-        </div>
-        <div className={styles.headMain}>
-          <Skeleton width={70} height={11} />
-          <div className={styles.name}>
-            <Skeleton width={220} height={28} />
-          </div>
-          <div className={styles.metaRow}>
-            <Skeleton width={220} height={13} />
-          </div>
-        </div>
-
-      </header>
       <section className={sectionStyles.section}>
       <Skeleton width="100%" height={200} />
       </section>
@@ -153,76 +154,105 @@ export default function NarratorPageClient({
 
   return (
     <div className={styles.page}>
-      <div className={styles.banner} aria-hidden="true">
-        {n.cover_url ? (
-          <PhotoView src={n.cover_url}>
-            <button type="button" className={styles.bannerBtn} aria-label="Увеличить баннер">
-              <img src={n.cover_url} alt="" className={styles.bannerImg} />
-            </button>
-          </PhotoView>
-        ) : (
-          <div className={styles.bannerEmpty}>
-            <span className={styles.bannerGlow} />
-            <img src="/foxgirl_narrator.svg" className={styles.bannerFoxgirl} alt=""/>
-          </div>
-        )}
-        <div className={styles.bannerShade} />
-      </div>
-
-      <header className={styles.head}>
-        <div className={styles.avatar}>
-          {n.avatar_url ? (
-            <PhotoView src={n.avatar_url}>
-              <button type="button" className={styles.avatarBtn} aria-label="Увеличить аватар">
-                <img src={n.avatar_url} alt={n.name} className={styles.avatarImg} />
+      <div className={styles.profileHead}>
+        <div className={styles.banner} aria-hidden="true">
+          {n.cover_url ? (
+            <PhotoView src={n.cover_url}>
+              <button type="button" className={styles.bannerBtn} aria-label="Увеличить баннер">
+                <img src={n.cover_url} alt="" className={styles.bannerImg} />
               </button>
             </PhotoView>
           ) : (
-            <Mic2 size={40} className={styles.avatarIcon} />
+            <div className={styles.bannerEmpty}>
+              <span className={styles.bannerGlow} />
+              <img src="/foxgirl_narrator.svg" className={styles.bannerFoxgirl} alt=""/>
+            </div>
           )}
+          <div className={styles.bannerShade} />
         </div>
 
-        <div className={styles.headMain}>
-          <span className="eyebrow">Чтец</span>
-          <h1 className={styles.name}>
-            {n.name}
-            {n.is_verified ? <VerifiedBadge /> : null}
-            {n.is_ai ? <AiBadge title="Синтезированный голос" /> : null}
-            {n.mod_status !== 'approved' ? <StatusBadge status={n.mod_status} /> : null}
-            {canEdit ? (
-              <Link href={`/narrator/${n.slug}/edit`} className={styles.editBtn} title="Редактировать">
-                <Pencil size={16} />
-              </Link>
-            ) : null}
-          </h1>
-          <div className={styles.metaRow}>
-            <span className={styles.metaItem}>{`Тайтлов: ${n.titles_count}`}</span>
-            <span className={styles.metaDot} aria-hidden="true" />
-            <span className={styles.metaItem}>{`Подписчиков: ${formatCount(n.subscribers_count)}`}</span>
-            <span className={styles.metaDot} aria-hidden="true" />
-            <span className={styles.metaItem}>{`на сайте с ${formatDate(n.created_at)}`}</span>
+        <div className={styles.dock}>
+          <div className={styles.dockAvatar}>
+            {n.avatar_url ? (
+              <PhotoView src={n.avatar_url}>
+                <button type="button" className={styles.avatarBtn} aria-label="Увеличить аватар">
+                  <img src={n.avatar_url} alt={n.name} className={styles.avatarImg} />
+                </button>
+              </PhotoView>
+            ) : (
+              <Mic2 size={40} className={styles.avatarIcon} />
+            )}
           </div>
-          <SocialLinks urls={n.socials} />
-        </div>
 
-        <div className={styles.headActions}>
-          <SubscribeButton
-            narratorId={n.id}
-            subscribed={n.my_subscription}
-            count={n.subscribers_count}
-          />
-          <ReportButton targetType="narrator" targetId={n.id} />
-        </div>
-      </header>
+          <div className={styles.dockId}>
+            <div className={styles.dockName}>
 
-      {n.bio ? (
-        <div className={`glass-panel ${styles.bioPanel}`}>
-          <span className="eyebrow">О себе</span>
-          <div className={styles.bio}>
-            <Collapsible maxHeight={300}>
-              <Markdown source={n.bio} media="image" />
-            </Collapsible>
+              <h1 className={styles.dockNameH1}>{n.name}</h1>
+              {n.is_verified ? <VerifiedBadge /> : null}
+              {n.is_ai ? <AiBadge title="Синтезированный голос" /> : null}
+              {n.mod_status !== 'approved' ? <StatusBadge status={n.mod_status} /> : null}
+              {canEdit ? (
+                <Link href={`/narrator/${n.slug}/edit`} className={styles.editBtn} title="Редактировать">
+                  <Pencil size={16} />
+                </Link>
+              ) : null}
+            </div>
+
+            <div className={styles.meta}>
+              <span className={styles.metaSub}>
+                <span className={styles.metaNarrator}>Чтец</span>
+                <span className={styles.metaItem}>{`Тайтлов: ${n.titles_count}`}</span>
+                <span className={styles.metaItem}>{`Подписчиков: ${formatCount(n.subscribers_count)}`}</span>
+                <span className={styles.metaJoined}>{`на сайте с ${formatDate(n.created_at)}`}</span>
+              </span>
+            </div>
           </div>
+
+          <div className={styles.dockActions}>
+            <SubscribeButton
+              narratorId={n.id}
+              subscribed={n.my_subscription}
+              count={n.subscribers_count}
+            />
+            <ReportButton targetType="narrator" targetId={n.id} className={styles.reportBtn} compact={true} />
+          </div>
+        </div>
+      </div>
+
+      {!n.is_self && !n.is_ai && !canEdit ? (
+        <div className={styles.claimBanner}>
+          <Mic2 size={17} aria-hidden="true" className={styles.claimBannerIcon} />
+          <div className={styles.claimBannerBody}>
+            <strong>Это ваша страница чтеца?</strong>
+            <span>
+              Эта страница создана без участия чтеца. Если вы озвучиваете под этим
+              именем — напишите в поддержку, и мы передадим страницу вам.
+            </span>
+          </div>
+          <a
+            href={SUPPORT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.claimBannerBtn}
+          >
+            Связаться с поддержкой
+          </a>
+        </div>
+      ) : null}
+
+      {n.bio || (n.socials && n.socials.length > 0) ? (
+        <div className={`glass-panel ${styles.aboutCard}`}>
+          <div className={styles.aboutTop}>
+            <span className="eyebrow">{n.bio ? 'О себе' : 'Ссылки'}</span>
+            <SocialLinks urls={n.socials} />
+          </div>
+          {n.bio ? (
+            <div className={styles.bio}>
+              <Collapsible maxHeight={300}>
+                <Markdown source={n.bio} media="image" />
+              </Collapsible>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

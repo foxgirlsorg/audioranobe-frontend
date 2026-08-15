@@ -100,6 +100,7 @@ export interface UserPublic {
   cover_url: string | null;
   role: Role;
   is_developer: boolean;
+  is_banned: boolean;
   created_at: string;
   presence: PresenceStatus;
   last_seen_at: string | null;
