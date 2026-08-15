@@ -4,11 +4,8 @@ import Link from 'next/link';
 import React from 'react';
 import { Mail } from 'lucide-react';
 import { TelegramIcon } from '@/components/SocialLinks/brands';
+import { SUPPORT_EMAIL, SUPPORT_BOT, SUPPORT_CHANNEL } from '@/lib/support';
 import styles from './Footer.module.css';
-
-const SUPPORT_EMAIL = 'support@audioranobe.com';
-const SUPPORT_BOT = 'https://t.me/audioranobesupportbot';
-const CHANNEL = 'https://t.me/audioranobecom';
 
 const NAV = [
   { href: '/catalog', label: 'Каталог' },
@@ -76,7 +73,7 @@ export default function Footer() {
               {'Поддержка'}
             </a>
             <a
-              href={CHANNEL}
+              href={SUPPORT_CHANNEL}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.contact}

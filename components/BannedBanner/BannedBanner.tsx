@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAuth } from '@/lib/auth';
 import { ShieldBan } from 'lucide-react';
+import { SUPPORT_URL } from '@/lib/support';
 
 export default function BannedBanner() {
   const { user } = useAuth();
@@ -35,7 +36,9 @@ export default function BannedBanner() {
       <ShieldBan size={16} />
       Ваш аккаунт заблокирован{user.ban_reason ? `: ${user.ban_reason}` : ''}. Некоторые функции недоступны.{' '}
       <a
-        href="mailto:support@audioranobe.com"
+        href={SUPPORT_URL}
+        target="_blank"
+        rel="noopener noreferrer"
         style={{ color: '#de6161', textDecoration: 'underline' }}
       >
         Связаться с поддержкой
