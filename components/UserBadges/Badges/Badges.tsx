@@ -16,7 +16,7 @@ function BadgeIcon({ badge, size }: { badge: BadgeKey; size: number }) {
         strokeLinejoin="round"
         aria-hidden="true"
       >
-        <path d="m8 8-4 4 4 4M16 8l4 4-4 4" />
+        <path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14" />
       </svg>
     );
   }
