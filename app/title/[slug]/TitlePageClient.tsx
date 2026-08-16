@@ -447,7 +447,7 @@ export default function TitlePageClient({
           {resume.continued ? 'Продолжить слушать' : 'Начать слушать'}
         </button>
       ) : null}
-      {user && (
+      {user && chaptersTotal > 0 && (
         <FavoriteButton
           titleId={title.id}
           favorited={title.my_favorite}
