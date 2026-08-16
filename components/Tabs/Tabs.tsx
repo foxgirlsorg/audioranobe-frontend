@@ -13,6 +13,18 @@ interface Tab {
   accent?: boolean;
 }
 
+type Variant = 'pill' | 'underline' | 'segmented';
+
+const VARIANT_CLASS: Record<Variant, string> = {
+  pill: styles.pill,
+  underline: styles.underline,
+  segmented: styles.segmented,
+};
+
+function wrapClass(variant: Variant | undefined): string {
+  return variant ? `${styles.tabs} ${VARIANT_CLASS[variant]}` : styles.tabs;
+}
+
 function tabClass(t: Tab, active: string): string {
   return [
     styles.tab,
@@ -32,10 +44,10 @@ function TabsBase({
   tabs: Tab[];
   active: string;
   onChange: (key: string) => void;
-  variant?: 'pill';
+  variant?: Variant;
 }) {
   return (
-    <div className={variant === 'pill' ? `${styles.tabs} ${styles.pill}` : styles.tabs} role="tablist">
+    <div className={wrapClass(variant)} role="tablist">
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -64,7 +76,7 @@ function TabsWithUrl({
   active: string;
   onChange: (key: string) => void;
   urlParam: string;
-  variant?: 'pill';
+  variant?: Variant;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,7 +102,7 @@ function TabsWithUrl({
   );
 
   return (
-    <div className={variant === 'pill' ? `${styles.tabs} ${styles.pill}` : styles.tabs} role="tablist">
+    <div className={wrapClass(variant)} role="tablist">
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -113,7 +125,7 @@ export function Tabs(props: {
   active: string;
   onChange: (key: string) => void;
   urlParam?: string;
-  variant?: 'pill';
+  variant?: Variant;
 }) {
   if (props.urlParam) {
     return (
