@@ -274,6 +274,13 @@
   flex-shrink: 0;
 }
 
+/* Below 768px (see media query further down) the links move under the bio
+   text instead of sitting next to the eyebrow — this is the mobile copy,
+   hidden on desktop. */
+.linksShowMobile {
+  display: none;
+}
+
 .bio {
   font-size: 14.5px;
 }
@@ -432,6 +439,15 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.7rem;
+  }
+
+  .linksHideMobile {
+    display: none;
+  }
+
+  .linksShowMobile {
+    display: block;
+    margin-top: 0.7rem;
   }
 
   .aboutCard {

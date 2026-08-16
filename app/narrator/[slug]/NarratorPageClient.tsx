@@ -244,13 +244,18 @@ export default function NarratorPageClient({
         <div className={`glass-panel ${styles.aboutCard}`}>
           <div className={styles.aboutTop}>
             <span className="eyebrow">{n.bio ? 'О себе' : 'Ссылки'}</span>
-            <SocialLinks urls={n.socials} />
+            <div className={n.bio ? styles.linksHideMobile : undefined}>
+              <SocialLinks urls={n.socials} />
+            </div>
           </div>
           {n.bio ? (
             <div className={styles.bio}>
               <Collapsible maxHeight={300}>
                 <Markdown source={n.bio} media="image" />
               </Collapsible>
+              <div className={styles.linksShowMobile}>
+                <SocialLinks urls={n.socials} />
+              </div>
             </div>
           ) : null}
         </div>

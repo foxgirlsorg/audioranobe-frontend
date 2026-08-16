@@ -547,13 +547,18 @@ export default function UserPageClient({
         <div className={`glass-panel ${styles.aboutCard}`}>
           <div className={styles.aboutTop}>
             <span className="eyebrow">{user.bio ? 'О себе' : 'Ссылки'}</span>
-            <SocialLinks urls={user.socials} />
+            <div className={user.bio ? styles.linksHideMobile : undefined}>
+              <SocialLinks urls={user.socials} />
+            </div>
           </div>
           {user.bio ? (
             <div className={styles.bio}>
               <Collapsible maxHeight={300}>
                 <Markdown source={user.bio} media="image" />
               </Collapsible>
+              <div className={styles.linksShowMobile}>
+                <SocialLinks urls={user.socials} />
+              </div>
             </div>
           ) : null}
         </div>
