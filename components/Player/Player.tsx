@@ -51,11 +51,13 @@ export default function Player() {
     setVolume,
     setSleep,
     stop,
+    barHidden,
+    full,
+    setFull,
   } = usePlayer();
 
   const [scrub, setScrub] = useState<number | null>(null);
   const [menu, setMenu] = useState<'rate' | 'sleep' | null>(null);
-  const [full, setFull] = useState(false);
   const [chapterOverflow, setChapterOverflow] = useState(false);
   const extrasRef = useRef<HTMLDivElement | null>(null);
   const lastVolumeRef = useRef(1);
@@ -98,6 +100,7 @@ export default function Player() {
   }, [full, current]);
 
   if (!current) return null;
+  if (barHidden && !full) return null;
 
   const shown = scrub !== null ? scrub : position;
   const max = duration > 0 ? duration : Math.max(shown, 1);

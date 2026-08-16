@@ -1,0 +1,90 @@
+.bar {
+  position: relative;
+  flex: none;
+  background: rgba(15, 15, 17, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+}
+
+/* Compact player is a mobile-only surface. */
+@media (min-width: 769px) {
+  .bar {
+    display: none;
+  }
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 4px;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.playIcon {
+  margin-left: 2px;
+}
+
+.ctrlBtn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+/* Defined after .ctrlBtn so its absolute positioning wins the cascade — the
+   button carries both classes. Anchored to .bar (the progress bar sits below
+   .controls), pinned to the right edge and centered over the whole player. */
+.fsBtn {
+  position: absolute;
+  right: 10px;
+  top: calc(50% - 1.5px);
+  transform: translateY(-50%);
+}
+
+.ctrlBtn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ctrlBtn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.skipNum {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  font-size: 7.5px;
+  font-weight: 700;
+  color: currentColor;
+}
+
+/* Non-interactive: shows position/buffer only, no numbers, no dragging. */
+.progress {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0,
+    var(--accent) var(--played, 0%),
+    rgba(255, 255, 255, 0.22) var(--played, 0%),
+    rgba(255, 255, 255, 0.22) var(--buffered, 0%),
+    rgba(255, 255, 255, 0.08) var(--buffered, 0%)
+  );
+}

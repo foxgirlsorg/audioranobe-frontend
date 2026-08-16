@@ -6,6 +6,12 @@
   min-height: 40vh;
 }
 
+/* On desktop the shell is transparent — page + compact player lay out exactly
+   as they did as direct children of the container (compact is mobile-only). */
+.dmShell {
+  display: contents;
+}
+
 .page {
   display: grid;
   /* minmax(0, 1fr): without the 0 minimum the thread column grows to fit its
@@ -839,6 +845,27 @@
     border-left: 0;
     border-right: 0;
     border-bottom: 0;
+  }
+
+  /* The compact player sits below the DM box in flow. A flex column filling
+     the viewport lets the box shrink to leave exactly the bar's height, so the
+     bar sits flush at the bottom with no leftover gap. */
+  .dmShell {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - var(--nav-total));
+    min-height: 0;
+  }
+
+  .dmShell.dmShellThread {
+    height: 100dvh;
+  }
+
+  .dmShell .page,
+  .dmShell .page.threadOpen {
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .thread {

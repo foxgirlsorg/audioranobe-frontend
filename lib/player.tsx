@@ -33,6 +33,10 @@ interface PlayerContextValue {
   setVolume(v: number): void;
   setSleep(minutes: number | 'chapter' | null): void;
   stop(): void;
+  barHidden: boolean;
+  setBarHidden(hidden: boolean): void;
+  full: boolean;
+  setFull(full: boolean): void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -50,6 +54,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const [sleep, setSleepState] = useState<number | 'chapter' | null>(null);
   const [sleepRemaining, setSleepRemaining] = useState<number | null>(null);
   const [buffered, setBuffered] = useState(0);
+  const [barHidden, setBarHidden] = useState(false);
+  const [full, setFull] = useState(false);
 
   // Progress only persists for signed-in users. The cookie is HttpOnly so JS
   // can't sniff the session — mirror the auth user into a ref the memoised
@@ -402,11 +408,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [toggle, skip]);
 
   useEffect(() => {
-    document.body.classList.toggle('has-player', !!current);
+    document.body.classList.toggle('has-player', !!current && !barHidden);
     return () => {
       document.body.classList.remove('has-player');
     };
-  }, [current]);
+  }, [current, barHidden]);
 
   const value = useMemo<PlayerContextValue>(
     () => ({
@@ -429,6 +435,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       setVolume,
       setSleep,
       stop,
+      barHidden,
+      setBarHidden,
+      full,
+      setFull,
     }),
     [
       current,
@@ -450,6 +460,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       setVolume,
       setSleep,
       stop,
+      barHidden,
+      full,
     ]
   );
 

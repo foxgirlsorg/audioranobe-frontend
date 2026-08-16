@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { usePlayer } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { initialsOf } from '@/lib/format';
@@ -36,6 +37,7 @@ import UserBadges from '@/components/UserBadges/UserBadges';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import PresenceLabel from '@/components/PresenceLabel/PresenceLabel';
 import Markdown from '@/components/Markdown/Markdown';
+import CompactPlayer from '@/components/CompactPlayer/CompactPlayer';
 import { PhotoView } from 'react-photo-view';
 import styles from './page.module.css';
 
@@ -145,6 +147,7 @@ export default function ChatPage() {
 
 function ChatInner() {
   const { user, isMod, loading: authLoading } = useAuth();
+  const { setBarHidden } = usePlayer();
   const away = useAway();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -197,6 +200,19 @@ function ChatInner() {
     document.body.classList.add('dm-fullscreen');
     return () => document.body.classList.remove('dm-fullscreen');
   }, []);
+
+  // On mobile the DM page swaps the global fixed player for its own compact bar
+  // embedded under the conversation; desktop keeps the normal docked player.
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const apply = () => setBarHidden(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => {
+      mq.removeEventListener('change', apply);
+      setBarHidden(false);
+    };
+  }, [setBarHidden]);
 
   // On mobile the thread view hides the global navbar so the thread's own header
   // is the single top bar. The layout reacts to this body class (see globals.css).
@@ -633,6 +649,7 @@ function ChatInner() {
   }
 
   return (
+    <div className={`${styles.dmShell} ${selectedId !== null ? styles.dmShellThread : ''}`}>
     <div className={`${styles.page} ${selectedId !== null ? styles.threadOpen : ''}`}>
       <aside className={styles.sidebar}>
         <header className={styles.sidebarHead}>
@@ -886,6 +903,8 @@ function ChatInner() {
         document.body
         )
         : null}
+    </div>
+    <CompactPlayer />
     </div>
   );
 }
