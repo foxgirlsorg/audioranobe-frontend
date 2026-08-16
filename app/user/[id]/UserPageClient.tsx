@@ -574,6 +574,8 @@ export default function UserPageClient({
             setTab(newTab);
             updateUrl(newTab, libStatus);
           }}
+          variant="segmented"
+          scrollable
         />
       </div>
 

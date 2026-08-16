@@ -190,6 +190,7 @@
 
 .segmented {
   display: flex;
+  width: 100%;
   gap: 0;
   padding: 3px;
   border-radius: 11px;
@@ -284,4 +285,19 @@
 
 .fadeEnd.scrollFade {
   --tabs-fade-end: 2rem;
+}
+
+/* Segmented tabs stay flex:1 (evenly filling the full width) on desktop; once
+   narrow, forcing that would squeeze labels unreadable, so tabs revert to
+   their natural width and the bar scrolls horizontally instead. */
+@media (max-width: 768px) {
+  .segmented.scrollFade {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .segmented.scrollFade .tab {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+  }
 }
