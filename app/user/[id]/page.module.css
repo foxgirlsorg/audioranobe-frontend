@@ -376,62 +376,7 @@
 
 /* ---------- library status rail ---------- */
 .statusRail {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
   margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-}
-
-.statusRail::-webkit-scrollbar {
-  display: none;
-}
-
-.statusChip {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.3rem 0.1rem;
-  margin-right: 0.9rem;
-  border: 0;
-  background: transparent;
-  color: var(--text-muted, #8a8a8a);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  cursor: pointer;
-  border-bottom: 1px solid transparent;
-  transition: color 0.25s ease, border-color 0.25s ease;
-}
-
-.statusChip:hover {
-  color: var(--text, #e8e8e8);
-}
-
-.statusChipActive,
-.statusChipActive:hover {
-  color: var(--accent, #de6161);
-  border-bottom-color: var(--accent, #de6161);
-}
-
-.statusCount {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--text-muted, #6b7280);
-}
-
-.statusChipActive .statusCount {
-  color: var(--accent, #de6161);
 }
 
 /* ---------- library rows ---------- */

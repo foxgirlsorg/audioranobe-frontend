@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './Tabs.module.css';
 
@@ -21,10 +21,6 @@ const VARIANT_CLASS: Record<Variant, string> = {
   segmented: styles.segmented,
 };
 
-function wrapClass(variant: Variant | undefined): string {
-  return variant ? `${styles.tabs} ${VARIANT_CLASS[variant]}` : styles.tabs;
-}
-
 function tabClass(t: Tab, active: string): string {
   return [
     styles.tab,
@@ -35,19 +31,65 @@ function tabClass(t: Tab, active: string): string {
     .join(' ');
 }
 
-function TabsBase({
+// Tracks whether the tab strip has hidden content past either edge, so a
+// `scrollable` bar can fade its overflow the same way the horizontal rails
+// on the home page do (see TabScroller).
+function useScrollEdges(enabled: boolean | undefined, tabs: Tab[]) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [edges, setEdges] = useState({ start: false, end: false });
+
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setEdges({ start: el.scrollLeft > 1, end: el.scrollLeft < max - 1 });
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const el = ref.current;
+    if (!el) return;
+    measure();
+    el.addEventListener('scroll', measure, { passive: true });
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    for (const child of Array.from(el.children)) ro.observe(child);
+    return () => {
+      el.removeEventListener('scroll', measure);
+      ro.disconnect();
+    };
+  }, [enabled, measure, tabs]);
+
+  return { ref, edges };
+}
+
+function TabsRender({
   tabs,
   active,
   onChange,
   variant,
+  scrollable,
 }: {
   tabs: Tab[];
   active: string;
   onChange: (key: string) => void;
   variant?: Variant;
+  scrollable?: boolean;
 }) {
+  const { ref, edges } = useScrollEdges(scrollable, tabs);
+
+  const wrapCls = [
+    styles.tabs,
+    variant ? VARIANT_CLASS[variant] : '',
+    scrollable ? styles.scrollFade : '',
+    scrollable && edges.start ? styles.fadeStart : '',
+    scrollable && edges.end ? styles.fadeEnd : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={wrapClass(variant)} role="tablist">
+    <div className={wrapCls} role="tablist" ref={ref}>
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -71,12 +113,14 @@ function TabsWithUrl({
   onChange,
   urlParam,
   variant,
+  scrollable,
 }: {
   tabs: Tab[];
   active: string;
   onChange: (key: string) => void;
   urlParam: string;
   variant?: Variant;
+  scrollable?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -101,23 +145,7 @@ function TabsWithUrl({
     [onChange, urlParam, searchParams, router],
   );
 
-  return (
-    <div className={wrapClass(variant)} role="tablist">
-      {tabs.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          role="tab"
-          aria-selected={t.key === active}
-          className={tabClass(t, active)}
-          onClick={() => handleClick(t.key)}
-        >
-          {t.label}
-          {t.count != null ? <span className={styles.count}>{t.count}</span> : null}
-        </button>
-      ))}
-    </div>
-  );
+  return <TabsRender tabs={tabs} active={active} onChange={handleClick} variant={variant} scrollable={scrollable} />;
 }
 
 export function Tabs(props: {
@@ -126,6 +154,10 @@ export function Tabs(props: {
   onChange: (key: string) => void;
   urlParam?: string;
   variant?: Variant;
+  // Fades the strip's overflowing edges (like the home page's rails) instead
+  // of letting tabs run off silently. Use when the tab list can outgrow its
+  // container, e.g. on narrow viewports.
+  scrollable?: boolean;
 }) {
   if (props.urlParam) {
     return (
@@ -134,9 +166,7 @@ export function Tabs(props: {
       </React.Suspense>
     );
   }
-  return (
-    <TabsBase tabs={props.tabs} active={props.active} onChange={props.onChange} variant={props.variant} />
-  );
+  return <TabsRender {...props} />;
 }
 
 export default Tabs;

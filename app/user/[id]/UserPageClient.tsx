@@ -580,33 +580,21 @@ export default function UserPageClient({
       {tab === 'library' ? (
         <div className={styles.tabBody}>
 
-          <div className={styles.statusRail} role="tablist" aria-label="Список в библиотеке">
-            {LIBRARY_STATUSES.map((s) => {
-              const count =
-                s.key === 'all'
-                  ? libraryTotal
-                  : stats[s.key as keyof UserProfile['stats']] ?? 0;
-              return (
-                <button
-                  key={s.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={s.key === libStatus}
-                  className={
-                    s.key === libStatus
-                      ? `${styles.statusChip} ${styles.statusChipActive}`
-                      : styles.statusChip
-                  }
-                  onClick={() => {
-                    setLibStatus(s.key);
-                    updateUrl('library', s.key);
-                  }}
-                >
-                  {s.label}
-                  <span className={styles.statusCount}>{count}</span>
-                </button>
-              );
-            })}
+          <div className={styles.statusRail}>
+            <Tabs
+              tabs={LIBRARY_STATUSES.map((s) => ({
+                key: s.key,
+                label: s.label,
+                count: s.key === 'all' ? libraryTotal : stats[s.key as keyof UserProfile['stats']] ?? 0,
+              }))}
+              active={libStatus}
+              onChange={(k) => {
+                setLibStatus(k);
+                updateUrl('library', k);
+              }}
+              variant="underline"
+              scrollable
+            />
           </div>
           {library.loading || !library.items ? (
             <div className={styles.center}>
