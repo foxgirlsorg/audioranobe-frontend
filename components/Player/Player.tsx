@@ -374,7 +374,7 @@ export default function Player() {
             <button
               type="button"
               className={styles.iconBtn}
-              onClick={() => setFull((v) => !v)}
+              onClick={() => setFull(!full)}
               title={full ? 'Свернуть плеер' : 'Во весь экран'}
               aria-label={full ? 'Свернуть плеер' : 'Во весь экран'}
               aria-pressed={full}
