@@ -79,18 +79,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0;
   /* min-height, not height: the row still wraps onto a second line at an
      awkward width, and a fixed height would clip it. */
   min-height: var(--ctl-h);
-  padding: 4px;
+  padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 9999px;
+  border-radius: 11px;
   background: rgba(255, 255, 255, 0.03);
 }
 
 .sortLabel {
   padding: 0 0.5rem 0 0.65rem;
+  margin-bottom: -0.2rem;
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -104,7 +105,7 @@
   gap: 0.35rem;
   padding: 0.32rem 0.75rem;
   border: 1px solid transparent;
-  border-radius: 9999px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
   font-size: 11px;
@@ -124,9 +125,11 @@
   opacity: 0.7;
 }
 
+/* Segmented-switch look: the active sort reads as a pressed segment, not just
+   a tinted pill — matches the "C" tab style used elsewhere on the site. */
 .sortOn {
-  border-color: rgba(222, 97, 97, 0.45);
-  background: var(--accent-soft);
+  border-color: rgba(222, 97, 97, 0.4);
+  background: linear-gradient(135deg, rgba(222, 97, 97, 0.28), rgba(222, 97, 97, 0.14));
   color: #fff;
 }
 
@@ -144,7 +147,7 @@
   height: var(--ctl-h);
   padding: 0 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 9999px;
+  border-radius: 9px;
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-secondary);
   font-size: 11px;
@@ -272,12 +275,12 @@
 
   .finishedBtn {
     flex: 0 0 auto;
-    border-radius: 9px;
   }
 }
 
 /* Sort direction. Icon-only: the arrow already says which way it goes, and the
-   label would double the width of a row that is tight on a phone. */
+   label would double the width of a row that is tight on a phone. Square on
+   every breakpoint — was circular on desktop only, now matches the mobile shape. */
 .invertBtn {
   display: inline-flex;
   align-items: center;
@@ -286,7 +289,7 @@
   height: var(--ctl-h);
   flex: 0 0 auto;
   border: 1px solid var(--border);
-  border-radius: 9999px;
+  border-radius: 9px;
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-secondary);
   cursor: pointer;
@@ -296,10 +299,4 @@
 .invertBtn:hover {
   border-color: var(--border-hover);
   color: var(--text);
-}
-
-@media (max-width: 870px) {
-  .invertBtn {
-    border-radius: 9px;
-  }
 }
