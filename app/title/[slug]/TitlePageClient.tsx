@@ -565,6 +565,7 @@ export default function TitlePageClient({
       onChange={(e) =>
         setTitle((prev) => (prev ? { ...prev, my_library: e as TitleFull['my_library'] } : prev))
       }
+      alwaysShowNote={!isMobile}
     />
   );
 
@@ -574,35 +575,29 @@ export default function TitlePageClient({
         <Star size={12} />
         {'Рейтинг'}
       </span>
-      {user ? (
-        <>
-          <RatingStars
-            value={title.avg_rating}
-            count={title.rating_count}
-            my={title.my_rating}
-            onRate={(v) => void rate(v)}
-          />
-          <button
-            type="button"
-            className={styles.ratingToggle}
-            onClick={() => setRatingOpen((o) => !o)}
-            aria-expanded={ratingOpen}
-          >
-            {ratingOpen ? 'Свернуть распределение' : 'Показать распределение'}
-            <ChevronDown
-              size={14}
-              className={ratingOpen ? `${styles.ratingChev} ${styles.ratingChevOpen}` : styles.ratingChev}
-            />
-          </button>
-          <div className={ratingOpen ? styles.ratingBars : `${styles.ratingBars} ${styles.ratingBarsClosed}`}>
-            <RatingBars distribution={title.rating_distribution} />
-          </div>
-        </>
-      ) : (
-        <div className={styles.ratingGuestCenter}>
-          <RatingStars value={title.avg_rating} count={title.rating_count} my={null} />
+      <RatingStars
+        value={title.avg_rating}
+        count={title.rating_count}
+        my={title.my_rating}
+        onRate={user ? (v) => void rate(v) : undefined}
+      />
+      <button
+        type="button"
+        className={styles.ratingToggle}
+        onClick={() => setRatingOpen((o) => !o)}
+        aria-expanded={ratingOpen}
+      >
+        {ratingOpen ? 'Свернуть распределение' : 'Показать распределение'}
+        <ChevronDown
+          size={14}
+          className={ratingOpen ? `${styles.ratingChev} ${styles.ratingChevOpen}` : styles.ratingChev}
+        />
+      </button>
+      <div className={ratingOpen ? `${styles.ratingBars} ${styles.ratingBarsOpen}` : styles.ratingBars}>
+        <div className={styles.ratingBarsInner}>
+          <RatingBars distribution={title.rating_distribution} />
         </div>
-      )}
+      </div>
     </div>
   );
 

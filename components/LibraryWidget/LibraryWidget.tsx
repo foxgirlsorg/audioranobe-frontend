@@ -19,11 +19,16 @@ export function LibraryWidget({
   entry,
   onChange,
   userId,
+  alwaysShowNote,
 }: {
   titleId: number;
   entry: { status: string; note: string } | null;
   onChange: (entry: { status: string; note: string } | null) => void;
   userId?: number;
+  // Keeps the note field visible (disabled, empty) even when the title isn't
+  // in the library yet, instead of hiding it entirely. Desktop only — mobile
+  // stays compact and only shows the note once the title is actually added.
+  alwaysShowNote?: boolean;
 }) {
   const { user, loading } = useAuth();
   const { toast } = useToast();
@@ -147,7 +152,7 @@ export function LibraryWidget({
         ) : null}
       </div>
 
-      {entry ? (
+      {entry || alwaysShowNote ? (
         <div className={styles.noteBlock}>
           <label className={styles.noteLabel} htmlFor={`library-note-${titleId}`}>
             {'Заметка'}
@@ -159,8 +164,13 @@ export function LibraryWidget({
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             maxLength={2000}
+            disabled={!entry}
             placeholder={
-              foreign ? 'Заметка в списке этого пользователя…' : 'Видна всем в вашем профиле…'
+              !entry
+                ? 'Добавьте тайтл в библиотеку, чтобы оставить заметку'
+                : foreign
+                ? 'Заметка в списке этого пользователя…'
+                : 'Видна всем в вашем профиле…'
             }
           />
           <div className={styles.noteRow}>
@@ -169,7 +179,7 @@ export function LibraryWidget({
               type="button"
               className={styles.save}
               onClick={saveNote}
-              disabled={savingNote || !noteDirty}
+              disabled={!entry || savingNote || !noteDirty}
             >
               {savingNote ? 'Сохранение…' : 'Сохранить заметку'}
             </button>

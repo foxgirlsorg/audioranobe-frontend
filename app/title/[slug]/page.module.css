@@ -637,15 +637,6 @@ a.factV:hover {
   transform: rotate(180deg);
 }
 
-/* Signed-out viewers only ever see the eyebrow + stars — no toggle, no
-   distribution — so center that alone in whatever height the card ends up
-   stretched to (matched against the library card next to it). */
-.ratingGuestCenter {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
 .railEyebrow {
   font-size: 10px;
   font-weight: 700;
@@ -951,13 +942,9 @@ a.factV:hover {
 
 /* RatingBars caps itself at 320px for standalone use elsewhere; this card is
    wider than that, so let the rows (and their tracks) use the full width. */
-.ratingBars > div {
+.ratingBarsInner > div {
   max-width: none;
   width: 100%;
-}
-
-.ratingBarsClosed {
-  display: block;
 }
 
 /* ---------- tabs (chapters / comments) ---------- */
@@ -1265,13 +1252,29 @@ a.factV:hover {
     flex: 0 0 auto;
   }
 
-  /* Rating collapses behind a toggle once the card wraps to full width. */
+  /* Rating collapses behind a toggle once the card wraps to full width —
+     animated the same way the volume accordions expand/collapse. */
   .ratingToggle {
     display: inline-flex;
   }
 
-  .ratingBarsClosed {
-    display: none;
+  .ratingBars {
+    display: grid;
+    grid-template-rows: 0fr;
+    padding-top: 0;
+    border-top: none;
+    transition: grid-template-rows 0.35s var(--ease-smooth);
+  }
+
+  .ratingBarsOpen {
+    grid-template-rows: 1fr;
+  }
+
+  .ratingBarsInner {
+    overflow: hidden;
+    min-height: 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
   }
 
   .volHead {

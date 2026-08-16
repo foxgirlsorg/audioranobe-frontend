@@ -95,6 +95,12 @@
   background: rgba(255, 255, 255, 0.055);
 }
 
+.note:disabled {
+  opacity: 0.5;
+  cursor: default;
+  resize: none;
+}
+
 .noteRow {
   display: flex;
   align-items: center;
