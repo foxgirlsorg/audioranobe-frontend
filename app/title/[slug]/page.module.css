@@ -96,19 +96,26 @@
   color: var(--text-secondary);
 }
 
-/* ---------- hero ---------- */
+/* ---------- hero: compact banner ---------- */
 
 .hero {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 300px;
-  gap: 2.5rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
   padding-top: 1.25rem;
-  margin-bottom: 3.5rem;
+  margin-bottom: 3rem;
+}
+
+.top {
+  display: flex;
+  gap: 1.9rem;
+  align-items: center;
+  min-width: 0;
 }
 
 .coverCol {
-  min-width: 0;
+  width: 260px;
+  flex-shrink: 0;
 }
 
 .coverPanel {
@@ -128,6 +135,16 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* AI / 18+ overlay badges, top-right of the artwork — same red pill as AiBadge. */
+.coverBadges {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  gap: 5px;
 }
 
 .coverBtn {
@@ -236,28 +253,66 @@
 
 /* ---------- info column ---------- */
 
-.infoCol {
+.headinfo {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.85rem;
+  gap: 0.8rem;
   min-width: 0;
-  padding-top: 0.35rem;
+  flex: 1;
+  padding-top: 0.1rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.nameBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .name {
-  font-size: clamp(1.8rem, 4vw, 2.9rem);
+  font-size: clamp(1.55rem, 2.6vw, 2rem);
   font-weight: 300;
-  line-height: 1.12;
+  line-height: 1.14;
   letter-spacing: 0.01em;
   color: #fff;
   text-wrap: balance;
 }
 
-.nameRow {
+/* ---------- author credit ---------- */
+
+.credit {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.creditLink {
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.creditLink:hover {
+  color: var(--accent-hover);
+  border-color: rgba(222, 97, 97, 0.55);
+}
+
+.creditMuted {
+  font-style: italic;
+}
+
+/* Small labelled toolbar, off the title row entirely — only visible to editors. */
+.editBar {
   display: flex;
-  align-items: center;
-  gap: 0.65rem;
+  gap: 0.3rem;
+  flex-shrink: 0;
 }
 
 .editBtn {
@@ -267,75 +322,24 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
   flex-shrink: 0;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .editBtn:hover {
   color: var(--accent-hover);
+  border-color: var(--border-hover);
   background: rgba(255, 255, 255, 0.06);
 }
 
 .altNames {
-  margin: -0.35rem 0 0;
+  margin: 0;
   font-size: 13px;
   line-height: 1.55;
   color: var(--text-muted);
-}
-
-/* ---------- author byline ---------- */
-
-.byline {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  margin: 0;
-  min-width: 0;
-}
-
-.bylineIcon {
-  align-self: center;
-  flex-shrink: 0;
-  color: var(--accent);
-  opacity: 0.85;
-}
-
-.bylineLabel {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.author {
-  font-size: 17px;
-  font-weight: 500;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.author:hover {
-  color: var(--accent-hover);
-  border-color: rgba(222, 97, 97, 0.55);
-}
-
-.authorUnknown {
-  font-size: 15px;
-  font-style: italic;
-  color: var(--text-muted);
-}
-
-/* ---------- status axes (release + narration) ---------- */
-
-.statusRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 0.15rem;
 }
 
 /*
@@ -367,114 +371,15 @@
   --tone-soft: rgba(185, 160, 106, 0.12);
 }
 
-/* One line, pill-shaped, the same height as the meta chips below it. */
-.statusPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.42rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 9999px;
-  border: 1px solid var(--border);
-  background: linear-gradient(to right, var(--tone-soft), rgba(255, 255, 255, 0.03));
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  white-space: nowrap;
-}
-
-.statusIcon {
-  flex-shrink: 0;
-  color: var(--tone);
-  opacity: 0.9;
-}
-
-.statusLabel {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.statusValue {
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--text);
-}
-
-.statusDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  background: var(--tone);
-  box-shadow: 0 0 0 2.5px var(--tone-soft);
-}
-
-/* Only the "still being read" state animates — it is the one that will change. */
-.toneLive .statusDot {
-  animation: statusPulse 2.4s var(--ease-smooth) infinite;
-}
-
-@keyframes statusPulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 3px rgba(222, 97, 97, 0.18);
-  }
-  50% {
-    box-shadow: 0 0 0 5px rgba(222, 97, 97, 0.05);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .toneLive .statusDot {
-    animation: none;
-  }
-}
-
-.metaChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.15rem;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.32rem 0.75rem;
-  border-radius: 9999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.chip svg {
-  color: var(--accent);
-  opacity: 0.9;
-}
-
-.genres {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* ---------- narrators row ---------- */
+/* ---------- narrators row (inline pills under the actions row) ---------- */
 
 .narrators {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 0.25rem;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .narrLabel {
@@ -494,6 +399,13 @@
 }
 
 .narrList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+/* Horizontal-scroll variant for mobile — everything still shows, just swipeable. */
+.narrListH {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
@@ -574,6 +486,7 @@
 .narrVerified {
   margin-left: 0.1rem;
   color: #de6161;
+  flex-shrink: 0;
 }
 
 /* ---------- description ---------- */
@@ -592,7 +505,7 @@
 
 .descClamped {
   display: -webkit-box;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -619,20 +532,126 @@
   margin-top: 0.9rem;
 }
 
-/* ---------- side panel ---------- */
-
-.sideCol {
+/* Desktop hero: banners already get spacing from .hero's own gap, so their
+   standalone margin-bottom (used when they sit loose elsewhere) is redundant
+   here and would double up the gap. */
+.heroBanners {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  min-width: 0;
+  gap: 1.2rem;
 }
 
-.ratingPanel {
+.heroBanners > .narrationBanner,
+.heroBanners > .claimBanner {
+  margin-bottom: 0;
+}
+
+/* ---------- subrow: library + rating, side by side ---------- */
+
+.subrow {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.subrow > * {
+  flex: 1 1 280px;
+}
+
+/* Facts card sits first in the row, directly under the cover and matching
+   its width exactly — everything else in the row (library, rating) still
+   shares the remaining space equally. */
+.factsCardCol {
+  flex: 0 0 260px;
+  width: 260px;
+}
+
+.factsCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.factsCardBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.factRow2 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 12.5px;
+}
+
+.factK {
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.factV {
+  color: var(--text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+a.factV:hover {
+  color: var(--accent);
+}
+
+/* Rating card — always fully expanded on desktop; the distribution collapses
+   behind a toggle only once the card is narrow enough to wrap (mobile). */
+.ratingCard {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px 18px;
+}
+
+.ratingToggle {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.ratingChev {
+  color: inherit;
+  transition: transform 0.3s var(--ease-smooth);
+}
+
+.ratingChevOpen {
+  transform: rotate(180deg);
+}
+
+/* Signed-out viewers only ever see the eyebrow + stars — no toggle, no
+   distribution — so center that alone in whatever height the card ends up
+   stretched to (matched against the library card next to it). */
+.ratingGuestCenter {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.railEyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .sideEyebrow {
@@ -921,31 +940,242 @@
   opacity: 0.85;
 }
 
-/* ---------- comments ---------- */
+/* ---------- rating distribution ---------- */
 
-.comments {
-  margin-top: 3rem;
+/* Desktop: always shown, no toggle — matches the rest of the page's "nothing
+   collapsed by default" rail cards. */
+.ratingBars {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* RatingBars caps itself at 320px for standalone use elsewhere; this card is
+   wider than that, so let the rows (and their tracks) use the full width. */
+.ratingBars > div {
+  max-width: none;
+  width: 100%;
+}
+
+.ratingBarsClosed {
+  display: block;
+}
+
+/* ---------- tabs (chapters / comments) ---------- */
+
+.tabsRow {
+  margin-bottom: 1.5rem;
+}
+
+.tabPanel {
+  min-width: 0;
+}
+
+/* CommentSection's own root margin is meant for standalone placement (news,
+   posts, narrator page); inside this tab panel it's redundant with the tab's
+   own spacing, so drop it here only. */
+.commentsInTab {
+  margin: 0;
+}
+
+/* ==========================================================================
+   App-style mobile layout — a separate render path (see useIsMobile), not a
+   reflow of the desktop grid. Cover-first centered hero, then a tab bar whose
+   "О тайтле" panel carries all the metadata.
+   ========================================================================== */
+
+.mHero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.mCoverPanel {
+  position: relative;
+  width: 190px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: var(--surface);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.5);
+}
+
+.mName {
+  margin-top: 16px;
+  font-size: 1.4rem;
+  font-weight: 300;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.mAlt {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.mActions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  margin-top: 1.1rem;
+}
+
+/* The play button is the global .btn.btn-primary; fill the row so the compact
+   FavoriteButton (its own control) sits to its right, like the mock. */
+.mActions :global(.btn) {
+  flex: 1;
+}
+
+.mActions .editBar {
+  flex: 0 0 auto;
+}
+
+.mAbout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.mFactsCard {
+  padding: 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.mFacts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 10px;
+}
+
+.mFact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  text-align: center;
+}
+
+.mFact b {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.mFact span,
+.mFact a {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.mFact a:hover {
+  color: var(--accent);
+}
+
+/* Narrator cards — avatar + stacked name/role in a bordered card, horizontally
+   scrolling row. Distinct from the desktop pill (.narrItem) on purpose. */
+.mPeople {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
+}
+
+.mPeople::-webkit-scrollbar {
+  display: none;
+}
+
+.mPerson {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.mPerson:hover {
+  border-color: var(--border-hover);
+  background: var(--accent-soft);
+}
+
+.mPersonAv {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.mPersonAvFallback {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(222, 97, 97, 0.18);
+  color: var(--accent-hover);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mPersonText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mPersonName {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.mPersonRole {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.mSimilar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
 }
 
 /* ---------- responsive ---------- */
-
-@media (max-width: 1100px) {
-  .hero {
-    grid-template-columns: 220px minmax(0, 1fr);
-    gap: 2rem;
-  }
-
-  .sideCol {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-  }
-
-  .sideCol > * {
-    flex: 1 1 260px;
-  }
-}
 
 @media (max-width: 768px) {
   .backdrop {
@@ -954,63 +1184,93 @@
   }
 
   .hero {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
     margin-bottom: 2.5rem;
+    gap: 1.1rem;
   }
 
-  .coverCol {
-    display: flex;
-    justify-content: center;
-  }
-
-  .coverPanel {
-    width: 200px;
-  }
-
-  .sideCol {
+  /* Cover + name + actions stack and center; only the prose (facts/desc) stays
+     left-aligned, where ragged-right reads better. */
+  .top {
     flex-direction: column;
-  }
-
-  /*
-   * The 1100px rule sets `flex: 1 1 260px` for a horizontal rail; once the rail
-   * turns vertical that basis becomes a 260px *height* and both panels grow
-   * empty space. Hand the height back to the content.
-   */
-  .sideCol > * {
-    flex: 0 0 auto;
-  }
-
-  /*
-   * One column, one axis: the cover is centred, so the identity block centres
-   * with it. Only the prose stays flush left, where ragged-right reads better.
-   */
-  .infoCol {
     align-items: center;
     text-align: center;
   }
 
-  .nameRow,
-  .byline,
-  .statusRow,
-  .metaChips,
-  .genres,
-  .narrList,
-  .actions {
-    justify-content: center;
+  .coverCol {
+    width: 190px;
   }
 
-  .narrators {
+  .headinfo {
+    align-items: center;
+    width: 100%;
+  }
+
+  .titleRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .nameBlock {
     align-items: center;
   }
 
-  .descWrap {
-    width: 100%;
-    text-align: left;
+  .editBar {
+    justify-content: center;
   }
 
-  /* Ten distribution rows is a third of the header on a phone; stars carry it. */
-  .ratingBars {
+  .actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .actions .btn-primary {
+    flex: 1;
+  }
+
+  .narrListH {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    justify-content: flex-start;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
+  }
+
+  .narrListH::-webkit-scrollbar {
+    display: none;
+  }
+
+  .narrListH .narrItem {
+    flex-shrink: 0;
+  }
+
+  .descWrap {
+    text-align: left;
+    width: 100%;
+  }
+
+  .tagsWrap {
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
+  }
+
+  .subrow {
+    flex-direction: column;
+  }
+
+  .subrow > * {
+    flex: 0 0 auto;
+  }
+
+  /* Rating collapses behind a toggle once the card wraps to full width. */
+  .ratingToggle {
+    display: inline-flex;
+  }
+
+  .ratingBarsClosed {
     display: none;
   }
 
@@ -1048,21 +1308,9 @@
   }
 }
 
-@media (max-width: 480px) {
-  .coverPanel {
-    width: 160px;
-  }
-
+@media (max-width: 400px) {
   .name {
-    font-size: 1.6rem;
-  }
-
-  .author {
-    font-size: 15.5px;
-  }
-
-  .statusPill {
-    padding: 0.28rem 0.6rem;
+    font-size: 1.45rem;
   }
 
   .chName {

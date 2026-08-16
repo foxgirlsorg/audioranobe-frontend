@@ -11,6 +11,7 @@ import {
   Download,
   Eye,
   Headphones,
+  Info,
   ListMusic,
   Lock,
   Mic,
@@ -38,7 +39,7 @@ import { useToast, errMsg } from '@/lib/toast';
 import { chapterFilePrefix, formatCount, formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Section from '@/components/Section/Section';
-import TabScroller from '@/components/TabScroller/TabScroller';
+import Tabs from '@/components/Tabs/Tabs';
 import ScrollRail from '@/components/ScrollRail/ScrollRail';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import RatingStars from '@/components/RatingStars/RatingStars';
@@ -78,22 +79,42 @@ function sharedNarrationStatus(
   return narrators.every((n) => n.narration_status === first) ? first : null;
 }
 
+/**
+ * The title page ships two distinct layouts — the desktop split (cover + rail +
+ * tabs) and an app-style single-column mobile layout — so this is a real
+ * breakpoint switch, not a CSS reflow. Starts `false` (server + first paint =
+ * desktop markup) and corrects on mount to avoid a hydration mismatch.
+ */
+function useIsMobile(): boolean {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const sync = () => setMobile(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+  return mobile;
+}
+
 function TitlePageSkeleton() {
   return (
     <div className={styles.page}>
       <header className={styles.hero}>
-        <div className={styles.coverCol}>
-          <div className={styles.coverPanel}>
-            <Skeleton height="100%" style={{ display: 'block' }} />
+        <div className={styles.top}>
+          <div className={styles.coverCol}>
+            <div className={styles.coverPanel}>
+              <Skeleton height="100%" style={{ display: 'block' }} />
+            </div>
           </div>
-        </div>
-        <div className={styles.infoCol}>
-          <div className={styles.name}>
-            <Skeleton width="70%" />
+          <div className={styles.headinfo}>
+            <div className={styles.name}>
+              <Skeleton width="70%" />
+            </div>
+            <Skeleton width={160} height={14} />
+            <Skeleton width="95%" count={2} />
+            <Skeleton width={160} height={38} borderRadius={10} />
           </div>
-          <Skeleton width={180} height={14} />
-          <Skeleton width="95%" count={3} />
-          <Skeleton width={130} height={38} borderRadius={10} />
         </div>
       </header>
     </div>
@@ -118,6 +139,10 @@ export default function TitlePageClient({
   const [missing, setMissing] = useState(false);
   const [openVols, setOpenVols] = useState<Record<number, boolean>>({});
   const [descOpen, setDescOpen] = useState(false);
+  const [tab, setTab] = useState('comments');
+  const [mobileTab, setMobileTab] = useState('about');
+  const isMobile = useIsMobile();
+  const [ratingOpen, setRatingOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [tagsClipped, setTagsClipped] = useState(false);
   const tagsRef = useRef<HTMLParagraphElement | null>(null);
@@ -323,289 +348,266 @@ export default function TitlePageClient({
   const bg = title.bg_url ?? title.cover_url;
   const descLong = title.description.length > DESC_CLAMP_CHARS;
   const chaptersTotal = title.volumes.reduce((n, v) => n + v.chapters.length, 0);
+  const commentsTotal = title.comments?.total ?? 0;
   const runtime = title.volumes.reduce((n, v) => n + volumeDuration(v), 0);
   const narrationStatus = sharedNarrationStatus(title.narrators);
 
   const restricted = title.is_restricted;
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.backdrop} aria-hidden="true">
-        {bg ? <img src={bg} alt="" className={styles.bdImg} /> : null}
-        <div className={styles.bdVignette} />
-        <div className={styles.bdNoise} />
-      </div>
+  const backdrop = (
+    <div className={styles.backdrop} aria-hidden="true">
+      {bg ? <img src={bg} alt="" className={styles.bdImg} /> : null}
+      <div className={styles.bdVignette} />
+      <div className={styles.bdNoise} />
+    </div>
+  );
 
-      {title.mod_status !== 'approved' ? (
-        <div className={styles.modBanner} role="status">
-          <ShieldAlert size={17} className={styles.modBannerIcon} />
-          <p className={styles.modBannerText}>
-            {title.mod_status === 'pending'
-              ? 'Этот тайтл ждёт модерации — пока его видят только его чтецы и модераторы.'
-              : 'Этот тайтл отклонён модерацией и скрыт из общего каталога.'}
-          </p>
-          <StatusBadge status={title.mod_status} />
+  const modBanner =
+    title.mod_status !== 'approved' ? (
+      <div className={styles.modBanner} role="status">
+        <ShieldAlert size={17} className={styles.modBannerIcon} />
+        <p className={styles.modBannerText}>
+          {title.mod_status === 'pending'
+            ? 'Этот тайтл ждёт модерации — пока его видят только его чтецы и модераторы.'
+            : 'Этот тайтл отклонён модерацией и скрыт из общего каталога.'}
+        </p>
+        <StatusBadge status={title.mod_status} />
+      </div>
+    ) : null;
+
+  const coverArt = (
+    <>
+      {title.is_ai || title.is_nsfw ? (
+        <div className={styles.coverBadges}>
+          {title.is_ai ? <AiBadge /> : null}
+          {title.is_nsfw ? (
+            <span className={styles.nsfwBadge} title="Материал 18+">
+              18+
+            </span>
+          ) : null}
         </div>
       ) : null}
-
-      <header className={styles.hero}>
-        <div className={styles.coverCol}>
-          <div className={styles.coverPanel}>
-            {title.cover_url && restricted ? (
-              <div className={styles.coverLocked}>
-                <img
-                  src={title.cover_url}
-                  alt=""
-                  aria-hidden="true"
-                  className={`${styles.cover} ${styles.coverBlurred}`}
-                />
-              </div>
-            ) : title.cover_url ? (
-              <PhotoView src={title.cover_url}>
-                <button type="button" className={styles.coverBtn} aria-label="Увеличить обложку">
-                  <img
-                    src={title.cover_url}
-                    alt={`Обложка «${title.name}»`}
-                    className={styles.cover}
-                  />
-                </button>
-              </PhotoView>
-            ) : (
-              <div className={styles.coverFallback}>
-                <Headphones size={40} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.infoCol}>
-          <div className={styles.nameRow}>
-            <h1 className={styles.name}>{title.name}</h1>
-            {title.is_ai ? <AiBadge /> : null}
-            {title.is_nsfw ? (
-              <span className={styles.nsfwBadge} title="Материал 18+">
-                18+
-              </span>
-            ) : null}
-            {canEdit ? (
-              <>
-                <Link
-                  href={`/title/${title.slug}/edit`}
-                  className={styles.editBtn}
-                  title="Редактировать тайтл"
-                  aria-label="Редактировать тайтл"
-                >
-                  <Pencil size={16} />
-                </Link>
-                <Link
-                  href={`/title/${title.slug}/edit?tab=content`}
-                  className={styles.editBtn}
-                  title="Главы и загрузка аудио"
-                  aria-label="Главы и загрузка аудио"
-                >
-                  <ListMusic size={16} />
-                </Link>
-              </>
-            ) : null}
-          </div>
-          {title.alt_names.length > 0 ? (
-            <p className={styles.altNames}>{title.alt_names.join(' · ')}</p>
-          ) : null}
-
-          <TabScroller
-            className={styles.quickInfoWrap}
-            stripClassName={styles.quickInfo}
-            ariaLabel="Сведения о тайтле"
-          >
-            <div className={styles.quickItem}>
-              <span className={styles.quickLabel}>{'Тайтл'}</span>
-              <span className={styles.quickValue}>{RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}</span>
-            </div>
-
-            {title.narrators.length > 0 ? (
-              <div className={styles.quickItem}>
-                <span className={styles.quickLabel}>{'Озвучка'}</span>
-                <span className={styles.quickValue}>{narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}</span>
-              </div>
-            ) : null}
-
-            <div className={styles.quickItem}>
-              <span className={styles.quickLabel}>{'Автор'}</span>
-              <span className={styles.quickValue}>
-                {title.author ? (
-                  <Link href={`/author/${title.author.id}`} title={`Ещё от ${title.author.name}`}>
-                    {title.author.name}
-                  </Link>
-                ) : (
-                  <span className={styles.quickMuted}>{'не указан'}</span>
-                )}
-              </span>
-            </div>
-
-            {title.year != null ? (
-              <div className={styles.quickItem}>
-                <span className={styles.quickLabel}>{'Год'}</span>
-                <span className={styles.quickValue}>{title.year}</span>
-              </div>
-            ) : null}
-
-            {runtime > 0 ? (
-              <div className={styles.quickItem}>
-                <span className={styles.quickLabel}>{'Длительность'}</span>
-                <span className={styles.quickValue}>{formatDuration(runtime)}</span>
-              </div>
-            ) : null}
-
-            {chaptersTotal > 0 ? (
-              <div className={styles.quickItem}>
-                <span className={styles.quickLabel}>{'Глав'}</span>
-                <span className={styles.quickValue}>{chaptersTotal}</span>
-              </div>
-            ) : null}
-
-            <div className={styles.quickItem}>
-              <span className={styles.quickLabel}>{'Прослушиваний'}</span>
-              <span className={styles.quickValue}>{formatCount(title.listens)}</span>
-            </div>
-
-            <div className={styles.quickItem}>
-              <span className={styles.quickLabel}>{'Просмотров'}</span>
-              <span className={styles.quickValue}>{formatCount(title.views_count)}</span>
-            </div>
-          </TabScroller>
-
-          {title.genres.length > 0 ? (
-            <div className={styles.tagsWrap}>
-              <span className={styles.quickLabel}>{'Теги'}</span>
-              <p
-                ref={tagsRef}
-                className={
-                  tagsOpen || !tagsClipped
-                    ? styles.tags
-                    : `${styles.tags} ${styles.tagsClamped}`
-                }
-              >
-                {title.genres.map((g) => (
-                  <Link key={g.slug} href={`/catalog?genre=${encodeURIComponent(g.slug)}`}>
-                    {g.name}
-                  </Link>
-                ))}
-              </p>
-              {tagsClipped || tagsOpen ? (
-                <button
-                  type="button"
-                  className={styles.tagsToggle}
-                  onClick={() => setTagsOpen((o) => !o)}
-                  aria-expanded={tagsOpen}
-                >
-                  {tagsOpen ? 'Свернуть' : 'Показать все'}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-
-          {title.narrators.length > 0 ? (
-            <div className={styles.narrators}>
-              <span className={styles.narrLabel}>
-                <Mic size={11} />
-                {title.narrators.length > 1 ? `Чтецы · ${title.narrators.length}` : 'Чтец'}
-              </span>
-              <div className={styles.narrList}>
-                {title.narrators.map((n) => (
-                  <Link
-                    key={n.id}
-                    href={`/narrator/${n.slug}`}
-                    className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}${
-                      n.is_verified ? ` ${styles.narrItemVerified}` : ''
-                    }`}
-                  >
-                    {n.avatar_url ? (
-                      <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
-                    ) : (
-                      <span className={styles.narrAvatarFallback}>
-                        {n.name.slice(0, 1).toUpperCase()}
-                      </span>
-                    )}
-                    <span className={styles.narrName}>{n.name}</span>
-                    {n.is_verified ? (
-                      <VerifiedBadge size={12} className={styles.narrVerified} />
-                    ) : null}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {title.description ? (
-            <div className={styles.descWrap}>
-              <div className={descLong && !descOpen ? `${styles.desc} ${styles.descClamped}` : styles.desc}>
-                <Markdown source={title.description} />
-              </div>
-              {descLong ? (
-                <button
-                  type="button"
-                  className={styles.descToggle}
-                  onClick={() => setDescOpen((o) => !o)}
-                >
-                  {descOpen ? 'Свернуть' : 'Развернуть'}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className={styles.actions}>
-            {!restricted && resume ? (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => void playChapter(resume.chapter)}
-              >
-                {player.current?.id === resume.chapter.id && player.playing ? (
-                  <Pause size={14} />
-                ) : (
-                  <Play size={14} />
-                )}
-                {resume.continued ? 'Продолжить слушать' : 'Начать слушать'}
-              </button>
-            ) : null}
-            {user && (
-            <FavoriteButton
-              titleId={title.id}
-              favorited={title.my_favorite}
-              count={title.favorites_count}
-              compact
-            />)}
-          </div>
-        </div>
-
-        <aside className={styles.sideCol}>
-          <LibraryWidget
-            titleId={title.id}
-            entry={title.my_library}
-            onChange={(e) =>
-              setTitle((prev) =>
-                prev ? { ...prev, my_library: e as TitleFull['my_library'] } : prev
-              )
-            }
+      {title.cover_url && restricted ? (
+        <div className={styles.coverLocked}>
+          <img
+            src={title.cover_url}
+            alt=""
+            aria-hidden="true"
+            className={`${styles.cover} ${styles.coverBlurred}`}
           />
-          <div className={`glass-panel ${styles.ratingPanel}`}>
-            <span className={styles.sideEyebrow}>
-              <Star size={12} />
-              {'Рейтинг'}
-            </span>
-            <RatingStars
-              value={title.avg_rating}
-              count={title.rating_count}
-              my={title.my_rating}
-              onRate={user ? (v) => void rate(v) : undefined}
-            />
-            <div className={styles.ratingBars}>
-              <RatingBars distribution={title.rating_distribution} />
-            </div>
-          </div>
-        </aside>
-      </header>
+        </div>
+      ) : title.cover_url ? (
+        <PhotoView src={title.cover_url}>
+          <button type="button" className={styles.coverBtn} aria-label="Увеличить обложку">
+            <img src={title.cover_url} alt={`Обложка «${title.name}»`} className={styles.cover} />
+          </button>
+        </PhotoView>
+      ) : (
+        <div className={styles.coverFallback}>
+          <Headphones size={44} />
+        </div>
+      )}
+    </>
+  );
 
+  const editButtons = canEdit ? (
+    <div className={styles.editBar}>
+      <Link
+        href={`/title/${title.slug}/edit`}
+        className={styles.editBtn}
+        title="Редактировать тайтл"
+        aria-label="Редактировать тайтл"
+      >
+        <Pencil size={16} />
+      </Link>
+      <Link
+        href={`/title/${title.slug}/edit?tab=content`}
+        className={styles.editBtn}
+        title="Главы и загрузка аудио"
+        aria-label="Главы и загрузка аудио"
+      >
+        <ListMusic size={16} />
+      </Link>
+    </div>
+  ) : null;
+
+  const playFavActions = (
+    <>
+      {!restricted && resume ? (
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => void playChapter(resume.chapter)}
+        >
+          {player.current?.id === resume.chapter.id && player.playing ? (
+            <Pause size={14} />
+          ) : (
+            <Play size={14} />
+          )}
+          {resume.continued ? 'Продолжить слушать' : 'Начать слушать'}
+        </button>
+      ) : null}
+      {user && (
+        <FavoriteButton
+          titleId={title.id}
+          favorited={title.my_favorite}
+          count={title.favorites_count}
+          compact
+        />
+      )}
+    </>
+  );
+
+  const narratorsBlock =
+    title.narrators.length > 0 ? (
+      <div className={styles.narrators}>
+        <span className={styles.narrLabel}>
+          <Mic size={11} />
+          {title.narrators.length > 1 ? `Чтецы · ${title.narrators.length}` : 'Чтец'}
+        </span>
+        <div className={styles.narrListH}>
+          {title.narrators.map((n) => (
+            <Link
+              key={n.id}
+              href={`/narrator/${n.slug}`}
+              className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}${
+                n.is_verified ? ` ${styles.narrItemVerified}` : ''
+              }`}
+            >
+              {n.avatar_url ? (
+                <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
+              ) : (
+                <span className={styles.narrAvatarFallback}>
+                  {n.name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <span className={styles.narrName}>{n.name}</span>
+              {n.is_verified ? (
+                <VerifiedBadge size={12} className={styles.narrVerified} />
+              ) : null}
+            </Link>
+          ))}
+        </div>
+      </div>
+    ) : null;
+
+  const mNarratorsBlock =
+    title.narrators.length > 0 ? (
+      <div className={styles.mPeople}>
+        {title.narrators.map((n) => (
+          <Link key={n.id} href={`/narrator/${n.slug}`} className={styles.mPerson}>
+            {n.avatar_url ? (
+              <img src={n.avatar_url} alt="" className={styles.mPersonAv} />
+            ) : (
+              <span className={styles.mPersonAvFallback}>{n.name.slice(0, 1).toUpperCase()}</span>
+            )}
+            <span className={styles.mPersonText}>
+              <span className={styles.mPersonName}>
+                {n.name}
+                {n.is_verified ? <VerifiedBadge size={11} className={styles.narrVerified} /> : null}
+              </span>
+              <span className={styles.mPersonRole}>{'Чтец'}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    ) : null;
+
+  const tagsBlock =
+    title.genres.length > 0 ? (
+      <div className={styles.tagsWrap}>
+        <span className={styles.railEyebrow}>{'Теги'}</span>
+        <p
+          ref={tagsRef}
+          className={tagsOpen || !tagsClipped ? styles.tags : `${styles.tags} ${styles.tagsClamped}`}
+        >
+          {title.genres.map((g) => (
+            <Link key={g.slug} href={`/catalog?genre=${encodeURIComponent(g.slug)}`}>
+              {g.name}
+            </Link>
+          ))}
+        </p>
+        {tagsClipped || tagsOpen ? (
+          <button
+            type="button"
+            className={styles.tagsToggle}
+            onClick={() => setTagsOpen((o) => !o)}
+            aria-expanded={tagsOpen}
+          >
+            {tagsOpen ? 'Свернуть' : 'Показать все'}
+          </button>
+        ) : null}
+      </div>
+    ) : null;
+
+  const descBlock = title.description ? (
+    <div className={styles.descWrap}>
+      <span className={styles.railEyebrow}>{'Описание'}</span>
+      <div className={descLong && !descOpen ? `${styles.desc} ${styles.descClamped}` : styles.desc}>
+        <Markdown source={title.description} />
+      </div>
+      {descLong ? (
+        <button
+          type="button"
+          className={styles.descToggle}
+          onClick={() => setDescOpen((o) => !o)}
+        >
+          {descOpen ? 'Свернуть' : 'Развернуть'}
+        </button>
+      ) : null}
+    </div>
+  ) : null;
+
+  const libraryWidget = (
+    <LibraryWidget
+      titleId={title.id}
+      entry={title.my_library}
+      onChange={(e) =>
+        setTitle((prev) => (prev ? { ...prev, my_library: e as TitleFull['my_library'] } : prev))
+      }
+    />
+  );
+
+  const ratingCard = (
+    <div className={`glass-panel ${styles.ratingCard}`}>
+      <span className={styles.sideEyebrow}>
+        <Star size={12} />
+        {'Рейтинг'}
+      </span>
+      {user ? (
+        <>
+          <RatingStars
+            value={title.avg_rating}
+            count={title.rating_count}
+            my={title.my_rating}
+            onRate={(v) => void rate(v)}
+          />
+          <button
+            type="button"
+            className={styles.ratingToggle}
+            onClick={() => setRatingOpen((o) => !o)}
+            aria-expanded={ratingOpen}
+          >
+            {ratingOpen ? 'Свернуть распределение' : 'Показать распределение'}
+            <ChevronDown
+              size={14}
+              className={ratingOpen ? `${styles.ratingChev} ${styles.ratingChevOpen}` : styles.ratingChev}
+            />
+          </button>
+          <div className={ratingOpen ? styles.ratingBars : `${styles.ratingBars} ${styles.ratingBarsClosed}`}>
+            <RatingBars distribution={title.rating_distribution} />
+          </div>
+        </>
+      ) : (
+        <div className={styles.ratingGuestCenter}>
+          <RatingStars value={title.avg_rating} count={title.rating_count} my={null} />
+        </div>
+      )}
+    </div>
+  );
+
+  const banners = (
+    <>
       {title.narration_pending ? (
         <div className={styles.narrationBanner}>
           <Headphones size={17} aria-hidden="true" />
@@ -638,204 +640,419 @@ export default function TitlePageClient({
           </a>
         </div>
       ) : null}
+    </>
+  );
 
-      <Section eyebrow={'Слушать'} title={'Тома и'} accent={'главы'}>
-        {chaptersTotal === 0 ? (
-          <EmptyState
-            icon={ListMusic}
-            title={'Глав пока нет'}
-            body={'У этой аудиокниги пока нет глав — загляните позже.'}
-          />
-        ) : (
-          <div className={styles.volumes}>
-            {title.volumes.map((v) => {
-              const open = !!openVols[v.id];
-              const total = volumeDuration(v);
-              return (
-                <div key={v.id} className={`glass-panel ${styles.volume}`}>
+  const chaptersContent =
+    chaptersTotal === 0 ? (
+      <EmptyState
+        icon={ListMusic}
+        title={'Глав пока нет'}
+        body={'У этой аудиокниги пока нет глав — загляните позже.'}
+      />
+    ) : (
+      <div className={styles.volumes}>
+        {title.volumes.map((v) => {
+          const open = !!openVols[v.id];
+          const total = volumeDuration(v);
+          return (
+            <div key={v.id} className={`glass-panel ${styles.volume}`}>
 
-                  <div className={styles.volHeadRow}>
-                    <button
-                      type="button"
-                      className={styles.volHead}
-                      onClick={() => toggleVolume(v.id)}
-                      aria-expanded={open}
-                    >
-                      <span className={styles.volTitle}>
-                        <span className={styles.volLabel}>{`Том ${v.number}`}</span>
-                        {v.name ? <span className={styles.volName}>{v.name}</span> : null}
+              <div className={styles.volHeadRow}>
+                <button
+                  type="button"
+                  className={styles.volHead}
+                  onClick={() => toggleVolume(v.id)}
+                  aria-expanded={open}
+                >
+                  <span className={styles.volTitle}>
+                    <span className={styles.volLabel}>{`Том ${v.number}`}</span>
+                    {v.name ? <span className={styles.volName}>{v.name}</span> : null}
+                  </span>
+                  <span className={styles.volMeta}>
+                    <span className={styles.volMetaItem}>
+                      <ListMusic size={12} />
+                      {`Глав: ${v.chapters.length}`}
+                    </span>
+                    {total > 0 ? (
+                      <span className={styles.volMetaItem}>
+                        <Clock size={12} />
+                        {formatDuration(total)}
                       </span>
-                      <span className={styles.volMeta}>
-                        <span className={styles.volMetaItem}>
-                          <ListMusic size={12} />
-                          {`Глав: ${v.chapters.length}`}
-                        </span>
-                        {total > 0 ? (
-                          <span className={styles.volMetaItem}>
-                            <Clock size={12} />
-                            {formatDuration(total)}
-                          </span>
-                        ) : null}
-                      </span>
-                    </button>
-                    {user ? (
-                      <ArchiveDownloadButton
-                        items={archiveItems([v], false)}
-                        archiveName={`${title.name} — Том ${v.number}`}
-                        label={`Скачать том ${v.number} архивом`}
-                        className={styles.volDownload}
-                        iconOnly
-                      />
                     ) : null}
-                    <button
-                      type="button"
-                      className={styles.volChev}
-                      onClick={() => toggleVolume(v.id)}
-                      tabIndex={-1}
-                      aria-hidden="true"
-                    >
-                      <ChevronDown
-                        size={16}
-                        className={open ? `${styles.chev} ${styles.chevOpen}` : styles.chev}
-                      />
-                    </button>
-                  </div>
-                  <div className={open ? `${styles.volBody} ${styles.volBodyOpen}` : styles.volBody}>
-                    <div className={styles.volInner}>
-                      {v.chapters.length === 0 ? (
-                        <div className={styles.noChapters}>
-                          {'В этом томе пока нет глав.'}
-                        </div>
-                      ) : (
-                        v.chapters.map((ch) => {
-                          const isCurrent = player.current?.id === ch.id;
-                          const playable = ch.audio_status === 'ready';
-                          const pos = isCurrent ? player.position : ch.my_position ?? 0;
-                          const dur =
-                            isCurrent && player.duration > 0
-                              ? player.duration
-                              : ch.duration_seconds;
-                          const pct = dur > 0 ? Math.min(100, (pos / dur) * 100) : 0;
-                          return (
-                            <div
-                              key={ch.id}
+                  </span>
+                </button>
+                {user ? (
+                  <ArchiveDownloadButton
+                    items={archiveItems([v], false)}
+                    archiveName={`${title.name} — Том ${v.number}`}
+                    label={`Скачать том ${v.number} архивом`}
+                    className={styles.volDownload}
+                    iconOnly
+                  />
+                ) : null}
+                <button
+                  type="button"
+                  className={styles.volChev}
+                  onClick={() => toggleVolume(v.id)}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                >
+                  <ChevronDown
+                    size={16}
+                    className={open ? `${styles.chev} ${styles.chevOpen}` : styles.chev}
+                  />
+                </button>
+              </div>
+              <div className={open ? `${styles.volBody} ${styles.volBodyOpen}` : styles.volBody}>
+                <div className={styles.volInner}>
+                  {v.chapters.length === 0 ? (
+                    <div className={styles.noChapters}>
+                      {'В этом томе пока нет глав.'}
+                    </div>
+                  ) : (
+                    v.chapters.map((ch) => {
+                      const isCurrent = player.current?.id === ch.id;
+                      const playable = ch.audio_status === 'ready';
+                      const pos = isCurrent ? player.position : ch.my_position ?? 0;
+                      const dur =
+                        isCurrent && player.duration > 0
+                          ? player.duration
+                          : ch.duration_seconds;
+                      const pct = dur > 0 ? Math.min(100, (pos / dur) * 100) : 0;
+                      return (
+                        <div
+                          key={ch.id}
+                          className={
+                            isCurrent ? `${styles.chRow} ${styles.chRowCurrent}` : styles.chRow
+                          }
+                        >
+                          <div className={styles.rowMain}>
+                            {playable ? (
+                              <button
+                                type="button"
+                                className={styles.playBtn}
+                                onClick={() => void playChapter(ch)}
+                                aria-label={
+                                  isCurrent && player.playing
+                                    ? `Приостановить главу ${ch.number}`
+                                    : `Включить главу ${ch.number}`
+                                }
+                              >
+                                {isCurrent && player.playing ? (
+                                  <Pause size={13} />
+                                ) : (
+                                  <Play size={13} className={styles.playIcon} />
+                                )}
+                              </button>
+                            ) : (
+                              <span className={styles.noPlay} title={'Аудио ещё не готово'}>
+                                <Headphones size={13} />
+                              </span>
+                            )}
+                            <span className={styles.chNum}>{ch.number}</span>
+                            <Link
+                              href={`/chapter/${ch.id}`}
                               className={
-                                isCurrent ? `${styles.chRow} ${styles.chRowCurrent}` : styles.chRow
+                                isCurrent
+                                  ? `${styles.chName} ${styles.chNameCurrent}`
+                                  : styles.chName
                               }
                             >
-                              <div className={styles.rowMain}>
-                                {playable ? (
-                                  <button
-                                    type="button"
-                                    className={styles.playBtn}
-                                    onClick={() => void playChapter(ch)}
-                                    aria-label={
-                                      isCurrent && player.playing
-                                        ? `Приостановить главу ${ch.number}`
-                                        : `Включить главу ${ch.number}`
-                                    }
-                                  >
-                                    {isCurrent && player.playing ? (
-                                      <Pause size={13} />
-                                    ) : (
-                                      <Play size={13} className={styles.playIcon} />
-                                    )}
-                                  </button>
-                                ) : (
-                                  <span className={styles.noPlay} title={'Аудио ещё не готово'}>
-                                    <Headphones size={13} />
-                                  </span>
-                                )}
-                                <span className={styles.chNum}>{ch.number}</span>
-                                <Link
-                                  href={`/chapter/${ch.id}`}
-                                  className={
-                                    isCurrent
-                                      ? `${styles.chName} ${styles.chNameCurrent}`
-                                      : styles.chName
-                                  }
-                                >
-                                  {ch.name || `Глава ${ch.number}`}
-                                </Link>
-                                <span className={styles.rowRight}>
-                                  {(ch.narrators ?? []).length > 0 ? (
-                                    <span className={styles.chNarrators} title={'Чтецы главы'}>
-                                      <Mic size={11} />
-                                      {ch.narrators.map((n) => n.name).join(', ')}
-                                    </span>
-                                  ) : null}
-                                  {ch.mod_status !== 'approved' ? (
-                                    <StatusBadge status={ch.mod_status} />
-                                  ) : null}
-                                  {ch.audio_status !== 'ready' && (canEdit || ch.audio_status !== 'none') ? (
-                                    <StatusBadge status={ch.audio_status} />
-                                  ) : null}
-                                  {isMod && title.is_imported ? (
-                                    <button
-                                      type="button"
-                                      className={styles.reNarrateBtn}
-                                      onClick={() => void reNarrate(ch)}
-                                      disabled={reNarrating === ch.id}
-                                      title={'Переозвучить главу'}
-                                      aria-label={`Переозвучить главу ${ch.number}`}
-                                    >
-                                      <RefreshCw size={12} className={reNarrating === ch.id ? styles.spin : undefined} />
-                                    </button>
-                                  ) : null}
-                                  {ch.duration_seconds > 0 ? (
-                                    <span className={styles.chDur}>
-                                      {formatDuration(ch.duration_seconds)}
-                                    </span>
-                                  ) : null}
-                                  {playable && user ? (
-                                    <button
-                                      type="button"
-                                      className={styles.dlBtn}
-                                      onClick={() => downloadChapter(ch.id)}
-                                      title={'Скачать главу'}
-                                      aria-label={`Скачать главу ${ch.number}`}
-                                    >
-                                      <Download size={14} />
-                                    </button>
-                                  ) : null}
+                              {ch.name || `Глава ${ch.number}`}
+                            </Link>
+                            <span className={styles.rowRight}>
+                              {(ch.narrators ?? []).length > 0 ? (
+                                <span className={styles.chNarrators} title={'Чтецы главы'}>
+                                  <Mic size={11} />
+                                  {ch.narrators.map((n) => n.name).join(', ')}
                                 </span>
-                              </div>
-                              {pct > 0 ? (
-                                <div className={styles.progress} aria-hidden="true">
-                                  <div
-                                    className={styles.progressFill}
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
                               ) : null}
+                              {ch.mod_status !== 'approved' ? (
+                                <StatusBadge status={ch.mod_status} />
+                              ) : null}
+                              {ch.audio_status !== 'ready' && (canEdit || ch.audio_status !== 'none') ? (
+                                <StatusBadge status={ch.audio_status} />
+                              ) : null}
+                              {isMod && title.is_imported ? (
+                                <button
+                                  type="button"
+                                  className={styles.reNarrateBtn}
+                                  onClick={() => void reNarrate(ch)}
+                                  disabled={reNarrating === ch.id}
+                                  title={'Переозвучить главу'}
+                                  aria-label={`Переозвучить главу ${ch.number}`}
+                                >
+                                  <RefreshCw size={12} className={reNarrating === ch.id ? styles.spin : undefined} />
+                                </button>
+                              ) : null}
+                              {ch.duration_seconds > 0 ? (
+                                <span className={styles.chDur}>
+                                  {formatDuration(ch.duration_seconds)}
+                                </span>
+                              ) : null}
+                              {playable && user ? (
+                                <button
+                                  type="button"
+                                  className={styles.dlBtn}
+                                  onClick={() => downloadChapter(ch.id)}
+                                  title={'Скачать главу'}
+                                  aria-label={`Скачать главу ${ch.number}`}
+                                >
+                                  <Download size={14} />
+                                </button>
+                              ) : null}
+                            </span>
+                          </div>
+                          {pct > 0 ? (
+                            <div className={styles.progress} aria-hidden="true">
+                              <div
+                                className={styles.progressFill}
+                                style={{ width: `${pct}%` }}
+                              />
                             </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
+                          ) : null}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </Section>
-
-      {title.similar.length > 0 ? (
-        <Section eyebrow={'В том же духе'} title={'Похожие'} accent={'тайтлы'}>
-          <ScrollRail step={1}>
-            {title.similar.map((s) => (
-              <div key={s.id} data-rail-card>
-                <TitleCardC title={s} />
               </div>
-            ))}
-          </ScrollRail>
-        </Section>
-      ) : null}
-
-      <div className={styles.comments}>
-        <CommentSection targetType="title" targetId={title.id} initialComments={title.comments} />
+            </div>
+          );
+        })}
       </div>
+    );
+
+  const commentsContent = (
+    <CommentSection
+      targetType="title"
+      targetId={title.id}
+      initialComments={title.comments}
+      className={styles.commentsInTab}
+    />
+  );
+
+  const similarSection =
+    title.similar.length > 0 ? (
+      <Section eyebrow={'В том же духе'} title={'Похожие'} accent={'тайтлы'}>
+        <ScrollRail step={1}>
+          {title.similar.map((s) => (
+            <div key={s.id} data-rail-card>
+              <TitleCardC title={s} />
+            </div>
+          ))}
+        </ScrollRail>
+      </Section>
+    ) : null;
+
+  // ---------- app-style mobile layout ----------
+  if (isMobile) {
+    const mobileTabs = [
+      { key: 'about', label: 'О тайтле' },
+      { key: 'chapters', label: 'Главы', count: chaptersTotal || undefined },
+      { key: 'comments', label: 'Комментарии', count: commentsTotal || undefined },
+      ...(title.similar.length > 0 ? [{ key: 'similar', label: 'Похожие' }] : []),
+    ];
+
+    return (
+      <div className={styles.page}>
+        {backdrop}
+        {modBanner}
+
+        <div className={styles.mHero}>
+          <div className={styles.mCoverPanel}>{coverArt}</div>
+          <h1 className={styles.mName}>{title.name}</h1>
+          {title.alt_names.length > 0 ? (
+            <p className={styles.mAlt}>{title.alt_names.join(' · ')}</p>
+          ) : null}
+          <div className={styles.mActions}>
+            {playFavActions}
+            {editButtons}
+          </div>
+        </div>
+
+        {banners}
+
+        <div className={styles.tabsRow}>
+          <Tabs tabs={mobileTabs} active={mobileTab} onChange={setMobileTab} variant="underline" />
+        </div>
+
+        {mobileTab === 'about' ? (
+          <div className={styles.mAbout}>
+            <div className={styles.mFactsCard}>
+              <div className={styles.mFacts}>
+                <div className={styles.mFact}>
+                  <b>Автор</b>
+                  {title.author ? (
+                    <Link href={`/author/${title.author.id}`}>{title.author.name}</Link>
+                  ) : (
+                    <span className={styles.quickMuted}>не указан</span>
+                  )}
+                </div>
+                {title.narrators.length > 0 ? (
+                  <div className={styles.mFact}>
+                    <b>Озвучка</b>
+                    <span>{narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}</span>
+                  </div>
+                ) : null}
+                {runtime > 0 ? (
+                  <div className={styles.mFact}>
+                    <b>Длительность</b>
+                    <span>{formatDuration(runtime)}</span>
+                  </div>
+                ) : null}
+                <div className={styles.mFact}>
+                  <b>Просмотров</b>
+                  <span>{formatCount(title.views_count)}</span>
+                </div>
+              </div>
+            </div>
+
+            {mNarratorsBlock}
+            {descBlock}
+            {tagsBlock}
+            {ratingCard}
+            {libraryWidget}
+          </div>
+        ) : null}
+
+        {mobileTab === 'chapters' ? (
+          <section className={styles.tabPanel}>{chaptersContent}</section>
+        ) : null}
+
+        {mobileTab === 'comments' ? (
+          <section className={styles.tabPanel}>{commentsContent}</section>
+        ) : null}
+
+        {mobileTab === 'similar' && title.similar.length > 0 ? (
+          <div className={styles.mSimilar}>
+            {title.similar.map((s) => (
+              <TitleCardC key={s.id} title={s} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  // ---------- desktop layout ----------
+  return (
+    <div className={styles.page}>
+      {backdrop}
+      {modBanner}
+
+      <header className={styles.hero}>
+        <div className={styles.top}>
+          <div className={styles.coverCol}>
+            <div className={styles.coverPanel}>{coverArt}</div>
+          </div>
+
+          <div className={styles.headinfo}>
+            <div className={styles.titleRow}>
+              <div className={styles.nameBlock}>
+                <h1 className={styles.name}>{title.name}</h1>
+                {title.alt_names.length > 0 ? (
+                  <p className={styles.altNames}>{title.alt_names.join(' · ')}</p>
+                ) : null}
+              </div>
+              {editButtons}
+            </div>
+
+            <div className={styles.actions}>{playFavActions}</div>
+
+            {tagsBlock}
+            {descBlock}
+          </div>
+        </div>
+
+        {title.narration_pending || title.is_ai ? (
+          <div className={styles.heroBanners}>{banners}</div>
+        ) : null}
+
+        <div className={styles.subrow}>
+          <div className={`glass-panel ${styles.factsCard} ${styles.factsCardCol}`}>
+            <span className={styles.sideEyebrow}>
+              <Info size={12} />
+              {'Информация'}
+            </span>
+            <div className={styles.factsCardBody}>
+              {title.author && (
+                <div className={styles.factRow2}>
+                  <span className={styles.factK}>{'Автор'}</span>
+                  <Link
+                    href={`/author/${title.author.id}`}
+                    className={styles.factV}
+                    title={`Ещё от ${title.author.name}`}
+                  >
+                    {title.author.name}
+                  </Link>
+                </div>
+              )}
+              <div className={styles.factRow2}>
+                <span className={styles.factK}>{'Тайтл'}</span>
+                <span className={styles.factV}>
+                  {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
+                </span>
+              </div>
+              {title.narrators.length > 0 ? (
+                <div className={styles.factRow2}>
+                  <span className={styles.factK}>{'Озвучка'}</span>
+                  <span className={styles.factV}>
+                    {narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}
+                  </span>
+                </div>
+              ) : null}
+              {title.year != null ? (
+                <div className={styles.factRow2}>
+                  <span className={styles.factK}>{'Год'}</span>
+                  <span className={styles.factV}>{title.year}</span>
+                </div>
+              ) : null}
+              {runtime > 0 ? (
+                <div className={styles.factRow2}>
+                  <span className={styles.factK}>{'Длительность'}</span>
+                  <span className={styles.factV}>{formatDuration(runtime)}</span>
+                </div>
+              ) : null}
+              {chaptersTotal > 0 ? (
+                <div className={styles.factRow2}>
+                  <span className={styles.factK}>{'Глав'}</span>
+                  <span className={styles.factV}>{chaptersTotal}</span>
+                </div>
+              ) : null}
+              <div className={styles.factRow2}>
+                <span className={styles.factK}>{'Просмотров'}</span>
+                <span className={styles.factV}>{formatCount(title.views_count)}</span>
+              </div>
+              {narratorsBlock}
+            </div>
+          </div>
+          {libraryWidget}
+          {ratingCard}
+        </div>
+      </header>
+
+      {similarSection}
+
+      <div className={styles.tabsRow}>
+        <Tabs
+          tabs={[
+            { key: 'chapters', label: 'Тома и главы', count: chaptersTotal || undefined },
+            { key: 'comments', label: 'Комментарии', count: commentsTotal || undefined },
+          ]}
+          active={tab}
+          onChange={setTab}
+          urlParam="tab"
+          variant="underline"
+        />
+      </div>
+
+      {tab === 'chapters' ? (
+        <section className={styles.tabPanel}>{chaptersContent}</section>
+      ) : (
+        <section className={styles.tabPanel}>{commentsContent}</section>
+      )}
     </div>
   );
 }

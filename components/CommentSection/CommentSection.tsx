@@ -792,12 +792,14 @@ export function CommentSection({
                                  targetType,
                                  targetId,
                                  initialComments,
+                                 className,
                                }: {
   targetType: CommentTargetType;
   targetId: number;
   /** First page (default 'new' sort) embedded in the entity response, so the
    *  section renders without a separate /comments request on load. */
   initialComments?: Paginated<Comment>;
+  className?: string;
 }) {
   const { user, isMod } = useAuth();
   const { toast } = useToast();
@@ -1144,7 +1146,7 @@ export function CommentSection({
   }, [items]);
 
   return (
-      <section className={styles.section}>
+      <section className={className ? `${styles.section} ${className}` : styles.section}>
         <header className={styles.head}>
           <h3 className={styles.heading}>
             Комментарии <span className={styles.headCount}>{total}</span>
