@@ -1273,6 +1273,12 @@ a.factV:hover {
   .ratingBarsInner {
     overflow: hidden;
     min-height: 0;
+  }
+
+  /* border-top renders regardless of the row's collapsed height, so it has
+     to be conditional on the open state or it shows as a stray line even
+     while closed. */
+  .ratingBarsOpen .ratingBarsInner {
     padding-top: 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.07);
   }
