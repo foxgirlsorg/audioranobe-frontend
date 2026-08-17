@@ -1,14 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ExternalLink, X } from 'lucide-react';
+import { useState } from 'react';
 import { TelegramIcon } from '@/components/SocialLinks/brands';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
-import { useAuth } from '@/lib/auth';
 import { useConfig } from '@/lib/config';
-import type { AuthProvider, Identity, Me } from '@/lib/types';
+import type { AuthProvider } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import styles from './ProviderAuth.module.css';
 
@@ -79,41 +76,21 @@ export function ProviderSection({ mode }: { mode: 'login' | 'link' }) {
   );
 }
 
-type TelegramStart = {
-  code: string;
-  poll_secret: string;
-  deep_link: string;
-  bot: string;
-  expires_in: number;
-};
-
 export default function ProviderAuth({
   mode,
-  onLinked,
   hide = [],
 }: {
   mode: 'login' | 'link';
-  onLinked?: (identities: Identity[]) => void;
   hide?: AuthProvider[];
 }) {
   const providers = useAuthProviders().filter((p) => !hide.includes(p));
-  const { adoptSession } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
 
   const [busy, setBusy] = useState<AuthProvider | null>(null);
-  const [tg, setTg] = useState<TelegramStart | null>(null);
-  const pollRef = useRef<number | null>(null);
 
-  const stopPolling = useCallback(() => {
-    if (pollRef.current !== null) {
-      window.clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => stopPolling, [stopPolling]);
-
+  // Every provider — Telegram included — is a redirect-based OAuth/OIDC flow:
+  // fetch the authorize URL, remember the mode, and hand the browser over. The
+  // provider returns to /auth/callback/{provider}, which finishes the exchange.
   async function startOAuth(provider: AuthProvider) {
     setBusy(provider);
     try {
@@ -128,116 +105,22 @@ export default function ProviderAuth({
     }
   }
 
-  async function startTelegram() {
-    setBusy('telegram');
-    try {
-      const res = await api<TelegramStart>('/auth/telegram/start', {
-        method: 'POST',
-        body: { mode },
-      });
-      setTg(res);
-      window.open(res.deep_link, '_blank', 'noopener,noreferrer');
-
-      const started = Date.now();
-      pollRef.current = window.setInterval(async () => {
-        if (Date.now() - started > res.expires_in * 1000) {
-          stopPolling();
-          setTg(null);
-          setBusy(null);
-          toast('Время ожидания истекло. Попробуйте ещё раз.', 'error');
-          return;
-        }
-        try {
-          const poll = await api<{
-            status: 'pending' | 'ready';
-            token?: string;
-            user?: Me;
-            identities?: Identity[];
-          }>(
-            `/auth/telegram/poll?code=${encodeURIComponent(res.code)}&secret=${encodeURIComponent(
-              res.poll_secret
-            )}`
-          );
-          if (poll.status !== 'ready') return;
-
-          stopPolling();
-          setTg(null);
-          setBusy(null);
-          if (poll.token && poll.user) {
-            adoptSession(poll.user);
-            if (poll.user.needs_setup) router.push('/auth/setup');
-          } else if (poll.identities) {
-            onLinked?.(poll.identities);
-            toast('Telegram привязан', 'ok');
-          }
-        } catch (e) {
-          stopPolling();
-          setTg(null);
-          setBusy(null);
-          toast(errMsg(e), 'error');
-        }
-      }, 2000);
-    } catch (e) {
-      toast(errMsg(e), 'error');
-      setBusy(null);
-    }
-  }
-
   if (providers.length === 0) return null;
 
   return (
-    <>
-      <div className={`${styles.grid} ${mode !== 'link' ? styles.auth : ''}`}>
-        {providers.map((p) => (
-          <button
-            key={p}
-            type="button"
-            className={`${styles.btn} ${mode !== 'link' ? styles.auth : ''}`}
-            disabled={busy !== null}
-            onClick={() => (p === 'telegram' ? void startTelegram() : void startOAuth(p))}
-          >
-            {busy === p ? <Spinner size={14} inline /> : <Mark provider={p} />}
-            {mode === 'link' && (
-                <span>
-                  Привязать {LABELS[p]}
-                </span>
-            )}
-
-          </button>
-        ))}
-      </div>
-
-      {tg ? (
-        <div className={styles.tgPanel} role="status">
-          <button
-            type="button"
-            className={styles.tgClose}
-            aria-label={'Отменить'}
-            onClick={() => {
-              stopPolling();
-              setTg(null);
-              setBusy(null);
-            }}
-          >
-            <X size={14} />
-          </button>
-          <p className={styles.tgTitle}>{'Ожидаем подтверждения в Telegram'}</p>
-          <p className={styles.tgText}>
-            {'Откройте чат с ботом @'}
-            {tg.bot}
-            {' и нажмите «Начать». Эта страница продолжит сама.'}
-          </p>
-          <a
-            href={tg.deep_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.tgLink}
-          >
-            <ExternalLink size={13} />
-            {'Открыть Telegram ещё раз'}
-          </a>
-        </div>
-      ) : null}
-    </>
+    <div className={`${styles.grid} ${mode !== 'link' ? styles.auth : ''}`}>
+      {providers.map((p) => (
+        <button
+          key={p}
+          type="button"
+          className={`${styles.btn} ${mode !== 'link' ? styles.auth : ''}`}
+          disabled={busy !== null}
+          onClick={() => void startOAuth(p)}
+        >
+          {busy === p ? <Spinner size={14} inline /> : <Mark provider={p} />}
+          {mode === 'link' && <span>Привязать {LABELS[p]}</span>}
+        </button>
+      ))}
+    </div>
   );
 }

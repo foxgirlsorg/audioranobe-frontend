@@ -874,10 +874,6 @@ export default function SettingsPage() {
         <ProviderAuth
           mode="link"
           hide={(identities ?? []).map((i) => i.provider)}
-          onLinked={(next) => {
-            setIdentities(next);
-            void refresh();
-          }}
         />
       </section>
 
