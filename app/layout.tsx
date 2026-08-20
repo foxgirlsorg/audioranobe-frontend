@@ -57,6 +57,9 @@ function AppProviders({ children }: { children: React.ReactNode }) {
           <MyNarratorsProvider>
             <ToastProvider>
               <PlayerProvider>
+                <a href="#main-content" className="skip-link">
+                  {'Перейти к содержимому'}
+                </a>
                 <div className="noise" aria-hidden="true" />
                 <DragScroll />
                 <NavBar />
@@ -64,7 +67,7 @@ function AppProviders({ children }: { children: React.ReactNode }) {
                 <CookiesBanner />
                 <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
                   <PhotoProvider>
-                    <main className="container">{children}</main>
+                    <main id="main-content" className="container">{children}</main>
                   </PhotoProvider>
                 </SkeletonTheme>
                 <Footer />

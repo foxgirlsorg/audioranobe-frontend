@@ -196,6 +196,7 @@ export default function Player() {
               } as React.CSSProperties
             }
             aria-label={'Перемотка'}
+            aria-valuetext={formatDuration(shown)}
           />
           <span className={styles.time}>{formatDuration(duration)}</span>
         </div>
@@ -368,6 +369,7 @@ export default function Player() {
                 onChange={(e) => setVolume(parseFloat(e.target.value))}
                 style={{ '--played': `${volume * 100}%` } as React.CSSProperties}
                 aria-label={'Громкость'}
+                aria-valuetext={`${Math.round(volume * 100)}%`}
               />
             </div>
 

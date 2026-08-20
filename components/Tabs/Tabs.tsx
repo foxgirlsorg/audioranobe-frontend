@@ -78,6 +78,21 @@ function TabsRender({
 }) {
   const { ref, edges } = useScrollEdges(scrollable, tabs);
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') return;
+    e.preventDefault();
+    const i = tabs.findIndex((t) => t.key === active);
+    let next: number;
+    if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = tabs.length - 1;
+    else if (e.key === 'ArrowLeft') next = i <= 0 ? tabs.length - 1 : i - 1;
+    else next = i >= tabs.length - 1 ? 0 : i + 1;
+    onChange(tabs[next].key);
+    const wrap = ref.current;
+    const btn = wrap?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next];
+    btn?.focus();
+  };
+
   const wrapCls = [
     styles.tabs,
     variant ? VARIANT_CLASS[variant] : '',
@@ -89,13 +104,14 @@ function TabsRender({
     .join(' ');
 
   return (
-    <div className={wrapCls} role="tablist" ref={ref}>
+    <div className={wrapCls} role="tablist" ref={ref} onKeyDown={onKeyDown}>
       {tabs.map((t) => (
         <button
           key={t.key}
           type="button"
           role="tab"
           aria-selected={t.key === active}
+          tabIndex={t.key === active ? 0 : -1}
           className={tabClass(t, active)}
           onClick={() => onChange(t.key)}
         >

@@ -47,6 +47,8 @@ export function RatingStars({
               className={styles.star}
               disabled={!interactive}
               tabIndex={interactive ? 0 : -1}
+              role={interactive ? 'radio' : undefined}
+              aria-checked={interactive ? i === my : undefined}
               onMouseEnter={interactive ? () => setHover(i) : undefined}
               onFocus={interactive ? () => setHover(i) : undefined}
               onBlur={interactive ? () => setHover(null) : undefined}
