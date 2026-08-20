@@ -146,13 +146,9 @@ export default function TitlePageClient({
   const [tagsOpen, setTagsOpen] = useState(false);
   const [tagsClipped, setTagsClipped] = useState(false);
   const tagsRef = useRef<HTMLParagraphElement | null>(null);
-  const [canEdit, setCanEdit] = useState(initialTitle?.can_edit ?? false);
+  const canEdit = title?.can_edit ?? false;
   const [reNarrating, setReNarrating] = useState<number | null>(null);
   const skipInitialFetch = useRef(initialTitle !== null);
-
-  useEffect(() => {
-    if (title) setCanEdit(title.can_edit);
-  }, [title]);
 
   const load = useCallback(async () => {
     setLoading(true);

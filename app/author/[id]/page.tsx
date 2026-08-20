@@ -23,7 +23,6 @@ export default function AuthorPage({ params }: { params: { id: string } }) {
   usePageTitle(author?.name);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -50,10 +49,6 @@ export default function AuthorPage({ params }: { params: { id: string } }) {
     };
   }, [authorRef]);
 
-  useEffect(() => {
-    if (author) setCanEdit(author.can_edit);
-  }, [author]);
-
   if (loading) {
     return (
       <div className={styles.center}>
@@ -75,6 +70,7 @@ export default function AuthorPage({ params }: { params: { id: string } }) {
   }
 
   const a = author;
+  const canEdit = a.can_edit;
 
   return (
     <div className={styles.page}>
