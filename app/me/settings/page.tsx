@@ -1002,16 +1002,22 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.panelActions}>
-          <button
-            type="button"
-            className="btn btn-danger"
-            onClick={() => {
-              setDelPw('');
-              setDelOpen(true);
-            }}
-          >
-            {'Удалить аккаунт'}
-          </button>
+          {hasPassword ? (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => {
+                setDelPw('');
+                setDelOpen(true);
+              }}
+            >
+              {'Удалить аккаунт'}
+            </button>
+          ) : (
+            <p className={styles.panelHint}>
+              {'Чтобы удалить аккаунт, сначала задайте пароль в разделе выше.'}
+            </p>
+          )}
         </div>
       </section>
 
