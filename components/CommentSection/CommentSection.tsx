@@ -819,8 +819,12 @@ export function CommentSection({
   // The embedded page is the default-'new' first page; use it for the initial
   // render and skip that one fetch. Any sort/target change still fetches.
   const skipInitialFetch = useRef(!!initialComments);
+  // Bumped whenever sort/target resets the list, so a loadMore() started
+  // under the previous sort can detect it's stale and discard its response.
+  const runRef = useRef(0);
 
   useEffect(() => {
+    runRef.current++;
     if (skipInitialFetch.current) {
       skipInitialFetch.current = false;
       return;
@@ -863,6 +867,7 @@ export function CommentSection({
 
   async function loadMore() {
     if (loadingMore) return;
+    const run = runRef.current;
     setLoadingMore(true);
     try {
       const res = await api<Paginated<Comment>>('/comments', {
@@ -874,6 +879,7 @@ export function CommentSection({
           per_page: PER_PAGE,
         },
       });
+      if (run !== runRef.current) return;
       setItems((prev) => {
         const seen = new Set(prev.map((c) => c.id));
         return [...prev, ...res.items.filter((c) => !seen.has(c.id))];
@@ -881,7 +887,7 @@ export function CommentSection({
       setTotal(res.total);
       setPage(res.page ?? page + 1);
     } catch (e) {
-      toast(errMsg(e), 'error');
+      if (run === runRef.current) toast(errMsg(e), 'error');
     } finally {
       setLoadingMore(false);
     }
