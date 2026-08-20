@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ImagePlus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast, errMsg } from '@/lib/toast';
 import type { TitleFull } from '@/lib/types';
-import ImageCropper from '@/components/ImageCropper/ImageCropper';
 import styles from './TitleArtwork.module.css';
+
+// Lazily loaded: react-easy-crop only needs to load once the user actually
+// opens the crop dialog, not on every title page visit.
+const ImageCropper = dynamic(() => import('@/components/ImageCropper/ImageCropper'), { ssr: false });
 
 type Kind = 'cover' | 'bg';
 

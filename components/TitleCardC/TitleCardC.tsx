@@ -19,9 +19,9 @@ export function TitleCardC({ title }: { title: TitleCard }) {
   return (
     <Link href={`/title/${title.slug}`} className={styles.card}>
       <div className={styles.coverWrap}>
-        {title.cover_url ? (
+        {title.cover_thumb_url || title.cover_url ? (
           <img
-            src={title.cover_url}
+            src={title.cover_thumb_url || title.cover_url || ''}
             alt={title.name}
             className={blurred ? `${styles.cover} ${styles.blurred}` : styles.cover}
             loading="lazy"

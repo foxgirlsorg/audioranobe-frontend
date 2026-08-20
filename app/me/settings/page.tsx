@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -32,11 +33,14 @@ import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import Spinner from '@/components/Spinner/Spinner';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
-import ImageCropper from '@/components/ImageCropper/ImageCropper';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import styles from './page.module.css';
+
+// Lazily loaded: react-easy-crop only needs to load once the user actually
+// opens the crop dialog, not on every visit to the settings page.
+const ImageCropper = dynamic(() => import('@/components/ImageCropper/ImageCropper'), { ssr: false });
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,30}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

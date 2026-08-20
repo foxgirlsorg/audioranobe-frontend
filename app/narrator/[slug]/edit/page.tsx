@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ImagePlus, Mic } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -13,12 +14,15 @@ import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
 import Tabs from '@/components/Tabs/Tabs';
-import ImageCropper from '@/components/ImageCropper/ImageCropper';
 import DangerZone from '@/components/DangerZone/DangerZone';
 import NarratorPosts from '@/components/NarratorPosts/NarratorPosts';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
+
+// Lazily loaded: react-easy-crop only needs to load once the user actually
+// opens the crop dialog, not on every visit to this edit page.
+const ImageCropper = dynamic(() => import('@/components/ImageCropper/ImageCropper'), { ssr: false });
 
 type MemberRow = { user: UserBrief; role: 'owner' | 'editor' };
 
