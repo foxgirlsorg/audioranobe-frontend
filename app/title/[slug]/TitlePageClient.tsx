@@ -34,7 +34,7 @@ import {
   type Volume,
 } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
-import { usePlayer } from '@/lib/player';
+import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
 import { chapterFilePrefix, formatCount, formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -95,6 +95,26 @@ function useIsMobile(): boolean {
     return () => mq.removeEventListener('change', sync);
   }, []);
   return mobile;
+}
+
+/**
+ * Renders only the currently-playing chapter row's progress fill, subscribed
+ * to usePlayerPosition() (ticks ~4x/sec during playback). Isolating the tick
+ * subscription here — instead of on the whole chapter list — means only this
+ * one small leaf re-renders on tick, not the entire (potentially
+ * many-hundred-chapter) page.
+ */
+function ChapterProgressBar({ fallbackDuration }: { fallbackDuration: number }) {
+  const { duration } = usePlayer();
+  const { position } = usePlayerPosition();
+  const dur = duration > 0 ? duration : fallbackDuration;
+  const pct = dur > 0 ? Math.min(100, (position / dur) * 100) : 0;
+  if (pct <= 0) return null;
+  return (
+    <div className={styles.progress} aria-hidden="true">
+      <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+    </div>
+  );
 }
 
 function TitlePageSkeleton() {
@@ -705,12 +725,11 @@ export default function TitlePageClient({
                     v.chapters.map((ch) => {
                       const isCurrent = player.current?.id === ch.id;
                       const playable = ch.audio_status === 'ready';
-                      const pos = isCurrent ? player.position : ch.my_position ?? 0;
-                      const dur =
-                        isCurrent && player.duration > 0
-                          ? player.duration
-                          : ch.duration_seconds;
-                      const pct = dur > 0 ? Math.min(100, (pos / dur) * 100) : 0;
+                      const staticPos = ch.my_position ?? 0;
+                      const staticPct =
+                        ch.duration_seconds > 0
+                          ? Math.min(100, (staticPos / ch.duration_seconds) * 100)
+                          : 0;
                       return (
                         <div
                           key={ch.id}
@@ -795,11 +814,13 @@ export default function TitlePageClient({
                               ) : null}
                             </span>
                           </div>
-                          {pct > 0 ? (
+                          {isCurrent ? (
+                            <ChapterProgressBar fallbackDuration={ch.duration_seconds} />
+                          ) : staticPct > 0 ? (
                             <div className={styles.progress} aria-hidden="true">
                               <div
                                 className={styles.progressFill}
-                                style={{ width: `${pct}%` }}
+                                style={{ width: `${staticPct}%` }}
                               />
                             </div>
                           ) : null}

@@ -2,11 +2,12 @@
 
 import React from 'react';
 import { Maximize2, Pause, Play, RotateCcw, RotateCw } from 'lucide-react';
-import { usePlayer } from '@/lib/player';
+import { usePlayer, usePlayerPosition } from '@/lib/player';
 import styles from './CompactPlayer.module.css';
 
 export default function CompactPlayer() {
-  const { current, playing, position, duration, buffered, toggle, skip, full, setFull } = usePlayer();
+  const { current, playing, duration, toggle, skip, full, setFull } = usePlayer();
+  const { position, buffered } = usePlayerPosition();
 
   if (!current || full) return null;
 

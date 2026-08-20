@@ -17,7 +17,7 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import { usePlayer } from '@/lib/player';
+import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { formatDuration } from '@/lib/format';
 import styles from './Player.module.css';
 
@@ -35,13 +35,11 @@ export default function Player() {
   const {
     current,
     playing,
-    position,
     duration,
     rate,
     volume,
     sleepRemaining,
     sleep,
-    buffered,
     toggle,
     seek,
     skip,
@@ -55,6 +53,7 @@ export default function Player() {
     full,
     setFull,
   } = usePlayer();
+  const { position, buffered } = usePlayerPosition();
 
   const [scrub, setScrub] = useState<number | null>(null);
   const [menu, setMenu] = useState<'rate' | 'sleep' | null>(null);

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import type { ChapterPlay } from '@/lib/types';
-import { usePlayer } from '@/lib/player';
+import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
 import { formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -31,6 +31,7 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
 
   const router = useRouter();
   const player = usePlayer();
+  const { position: livePosition } = usePlayerPosition();
   const { toast } = useToast();
 
   const [chapter, setChapter] = useState<ChapterPlay | null>(null);
@@ -135,7 +136,7 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
 
   const isCurrent = player.current?.id === chapter.id;
   const playing = isCurrent && player.playing;
-  const livePos = isCurrent ? player.position : chapter.my_position ?? 0;
+  const livePos = isCurrent ? livePosition : chapter.my_position ?? 0;
   const dur = isCurrent && player.duration > 0 ? player.duration : chapter.duration_seconds;
   const pct = dur > 0 ? Math.min(100, (livePos / dur) * 100) : 0;
   const chapterLabel = chapter.name || `Глава ${chapter.number}`;
