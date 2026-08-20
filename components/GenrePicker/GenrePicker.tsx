@@ -16,6 +16,7 @@ interface Props {
   placeholder?: string;
   genres?: Genre[];
   onGenresChange?: (genres: Genre[]) => void;
+  ariaLabelledBy?: string;
 }
 
 export default function GenrePicker({
@@ -25,6 +26,7 @@ export default function GenrePicker({
   placeholder = 'Найти или создать тег…',
   genres: genresProp,
   onGenresChange,
+  ariaLabelledBy,
 }: Props) {
   const { toast } = useToast();
   const [ownGenres, setOwnGenres] = useState<Genre[]>([]);
@@ -156,6 +158,7 @@ export default function GenrePicker({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           autoComplete="off"
+          aria-labelledby={ariaLabelledBy}
         />
       </div>
 

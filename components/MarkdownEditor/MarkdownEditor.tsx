@@ -136,6 +136,8 @@ export default function MarkdownEditor({
   onKeyDown,
   onSelect,
   onClick,
+  ariaLabel,
+  ariaLabelledBy,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -151,6 +153,8 @@ export default function MarkdownEditor({
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onSelect?: () => void;
   onClick?: () => void;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
 }) {
   const slim = variant === 'slim';
   const ref = useRef<HTMLTextAreaElement | null>(null);
@@ -357,6 +361,8 @@ export default function MarkdownEditor({
             onKeyDown={handleKeyDown}
             onSelect={onSelect}
             onClick={onClick}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
           />
         )}
         {preview ? null : overlay}

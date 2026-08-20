@@ -54,6 +54,7 @@ export function SocialsEditor({
               placeholder="https://…"
               onChange={(e) => setAt(i, e.target.value)}
               aria-invalid={invalid}
+              aria-label={`Ссылка ${i + 1}`}
             />
             <button
               type="button"

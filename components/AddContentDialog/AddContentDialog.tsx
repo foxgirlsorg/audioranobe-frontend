@@ -187,8 +187,8 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
       {error ? <div className={styles.error}>{error}</div> : null}
 
       <div className={styles.field}>
-        <span className={styles.label}>{'Чтецы'}</span>
-        <div className={styles.pillRow}>
+        <span className={styles.label} id="add-title-narrators-label">{'Чтецы'}</span>
+        <div className={styles.pillRow} role="group" aria-labelledby="add-title-narrators-label">
           {narrators.map((n) => (
             <button
               key={n.id}
@@ -231,8 +231,8 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
       </div>
 
       <div className={styles.field}>
-        <span className={styles.label}>{'Автор'}</span>
-        <AuthorPicker value={author} onChange={setAuthor} />
+        <span className={styles.label} id="add-title-author-label">{'Автор'}</span>
+        <AuthorPicker value={author} onChange={setAuthor} ariaLabelledBy="add-title-author-label" />
       </div>
 
       <div className={styles.row}>
@@ -263,17 +263,18 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
       </div>
 
       <div className={styles.field}>
-        <span className={styles.label}>{'Теги'}</span>
-        <GenrePicker value={genreIds} onChange={setGenreIds} />
+        <span className={styles.label} id="add-title-genres-label">{'Теги'}</span>
+        <GenrePicker value={genreIds} onChange={setGenreIds} ariaLabelledBy="add-title-genres-label" />
       </div>
 
       <div className={styles.field}>
-        <span className={styles.label}>{'Описание'}</span>
+        <span className={styles.label} id="add-title-desc-label">{'Описание'}</span>
         <MarkdownEditor
           value={description}
           onChange={setDescription}
           maxLength={LIMITS.titleDescription}
           placeholder="О чём эта книга? **Markdown** поддерживается."
+          ariaLabelledBy="add-title-desc-label"
         />
       </div>
 
@@ -368,12 +369,13 @@ function NarratorForm({ onDone, onBack }: { onDone: () => void; onBack: () => vo
       </div>
 
       <div className={styles.field}>
-        <span className={styles.label}>{'Описание'}</span>
+        <span className={styles.label} id="add-narr-bio-label">{'Описание'}</span>
         <MarkdownEditor
           value={bio}
           onChange={setBio}
           maxLength={10000}
           placeholder="Расскажите слушателям об этом чтеце…"
+          ariaLabelledBy="add-narr-bio-label"
         />
       </div>
 

@@ -12,12 +12,14 @@ interface Props {
   value: Author | null;
   onChange: (author: Author | null) => void;
   placeholder?: string;
+  ariaLabelledBy?: string;
 }
 
 export default function AuthorPicker({
   value,
   onChange,
   placeholder = 'Найти или создать автора…',
+  ariaLabelledBy,
 }: Props) {
   const { toast } = useToast();
   const [query, setQuery] = useState('');
@@ -121,6 +123,7 @@ export default function AuthorPicker({
             if (e.key === 'Escape') setOpen(false);
           }}
           autoComplete="off"
+          aria-labelledby={ariaLabelledBy}
         />
       </div>
 
