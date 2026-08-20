@@ -285,7 +285,9 @@ export default function UserPageClient({
   );
   const fetchCollections = useCallback(
     (page: number) =>
-      api<Paginated<CollectionCard>>('/collections', { params: { user: username, page } }),
+      username
+        ? api<Paginated<CollectionCard>>('/collections', { params: { user: username, page } })
+        : Promise.resolve<Paginated<CollectionCard>>({ items: [], page: 1, per_page: 0, total: 0 }),
     [username]
   );
   const fetchFriends = useCallback(
