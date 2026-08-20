@@ -25,7 +25,7 @@ interface BadgesValue extends Badges {
   /** Force an immediate re-fetch (e.g. after marking things read). */
   refresh: () => void;
   /** Optimistically adjust counts so the UI reacts before the next poll. */
-  patch: (p: Partial<Badges>) => void;
+  patch: (p: Partial<Badges> | ((b: Badges) => Partial<Badges>)) => void;
 }
 
 const ZERO: Badges = { messages: 0, notifications: 0, friend_requests: 0 };
@@ -70,7 +70,8 @@ export function BadgesProvider({ children }: { children: React.ReactNode }): JSX
   }, [user, refresh, pathname]);
 
   const patch = useCallback(
-    (p: Partial<Badges>) => setBadges((b) => ({ ...b, ...p })),
+    (p: Partial<Badges> | ((b: Badges) => Partial<Badges>)) =>
+      setBadges((b) => ({ ...b, ...(typeof p === 'function' ? p(b) : p) })),
     []
   );
 

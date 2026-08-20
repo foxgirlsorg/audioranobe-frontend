@@ -68,7 +68,7 @@ export default function NotificationBell() {
   const onItemClick = (n: Notification) => {
     if (!n.is_read) {
       api('/me/notifications/read', { method: 'POST', body: { ids: [n.id] } }).catch(() => refresh());
-      patch({ notifications: Math.max(0, count - 1) });
+      patch((b) => ({ notifications: Math.max(0, b.notifications - 1) }));
       setItems((prev) => (prev ? prev.filter((x) => x.id !== n.id) : prev));
     }
     if (n.link) {
