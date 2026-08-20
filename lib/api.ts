@@ -30,22 +30,26 @@ export interface ApiOptions {
 }
 
 // Every response carries the current user as an X-Me header (base64 Me JSON,
-// empty when signed out). AuthProvider registers here via onViewer.
+// empty when signed out). AuthProvider (and any other interested consumer)
+// registers here via onViewer.
 //
-// lastMeHeader dedupes: the listener is only notified when the header value
+// lastMeHeader dedupes: listeners are only notified when the header value
 // actually changes, not on every response — notifying unconditionally can
 // feed back into more API calls and flood the connection pool.
 type ViewerListener = (me: unknown | null) => void;
-let viewerListener: ViewerListener | null = null;
+const viewerListeners = new Set<ViewerListener>();
 let lastMeHeader: string | null = null;
 
-export function onViewer(fn: ViewerListener | null): void {
-  viewerListener = fn;
-  // Reset the dedup guard whenever the listener is cleared.  If the
-  // AuthProvider unmounts and remounts (e.g. React StrictMode double-invoke
-  // or a future layout change), the next API response must fire the listener
-  // even when it carries the same X-Me value as the previous one.
-  if (fn === null) lastMeHeader = null;
+export function onViewer(fn: ViewerListener): () => void {
+  viewerListeners.add(fn);
+  return () => {
+    viewerListeners.delete(fn);
+    // Reset the dedup guard whenever a listener unsubscribes. If the
+    // AuthProvider unmounts and remounts (e.g. React StrictMode double-invoke
+    // or a future layout change), the next subscriber must be notified even
+    // when it carries the same X-Me value as the previous notification.
+    lastMeHeader = null;
+  };
 }
 
 function decodeViewer(header: string): unknown | null {
@@ -110,7 +114,8 @@ export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise
     const meHeader = res.headers.get('X-Me');
     if (meHeader !== null && meHeader !== lastMeHeader) {
       lastMeHeader = meHeader;
-      viewerListener?.(decodeViewer(meHeader));
+      const viewer = decodeViewer(meHeader);
+      for (const listener of viewerListeners) listener(viewer);
     }
   }
 

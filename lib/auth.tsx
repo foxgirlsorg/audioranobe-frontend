@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   useEffect(() => {
     // Primary path: every credentialed API response ships an X-Me header.
     // This listener fires and resolves loading without an extra round-trip.
-    onViewer((me) => {
+    const unsubscribe = onViewer((me) => {
       setUser((me as Viewer | null) ?? null);
       setLoading(false);
     });
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     }, 0);
 
     return () => {
-      onViewer(null);
+      unsubscribe();
       window.clearTimeout(t);
     };
   }, []);
