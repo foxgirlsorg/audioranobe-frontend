@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import styles from './Modal.module.css';
+
+const FOCUSABLE =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function Modal({
   open,
@@ -21,6 +24,8 @@ export function Modal({
 }) {
   const [mounted, setMounted] = useState(false);
   const showMounted = useAnimatedPresence(open, 180);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -40,6 +45,20 @@ export function Modal({
     };
   }, [open, onClose]);
 
+  // Move focus into the dialog once it's mounted (so both the panel exists
+  // and its focusable descendants are in the DOM to query), and return it to
+  // whatever triggered the dialog when it closes.
+  useEffect(() => {
+    if (!open || !showMounted) return;
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    const first = panel?.querySelector<HTMLElement>(FOCUSABLE);
+    (first ?? panel)?.focus();
+    return () => {
+      previousFocusRef.current?.focus?.();
+    };
+  }, [open, showMounted]);
+
   if (!mounted || !showMounted) return null;
 
   return createPortal(
@@ -52,12 +71,30 @@ export function Modal({
       }}
     >
       <div
+        ref={panelRef}
         className={[styles.panel, size === 'wide' ? styles.panelWide : '', open ? '' : styles.panelOut]
           .filter(Boolean)
           .join(' ')}
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Диалог'}
+        tabIndex={-1}
+        onKeyDown={(e) => {
+          if (e.key !== 'Tab') return;
+          const panel = panelRef.current;
+          if (!panel) return;
+          const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }}
       >
         <span className={styles.topBar} aria-hidden="true" />
         <div className={styles.head}>
