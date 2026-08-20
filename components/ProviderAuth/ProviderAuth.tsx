@@ -116,9 +116,10 @@ export default function ProviderAuth({
           className={`${styles.btn} ${mode !== 'link' ? styles.auth : ''}`}
           disabled={busy !== null}
           onClick={() => void startOAuth(p)}
+          aria-label={mode === 'link' ? `Привязать ${LABELS[p]}` : `Войти через ${LABELS[p]}`}
         >
           {busy === p ? <Spinner size={14} inline /> : <Mark provider={p} />}
-          {mode === 'link' && <span>Привязать {LABELS[p]}</span>}
+          {mode === 'link' && <span aria-hidden="true">Привязать {LABELS[p]}</span>}
         </button>
       ))}
     </div>

@@ -202,6 +202,7 @@ export default function Select<T extends string = string>({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
+        aria-activedescendant={open && activeIdx >= 0 ? `${listId}-${activeIdx}` : undefined}
         aria-label={ariaLabel}
         onClick={() => setOpen((v) => !v)}
         onKeyDown={onKeyDown}
@@ -230,7 +231,6 @@ export default function Select<T extends string = string>({
                 ...(pos.up ? { bottom: window.innerHeight - pos.top } : { top: pos.top }),
               }}
               role="listbox"
-              aria-activedescendant={activeIdx >= 0 ? `${listId}-${activeIdx}` : undefined}
               tabIndex={-1}
             >
           {options.map((o, i) => {
