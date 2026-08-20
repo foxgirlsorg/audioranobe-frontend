@@ -1,26 +1,14 @@
 import type { Metadata } from 'next';
-import { API_URL } from '@/lib/api';
 import { plainSummary } from '@/lib/format';
+import { fetchMeta } from '@/lib/serverFetch';
 import type { TitleFull } from '@/lib/types';
-
-async function fetchTitle(slug: string): Promise<TitleFull | null> {
-  try {
-    const res = await fetch(`${API_URL}/titles/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as TitleFull;
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const title = await fetchTitle(params.slug);
+  const title = await fetchMeta<TitleFull>(`/titles/${encodeURIComponent(params.slug)}`);
   if (title === null) {
     return { title: 'Тайтл не найден — AudioRanobe' };
   }

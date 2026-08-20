@@ -1,26 +1,14 @@
 import type { Metadata } from 'next';
-import { API_URL } from '@/lib/api';
 import { plainSummary } from '@/lib/format';
+import { fetchMeta } from '@/lib/serverFetch';
 import type { CollectionFull } from '@/lib/types';
-
-async function fetchCollection(id: string): Promise<CollectionFull | null> {
-  try {
-    const res = await fetch(`${API_URL}/collections/${encodeURIComponent(id)}`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as CollectionFull;
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({
   params,
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const collection = await fetchCollection(params.id);
+  const collection = await fetchMeta<CollectionFull>(`/collections/${encodeURIComponent(params.id)}`);
   if (collection === null) {
     return { title: 'Коллекция не найдена — AudioRanobe' };
   }

@@ -1,26 +1,14 @@
 import type { Metadata } from 'next';
-import { API_URL } from '@/lib/api';
 import { plainSummary } from '@/lib/format';
+import { fetchMeta } from '@/lib/serverFetch';
 import type { Announcement } from '@/lib/types';
-
-async function fetchAnnouncement(slug: string): Promise<Announcement | null> {
-  try {
-    const res = await fetch(`${API_URL}/announcements/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as Announcement;
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const item = await fetchAnnouncement(params.slug);
+  const item = await fetchMeta<Announcement>(`/announcements/${encodeURIComponent(params.slug)}`);
   if (item === null) {
     return { title: 'Новость не найдена — AudioRanobe' };
   }

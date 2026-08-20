@@ -1,26 +1,14 @@
 import type { Metadata } from 'next';
-import { API_URL } from '@/lib/api';
 import { plainSummary } from '@/lib/format';
+import { fetchMeta } from '@/lib/serverFetch';
 import type { AuthorFull } from '@/lib/types';
-
-async function fetchAuthor(ref: string): Promise<AuthorFull | null> {
-  try {
-    const res = await fetch(`${API_URL}/authors/${encodeURIComponent(ref)}`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as AuthorFull;
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({
   params,
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const author = await fetchAuthor(params.id);
+  const author = await fetchMeta<AuthorFull>(`/authors/${encodeURIComponent(params.id)}`);
   if (author === null) {
     return { title: 'Автор не найден — AudioRanobe' };
   }

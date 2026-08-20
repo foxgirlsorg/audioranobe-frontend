@@ -1,25 +1,13 @@
 import type { Metadata } from 'next';
-import { API_URL } from '@/lib/api';
+import { fetchMeta } from '@/lib/serverFetch';
 import type { ChapterPlay } from '@/lib/types';
-
-async function fetchChapter(id: string): Promise<ChapterPlay | null> {
-  try {
-    const res = await fetch(`${API_URL}/chapters/${encodeURIComponent(id)}`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as ChapterPlay;
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({
   params,
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const chapter = await fetchChapter(params.id);
+  const chapter = await fetchMeta<ChapterPlay>(`/chapters/${encodeURIComponent(params.id)}`);
   if (chapter === null) {
     return { title: 'Глава не найдена — AudioRanobe' };
   }
