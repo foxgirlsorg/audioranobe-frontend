@@ -11,18 +11,17 @@ import React, {
 } from 'react';
 import { api, API_URL } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useToast } from '@/lib/toast';
 import type { ChapterPlay } from '@/lib/types';
 
 interface PlayerContextValue {
   current: ChapterPlay | null;
   playing: boolean;
-  position: number;
   duration: number;
   rate: number;
   volume: number;
   sleepRemaining: number | null;
   sleep: number | 'chapter' | null;
-  buffered: number;
   playChapter(id: number): Promise<void>;
   toggle(): void;
   seek(s: number): void;
@@ -39,7 +38,18 @@ interface PlayerContextValue {
   setFull(full: boolean): void;
 }
 
+// position/buffered live in their own context, updated ~4x/sec by the audio
+// element's timeupdate. Splitting them out keeps the main context's identity
+// stable during playback, so consumers that don't render the scrubber (most
+// of usePlayer()'s callers) don't re-render on every tick — only the
+// scrubber components that call usePlayerPosition() do.
+interface PlayerPositionValue {
+  position: number;
+  buffered: number;
+}
+
 const PlayerContext = createContext<PlayerContextValue | null>(null);
+const PlayerPositionContext = createContext<PlayerPositionValue | null>(null);
 
 const RATE_KEY = 'audioranobe_rate';
 const VOL_KEY = 'audioranobe_volume';
@@ -66,6 +76,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     authedRef.current = !!user;
   }, [user]);
 
+  const { toast } = useToast();
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentRef = useRef<ChapterPlay | null>(null);
   const rateRef = useRef(1);
@@ -74,6 +86,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const sleepUntilRef = useRef(0);
   const endedRef = useRef<() => void>(() => {});
   const loadSeqRef = useRef(0);
+  // True from the moment a new chapter's src is assigned until its
+  // loadedmetadata fires. Swapping audio.src on a playing element
+  // synchronously fires a 'pause' event with currentTime reset to 0 — this
+  // guard stops that spurious pause from saving position:0 over the
+  // incoming chapter's real (currentRef already points at it) progress.
+  const switchingRef = useRef(false);
 
   const saveProgress = useCallback((keepalive = false, positionOverride?: number) => {
     const cur = currentRef.current;
@@ -94,6 +112,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     }
   }, []);
 
+  // Autoplay-policy rejections (NotAllowedError) are routine — the browser
+  // blocking unprompted audio isn't a playback failure worth a toast. Any
+  // other rejection (unsupported format, decode error, aborted fetch) is.
+  const reportPlayError = useCallback(
+    (e: unknown) => {
+      if (e instanceof DOMException && e.name === 'NotAllowedError') return;
+      toast('Не удалось воспроизвести главу', 'error');
+    },
+    [toast]
+  );
+
   const ensureAudio = useCallback((): HTMLAudioElement => {
     let audio = audioRef.current;
     if (audio) return audio;
@@ -112,6 +141,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       }
     });
     audio.addEventListener('loadedmetadata', () => {
+      switchingRef.current = false;
       const a = audioRef.current;
       if (a && Number.isFinite(a.duration) && a.duration > 0) setDuration(a.duration);
     });
@@ -132,20 +162,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     audio.addEventListener('pause', () => {
       const a = audioRef.current;
       setPlaying(false);
-      if (a && !a.ended && currentRef.current) saveProgress();
+      if (a && !a.ended && currentRef.current && !switchingRef.current) saveProgress();
     });
     audio.addEventListener('ended', () => endedRef.current());
-    audio.addEventListener('error', () => setPlaying(false));
+    audio.addEventListener('error', () => {
+      switchingRef.current = false;
+      setPlaying(false);
+      if (currentRef.current) toast('Не удалось воспроизвести главу', 'error');
+    });
 
     audioRef.current = audio;
     return audio;
-  }, [saveProgress]);
+  }, [saveProgress, toast]);
 
   const playChapter = useCallback(
     async (id: number) => {
       const audio = ensureAudio();
       if (currentRef.current && currentRef.current.id === id && audio.src) {
-        audio.play().catch(() => {});
+        audio.play().catch(reportPlayError);
         return;
       }
       if (currentRef.current && currentRef.current.id !== id) saveProgress();
@@ -162,6 +196,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       const start = Math.max(0, (ch.my_position ?? 0) - 10);
       setPosition(start);
 
+      switchingRef.current = true;
       audio.src = ch.audio_url;
       audio.playbackRate = rateRef.current;
       audio.defaultPlaybackRate = rateRef.current;
@@ -179,21 +214,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       }
       try {
         await audio.play();
-      } catch {
+      } catch (e) {
+        reportPlayError(e);
       }
     },
-    [ensureAudio, saveProgress]
+    [ensureAudio, saveProgress, reportPlayError]
   );
 
   const toggle = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !currentRef.current) return;
     if (audio.paused) {
-      audio.play().catch(() => {});
+      audio.play().catch(reportPlayError);
     } else {
       audio.pause();
     }
-  }, []);
+  }, [reportPlayError]);
 
   const seek = useCallback(
     (s: number) => {
@@ -418,13 +454,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     () => ({
       current,
       playing,
-      position,
       duration,
       rate,
       volume,
       sleepRemaining,
       sleep,
-      buffered,
       playChapter,
       toggle,
       seek,
@@ -443,13 +477,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     [
       current,
       playing,
-      position,
       duration,
       rate,
       volume,
       sleepRemaining,
       sleep,
-      buffered,
       playChapter,
       toggle,
       seek,
@@ -465,11 +497,29 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     ]
   );
 
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+  const positionValue = useMemo<PlayerPositionValue>(
+    () => ({ position, buffered }),
+    [position, buffered]
+  );
+
+  return (
+    <PlayerContext.Provider value={value}>
+      <PlayerPositionContext.Provider value={positionValue}>
+        {children}
+      </PlayerPositionContext.Provider>
+    </PlayerContext.Provider>
+  );
 }
 
 export function usePlayer(): PlayerContextValue {
   const ctx = useContext(PlayerContext);
   if (!ctx) throw new Error('usePlayer must be used inside <PlayerProvider>');
+  return ctx;
+}
+
+/** Position/buffered, updated ~4x/sec during playback — see PlayerPositionContext above. */
+export function usePlayerPosition(): PlayerPositionValue {
+  const ctx = useContext(PlayerPositionContext);
+  if (!ctx) throw new Error('usePlayerPosition must be used inside <PlayerProvider>');
   return ctx;
 }
