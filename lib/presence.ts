@@ -22,10 +22,6 @@ let stop: (() => void) | null = null;
 let subscribers = 0;
 const listeners = new Set<(away: boolean) => void>();
 
-export function isAway(): boolean {
-  return away;
-}
-
 /** Base interval scaled up when the viewer is away, so idle tabs poll less. */
 export function scalePoll(baseMs: number, isAwayNow: boolean): number {
   return isAwayNow ? baseMs * AWAY_POLL_FACTOR : baseMs;

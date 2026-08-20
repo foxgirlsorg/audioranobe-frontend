@@ -14,8 +14,6 @@ export function formatDuration(totalSeconds: number): string {
   return `${m}:${two(sec)}`;
 }
 
-export const formatTime = formatDuration;
-
 export function formatDate(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
