@@ -53,7 +53,7 @@ export default async function TitlePage({ params }: { params: { slug: string } }
       {initialTitle ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(titleJsonLd(initialTitle)) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(titleJsonLd(initialTitle)).replace(/</g, '\\u003c') }}
         />
       ) : null}
       <TitlePageClient key={params.slug} slug={params.slug} initialTitle={initialTitle} />
