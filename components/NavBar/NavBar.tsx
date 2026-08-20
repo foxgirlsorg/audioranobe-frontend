@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Skeleton from 'react-loading-skeleton';
 import {
@@ -91,6 +91,7 @@ export default function NavBar() {
   const [sug, setSug] = useState<SearchSuggest | null>(null);
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
+  const suggestListId = useId();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -108,6 +109,7 @@ export default function NavBar() {
   // page. Portalled content lives outside userWrapRef's DOM subtree, so the
   // outside-click handler needs this second ref to still recognize it.
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const avatarBtnRef = useRef<HTMLButtonElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const seqRef = useRef(0);
@@ -197,8 +199,18 @@ export default function NavBar() {
         (mobileMenuRef.current && mobileMenuRef.current.contains(target));
       if (!insideUserMenu) closeUserMenu();
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && userMenuOpenRef.current) {
+        closeUserMenu();
+        avatarBtnRef.current?.focus();
+      }
+    };
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [closeUserMenu]);
 
   useEffect(() => {
@@ -432,6 +444,7 @@ export default function NavBar() {
               return (
                 <button
                   key={it.key}
+                  id={`${suggestListId}-${idx}`}
                   type="button"
                   className={`${styles.item} ${activeIdx === idx ? styles.itemActive : ''}`}
                   onMouseDown={(e) => e.preventDefault()}
@@ -548,11 +561,18 @@ export default function NavBar() {
                 if (flatItems.length) setSugOpen(true);
               }}
               aria-label={'Поиск'}
+              role="combobox"
+              aria-expanded={sugOpen && !!sug}
+              aria-controls={suggestListId}
+              aria-activedescendant={
+                sugOpen && activeIdx >= 0 ? `${suggestListId}-${activeIdx}` : undefined
+              }
               autoComplete="off"
               spellCheck={false}
             />
             {sugMounted && (
               <div
+                id={suggestListId}
                 className={`${styles.dropdown} ${sugOpen && sug ? '' : styles.dropdownOut}`}
                 role="listbox"
               >
@@ -596,6 +616,7 @@ export default function NavBar() {
                 <NotificationBell />
                 <div className={styles.userWrap} ref={userWrapRef}>
                   <button
+                    ref={avatarBtnRef}
                     type="button"
                     className={styles.avatarBtn}
                     onClick={() => {

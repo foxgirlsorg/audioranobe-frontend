@@ -25,14 +25,25 @@ export default function NotificationBell() {
   const menuMounted = useAnimatedPresence(open, 140);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const bellBtnRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        bellBtnRef.current?.focus();
+      }
+    };
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   const loadLatest = useCallback(async () => {
@@ -82,6 +93,7 @@ export default function NotificationBell() {
   return (
     <div className={styles.wrap} ref={wrapRef}>
       <button
+        ref={bellBtnRef}
         type="button"
         className={styles.bellBtn}
         onClick={toggleOpen}
