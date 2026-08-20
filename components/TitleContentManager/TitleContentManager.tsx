@@ -412,7 +412,7 @@ export default function TitleContentManager({
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   function toggleVolumeSelection(v: Volume) {
-    const ids = v.chapters.map((c) => c.id);
+    const ids = visibleChapters(v).map((c) => c.id);
     const allOn = ids.every((id) => selected.includes(id));
     setSelected((prev) =>
       allOn ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]
@@ -824,11 +824,11 @@ export default function TitleContentManager({
                 ) : (
                   <>
                     <div className={styles.volumeTitle}>
-                      {v.chapters.length > 0 ? (
+                      {visibleChapters(v).length > 0 ? (
                         <input
                           type="checkbox"
                           className={styles.selectBox}
-                          checked={v.chapters.every((c) => selected.includes(c.id))}
+                          checked={visibleChapters(v).every((c) => selected.includes(c.id))}
                           onChange={() => toggleVolumeSelection(v)}
                           aria-label={`Выбрать все главы тома ${v.number}`}
                           title="Выбрать все главы тома"
