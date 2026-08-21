@@ -159,7 +159,7 @@ export default function TitlePageClient({
   const [missing, setMissing] = useState(false);
   const [openVols, setOpenVols] = useState<Record<number, boolean>>({});
   const [descOpen, setDescOpen] = useState(false);
-  const [tab, setTab] = useState('chapters');
+  const [tab, setTab] = useState('comments');
   const [mobileTab, setMobileTab] = useState('about');
   const isMobile = useIsMobile();
   const [ratingOpen, setRatingOpen] = useState(false);
