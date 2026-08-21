@@ -118,10 +118,19 @@
    down the list. */
 .rating,
 .ratingEmpty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1;
   min-width: 1.6em;
   text-align: right;
+}
+
+.ratingStar {
+  display: block;
+  flex-shrink: 0;
 }
 
 .rating {

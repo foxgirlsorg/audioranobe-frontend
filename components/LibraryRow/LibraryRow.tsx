@@ -179,6 +179,7 @@ export function LibraryRow({
             className={entry.rating ? styles.rating : styles.ratingEmpty}
             title={entry.rating ? `Оценка ${entry.rating} из 10` : 'Без оценки'}
           >
+            <Star size={13} className={styles.ratingStar} fill={entry.rating ? 'currentColor' : 'none'} />
             {entry.rating ?? '—'}
           </span>
           {canEdit ? (
