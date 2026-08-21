@@ -128,11 +128,25 @@
 }
 
 .convName {
+  display: flex;
+  align-items: center;
+  min-width: 0;
   font-weight: 600;
   font-size: 14px;
+}
+
+/* Only the name itself truncates — badges are fixed-size and sit outside the
+   ellipsis so a long name can never push them out of view. */
+.convNameText {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.convBadges {
+  flex-shrink: 0;
+  margin-left: 5px;
 }
 
 .convTime {
@@ -331,15 +345,14 @@
   gap: 3px;
 }
 
-/* Telegram-style sticky date pill: sits ~10px under the header while its day is
-   in view, then the next day's pill pushes it up as you scroll. */
+
 .dayDivider {
   position: sticky;
-  top: 10px;
+  top: -10px;
   z-index: 5;
   display: flex;
   justify-content: center;
-  margin: 6px 0 8px;
+  margin: -16px 0 8px;
   pointer-events: none;
 }
 
@@ -460,12 +473,27 @@
   color: inherit;
 }
 
-.rich > :global(*:first-child) {
+/* Trim the outer + inner leading margins so the bubble hugs the text. */
+.rich :global(.markdown-body) > :global(*:first-child) {
   margin-top: 0;
 }
 
-.rich > :global(*:last-child) {
+.rich :global(.markdown-body) > :global(*:last-child) {
   margin-bottom: 0;
+}
+
+/* A one-paragraph rich message collapses to an inline-block so the meta rides
+   the end of the last line exactly like a plain-text bubble — keeping the two
+   the same height. (Plain `display: inline` on the markdown-body leaves its
+   trailing text node on its own line and the meta wraps below; inline-block
+   is what actually keeps them on one line.) Multi-block markdown stays block,
+   so its meta sits on a trailing line — fine, those messages are tall anyway. */
+.rich :global(.markdown-body):has(> :global(p:only-child)) {
+  display: inline-block;
+}
+
+.rich :global(.markdown-body) > :global(p:only-child) {
+  display: inline;
 }
 
 .bubbleHighlight {
@@ -657,19 +685,19 @@
   gap: 4px;
   align-items: center;
   justify-content: flex-end;
-  margin-top: 2px;
+  margin-top: 4px;
   font-size: 10.5px;
   color: var(--text-muted, #9a9a9a);
 }
 
 .metaInline {
-  float: right;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
   margin-left: 6px;
   font-size: 10.5px;
+  line-height: 1;
+  vertical-align: baseline;
   color: var(--text-muted, #9a9a9a);
   white-space: nowrap;
 }

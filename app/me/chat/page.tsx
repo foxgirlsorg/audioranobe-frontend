@@ -591,10 +591,6 @@ function ChatInner() {
         {m.mine ? (read ? <CheckCheck size={13} className={styles.readTick} /> : <Check size={13} />) : null}
       </>
     );
-    // Plain text can carry the meta as a floated tail so it rides the last line
-    // of text (Telegram-style). Rich/markdown and image-only bodies can't host
-    // a nested float safely, so they keep it on its own row below.
-    const inlineMeta = !!m.body && m.format !== 'rich';
     return (
       <div key={m.id} id={`dm-msg-${m.id}`} className={`${styles.bubbleRow} ${m.mine ? styles.mine : styles.theirs}`}>
         {canReply ? (
@@ -630,15 +626,23 @@ function ChatInner() {
           ) : null}
           {m.body ? (
             m.format === 'rich' ? (
-              <div className={styles.rich}><Markdown source={m.body} compact /></div>
+              // The meta rides the last line inline (like plain text); a
+              // one-paragraph rich message flows inline via CSS so it ends up
+              // the same height as a plain bubble. Multi-block markdown keeps
+              // the meta on its own trailing line, which is fine.
+              <div className={styles.rich}>
+                <Markdown source={m.body} compact />
+                <span className={styles.metaInline}>{meta}</span>
+              </div>
             ) : (
               <span className={styles.bubbleText}>
                 {linkify(m.body)}
                 <span className={styles.metaInline}>{meta}</span>
               </span>
             )
-          ) : null}
-          {!inlineMeta ? <span className={styles.meta}>{meta}</span> : null}
+          ) : (
+            <span className={styles.meta}>{meta}</span>
+          )}
         </div>
       </div>
     );
@@ -675,14 +679,17 @@ function ChatInner() {
                     {c.user.avatar_url ? (
                       <img src={c.user.avatar_url} alt="" />
                     ) : (
-                      <span className={styles.avatarFallback}>{initialsOf(c.user.username)}</span>
+                      <span className={styles.avatarFallback}>{initialsOf(c.user.username)} </span>
                     )}
                   </span>
                   <PresenceDot status={c.user.presence} lastSeenAt={c.user.last_seen_at} size={12} className={styles.presenceDot} />
                 </span>
                 <span className={styles.convMain}>
                   <span className={styles.convTop}>
-                    <span className={styles.convName}>{c.user.display_name || c.user.username}</span>
+                    <span className={styles.convName}>
+                      <span className={styles.convNameText}>{c.user.display_name || c.user.username}</span>
+                      <UserBadges user={c.user} size={13} className={styles.convBadges} />
+                    </span>
                     {c.last_message_at ? <span className={styles.convTime}>{fmtTime(c.last_message_at)}</span> : null}
                   </span>
                   <span className={styles.convPreview}>
@@ -728,7 +735,7 @@ function ChatInner() {
                 <span className={styles.threadHeadText}>
                   <span className={styles.threadName}>
                     {thread.user.display_name || thread.user.username}
-                    <UserBadges user={thread.user} size={11} />
+                    <UserBadges user={thread.user} size={13} />
                   </span>
                   <PresenceLabel
                     status={thread.user.presence}

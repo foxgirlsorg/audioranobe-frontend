@@ -41,7 +41,7 @@ function PersonRow({
         <span className={styles.meta}>
           <span className={styles.name}>
             {user.display_name || user.username}
-            <UserBadges user={user} size={9} />
+            <UserBadges user={user} size={14} />
           </span>
           {user.display_name && user.display_name !== user.username ? (
             <span className={styles.handle}>@{user.username}</span>

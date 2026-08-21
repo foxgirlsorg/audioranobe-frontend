@@ -338,7 +338,7 @@ export default function NavBar() {
           <span className={styles.menuEyebrow}>{'вы вошли как'}</span>
           <span className={styles.menuName}>
             {user.display_name || user.username}
-            <UserBadges user={user} size={9} className={styles.badges} />
+            <UserBadges user={user} size={14} className={styles.badges} />
           </span>
           {user.display_name && user.display_name !== user.username ? (
             <span className={styles.menuHandle}>@{user.username}</span>

@@ -552,7 +552,7 @@ function NestedComment({
                   <span className={styles.usernameGone}>удалённый пользователь</span>
               )}
               {comment.user ? (
-                  <UserBadges user={comment.user} size={8} />
+                  <UserBadges user={comment.user} size={13} />
               ) : null}
               <time
                   className={styles.time}
