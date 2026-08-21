@@ -290,7 +290,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
       </header>
 
       <div className={styles.tabsRow}>
-        <Tabs tabs={tabs} active={tab} onChange={setTab} urlParam="tab" />
+        <Tabs tabs={tabs} active={tab} onChange={setTab} urlParam="tab" variant="underline" />
       </div>
 
       {tab === 'info' && (

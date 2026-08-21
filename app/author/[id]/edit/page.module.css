@@ -19,6 +19,11 @@
   padding: 1.6rem 1.7rem;
 }
 
+.head {
+  display: flex;
+  flex-direction: column;
+}
+
 .heading {
   font-size: clamp(1.3rem, 3vw, 1.8rem);
   font-weight: 300;

@@ -137,10 +137,12 @@ export default function AuthorEditPage({ params }: { params: { id: string } }) {
         К автору
       </Link>
 
-      <form className={`glass-panel ${styles.formPanel}`} onSubmit={handleSubmit} noValidate>
+      <header className={styles.head}>
         <h1 className={styles.heading}>Редактирование автора</h1>
         <p className={styles.subtitle}>{author.name}</p>
+      </header>
 
+      <form className={`glass-panel ${styles.formPanel}`} onSubmit={handleSubmit} noValidate>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="a-name">
             Название

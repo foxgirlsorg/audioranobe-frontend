@@ -316,6 +316,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
           active={tab}
           onChange={setTab}
           urlParam="tab"
+          variant="underline"
         />
       </div>
 
