@@ -42,6 +42,7 @@ export function UserEditModal({
   const [socials, setSocials] = useState<string[]>([]);
   const [password, setPassword] = useState('');
   const [isDeveloper, setIsDeveloper] = useState(false);
+  const [isDonator, setIsDonator] = useState(false);
 
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
@@ -65,6 +66,7 @@ export function UserEditModal({
         setSocials(u.socials ?? []);
         setPassword('');
         setIsDeveloper(!!u.is_developer);
+        setIsDonator(!!u.is_donator);
       })
       .catch((e) => {
         if (alive) setLoadError(errMsg(e));
@@ -98,6 +100,7 @@ export function UserEditModal({
               }
             : {}),
           is_developer: isDeveloper,
+          is_donator: isDonator,
         },
       });
       applyUpdate(updated, false);
@@ -256,6 +259,15 @@ export function UserEditModal({
               checked={isDeveloper}
               onChange={setIsDeveloper}
               label={'Командный бейдж: разработчик'}
+              disabled={imageBusy !== null || busy}
+            />
+          ) : null}
+
+          {isAdmin ? (
+            <Toggle
+              checked={isDonator}
+              onChange={setIsDonator}
+              label={'Бейдж: донатер'}
               disabled={imageBusy !== null || busy}
             />
           ) : null}

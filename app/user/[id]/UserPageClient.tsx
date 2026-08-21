@@ -411,6 +411,7 @@ export default function UserPageClient({
               cover_url: updated.cover_url,
               role: updated.role,
               is_developer: updated.is_developer,
+              is_donator: updated.is_donator,
               is_banned: updated.is_banned,
             },
           }

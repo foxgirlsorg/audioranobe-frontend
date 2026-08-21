@@ -6,15 +6,16 @@ export default function UserBadges({
                                      size = 21,
                                      className = '',
                                    }: {
-  user?: { role?: string | null; is_developer?: boolean } | null;
+  user?: { role?: string | null; is_developer?: boolean; is_donator?: boolean } | null;
   size?: number;
   className?: string;
 }) {
   const role = user?.role ?? null;
   const isDeveloper = !!user?.is_developer;
+  const isDonator = !!user?.is_donator;
   const isStaff = role === 'moderator' || role === 'admin';
 
-  if (!isStaff && !isDeveloper) return null;
+  if (!isStaff && !isDeveloper && !isDonator) return null;
 
   const badges: { key: BadgeKey; title: string }[] = [];
 
@@ -29,6 +30,13 @@ export default function UserBadges({
     badges.push({
       key: 'developer',
       title: 'Разработчик',
+    });
+  }
+
+  if (isDonator) {
+    badges.push({
+      key: 'donator',
+      title: 'Донатер',
     });
   }
 

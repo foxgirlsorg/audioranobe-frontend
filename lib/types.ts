@@ -70,6 +70,7 @@ export interface UserBrief {
   avatar_url: string | null;
   role: Role;
   is_developer: boolean;
+  is_donator: boolean;
   /** Derived server-side; 'offline' on briefs whose query omits presence cols. */
   presence: PresenceStatus;
   last_seen_at: string | null;
@@ -100,6 +101,7 @@ export interface UserPublic {
   cover_url: string | null;
   role: Role;
   is_developer: boolean;
+  is_donator: boolean;
   is_banned: boolean;
   created_at: string;
   presence: PresenceStatus;
@@ -129,6 +131,7 @@ export interface Viewer {
   cover_url: string | null;
   role: Role;
   is_developer: boolean;
+  is_donator: boolean;
   created_at: string;
   email: string | null;
   has_password: boolean;
@@ -545,7 +548,7 @@ export interface ModNarrator {
   subscribers_count: number;
   created_at: string;
   deleted_at: string | null;
-  owner: { id: number; username: string; role: Role; is_developer: boolean } | null;
+  owner: { id: number; username: string; role: Role; is_developer: boolean; is_donator: boolean } | null;
   admin_contact: string | null;
 }
 
