@@ -12,9 +12,7 @@ import {
   History,
   Library,
   LibraryBig,
-  LogIn,
   LogOut,
-  Menu,
   MessageCircle,
   Mic,
   Newspaper,
@@ -93,7 +91,6 @@ export default function NavBar() {
   const [activeIdx, setActiveIdx] = useState(-1);
   const suggestListId = useId();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   // Lazily loaded (and shared with the add-content dialog) — fetched when the
@@ -124,7 +121,6 @@ export default function NavBar() {
   // can play instead of the element just vanishing.
   const sugMounted = useAnimatedPresence(sugOpen && !!sug, 140);
   const userMenuMounted = useAnimatedPresence(userMenuOpen && !isMobile, 140);
-  const mobileOverlayMounted = useAnimatedPresence(mobileOpen, 200);
   const mobileSearchMounted = useAnimatedPresence(mobileSearchOpen, 160);
 
   useEffect(() => {
@@ -164,7 +160,6 @@ export default function NavBar() {
   useEffect(() => {
     setSugOpen(false);
     closeUserMenu();
-    setMobileOpen(false);
     setMobileSearchOpen(false);
   }, [pathname, closeUserMenu]);
 
@@ -214,13 +209,13 @@ export default function NavBar() {
   }, [closeUserMenu]);
 
   useEffect(() => {
-    if (!mobileOpen && !mobileSearchOpen) return;
+    if (!mobileSearchOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [mobileOpen, mobileSearchOpen]);
+  }, [mobileSearchOpen]);
 
   // The floating search's own way out, beyond its close button: Escape, and
   // autofocus so typing can start immediately.
@@ -283,7 +278,6 @@ export default function NavBar() {
     setSugOpen(false);
     setActiveIdx(-1);
     inputRef.current?.blur();
-    setMobileOpen(false);
     setMobileSearchOpen(false);
     router.push(`/catalog?q=${encodeURIComponent(trimmed)}`);
   };
@@ -311,7 +305,6 @@ export default function NavBar() {
   const goRandom = async () => {
     try {
       const { slug } = await api<{ slug: string }>('/titles/random');
-      setMobileOpen(false);
       setMobileSearchOpen(false);
       router.push(`/title/${slug}`);
     } catch (e) {
@@ -321,7 +314,6 @@ export default function NavBar() {
 
   const doLogout = () => {
     closeUserMenu();
-    setMobileOpen(false);
     logout();
     toast('Вы вышли из аккаунта');
     router.push('/');
@@ -376,7 +368,7 @@ export default function NavBar() {
           ))}
           <button type="button" className={styles.menuItem} onClick={goRandom}>
             <Dices aria-hidden="true" />
-            {'Случайный'}
+            {'Случайный тайтл'}
           </button>
 
         </div>
@@ -425,7 +417,6 @@ export default function NavBar() {
 
   const openAdd = () => {
     closeUserMenu();
-    setMobileOpen(false);
     setAddOpen(true);
   };
 
@@ -594,10 +585,7 @@ export default function NavBar() {
           <button
             type="button"
             className={`${styles.iconBtn} ${styles.mobileSearchBtn}`}
-            onClick={() => {
-              setMobileOpen(false);
-              setMobileSearchOpen(true);
-            }}
+            onClick={() => setMobileSearchOpen(true)}
             aria-label={'Поиск'}
           >
             <Search />
@@ -679,30 +667,16 @@ export default function NavBar() {
                   : null}
               </>
             ) : (
-              <div className={styles.authBtns}>
-                <Link href="/auth/login" className="btn btn-ghost">
-                  {'Войти'}
-                </Link>
-                <Link href="/auth/register" className="btn btn-primary">
-                  {'Регистрация'}
-                </Link>
-              </div>
+              <Link
+                href="/auth/register"
+                className={styles.iconBtn}
+                title={'Регистрация'}
+                aria-label={'Регистрация'}
+              >
+                <UserPlus />
+              </Link>
             )}
           </div>
-
-          {!user ? (
-            <button
-              type="button"
-              className={`${styles.iconBtn} ${styles.burger}`}
-              onClick={() => {
-                setMobileSearchOpen(false);
-                setMobileOpen(true);
-              }}
-              aria-label={'Открыть меню'}
-            >
-              <Menu />
-            </button>
-          ) : null}
         </div>
       </header>
 
@@ -745,55 +719,6 @@ export default function NavBar() {
               )}
             </div>
           </div>
-        </div>
-      )}
-
-      {mobileOverlayMounted && (
-        <div className={`${styles.overlay} ${mobileOpen ? '' : styles.overlayOut}`}>
-          <div className={styles.overlayHead}>
-            <Link href="/" className={styles.logo} onClick={() => setMobileOpen(false)}>
-              AUDIO<span className={styles.logoAccent}>RANOBE</span>
-            </Link>
-            <button
-              type="button"
-              className={styles.iconBtn}
-              onClick={() => setMobileOpen(false)}
-              aria-label={'Закрыть меню'}
-            >
-              <X />
-            </button>
-          </div>
-
-          <div className={styles.groupLabel}>{'Разделы'}</div>
-          <nav className={styles.overlayLinks} aria-label={'Мобильное меню'}>
-            {NAV_LINKS.map((l) => (
-              <Link key={l.href} href={l.href} className={styles.overlayLink}>
-                <l.icon aria-hidden="true" />
-                {l.label}
-              </Link>
-            ))}
-            <button type="button" className={styles.overlayLink} onClick={goRandom}>
-              <Dices aria-hidden="true" />
-              {'Случайный'}
-            </button>
-          </nav>
-
-          {!user ? (
-            <>
-              <div className={styles.overlaySep} />
-              <div className={styles.groupLabel}>{'Аккаунт'}</div>
-              <nav className={styles.overlaySubLinks} aria-label={'Аккаунт'}>
-                <Link href="/auth/login" className={styles.overlaySub}>
-                  <LogIn aria-hidden="true" />
-                  {'Войти'}
-                </Link>
-                <Link href="/auth/register" className={styles.overlaySub}>
-                  <UserPlus aria-hidden="true" />
-                  {'Регистрация'}
-                </Link>
-              </nav>
-            </>
-          ) : null}
         </div>
       )}
 

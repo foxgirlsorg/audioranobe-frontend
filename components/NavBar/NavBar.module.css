@@ -361,12 +361,6 @@
   line-height: 0;
 }
 
-.authBtns {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
 .userWrap {
   position: relative;
 }
@@ -563,34 +557,12 @@
   color: var(--accent-hover);
 }
 
-/* ---------- burger + mobile overlay ---------- */
+/* ---------- mobile-only account menu ---------- */
 
-.burger {
-  display: none;
-}
-
-/* Mirrors .burger's own breakpoint: the account menu's copy of Разделы +
-   Случайный only appears once the top nav is gone, so it's never a duplicate. */
+/* Mirrors .links' own breakpoint: the account menu's copy of Разделы +
+   Случайный тайтл only appears once the top nav is gone, so it's never a duplicate. */
 .menuMobileOnly {
   display: none;
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(12, 12, 14, 0.85);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  display: flex;
-  flex-direction: column;
-  padding: 0 1.5rem 3rem;
-  overflow-y: auto;
-  animation: overlay-in 0.25s ease;
-}
-
-.overlayOut {
-  animation: overlay-out 0.2s ease forwards;
 }
 
 @keyframes overlay-in {
@@ -609,108 +581,6 @@
   to {
     opacity: 0;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .overlay,
-  .overlayOut {
-    animation: none;
-  }
-}
-
-.overlayHead {
-  height: var(--nav-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex: none;
-}
-
-/* Section labels above each overlay group — same look as the search
-   dropdown's group headers (.groupLabel), just with room above them here. */
-.overlay .groupLabel {
-  margin-top: 2rem;
-}
-
-.overlay .groupLabel:first-of-type {
-  margin-top: 1.5rem;
-}
-
-.overlayLinks {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1.1rem;
-  margin-top: 0.9rem;
-}
-
-.overlayLink {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.3rem;
-  font-weight: 300;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #fff;
-  transition: color 0.2s ease;
-  text-align: left;
-}
-
-.overlayLink svg {
-  width: 20px;
-  height: 20px;
-  flex: none;
-  color: var(--accent);
-}
-
-.overlayLink:hover {
-  color: var(--accent-hover);
-}
-
-.overlaySep {
-  height: 1px;
-  background: linear-gradient(to right, var(--accent), rgba(222, 97, 97, 0.2), transparent);
-  opacity: 0.6;
-  margin: 1.4rem 0;
-  flex: none;
-}
-
-.overlaySubLinks {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.9rem;
-  margin-top: 0.9rem;
-}
-
-.overlaySub {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  transition: color 0.2s ease;
-  text-align: left;
-}
-
-.overlaySub svg {
-  width: 16px;
-  height: 16px;
-  flex: none;
-  color: var(--text-muted);
-  transition: color 0.2s ease;
-}
-
-.overlaySub:hover {
-  color: var(--accent-hover);
-}
-
-.overlaySub:hover svg {
-  color: var(--accent-hover);
 }
 
 /* ---------- floating mobile search ---------- */
@@ -797,32 +667,16 @@
   }
 
   /* Matches .links' own breakpoint exactly — the account menu's copy of
-     Разделы + Случайный must appear the instant the top nav disappears, not
-     at the (much narrower) point the burger shows up. Leaving a gap between
-     the two meant a stretch of viewport widths with no way to reach them. */
+     Разделы + Случайный тайтл must appear the instant the top nav disappears,
+     so it's always reachable. */
   .menuMobileOnly {
     display: contents;
   }
 }
 
-/*
- * The signed-out auth buttons are 240px of the row, and below ~880 they no
- * longer fit beside the search. They fold into the burger — which already
- * carries Войти and Регистрация — a step before the rest of the bar does, so
- * the search survives all the way down to the mobile view.
- */
 @media (max-width: 899px) {
-  .authBtns,
   .navLang {
     display: none;
-  }
-
-  .burger {
-    display: inline-flex;
-    min-width: 44px;
-    min-height: 44px;
-    align-items: center;
-    justify-content: center;
   }
 }
 
@@ -834,10 +688,9 @@
 /*
  * True mobile: the avatar/chat/notifications cluster stays — those are quick
  * shortcuts, not menus, and only the avatar's own dropdown duplicates the
- * burger's account links (still true, but that dropdown isn't reachable by
- * accident the way the old always-visible Dices button was). What moves out
- * is just the random-title icon (now an overlay row) — a dedicated search
- * icon takes its old spot, opening the floating search panel below.
+ * account links. What moves out is just the random-title icon (reachable
+ * from the account menu instead) — a dedicated search icon takes its old
+ * spot, opening the floating search panel below.
  */
 @media (max-width: 768px) {
   .inner {
@@ -847,7 +700,6 @@
 
   .links,
   .search,
-  .authBtns,
   .navLang,
   .randomBtn {
     display: none;
@@ -859,8 +711,7 @@
     letter-spacing: 0.22em;
   }
 
-  .mobileSearchBtn,
-  .burger {
+  .mobileSearchBtn {
     display: inline-flex;
     min-width: 44px;
     min-height: 44px;
@@ -926,14 +777,6 @@
   .logo {
     font-size: 15px;
     letter-spacing: 0.28em;
-  }
-
-  .overlayLink {
-    font-size: 1.2rem;
-  }
-
-  .overlaySub {
-    font-size: 0.85rem;
   }
 
   .search {

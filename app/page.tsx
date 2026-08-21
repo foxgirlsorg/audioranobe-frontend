@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Megaphone, Play, UserPlus, X } from 'lucide-react';
+import { AlertTriangle, LogIn, Megaphone, Play, UserPlus, X } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import { api } from '@/lib/api';
 import type { HomeData, TitleCard } from '@/lib/types';
@@ -212,10 +212,13 @@ export default function HomePage() {
             собирайте свою библиотеку.
           </p>
           <div className={styles.heroActions}>
-
             <Link href="/auth/register" className="btn">
               <UserPlus />
               Создать аккаунт
+            </Link>
+            <Link href="/auth/login" className="btn btn-ghost">
+              <LogIn />
+              Войти
             </Link>
           </div>
         </section>
