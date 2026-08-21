@@ -982,7 +982,7 @@ export default function TitlePageClient({
           <div className={styles.heroBanners}>{banners}</div>
         ) : null}
 
-        <div className={styles.subrow}>
+        <div className={`${styles.subrow} ${!user ? styles.subrowCompact : ''}`}>
           <div className={`glass-panel ${styles.factsCard} ${styles.factsCardCol}`}>
             <span className={styles.sideEyebrow}>
               <Info size={12} />
@@ -1040,7 +1040,7 @@ export default function TitlePageClient({
               {narratorsBlock}
             </div>
           </div>
-          {libraryWidget}
+          {user ? libraryWidget : null}
           {ratingCard}
         </div>
       </header>

@@ -559,6 +559,14 @@
   flex: 1 1 280px;
 }
 
+/* Guests only see the facts card and the rating card (no library widget) —
+   without the third block to share the row, letting them grow would stretch
+   the rating card across the freed-up space instead of sitting beside the
+   facts card. */
+.subrowCompact > *:not(.factsCardCol) {
+  flex: 0 1 400px;
+}
+
 /* Facts card sits first in the row, directly under the cover and matching
    its width exactly — everything else in the row (library, rating) still
    shares the remaining space equally. */
