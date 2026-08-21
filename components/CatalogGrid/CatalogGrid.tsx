@@ -152,7 +152,7 @@ export default function CatalogGrid() {
             title="Тайтл завершён и хотя бы один чтец завершил озвучку"
           >
             <CheckCheck size={13} />
-            Только завершённые
+            <span className={styles.finishedOnlyWord}>Только</span> завершённые
           </button>
         </div>
       </header>

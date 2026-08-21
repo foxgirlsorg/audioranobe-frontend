@@ -278,6 +278,12 @@
   }
 }
 
+@media (max-width: 768px) {
+  .finishedOnlyWord {
+    display: none;
+  }
+}
+
 /* Sort direction. Icon-only: the arrow already says which way it goes, and the
    label would double the width of a row that is tight on a phone. Square on
    every breakpoint — was circular on desktop only, now matches the mobile shape. */
