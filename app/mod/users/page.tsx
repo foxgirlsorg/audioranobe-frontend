@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ImagePlus, KeyRound, MailCheck, Pencil, Search, Trash2, Users } from 'lucide-react';
+import { MailCheck, Pencil, Search, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
-import { resizeToWebp } from '@/lib/image';
 import { formatDate } from '@/lib/format';
 import type { Me, Paginated, Role } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
@@ -16,7 +15,7 @@ import { useInfiniteList } from '@/lib/useInfiniteList';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
-import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
+import UserEditModal from '@/components/UserEditModal/UserEditModal';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import Select from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
@@ -32,23 +31,12 @@ function UsersContent() {
   const { user: me } = useAuth();
   const { toast } = useToast();
   const isAdmin = me?.role === 'admin';
-  const isModerator = me?.role === 'moderator' || isAdmin;
 
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<Me | null>(null);
-  const [toEdit, setToEdit] = useState<Me | null>(null);
-  const [editUsername, setEditUsername] = useState('');
-  const [editDisplayName, setEditDisplayName] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editBio, setEditBio] = useState('');
-  const [editSocials, setEditSocials] = useState<string[]>([]);
-  const [editPassword, setEditPassword] = useState('');
-  const [editIsDeveloper, setEditIsDeveloper] = useState(false);
-  const [imageBusy, setImageBusy] = useState<'avatar' | 'cover' | null>(null);
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
-  const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const [toEditId, setToEditId] = useState<number | null>(null);
   const [toBan, setToBan] = useState<Me | null>(null);
   const [banReason, setBanReason] = useState('');
 
@@ -77,46 +65,6 @@ function UsersContent() {
       toast(
         `${u.username} теперь ${ROLE_LABELS[role] ? ROLE_LABELS[role] : role}`
       );
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-    setBusyId(null);
-  };
-
-  const openEdit = (u: Me) => {
-    setToEdit(u);
-    setEditUsername(u.username);
-    setEditDisplayName(u.display_name || '');
-    setEditEmail(u.email ?? '');
-    setEditBio(u.bio || '');
-    setEditSocials(u.socials ?? []);
-    setEditPassword('');
-    setEditIsDeveloper(!!u.is_developer);
-  };
-
-  const saveEdit = async () => {
-    if (!toEdit) return;
-    setBusyId(toEdit.id);
-    try {
-      const updated = await api<Me>(`/mod/users/${toEdit.id}`, {
-        method: 'PATCH',
-        body: {
-          username: editUsername.trim() || undefined,
-          display_name: editDisplayName,
-          bio: editBio,
-          socials: editSocials,
-          ...(isAdmin
-            ? {
-                email: editEmail.trim() || undefined,
-                ...(editPassword ? { password: editPassword } : {}),
-              }
-            : {}),
-          ...(isModerator ? { is_developer: editIsDeveloper } : {}),
-        },
-      });
-      replaceRow(updated);
-      setToEdit(null);
-      toast(editPassword ? 'Профиль и пароль обновлены' : 'Профиль обновлён');
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -163,24 +111,6 @@ function UsersContent() {
 
   const roles: Role[] = ['user', 'moderator', 'admin'];
 
-  const sendResetLink = async (u: Me) => {
-    setBusyId(u.id);
-    try {
-      const res = await api<{ sent: boolean }>(`/mod/users/${u.id}/reset-password`, {
-        method: 'POST',
-        body: {},
-      });
-      toast(
-        res.sent
-          ? `Ссылка для сброса отправлена на ${u.email}`
-          : 'Почта не настроена на сервере — ссылка записана в лог'
-      );
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-    setBusyId(null);
-  };
-
   const verifyEmail = async (u: Me, value: boolean) => {
     setBusyId(u.id);
     try {
@@ -189,53 +119,11 @@ function UsersContent() {
         body: { email_verified: value },
       });
       replaceRow(updated);
-      setToEdit((prev) => (prev && prev.id === u.id ? updated : prev));
       toast(value ? 'Почта отмечена подтверждённой' : 'Отметка подтверждения снята');
     } catch (e) {
       toast(errMsg(e), 'error');
     }
     setBusyId(null);
-  };
-
-  const setVerified = async (value: boolean) => {
-    if (toEdit) await verifyEmail(toEdit, value);
-  };
-
-  const uploadImage = async (kind: 'avatar' | 'cover', file: File) => {
-    if (!toEdit) return;
-    setImageBusy(kind);
-    try {
-      const resized =
-        kind === 'avatar'
-          ? await resizeToWebp(file, 1024, 1024)
-          : await resizeToWebp(file, 2048, 2048);
-      const fd = new FormData();
-      fd.append('file', resized, `${kind}.webp`);
-      const updated = await api<Me>(`/mod/users/${toEdit.id}/${kind}`, { formData: fd });
-      replaceRow(updated);
-      setToEdit(updated);
-      toast(kind === 'avatar' ? 'Аватар обновлён' : 'Обложка обновлена');
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-    setImageBusy(null);
-  };
-
-  const removeImage = async (kind: 'avatar' | 'cover') => {
-    if (!toEdit) return;
-    setImageBusy(kind);
-    try {
-      const updated = await api<Me>(`/mod/users/${toEdit.id}`, {
-        method: 'PATCH',
-        body: kind === 'avatar' ? { remove_avatar: true } : { remove_cover: true },
-      });
-      replaceRow(updated);
-      setToEdit(updated);
-      toast(kind === 'avatar' ? 'Аватар удалён' : 'Обложка удалена');
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-    setImageBusy(null);
   };
 
   const toggleSkipModeration = async (u: Me) => {
@@ -407,7 +295,7 @@ function UsersContent() {
                             type="button"
                             className={`btn btn-ghost ${styles.smallBtn}`}
                             disabled={busy}
-                            onClick={() => openEdit(u)}
+                            onClick={() => setToEditId(u.id)}
                             aria-label={`Редактировать ${u.username}`}
                             title={'Редактировать'}
                           >
@@ -444,198 +332,7 @@ function UsersContent() {
         </>
       )}
 
-      <Modal
-        open={!!toEdit}
-        onClose={() => setToEdit(null)}
-        title={'Редактировать пользователя'}
-      >
-        <div className={styles.editForm}>
-          <label className={styles.fieldLabel}>
-            {'Имя пользователя'}
-            <input
-              className="input"
-              type="text"
-              value={editUsername}
-              onChange={(e) => setEditUsername(e.target.value)}
-              placeholder={'Имя пользователя'}
-            />
-          </label>
-          <label className={styles.fieldLabel}>
-            {'Отображаемое имя'}
-            <input
-              className="input"
-              type="text"
-              value={editDisplayName}
-              onChange={(e) => setEditDisplayName(e.target.value)}
-              placeholder={'Никнейм'}
-            />
-          </label>
-          <label className={styles.fieldLabel}>
-            {'О себе'}
-            <textarea
-              className="textarea"
-              rows={3}
-              value={editBio}
-              onChange={(e) => setEditBio(e.target.value)}
-              placeholder={'Биография пользователя'}
-            />
-          </label>
-          <div className={styles.fieldLabel}>
-            {'Ссылки'}
-            <SocialsEditor value={editSocials} onChange={setEditSocials} />
-          </div>
-          {isAdmin ? (
-            <>
-              <label className={styles.fieldLabel}>
-                {'Email'}
-                <input
-                  className="input"
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  placeholder={'Email'}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                {'Новый пароль'}
-                <input
-                  className="input"
-                  type="text"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                  placeholder={'Оставьте пустым, чтобы не менять'}
-                  autoComplete="new-password"
-                />
-              </label>
-            </>
-          ) : null}
-
-          {isAdmin ? (
-            <Toggle
-              checked={editIsDeveloper}
-              onChange={(on) => setEditIsDeveloper(on)}
-              label={'Командный бейдж: разработчик'}
-              disabled={imageBusy !== null || busyId === toEdit?.id}
-            />
-          ) : null}
-          <button
-            type="button"
-            className="btn btn-ghost"
-            disabled={busyId === toEdit?.id}
-            onClick={() => {
-              if (toEdit) void sendResetLink(toEdit);
-            }}
-          >
-            <KeyRound size={14} />
-            {'Отправить ссылку для сброса'}
-          </button>
-
-          {isAdmin ? (
-            <Toggle
-              checked={!!toEdit?.email_verified}
-              onChange={(on) => void setVerified(on)}
-              disabled={imageBusy !== null || busyId === toEdit?.id}
-              label="Почта подтверждена"
-            />
-          ) : null}
-
-          <div className={styles.imagesBlock}>
-            <span className={styles.fieldLabel}>{'Изображения профиля'}</span>
-            <div className={styles.imageRow}>
-              <span className={styles.imagePreview}>
-                {toEdit?.avatar_url ? (
-                  <img src={toEdit.avatar_url} alt="" />
-                ) : (
-                  <span className={styles.imageEmpty}>{'нет'}</span>
-                )}
-              </span>
-              <span className={styles.imageName}>{'Аватар'}</span>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                disabled={imageBusy !== null}
-                onClick={() => avatarInputRef.current?.click()}
-              >
-                <ImagePlus size={14} />
-                {'Заменить'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                disabled={imageBusy !== null || !toEdit?.avatar_url}
-                onClick={() => void removeImage('avatar')}
-                aria-label={'Удалить аватар'}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-            <div className={styles.imageRow}>
-              <span className={`${styles.imagePreview} ${styles.imageWide}`}>
-                {toEdit?.cover_url ? (
-                  <img src={toEdit.cover_url} alt="" />
-                ) : (
-                  <span className={styles.imageEmpty}>{'нет'}</span>
-                )}
-              </span>
-              <span className={styles.imageName}>{'Обложка'}</span>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                disabled={imageBusy !== null}
-                onClick={() => coverInputRef.current?.click()}
-              >
-                <ImagePlus size={14} />
-                {'Заменить'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                disabled={imageBusy !== null || !toEdit?.cover_url}
-                onClick={() => void removeImage('cover')}
-                aria-label={'Удалить обложку'}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void uploadImage('avatar', f);
-                e.target.value = '';
-              }}
-            />
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void uploadImage('cover', f);
-                e.target.value = '';
-              }}
-            />
-          </div>
-
-          <div className={styles.editActions}>
-            <button type="button" className="btn btn-ghost" onClick={() => setToEdit(null)}>
-              {'Отмена'}
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={busyId === toEdit?.id}
-              onClick={saveEdit}
-            >
-              {'Сохранить'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <UserEditModal userId={toEditId} onClose={() => setToEditId(null)} onSaved={replaceRow} />
 
       <Modal
         open={!!toBan}

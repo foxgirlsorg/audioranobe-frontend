@@ -17,6 +17,7 @@ import {
   Check,
   X,
   ShieldBan,
+  Pencil,
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import {
@@ -26,6 +27,7 @@ import {
   type FriendStatus,
   type LibraryEntry,
   type Paginated,
+  type Me,
   type TitleCard,
   type UserBrief,
   type UserComment,
@@ -52,6 +54,7 @@ import SocialLinks from '@/components/SocialLinks/SocialLinks';
 import Markdown from '@/components/Markdown/Markdown';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import Collapsible from '@/components/Collapsible/Collapsible';
+import UserEditModal from '@/components/UserEditModal/UserEditModal';
 import { PhotoView } from 'react-photo-view';
 import styles from './page.module.css';
 import sectionStyles from "@/components/Section/Section.module.css";
@@ -240,10 +243,11 @@ export default function UserPageClient({
   const userRef = decodeURIComponent(id);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user: viewer } = useAuth();
+  const { user: viewer, isMod } = useAuth();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [friendStatus, setFriendStatus] = useState<FriendStatus>(initialProfile?.friendship.status ?? 'none');
   const [friendsCount, setFriendsCount] = useState(initialProfile?.friendship.friends_count ?? 0);
   const [friendBusy, setFriendBusy] = useState(false);
@@ -392,6 +396,28 @@ export default function UserPageClient({
   const handleEntryRemove = (titleId: number) =>
     library.remove((e) => e.title.id === titleId);
 
+  const handleUserSaved = (updated: Me) => {
+    setProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            user: {
+              ...prev.user,
+              username: updated.username,
+              display_name: updated.display_name,
+              bio: updated.bio,
+              socials: updated.socials,
+              avatar_url: updated.avatar_url,
+              cover_url: updated.cover_url,
+              role: updated.role,
+              is_developer: updated.is_developer,
+              is_banned: updated.is_banned,
+            },
+          }
+        : prev
+    );
+  };
+
   const runFriend = async (
     method: 'POST' | 'DELETE',
     path: string,
@@ -451,6 +477,20 @@ export default function UserPageClient({
             <div className={styles.dockName}>
               <h1 className={styles.dockNameH1}>{user.display_name || user.username}</h1>
               <UserBadges user={user} size={20} className={styles.nameBadges} />
+              {isOwnProfile ? (
+                <Link href="/me/settings" className={styles.editBtn} title="Редактировать">
+                  <Pencil size={16} />
+                </Link>
+              ) : isMod ? (
+                <button
+                  type="button"
+                  className={styles.editBtn}
+                  title="Редактировать"
+                  onClick={() => setEditingId(user.id)}
+                >
+                  <Pencil size={16} />
+                </button>
+              ) : null}
             </div>
 
             <div className={styles.meta}>
@@ -817,6 +857,8 @@ export default function UserPageClient({
           )}
         </div>
       ) : null}
+
+      <UserEditModal userId={editingId} onClose={() => setEditingId(null)} onSaved={handleUserSaved} />
     </div>
   );
 }

@@ -178,6 +178,24 @@
   margin-left: -0.15rem;
 }
 
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.editBtn:hover {
+  color: var(--accent-hover);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .meta {
   display: flex;
   align-items: center;

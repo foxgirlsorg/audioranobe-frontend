@@ -234,56 +234,6 @@
   cursor: default;
 }
 
-
-/* Admin profile-image controls in the edit modal */
-.imagesBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding-top: 0.4rem;
-}
-
-.imageRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.imagePreview {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.imageWide {
-  width: 72px;
-}
-
-.imagePreview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.imageEmpty {
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-.imageName {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
 .checkRow {
   display: inline-flex;
   align-items: center;
