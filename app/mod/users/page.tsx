@@ -16,6 +16,7 @@ import { useInfiniteList } from '@/lib/useInfiniteList';
 import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
+import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import Select from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
@@ -39,8 +40,10 @@ function UsersContent() {
   const [toDelete, setToDelete] = useState<Me | null>(null);
   const [toEdit, setToEdit] = useState<Me | null>(null);
   const [editUsername, setEditUsername] = useState('');
+  const [editDisplayName, setEditDisplayName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [editSocials, setEditSocials] = useState<string[]>([]);
   const [editPassword, setEditPassword] = useState('');
   const [editIsDeveloper, setEditIsDeveloper] = useState(false);
   const [imageBusy, setImageBusy] = useState<'avatar' | 'cover' | null>(null);
@@ -83,8 +86,10 @@ function UsersContent() {
   const openEdit = (u: Me) => {
     setToEdit(u);
     setEditUsername(u.username);
+    setEditDisplayName(u.display_name || '');
     setEditEmail(u.email ?? '');
     setEditBio(u.bio || '');
+    setEditSocials(u.socials ?? []);
     setEditPassword('');
     setEditIsDeveloper(!!u.is_developer);
   };
@@ -97,10 +102,12 @@ function UsersContent() {
         method: 'PATCH',
         body: {
           username: editUsername.trim() || undefined,
+          display_name: editDisplayName,
+          bio: editBio,
+          socials: editSocials,
           ...(isAdmin
             ? {
                 email: editEmail.trim() || undefined,
-                bio: editBio,
                 ...(editPassword ? { password: editPassword } : {}),
               }
             : {}),
@@ -453,6 +460,30 @@ function UsersContent() {
               placeholder={'Имя пользователя'}
             />
           </label>
+          <label className={styles.fieldLabel}>
+            {'Отображаемое имя'}
+            <input
+              className="input"
+              type="text"
+              value={editDisplayName}
+              onChange={(e) => setEditDisplayName(e.target.value)}
+              placeholder={'Никнейм'}
+            />
+          </label>
+          <label className={styles.fieldLabel}>
+            {'О себе'}
+            <textarea
+              className="textarea"
+              rows={3}
+              value={editBio}
+              onChange={(e) => setEditBio(e.target.value)}
+              placeholder={'Биография пользователя'}
+            />
+          </label>
+          <div className={styles.fieldLabel}>
+            {'Ссылки'}
+            <SocialsEditor value={editSocials} onChange={setEditSocials} />
+          </div>
           {isAdmin ? (
             <>
               <label className={styles.fieldLabel}>
@@ -463,16 +494,6 @@ function UsersContent() {
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
                   placeholder={'Email'}
-                />
-              </label>
-              <label className={styles.fieldLabel}>
-                {'О себе'}
-                <textarea
-                  className="textarea"
-                  rows={3}
-                  value={editBio}
-                  onChange={(e) => setEditBio(e.target.value)}
-                  placeholder={'Биография пользователя'}
                 />
               </label>
               <label className={styles.fieldLabel}>
