@@ -13,6 +13,7 @@ import {
   Library,
   LibraryBig,
   LogOut,
+  Menu,
   MessageCircle,
   Mic,
   Newspaper,
@@ -30,6 +31,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useBadges } from '@/lib/badges';
 import { useMyNarrators } from '@/lib/narrators';
+import { useModSidebar } from '@/lib/modSidebar';
 import { errMsg, useToast } from '@/lib/toast';
 import { useRequestNarration } from '@/lib/requestNarration';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
@@ -83,6 +85,8 @@ export default function NavBar() {
   const { messages: msgCount, notifications: notifCount, friend_requests: friendReq } = useBadges();
   const { toast } = useToast();
   const { request: requestNarration, pendingSlug: narrPending } = useRequestNarration();
+  const { open: modSidebarOpen, setOpen: setModSidebarOpen } = useModSidebar();
+  const isModSection = pathname?.startsWith('/mod') ?? false;
 
   const [scrolled, setScrolled] = useState(false);
   const [q, setQ] = useState('');
@@ -161,7 +165,8 @@ export default function NavBar() {
     setSugOpen(false);
     closeUserMenu();
     setMobileSearchOpen(false);
-  }, [pathname, closeUserMenu]);
+    setModSidebarOpen(false);
+  }, [pathname, closeUserMenu, setModSidebarOpen]);
 
   useEffect(() => {
     const query = q.trim();
@@ -516,7 +521,9 @@ export default function NavBar() {
     <>
       <header
         className={`${styles.nav} site-header ${
-          scrolled || (isMobile && (userMenuOpen || userMenuClosing)) ? styles.scrolled : ''
+          scrolled || isModSection || (isMobile && (userMenuOpen || userMenuClosing))
+            ? styles.scrolled
+            : ''
         }`}
       >
         <div className={styles.inner}>
@@ -582,14 +589,16 @@ export default function NavBar() {
             <Dices />
           </button>
 
-          <button
-            type="button"
-            className={`${styles.iconBtn} ${styles.mobileSearchBtn}`}
-            onClick={() => setMobileSearchOpen(true)}
-            aria-label={'Поиск'}
-          >
-            <Search />
-          </button>
+          {!isModSection && (
+            <button
+              type="button"
+              className={`${styles.iconBtn} ${styles.mobileSearchBtn}`}
+              onClick={() => setMobileSearchOpen(true)}
+              aria-label={'Поиск'}
+            >
+              <Search />
+            </button>
+          )}
 
           <div className={styles.authArea}>
             {loading ? (
@@ -642,6 +651,18 @@ export default function NavBar() {
                     </div>
                   )}
                 </div>
+
+                {isModSection && isMod && (
+                  <button
+                    type="button"
+                    className={`${styles.iconBtn} ${styles.modMenuBtn}`}
+                    onClick={() => setModSidebarOpen((v) => !v)}
+                    aria-label={modSidebarOpen ? 'Закрыть меню модерации' : 'Меню модерации'}
+                    aria-expanded={modSidebarOpen}
+                  >
+                    {modSidebarOpen ? <X /> : <Menu />}
+                  </button>
+                )}
 
                 {isMobile && mounted
                   ? createPortal(

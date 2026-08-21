@@ -91,7 +91,7 @@ function DmcaContent() {
   return (
     <div>
       <Tabs
-        variant="pill"
+        variant="underline"
         tabs={STATUS_TABS}
         active={tab}
         onChange={(k) => {

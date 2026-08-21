@@ -706,6 +706,7 @@ export interface DashboardStats {
   listens_total: number;
   pending_requests: number;
   open_reports: number;
+  mods_online: number;
   jobs_queued: number;
   jobs_processing: number;
   jobs_error: number;

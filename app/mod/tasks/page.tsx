@@ -79,7 +79,7 @@ function TasksInner() {
   return (
     <div className={styles.wrap}>
       <Tabs
-        variant="pill"
+        variant="underline"
         tabs={tabs}
         active={status || 'all'}
         onChange={(k) => {

@@ -99,7 +99,7 @@ function TrashContent() {
       </p>
 
       <Tabs
-        variant="pill"
+        variant="underline"
         tabs={KIND_TABS}
         active={kind}
         onChange={(k) => {

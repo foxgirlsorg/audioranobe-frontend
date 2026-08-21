@@ -13,6 +13,7 @@ import { BadgesProvider } from '@/lib/badges';
 import { MyNarratorsProvider } from '@/lib/narrators';
 import { ToastProvider } from '@/lib/toast';
 import { PlayerProvider } from '@/lib/player';
+import { ModSidebarProvider } from '@/lib/modSidebar';
 import NavBar from '@/components/NavBar/NavBar';
 import BannedBanner from '@/components/BannedBanner/BannedBanner';
 import CookiesBanner from '@/components/CookiesBanner/CookiesBanner';
@@ -57,21 +58,23 @@ function AppProviders({ children }: { children: React.ReactNode }) {
           <MyNarratorsProvider>
             <ToastProvider>
               <PlayerProvider>
-                <a href="#main-content" className="skip-link">
-                  {'Перейти к содержимому'}
-                </a>
-                <div className="noise" aria-hidden="true" />
-                <DragScroll />
-                <NavBar />
-                <BannedBanner />
-                <CookiesBanner />
-                <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
-                  <PhotoProvider>
-                    <main id="main-content" className="container">{children}</main>
-                  </PhotoProvider>
-                </SkeletonTheme>
-                <Footer />
-                <Player />
+                <ModSidebarProvider>
+                  <a href="#main-content" className="skip-link">
+                    {'Перейти к содержимому'}
+                  </a>
+                  <div className="noise" aria-hidden="true" />
+                  <DragScroll />
+                  <NavBar />
+                  <BannedBanner />
+                  <CookiesBanner />
+                  <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
+                    <PhotoProvider>
+                      <main id="main-content" className="container">{children}</main>
+                    </PhotoProvider>
+                  </SkeletonTheme>
+                  <Footer />
+                  <Player />
+                </ModSidebarProvider>
               </PlayerProvider>
             </ToastProvider>
           </MyNarratorsProvider>

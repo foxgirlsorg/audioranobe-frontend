@@ -102,7 +102,7 @@ function NarratorsContent() {
       </p>
 
       <Tabs
-        variant="pill"
+        variant="underline"
         tabs={TABS}
         active={status}
         onChange={(k) => {

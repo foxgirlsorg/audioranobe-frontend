@@ -1,7 +1,16 @@
-/* Shared chrome for the moderation panel: heading, section tabs, guard states. */
+/* Shared chrome for the moderation panel: sidebar nav, heading, guard states. */
 
 .shell {
-  display: block;
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100vh - var(--nav-total, 72px));
+}
+
+.contentCol {
+  flex: 1;
+  min-width: 0;
+  max-width: 1200px;
+  padding: 1.6rem 2.5rem 3rem;
 }
 
 .head {
@@ -25,46 +34,223 @@
   font-weight: 400;
 }
 
-/* Layout now lives in TabScroller; this only positions the strip. */
-.nav {
-  margin-bottom: 2rem;
+/* ---------- sidebar (desktop) ---------- */
+
+.sidebar {
+  width: 224px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  position: sticky;
+  top: var(--nav-total, 72px);
+  align-self: flex-start;
+  height: calc(100vh - var(--nav-total, 72px));
+  padding: 1.6rem 0.8rem 1.6rem;
+  background: rgba(15, 15, 17, 0.6);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  transition: width 0.2s ease;
 }
 
-.tab {
-  display: inline-flex;
+.sidebarCollapsed {
+  width: 68px;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.42rem 1rem;
-  border-radius: 9999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
 }
 
-.tab svg {
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sidebarCollapsed .group {
+  align-items: center;
+  width: 100%;
+}
+
+.groupLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 0.6rem;
+  margin-bottom: 0.3rem;
+}
+
+.groupHair {
+  width: 60%;
+  height: 1px;
+  background: var(--border);
+  margin: 0 auto 0.5rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.46rem 0.6rem;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.itemCollapsed {
+  justify-content: center;
+  width: 42px;
+  padding: 0.5rem;
+}
+
+.itemIconWrap {
+  position: relative;
+  display: inline-flex;
   flex-shrink: 0;
 }
 
-.tab:hover {
-  border-color: var(--border-hover);
-  color: var(--accent-hover);
+.itemIcon {
+  flex-shrink: 0;
+}
+
+.itemLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemDot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warn, #d6a34f);
+}
+
+.itemBadge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--warn, #d6a34f);
+  background: rgba(214, 163, 79, 0.12);
+  border: 1px solid rgba(214, 163, 79, 0.3);
+  padding: 0.05rem 0.4rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.tagAdmin {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.02rem 0.32rem;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .active,
 .active:hover {
   background: var(--accent-soft);
-  border-color: rgba(222, 97, 97, 0.5);
   color: var(--accent-hover);
 }
 
+.collapseBtn {
+  margin-top: auto;
+  align-self: flex-end;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.sidebarCollapsed .collapseBtn {
+  align-self: center;
+}
+
+.collapseBtn:hover {
+  color: var(--accent-hover);
+  border-color: var(--border-hover, var(--border));
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .content {
-  display: block;
+  min-width: 0;
+}
+
+/* ---------- mobile drawer (portalled to <body>) ---------- */
+/* Slides in from the right, mirroring the account menu's mobile drawer in
+   NavBar — opened by the burger button next to the avatar, not by anything
+   rendered here. */
+
+.drawerBackdrop {
+  position: fixed;
+  inset: 0;
+  top: var(--nav-total, 72px);
+  z-index: 240;
+  background: rgba(8, 8, 10, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.drawerBackdropOpen {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.25s ease;
+}
+
+.drawer {
+  position: fixed;
+  top: var(--nav-total, 72px);
+  right: 0;
+  bottom: 0;
+  z-index: 250;
+  width: min(280px, 84vw);
+  padding: 0.4rem 0.6rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  background: rgba(16, 16, 18, 0.9);
+  border-left: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: -16px 0 40px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+  transform: translateX(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.28s;
+}
+
+.drawerOpen {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.drawer .item {
+  padding: 0.6rem 0.7rem;
+  font-size: 13px;
 }
 
 /* ---------- guard states ---------- */
@@ -143,7 +329,17 @@
     margin: 2rem auto;
   }
 
-  .nav {
-    margin-bottom: 1.4rem;
+  .shell {
+    display: block;
+    min-height: 0;
+  }
+
+  .contentCol {
+    padding: 1.2rem 1rem 3rem;
+  }
+
+  /* The in-flow sidebar is replaced by the drawer on mobile. */
+  .sidebar {
+    display: none;
   }
 }

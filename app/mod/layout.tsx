@@ -1,9 +1,7 @@
-import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { ModCollapseProvider, MOD_SIDEBAR_COOKIE } from './modSidebarCollapse';
 
-export const metadata: Metadata = {
-  title: 'Модерация — AudioRanobe',
-};
-
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+export default function ModLayout({ children }: { children: React.ReactNode }) {
+  const initialCollapsed = cookies().get(MOD_SIDEBAR_COOKIE)?.value === '1';
+  return <ModCollapseProvider initialCollapsed={initialCollapsed}>{children}</ModCollapseProvider>;
 }

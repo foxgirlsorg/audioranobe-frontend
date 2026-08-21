@@ -132,6 +132,7 @@
   max-width: none;
   gap: 1.8rem;
   padding: 0;
+  margin-bottom: 0.9rem;
   border: none;
   border-radius: 0;
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));

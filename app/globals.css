@@ -207,6 +207,14 @@ body.has-notice main.container {
   padding-top: var(--nav-total);
 }
 
+/* Moderation panel manages its own sidebar/content padding, so it drops the
+   site's centered max-width and runs edge-to-edge instead. */
+body.mod-fullscreen main.container {
+  max-width: none;
+  padding-inline: 0;
+  padding-top: var(--nav-total);
+}
+
 /* ---------- noise overlay (STYLE.md 4.1) ---------- */
 
 .noise {

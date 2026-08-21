@@ -284,11 +284,16 @@
   color: var(--text-secondary);
   flex: none;
   transition: color 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.iconBtn:hover {
-  color: var(--accent-hover);
-  background: rgba(255, 255, 255, 0.05);
+/* hover-capable pointers only — on touch, :hover fires on tap and then has
+   nothing to leave it, so the highlight would otherwise stick around. */
+@media (hover: hover) {
+  .iconBtn:hover {
+    color: var(--accent-hover);
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
 .iconBtn svg {
@@ -681,7 +686,8 @@
 }
 
 /* Hidden above the mobile break point; the media query below turns it on. */
-.mobileSearchBtn {
+.mobileSearchBtn,
+.modMenuBtn {
   display: none;
 }
 
@@ -711,7 +717,8 @@
     letter-spacing: 0.22em;
   }
 
-  .mobileSearchBtn {
+  .mobileSearchBtn,
+  .modMenuBtn {
     display: inline-flex;
     min-width: 44px;
     min-height: 44px;
