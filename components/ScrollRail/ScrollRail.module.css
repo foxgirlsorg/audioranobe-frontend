@@ -10,6 +10,11 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding: 2px 2px 12px;
+  /* Matches the left/right padding above — without it, proximity snapping
+     treats that padding as part of the first/last card's snap offset and
+     never settles at true scrollLeft 0, permanently eating the space
+     reserved for the hover glow. */
+  scroll-padding-inline: 2px;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   -ms-overflow-style: none;
