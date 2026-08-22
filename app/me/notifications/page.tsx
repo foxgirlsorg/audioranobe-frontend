@@ -67,7 +67,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   friend_request: 'Заявка в друзья',
   friend_accept: 'Заявка принята',
   narration_ready: 'Озвучка готова',
-  badge_earned: 'Новый бедж',
+  badge_earned: 'Новый бейдж',
 };
 
 function splitHeading(s: string): [string, string] {
