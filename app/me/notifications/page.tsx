@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  Award,
   Bell,
   CheckCheck,
   ClipboardCheck,
@@ -46,6 +47,7 @@ const TYPE_ICONS: Record<NotificationType, ComponentType<{ size?: number | strin
   friend_request: UserPlus,
   friend_accept: UserCheck,
   narration_ready: Headphones,
+  badge_earned: Award,
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -64,6 +66,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   friend_request: 'Заявка в друзья',
   friend_accept: 'Заявка принята',
   narration_ready: 'Озвучка готова',
+  badge_earned: 'Новый бедж',
 };
 
 function splitHeading(s: string): [string, string] {

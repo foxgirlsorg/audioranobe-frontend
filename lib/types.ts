@@ -53,7 +53,8 @@ export type NotificationType =
   | 'narrator_post'
   | 'friend_request'
   | 'friend_accept'
-  | 'narration_ready';
+  | 'narration_ready'
+  | 'badge_earned';
 export type ReportStatus = 'open' | 'resolved' | 'dismissed';
 export type ReportTargetType = 'title' | 'narrator' | 'chapter' | 'comment' | 'user' | 'collection';
 export type JobStatus = 'queued' | 'processing' | 'done' | 'error';
