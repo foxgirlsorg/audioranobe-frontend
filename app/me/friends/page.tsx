@@ -145,7 +145,7 @@ function FriendsInner() {
       friends: d.friends.filter((x) => x.id !== f.id),
     }));
 
-  if (authLoading || (loading && !data)) {
+  if (authLoading || !user || (loading && !data)) {
     return (
       <div className={styles.center}>
         <Spinner size={34} />
@@ -167,16 +167,17 @@ function FriendsInner() {
 
   return (
     <div className={styles.page}>
-      <Link href="/me/settings" className={styles.back}>
-        <ArrowLeft size={16} /> Аккаунт
+      <Link href={`/user/${encodeURIComponent(user.username)}`} className="back-link">
+        <ArrowLeft size={14} /> В профиль
       </Link>
       <h1 className={styles.title}>Друзья</h1>
 
       <div className={styles.tabsWrap}>
         <Tabs
           urlParam="tab"
+          variant="underline"
           tabs={[
-            { key: 'friends', label: 'Друзья', count: data.friends.length },
+            { key: 'friends', label: 'В друзьях', count: data.friends.length },
             {
               key: 'incoming',
               label: 'Входящие',
