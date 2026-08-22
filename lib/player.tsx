@@ -54,6 +54,11 @@ const PlayerPositionContext = createContext<PlayerPositionValue | null>(null);
 const RATE_KEY = 'audioranobe_rate';
 const VOL_KEY = 'audioranobe_volume';
 
+// Loudness is perceived roughly logarithmically, so a linear slider value
+// sounds like it's already loud within the first quarter of its travel.
+// Raising it to a power before handing it to the audio element spreads that out.
+const toGain = (v: number): number => Math.pow(v, 2.5);
+
 export function PlayerProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const [current, setCurrent] = useState<ChapterPlay | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -130,7 +135,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     audio.preload = 'auto';
     audio.playbackRate = rateRef.current;
     audio.defaultPlaybackRate = rateRef.current;
-    audio.volume = volumeRef.current;
+    audio.volume = toGain(volumeRef.current);
 
     audio.addEventListener('timeupdate', () => {
       const a = audioRef.current;
@@ -200,7 +205,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       audio.src = ch.audio_url;
       audio.playbackRate = rateRef.current;
       audio.defaultPlaybackRate = rateRef.current;
-      audio.volume = volumeRef.current;
+      audio.volume = toGain(volumeRef.current);
       if (start > 0) {
         const onMeta = () => {
           audio.removeEventListener('loadedmetadata', onMeta);
@@ -292,7 +297,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     volumeRef.current = clamped;
     setVolumeState(clamped);
     const audio = audioRef.current;
-    if (audio) audio.volume = clamped;
+    if (audio) audio.volume = toGain(clamped);
     try {
       localStorage.setItem(VOL_KEY, String(clamped));
     } catch {
