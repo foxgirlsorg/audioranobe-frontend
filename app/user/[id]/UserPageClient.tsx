@@ -773,7 +773,7 @@ export default function UserPageClient({
             />
           ) : (
             <>
-              <CardGrid>
+              <CardGrid edgeToEdge>
                 {favorites.items.map((tc) => (
                   <TitleCardC key={tc.id} title={tc} />
                 ))}

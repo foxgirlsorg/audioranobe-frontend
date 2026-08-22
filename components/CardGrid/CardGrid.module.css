@@ -23,3 +23,36 @@
     gap: 1.1rem 0.9rem;
   }
 }
+
+/* Fixed-size cards, dynamic gaps: `auto-fit` caps at a max of 6 columns
+   within the site's 1200px page container (1136px content / 164px card ≈
+   6.9, floored) and collapses unused trailing tracks for a sparse row
+   instead of spreading cards apart as if empty slots existed.
+   `justify-content: space-between` then pushes any leftover width into the
+   gaps (dynamic) rather than into the cards — so the grid always spans
+   edge-to-edge, whatever the count. Same technique as the collection detail
+   page's own item grid. Doubled selector: overrides both the base .grid
+   rule above and its <768px 2-column rule regardless of source order. */
+.grid.gridEdge {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(138px, 164px));
+  justify-content: space-between;
+  row-gap: 1.5rem;
+  column-gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .grid.gridEdge {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 150px));
+    row-gap: 1.1rem;
+    column-gap: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid.gridEdge {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 130px));
+    row-gap: 1rem;
+    column-gap: 0.7rem;
+  }
+}

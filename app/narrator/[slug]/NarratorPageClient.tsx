@@ -263,7 +263,7 @@ export default function NarratorPageClient({
 
       <Section eyebrow="Каталог" title="Озвученные" accent="тайтлы">
         {n.titles.length > 0 ? (
-          <CardGrid>
+          <CardGrid edgeToEdge>
             {n.titles.map((tc) => (
               <TitleCardC key={tc.id} title={tc} />
             ))}
