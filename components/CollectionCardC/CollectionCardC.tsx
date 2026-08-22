@@ -43,7 +43,7 @@ export function CollectionCardC({ collection }: { collection: CollectionCard }) 
       ) : null}
       <div className={styles.meta}>
         <span className={styles.by}>
-          {`от ${collection.user.username}`}
+          {`от ${collection.user.display_name || collection.user.username}`}
         </span>
         <span className={styles.stats}>
           <span className={styles.stat}>
