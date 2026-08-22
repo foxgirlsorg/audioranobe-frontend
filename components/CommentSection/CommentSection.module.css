@@ -25,8 +25,12 @@
   font-weight: 400;
 }
 
+/* !important: these compete on specificity with Tabs.module.css's own
+   `.tabs { display: inline-flex }` on the same element — a different CSS
+   module, so the tie is decided by bundling order rather than anything
+   readable here. Force it instead of relying on that. */
 .sortTabsMobile {
-  display: none;
+  display: none !important;
 }
 
 @media (max-width: 768px) {
@@ -35,11 +39,11 @@
   }
 
   .sortTabsDesktop {
-    display: none;
+    display: none !important;
   }
 
   .sortTabsMobile {
-    display: inline-flex;
+    display: inline-flex !important;
     margin-bottom: 1.3rem;
   }
 }
