@@ -80,7 +80,7 @@
 
 .nameRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   min-width: 0;
 }
@@ -91,9 +91,10 @@
   line-height: 1.4;
   color: var(--text, #e8e8e8);
   transition: color 0.3s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .card:hover .name {
