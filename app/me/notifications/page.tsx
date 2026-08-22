@@ -22,6 +22,7 @@ import type { ComponentType } from 'react';
 import { api } from '@/lib/api';
 import type { Notification, NotificationType, Paginated } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { useBadges } from '@/lib/badges';
 import { useToast, errMsg } from '@/lib/toast';
 import { timeAgo } from '@/lib/format';
 import Spinner from '@/components/Spinner/Spinner';
@@ -72,6 +73,7 @@ function splitHeading(s: string): [string, string] {
 
 export default function MyNotificationsPage() {
   const { user, loading: authLoading } = useAuth();
+  const { notifications: unreadCount } = useBadges();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -169,7 +171,7 @@ export default function MyNotificationsPage() {
           type="button"
           className={styles.markAll}
           onClick={markAllRead}
-          disabled={markingAll}
+          disabled={markingAll || unreadCount === 0}
           title={'Отметить все уведомления прочитанными'}
         >
           <CheckCheck size={14} />

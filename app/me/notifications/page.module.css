@@ -68,21 +68,14 @@
   gap: 1rem;
   padding: 0.85rem 1.15rem;
   cursor: pointer;
-  border-left: 3px solid transparent;
 }
 
 .row:hover {
   border-color: var(--border-hover);
-  border-left-color: rgba(222, 97, 97, 0.35);
 }
 
 .unread {
-  border-left: 3px solid var(--accent);
   background: rgba(222, 97, 97, 0.05);
-}
-
-.unread:hover {
-  border-left-color: var(--accent);
 }
 
 .icon {
