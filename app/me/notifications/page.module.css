@@ -129,22 +129,32 @@
   color: var(--text);
 }
 
-.when {
+.rowEnd {
   flex-shrink: 0;
-  color: var(--text-muted);
-  font-size: 11.5px;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
   align-self: flex-start;
   margin-top: 0.2rem;
 }
 
-.dot {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px rgba(222, 97, 97, 0.6);
+.when {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.markReadBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.markReadBtn:hover {
+  color: var(--accent);
 }
 
 /* ---------- responsive ---------- */

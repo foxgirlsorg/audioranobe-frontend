@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { Fragment, useCallback, useEffect, useId, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Skeleton from 'react-loading-skeleton';
 import {
@@ -110,6 +110,9 @@ export default function NavBar() {
   // page. Portalled content lives outside userWrapRef's DOM subtree, so the
   // outside-click handler needs this second ref to still recognize it.
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  // Same deal for the desktop menu now that it's portaled too — it lives
+  // outside userWrapRef's DOM subtree.
+  const desktopMenuRef = useRef<HTMLDivElement | null>(null);
   const avatarBtnRef = useRef<HTMLButtonElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -126,6 +129,18 @@ export default function NavBar() {
   const sugMounted = useAnimatedPresence(sugOpen && !!sug, 140);
   const userMenuMounted = useAnimatedPresence(userMenuOpen && !isMobile, 140);
   const mobileSearchMounted = useAnimatedPresence(mobileSearchOpen, 160);
+
+  // Portaled to <body> for the same reason the mobile sidebar is (see the
+  // comment on mobileMenuRef): nested inside .nav, this menu's own
+  // backdrop-filter would sample .nav's already-blurred backdrop once
+  // `.scrolled` gives the nav a backdrop-filter of its own, so the blur
+  // visually disappears past the top of the page.
+  const [userMenuPos, setUserMenuPos] = useState<{ top: number; right: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!userMenuOpen || isMobile || !userWrapRef.current) return;
+    const r = userWrapRef.current.getBoundingClientRect();
+    setUserMenuPos({ top: r.bottom + (scrolled ? 25 : 10), right: window.innerWidth - r.right });
+  }, [userMenuOpen, isMobile, scrolled]);
 
   useEffect(() => {
     userMenuOpenRef.current = userMenuOpen;
@@ -196,7 +211,8 @@ export default function NavBar() {
       if (searchWrapRef.current && !searchWrapRef.current.contains(target)) setSugOpen(false);
       const insideUserMenu =
         (userWrapRef.current && userWrapRef.current.contains(target)) ||
-        (mobileMenuRef.current && mobileMenuRef.current.contains(target));
+        (mobileMenuRef.current && mobileMenuRef.current.contains(target)) ||
+        (desktopMenuRef.current && desktopMenuRef.current.contains(target));
       if (!insideUserMenu) closeUserMenu();
     };
     const onKey = (e: KeyboardEvent) => {
@@ -610,7 +626,7 @@ export default function NavBar() {
                 <span className={styles.dmSlot}>
                   <ChatButton />
                 </span>
-                <NotificationBell />
+                <NotificationBell scrolled={scrolled} />
                 <div className={styles.userWrap} ref={userWrapRef}>
                   <button
                     ref={avatarBtnRef}
@@ -641,15 +657,20 @@ export default function NavBar() {
                       {friendReq > 99 ? '99+' : friendReq}
                     </span>
                   )}
-                  {userMenuMounted && (
-                    <div
-                      className={`${styles.userMenu} ${
-                        userMenuOpen && !isMobile ? '' : styles.userMenuOut
-                      }`}
-                    >
-                      {renderAccountMenuContent()}
-                    </div>
-                  )}
+                  {userMenuMounted && mounted && userMenuPos
+                    ? createPortal(
+                        <div
+                          ref={desktopMenuRef}
+                          className={`${styles.userMenu} ${
+                            userMenuOpen && !isMobile ? '' : styles.userMenuOut
+                          }`}
+                          style={{ top: userMenuPos.top, right: userMenuPos.right }}
+                        >
+                          {renderAccountMenuContent()}
+                        </div>,
+                        document.body
+                      )
+                    : null}
                 </div>
 
                 {isModSection && isMod && (

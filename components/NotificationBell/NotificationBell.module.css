@@ -41,12 +41,10 @@
 }
 
 .menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 10px);
+  position: fixed;
   width: 330px;
   z-index: 150;
-  background: var(--surface-strong);
+  background: rgba(16, 16, 18, 0.75);
   border: 1px solid var(--border);
   border-radius: 12px;
   backdrop-filter: blur(16px);
@@ -55,6 +53,7 @@
   overflow: hidden;
   transform-origin: top right;
   animation: menu-in 0.16s var(--ease-smooth);
+  transition: top 0.25s var(--ease-smooth);
 }
 
 .menuOut {
@@ -147,13 +146,12 @@
 .item {
   position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
   width: 100%;
   margin-bottom: 8px;
   padding: 9px 10px 9px 20px;
   border-radius: 8px;
-  text-align: left;
   transition: background 0.15s ease;
 }
 
@@ -167,6 +165,29 @@
 
 .itemUnread:hover {
   background: rgba(222, 97, 97, 0.1);
+}
+
+.itemMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.markReadBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.markReadBtn:hover {
+  color: var(--accent);
 }
 
 .dot {
@@ -221,10 +242,12 @@
 
 @media (max-width: 480px) {
   .menu {
-    position: fixed;
-    left: 10px;
-    right: 10px;
-    top: calc(var(--nav-height) + 4px);
+    /* !important: beats the inline top/right the component computes from the
+       bell's position — on narrow screens the menu always stretches edge to
+       edge instead of trailing the button. */
+    left: 10px !important;
+    right: 10px !important;
+    top: calc(var(--nav-height) + 4px) !important;
     width: auto;
   }
 

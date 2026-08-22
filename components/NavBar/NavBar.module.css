@@ -448,13 +448,11 @@
 }
 
 .userMenu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 10px);
+  position: fixed;
   width: 214px;
   z-index: 150;
   padding: 6px;
-  background: var(--surface-strong);
+  background: rgba(16, 16, 18, 0.75);
   border: 1px solid var(--border);
   border-radius: 12px;
   backdrop-filter: blur(16px);
@@ -466,6 +464,7 @@
   overflow-y: auto;
   transform-origin: top right;
   animation: menu-in 0.16s var(--ease-smooth);
+  transition: top 0.25s var(--ease-smooth);
 }
 
 .userMenuOut {

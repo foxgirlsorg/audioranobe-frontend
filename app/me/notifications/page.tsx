@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Award,
   Bell,
+  Check,
   CheckCheck,
   ClipboardCheck,
   FileX,
@@ -133,6 +134,12 @@ export default function MyNotificationsPage() {
     );
   }
 
+  function markRead(n: Notification) {
+    if (n.is_read) return;
+    markLocal(n.id);
+    api('/me/notifications/read', { method: 'POST', body: { ids: [n.id] } }).catch(() => {});
+  }
+
   function open(n: Notification) {
     if (!n.is_read) {
       markLocal(n.id);
@@ -223,8 +230,23 @@ export default function MyNotificationsPage() {
                     </span>
                     <p className={styles.body}>{n.body}</p>
                   </div>
-                  <span className={styles.when}>{timeAgo(n.created_at)}</span>
-                  {!n.is_read ? <span className={styles.dot} aria-label={'Непрочитанное'} /> : null}
+                  <div className={styles.rowEnd}>
+                    <span className={styles.when}>{timeAgo(n.created_at)}</span>
+                    {!n.is_read ? (
+                      <button
+                        type="button"
+                        className={styles.markReadBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markRead(n);
+                        }}
+                        title={'Отметить прочитанным'}
+                        aria-label={'Отметить прочитанным'}
+                      >
+                        <Check size={18} />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}
