@@ -189,6 +189,14 @@ function ChatInner() {
   const pressTimer = useRef<number | null>(null);
   const loadingMoreRef = useRef(false);
 
+  // Which day dividers are currently pinned to the top of the scroll area —
+  // only those get the negative margin that pulls them flush against it.
+  // Detected via a 1px sentinel placed right before each divider: once the
+  // sentinel scrolls fully out of view (intersectionRatio < 1 against the
+  // scroll container), the divider ahead of it must be stuck.
+  const [stuckDays, setStuckDays] = useState<Set<string>>(new Set());
+  const sentinelRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth/login?next=/me/chat');
   }, [authLoading, user, router]);
@@ -330,6 +338,32 @@ function ChatInner() {
     }
     return gs;
   }, [thread?.messages]);
+
+  useEffect(() => {
+    const root = listRef.current;
+    if (!root) return;
+    const days = dayGroups.map((g) => g.day);
+    const io = new IntersectionObserver(
+      (entries) => {
+        setStuckDays((prev) => {
+          const next = new Set(prev);
+          for (const entry of entries) {
+            const day = (entry.target as HTMLElement).dataset.day;
+            if (!day) continue;
+            if (entry.intersectionRatio < 1) next.add(day);
+            else next.delete(day);
+          }
+          return next;
+        });
+      },
+      { root, threshold: [1] }
+    );
+    for (const day of days) {
+      const el = sentinelRefs.current.get(day);
+      if (el) io.observe(el);
+    }
+    return () => io.disconnect();
+  }, [dayGroups]);
 
   // ---- keep view pinned to the newest message ----
   const messageCount = thread?.messages.length ?? 0;
@@ -756,7 +790,23 @@ function ChatInner() {
                 ) : (
                   dayGroups.map((g) => (
                     <div key={g.day} className={styles.dayGroup}>
-                      <div className={styles.dayDivider}><span>{dayLabel(g.items[0].created_at)}</span></div>
+                      <div
+                        ref={(el) => {
+                          if (el) sentinelRefs.current.set(g.day, el);
+                          else sentinelRefs.current.delete(g.day);
+                        }}
+                        data-day={g.day}
+                        className={styles.daySentinel}
+                      />
+                      <div
+                        className={
+                          stuckDays.has(g.day)
+                            ? `${styles.dayDivider} ${styles.stuck}`
+                            : styles.dayDivider
+                        }
+                      >
+                        <span>{dayLabel(g.items[0].created_at)}</span>
+                      </div>
                       {g.items.map(renderMessage)}
                     </div>
                   ))

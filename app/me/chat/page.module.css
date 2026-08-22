@@ -346,14 +346,25 @@
 }
 
 
+.daySentinel {
+  height: 1px;
+}
+
 .dayDivider {
   position: sticky;
   top: -10px;
   z-index: 5;
   display: flex;
   justify-content: center;
-  margin: -16px 0 8px;
+  margin: 0 0 8px;
   pointer-events: none;
+}
+
+/* Only pull the pill flush against the scroll area's top edge once it's
+   actually pinned there — mid-chat, it should sit inline with normal
+   spacing instead of overlapping the message above it. */
+.dayDivider.stuck {
+  margin: -16px 0 8px;
 }
 
 .dayDivider span {
@@ -372,6 +383,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Extra breathing room where the sender switches, on top of .dayGroup's
+   regular 3px gap between consecutive messages from the same side. */
+.bubbleRow.mine + .bubbleRow.theirs,
+.bubbleRow.theirs + .bubbleRow.mine {
+  margin-top: 10px;
 }
 
 /* hover-only quick reply affordance (PC); mobile uses the long-press menu */
