@@ -651,7 +651,7 @@ export default function SettingsPage() {
 
         <div className={styles.pwGrid}>
           {hasPassword ? (
-            <div className={styles.field}>
+            <div className={`${styles.field} ${styles.fieldFull}`}>
               <label className={styles.label} htmlFor="settings-oldpw">
                 {'Текущий пароль'}
               </label>

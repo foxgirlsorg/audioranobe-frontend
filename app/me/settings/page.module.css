@@ -178,7 +178,7 @@
   gap: 1rem;
 }
 
-.pwGrid .field:first-child {
+.pwGrid .fieldFull {
   grid-column: 1 / -1;
 }
 
