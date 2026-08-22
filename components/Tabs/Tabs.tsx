@@ -13,12 +13,13 @@ interface Tab {
   accent?: boolean;
 }
 
-type Variant = 'pill' | 'underline' | 'segmented';
+type Variant = 'pill' | 'underline' | 'segmented' | 'square';
 
 const VARIANT_CLASS: Record<Variant, string> = {
   pill: styles.pill,
   underline: styles.underline,
   segmented: styles.segmented,
+  square: styles.square,
 };
 
 function tabClass(t: Tab, active: string): string {
@@ -69,12 +70,14 @@ function TabsRender({
   onChange,
   variant,
   scrollable,
+  className,
 }: {
   tabs: Tab[];
   active: string;
   onChange: (key: string) => void;
   variant?: Variant;
   scrollable?: boolean;
+  className?: string;
 }) {
   const { ref, edges } = useScrollEdges(scrollable, tabs);
 
@@ -99,6 +102,7 @@ function TabsRender({
     scrollable ? styles.scrollFade : '',
     scrollable && edges.start ? styles.fadeStart : '',
     scrollable && edges.end ? styles.fadeEnd : '',
+    className || '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -130,6 +134,7 @@ function TabsWithUrl({
   urlParam,
   variant,
   scrollable,
+  className,
 }: {
   tabs: Tab[];
   active: string;
@@ -137,6 +142,7 @@ function TabsWithUrl({
   urlParam: string;
   variant?: Variant;
   scrollable?: boolean;
+  className?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -161,7 +167,16 @@ function TabsWithUrl({
     [onChange, urlParam, searchParams, router],
   );
 
-  return <TabsRender tabs={tabs} active={active} onChange={handleClick} variant={variant} scrollable={scrollable} />;
+  return (
+    <TabsRender
+      tabs={tabs}
+      active={active}
+      onChange={handleClick}
+      variant={variant}
+      scrollable={scrollable}
+      className={className}
+    />
+  );
 }
 
 export function Tabs(props: {
@@ -174,6 +189,7 @@ export function Tabs(props: {
   // of letting tabs run off silently. Use when the tab list can outgrow its
   // container, e.g. on narrow viewports.
   scrollable?: boolean;
+  className?: string;
 }) {
   if (props.urlParam) {
     return (

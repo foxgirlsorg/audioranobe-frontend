@@ -46,6 +46,57 @@
   flex: 1;
 }
 
+/* Two sets of sort-tabs + create-button markup, switched purely by width —
+   the default rounded-pill tabs (wide) on desktop, a squared-off tabs
+   variant sharing a row with the create button on mobile. */
+.mobileSortRow {
+  display: none;
+}
+
+.createBtnWide {
+  display: inline-flex;
+}
+
+@media (max-width: 768px) {
+  .sortTabsWide {
+    display: none;
+  }
+
+  .createBtnWide {
+    display: none;
+  }
+
+  .mobileSortRow {
+    display: flex;
+    align-items: stretch;
+    gap: 0.7rem;
+    flex: 1 1 100%;
+  }
+
+  .mobileSortRow :global(.btn) {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Icon-only on mobile, square, matching the square-tab bar's own rendered
+     height (4px wrap padding + 7px*2 tab padding + line box — a fixed 40px
+     in practice). `aspect-ratio` + `align-items: stretch` looks like the
+     "derive it, don't hardcode it" way to do this, but a row-flex item's
+     main-axis (width) size resolves from its content BEFORE aspect-ratio is
+     applied, so the height stretch alone doesn't pull width along with it —
+     tested: it renders as a 17×40 sliver, not a 40×40 square. Explicit
+     dimensions it is. Scoped through the parent (rather than the bare class)
+     so it outranks globals.css's own `.btn` mobile override
+     (padding/min-height), whose load order relative to this module isn't
+     guaranteed. */
+  .mobileSortRow .createBtnMobile {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    min-height: 0;
+  }
+}
+
 /* ---------- grid ---------- */
 
 .gridWrap {

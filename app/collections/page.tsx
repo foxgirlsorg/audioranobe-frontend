@@ -124,6 +124,7 @@ export default function CollectionsPage() {
           aria-label="Поиск коллекций"
         />
         <Tabs
+          className={styles.sortTabsWide}
           tabs={[
             { key: 'popular', label: 'Популярное' },
             { key: 'new', label: 'Новые' },
@@ -135,8 +136,39 @@ export default function CollectionsPage() {
           }}
         />
         <div className={styles.spacer} />
+
+        <div className={styles.mobileSortRow}>
+          <Tabs
+            variant="square"
+            tabs={[
+              { key: 'popular', label: 'Популярное' },
+              { key: 'new', label: 'Новые' },
+            ]}
+            active={sort}
+            onChange={(key) => {
+              setSort(key as 'popular' | 'new');
+              setPage(1);
+            }}
+          />
+          {user ? (
+            <button
+              type="button"
+              className={`btn btn-primary ${styles.createBtnMobile}`}
+              onClick={openCreate}
+              title="Новая коллекция"
+              aria-label="Новая коллекция"
+            >
+              <Plus />
+            </button>
+          ) : null}
+        </div>
+
         {user ? (
-          <button type="button" className="btn btn-primary" onClick={openCreate}>
+          <button
+            type="button"
+            className={`btn btn-primary ${styles.createBtnWide}`}
+            onClick={openCreate}
+          >
             <Plus />
             Новая коллекция
           </button>

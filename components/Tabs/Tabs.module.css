@@ -124,6 +124,22 @@
   color: var(--accent);
 }
 
+/* ---------- square variant: same structure as the default pill, just with
+   the app's standard small radius instead of a fully-rounded capsule ---------- */
+
+.tabs.square {
+  /* Doubled selector: beats the base .tabs rule's border-radius regardless
+     of stylesheet source order. */
+  border-radius: var(--radius-sm, 8px);
+  width: 100%;
+}
+
+.square .tab {
+  flex: 1;
+  justify-content: center;
+  border-radius: var(--radius-sm, 8px);
+}
+
 /* ---------- underline variant: quiet, text-first, section-switcher feel ---------- */
 
 .underline {
