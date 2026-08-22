@@ -176,4 +176,18 @@
     flex-basis: 100%;
     min-width: 0;
   }
+
+  /* CardGrid switches to a 2-column layout under 768px, so on a narrow phone
+     each card is only ~150-180px wide — too narrow for the desktop fan (76px
+     covers spread ±90px from center, ~180px total). translateX in .c1/.c2
+     is percentage-based off .coverImg's own width, so shrinking just the
+     width scales the whole fan down proportionally without touching those
+     percentages. */
+  .covers {
+    height: 96px;
+  }
+
+  .coverImg {
+    width: 54px;
+  }
 }
