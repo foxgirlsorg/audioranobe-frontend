@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { MailCheck, Pencil, Search, Trash2, Users } from 'lucide-react';
+import { Hammer, MailCheck, Pencil, Search, Trash2, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -180,7 +180,7 @@ function UsersContent() {
                   <th>{'Пользователь'}</th>
                   <th>{'Email'}</th>
                   <th>{'Роль'}</th>
-                  <th>{'Без модерации'}</th>
+                  <th>{'Без мод.'}</th>
                   <th>{'Статус'}</th>
                   <th>{'Регистрация'}</th>
                   <th aria-label={'Действия'} />
@@ -202,7 +202,9 @@ function UsersContent() {
                             {u.username}
                           </Link>
                           {u.is_banned ? (
-                            <span className={styles.bannedChip}>{'забанен'}</span>
+                            <span className={styles.bannedChip} title="Забанен" aria-label="Забанен">
+                              <Hammer size={13} fill="currentColor" />
+                            </span>
                           ) : null}
                         </div>
                       </td>
@@ -220,10 +222,10 @@ function UsersContent() {
                                 className={styles.verifyBtn}
                                 disabled={busyId === u.id}
                                 onClick={() => void verifyEmail(u, true)}
+                                aria-label="Отметить почту подтверждённой"
                                 title="Отметить почту подтверждённой"
                               >
                                 <MailCheck size={13} />
-                                {'Подтвердить'}
                               </button>
                             )
                           ) : null}
@@ -248,7 +250,6 @@ function UsersContent() {
                           checked={u.skip_moderation}
                           disabled={!isAdmin || busy}
                           onChange={() => void toggleSkipModeration(u)}
-                          label={u.skip_moderation ? 'разрешено' : 'нет'}
                         />
                       </td>
                       <td>

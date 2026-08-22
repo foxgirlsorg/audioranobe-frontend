@@ -90,15 +90,9 @@
 .bannedChip {
   display: inline-flex;
   align-items: center;
-  padding: 0.14rem 0.5rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(197, 52, 52, 0.5);
-  background: rgba(197, 52, 52, 0.12);
-  color: #dd8181;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  justify-content: center;
+  flex: none;
+  color: var(--danger, #c53434);
 }
 
 .emailRow {
@@ -109,9 +103,7 @@
 }
 
 .emailText {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .verifiedChip {
@@ -123,23 +115,19 @@
 .verifyBtn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   flex: none;
-  padding: 3px 9px;
-  border: 1px solid var(--border);
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(220, 60, 60, 0.35);
   border-radius: 9999px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--danger, #dc3c3c);
   transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
 .verifyBtn:hover {
-  border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
+  border-color: var(--danger, #dc3c3c);
+  background: rgba(220, 60, 60, 0.1);
 }
 
 .verifyBtn:disabled {
@@ -149,7 +137,8 @@
 
 .email {
   color: var(--text-secondary);
-  word-break: break-all;
+  min-width: 240px;
+  white-space: nowrap;
 }
 
 .roleSelect {
