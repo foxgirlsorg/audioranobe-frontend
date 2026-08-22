@@ -251,7 +251,11 @@
 
 /* ---------- continue listening cards ---------- */
 
-.continueCard {
+/* Doubled selector: these cards now sit inside ScrollRail's `.track`, whose
+   own `.track > *` rule sets flex/width for its usual narrow cover cards.
+   Same specificity as a single `.continueCard`, so the outcome would depend
+   on load order between the two CSS modules — beat it outright instead. */
+.continueCard.continueCard {
   flex: 0 0 320px;
   display: flex;
   gap: 0.9rem;
@@ -390,7 +394,7 @@
     padding: 2rem 0.25rem 2.25rem;
   }
 
-  .continueCard {
+  .continueCard.continueCard {
     /* Nearly fills the visible track (container padding is 1rem/side here),
        leaving a peek of the next card as a scroll hint when there's more. */
     flex-basis: min(480px, calc(100vw - 6rem));
@@ -413,7 +417,7 @@
     padding: 0 0.25rem;
   }
 
-  .continueCard {
+  .continueCard.continueCard {
     /* Container padding is 0.75rem/side at this width. */
     flex-basis: calc(100vw - 4.5rem);
     padding: 0.65rem;

@@ -257,14 +257,14 @@ export default function HomePage() {
           title="Продолжить"
           accent="слушать"
         >
-          <div className={styles.rail}>
+          <ScrollRail>
             {data.continue.map((c) => {
               const pct =
                 c.chapter.duration_seconds > 0
                   ? Math.min(100, (c.position_seconds / c.chapter.duration_seconds) * 100)
                   : 0;
               return (
-                <div key={c.chapter.id} className={styles.continueCard}>
+                <div key={c.chapter.id} className={styles.continueCard} data-rail-card>
                   <Link href={`/title/${c.title.slug}`} className={styles.continueCover}>
                     {c.title.cover_url ? (
                       <img src={c.title.cover_url} alt={c.title.name} loading="lazy" />
@@ -303,7 +303,7 @@ export default function HomePage() {
                 </div>
               );
             })}
-          </div>
+          </ScrollRail>
         </Section>
       ) : null}
 
