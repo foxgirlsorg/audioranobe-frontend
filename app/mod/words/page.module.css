@@ -37,7 +37,8 @@
 }
 
 .modeSelect {
-  max-width: 170px;
+  flex: 0 0 190px;
+  width: 190px;
 }
 
 .noteInput {
@@ -113,8 +114,12 @@
     align-items: stretch;
   }
 
-  .wordInput,
-  .modeSelect {
+  .wordInput {
     max-width: none;
+  }
+
+  .modeSelect {
+    flex-basis: auto;
+    width: auto;
   }
 }

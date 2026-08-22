@@ -47,7 +47,7 @@ const GROUPS: Group[] = [
     tabs: [
       { href: '/mod/queue', label: 'Очередь', icon: Inbox, countKey: 'pending_requests' },
       { href: '/mod/reports', label: 'Жалобы', icon: Flag, countKey: 'open_reports' },
-      { href: '/mod/words', label: 'Стоп-слова', icon: Filter, adminOnly: true },
+      { href: '/mod/words', label: 'Фильтр слов', icon: Filter, adminOnly: true },
       { href: '/mod/usernames', label: 'Имена', icon: Lock, adminOnly: true },
       { href: '/mod/trash', label: 'Корзина', icon: Trash2, adminOnly: true },
     ],
