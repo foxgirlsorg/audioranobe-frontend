@@ -127,16 +127,36 @@
 
 /* ---------- items ---------- */
 
+/* CSS grid, not flex: a fixed-width flex row rarely divides evenly into the
+   container's exact width, leaving slack on the right that made the grid
+   narrower than the header above it. `auto-fit` caps at a max of 6 columns
+   within this page's 1200px container (1136px content / 164px card ≈ 6.9,
+   floored) and collapses unused trailing tracks for a sparse row instead of
+   spreading items apart as if empty slots existed. `justify-content:
+   space-between` then pushes any leftover width into the gaps themselves
+   (dynamic) rather than into the tracks — so the first card's left edge and
+   the last card's right edge stay flush with the header, whatever the count. */
 .items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.75rem 1.25rem;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 164px));
+  justify-content: space-between;
+  row-gap: 1.75rem;
+  column-gap: 1.25rem;
 }
 
 .item {
-  display: block;
-  width: 164px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* TitleCardC's own .card sets `flex: 0 1 152px` for when it's a direct child
+   of a row-direction flex grid elsewhere. .item is column-direction, where
+   that same flex-basis would apply to height instead of width, squashing
+   the card. Reset it here rather than in TitleCardC itself, since other
+   call sites still need the row-direction sizing. */
+.item > a {
+  flex: none;
 }
 
 .note {
@@ -153,7 +173,13 @@
 .itemTools {
   display: flex;
   gap: 4px;
-  margin-top: 8px;
+  /* .item is a flex column now (see .item), and title names of different
+     lengths make cards different heights within a row — auto margin pins
+     the tools to the bottom of the item's box instead of directly under
+     whatever height the card happened to end up at, so they line up across
+     a row regardless. */
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 .tool {
@@ -343,11 +369,9 @@
   }
 
   .items {
-    gap: 1.25rem 0.9rem;
-  }
-
-  .item {
-    width: 150px;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 150px));
+    row-gap: 1.25rem;
+    column-gap: 0.9rem;
   }
 
   .form,
@@ -358,11 +382,9 @@
 
 @media (max-width: 480px) {
   .items {
-    gap: 1rem 0.7rem;
-  }
-
-  .item {
-    width: 130px;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 130px));
+    row-gap: 1rem;
+    column-gap: 0.7rem;
   }
 
   .tool {
