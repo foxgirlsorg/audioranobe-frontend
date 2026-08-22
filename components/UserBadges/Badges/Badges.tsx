@@ -1,11 +1,15 @@
-import { Code2 } from 'lucide-react';
+import { Code2, Hammer } from 'lucide-react';
 import styles from './Badges.module.css';
 
-export type BadgeKey = 'admin' | 'moderator' | 'developer' | 'donator';
+export type BadgeKey = 'admin' | 'moderator' | 'developer' | 'donator' | 'banned';
 
 function BadgeIcon({ badge, size }: { badge: BadgeKey; size: number }) {
   if (badge === 'developer') {
     return <Code2 size={size} strokeWidth={2.4} aria-hidden="true" />;
+  }
+
+  if (badge === 'banned') {
+    return <Hammer size={size} fill="currentColor" aria-hidden="true" />;
   }
 
   if (badge === 'donator') {

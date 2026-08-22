@@ -72,6 +72,7 @@ export interface UserBrief {
   role: Role;
   is_developer: boolean;
   is_donator: boolean;
+  is_banned: boolean;
   /** Derived server-side; 'offline' on briefs whose query omits presence cols. */
   presence: PresenceStatus;
   last_seen_at: string | null;

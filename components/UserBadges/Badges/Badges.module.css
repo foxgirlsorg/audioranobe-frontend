@@ -25,3 +25,7 @@
 .donator {
   color: #f2c94c;
 }
+
+.banned {
+  color: var(--danger, #c53434);
+}
