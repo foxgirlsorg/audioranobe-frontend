@@ -5,6 +5,7 @@ import React from 'react';
 import { Mail } from 'lucide-react';
 import { TelegramIcon } from '@/components/SocialLinks/brands';
 import { SUPPORT_EMAIL, SUPPORT_BOT, SUPPORT_CHANNEL } from '@/lib/support';
+import { APP_VERSION, APP_VERSION_NAME } from '@/lib/version';
 import styles from './Footer.module.css';
 
 const NAV = [
@@ -86,7 +87,10 @@ export default function Footer() {
       </div>
 
       <div className={`container ${styles.bottom}`}>
-        <span className={styles.copy}>{`© ${year} AudioRanobe`}</span>
+        <span className={styles.bottomLeft}>
+          <span className={styles.copy}>{`© ${year} AudioRanobe`}</span>
+          <span className={styles.version}>{`v${APP_VERSION} «${APP_VERSION_NAME}»`}</span>
+        </span>
         <a
           href="https://foxgirls.org"
           target="_blank"

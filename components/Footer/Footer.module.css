@@ -113,13 +113,24 @@
   border-top: 1px solid var(--border);
 }
 
+.bottomLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
 .copy,
-.copyLink {
+.copyLink,
+.version {
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.version {
+  opacity: 0.6;
 }
 
 .copyLink {
