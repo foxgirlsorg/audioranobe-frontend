@@ -71,6 +71,7 @@ function TabsRender({
   variant,
   scrollable,
   className,
+  mobileSquare,
 }: {
   tabs: Tab[];
   active: string;
@@ -78,6 +79,10 @@ function TabsRender({
   variant?: Variant;
   scrollable?: boolean;
   className?: string;
+  // Below 768px: square corners, full width, tabs evenly filling the row —
+  // like the `square` variant, but only past that breakpoint so the tabs
+  // keep their normal look (pill, underline, etc.) on desktop.
+  mobileSquare?: boolean;
 }) {
   const { ref, edges } = useScrollEdges(scrollable, tabs);
 
@@ -102,6 +107,7 @@ function TabsRender({
     scrollable ? styles.scrollFade : '',
     scrollable && edges.start ? styles.fadeStart : '',
     scrollable && edges.end ? styles.fadeEnd : '',
+    mobileSquare ? styles.mobileSquare : '',
     className || '',
   ]
     .filter(Boolean)
@@ -135,6 +141,7 @@ function TabsWithUrl({
   variant,
   scrollable,
   className,
+  mobileSquare,
 }: {
   tabs: Tab[];
   active: string;
@@ -143,6 +150,7 @@ function TabsWithUrl({
   variant?: Variant;
   scrollable?: boolean;
   className?: string;
+  mobileSquare?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -175,6 +183,7 @@ function TabsWithUrl({
       variant={variant}
       scrollable={scrollable}
       className={className}
+      mobileSquare={mobileSquare}
     />
   );
 }
@@ -190,6 +199,7 @@ export function Tabs(props: {
   // container, e.g. on narrow viewports.
   scrollable?: boolean;
   className?: string;
+  mobileSquare?: boolean;
 }) {
   if (props.urlParam) {
     return (

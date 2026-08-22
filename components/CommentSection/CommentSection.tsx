@@ -793,6 +793,7 @@ export function CommentSection({
                                  targetId,
                                  initialComments,
                                  className,
+                                 compactMobileHead,
                                }: {
   targetType: CommentTargetType;
   targetId: number;
@@ -800,6 +801,11 @@ export function CommentSection({
    *  section renders without a separate /comments request on load. */
   initialComments?: Paginated<Comment>;
   className?: string;
+  /** Below 768px: drop the "Комментарии" heading and make the sort tabs
+   *  square and full-width instead of the default compact pill — for
+   *  embeddings (e.g. the title page's tab panel) where the heading is
+   *  redundant with the tab label above it. */
+  compactMobileHead?: boolean;
 }) {
   const { user, isMod } = useAuth();
   const { toast } = useToast();
@@ -1154,13 +1160,14 @@ export function CommentSection({
   return (
       <section className={className ? `${styles.section} ${className}` : styles.section}>
         <header className={styles.head}>
-          <h3 className={styles.heading}>
+          <h3 className={`${styles.heading} ${compactMobileHead ? styles.headingHideMobile : ''}`}>
             Комментарии <span className={styles.headCount}>{total}</span>
           </h3>
           <Tabs
               tabs={SORT_TABS}
               active={sort}
               onChange={(k) => setSort(k as Sort)}
+              className={styles.sortTabsDesktop}
           />
         </header>
 
@@ -1189,6 +1196,14 @@ export function CommentSection({
           </span>
             </div>
         )}
+
+        <Tabs
+            tabs={SORT_TABS}
+            active={sort}
+            onChange={(k) => setSort(k as Sort)}
+            className={styles.sortTabsMobile}
+            mobileSquare
+        />
 
         {loading ? (
             <Spinner />

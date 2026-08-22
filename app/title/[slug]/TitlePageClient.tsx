@@ -842,6 +842,7 @@ export default function TitlePageClient({
       targetId={title.id}
       initialComments={title.comments}
       className={styles.commentsInTab}
+      compactMobileHead
     />
   );
 

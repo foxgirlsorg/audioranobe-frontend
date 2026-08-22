@@ -172,7 +172,8 @@
   background: transparent;
 }
 
-.underline .active {
+.underline .active,
+.underline .active:hover {
   color: #fff;
   background: transparent;
   border-color: transparent;
@@ -241,6 +242,8 @@
 
 .segmented .active:hover {
   color: #fff;
+  background: linear-gradient(135deg, rgba(222, 97, 97, 0.28), rgba(222, 97, 97, 0.14));
+  border-color: rgba(222, 97, 97, 0.4);
 }
 
 .segmented .count {
@@ -255,6 +258,32 @@
 .segmented .active .count {
   color: #fff;
   background: transparent;
+}
+
+/* ---------- mobileSquare: square, full-width, only below the mobile break
+   point — same shape as the `square` variant, but layered on top of whatever
+   variant is active on desktop instead of replacing it ---------- */
+
+@media (max-width: 768px) {
+  .mobileSquare {
+    border-radius: var(--radius-sm, 8px);
+    width: 100%;
+  }
+
+  .mobileSquare .tab {
+    flex: 1;
+    justify-content: center;
+    border-radius: var(--radius-sm, 8px);
+  }
+
+  /* Touch browsers can apply :hover after a tap and leave it stuck; without
+     this the active tab would flash to the plain hover color and stay there
+     until the next tap elsewhere. Pin it back to its resting look. */
+  .mobileSquare .active:hover {
+    color: var(--accent, #de6161);
+    background: rgba(222, 97, 97, 0.12);
+    border-color: rgba(222, 97, 97, 0.35);
+  }
 }
 
 /* ---------- scrollable: edge fade mask ---------- */

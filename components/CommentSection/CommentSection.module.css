@@ -25,6 +25,25 @@
   font-weight: 400;
 }
 
+.sortTabsMobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .headingHideMobile {
+    display: none;
+  }
+
+  .sortTabsDesktop {
+    display: none;
+  }
+
+  .sortTabsMobile {
+    display: inline-flex;
+    margin-bottom: 1.3rem;
+  }
+}
+
 /* ---------------------------------------------------------------- post box */
 
 .postBox {
