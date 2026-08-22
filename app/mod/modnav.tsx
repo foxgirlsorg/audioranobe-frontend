@@ -57,7 +57,7 @@ const GROUPS: Group[] = [
     tabs: [
       { href: '/mod/users', label: 'Пользователи', icon: Users },
       { href: '/mod/narrators', label: 'Чтецы', icon: Mic },
-      { href: '/mod/authors', label: 'Авторы', icon: Feather, adminOnly: true },
+      { href: '/mod/authors', label: 'Авторы', icon: Feather },
       { href: '/mod/genres', label: 'Теги', icon: BookMarked, adminOnly: true },
       { href: '/mod/dmca', label: 'DMCA', icon: Shield, adminOnly: true },
     ],

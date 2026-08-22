@@ -4,36 +4,6 @@
   padding: 4rem 0;
 }
 
-.createForm {
-  padding: 1.4rem 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.formTitle {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 0.9rem;
-}
-
-.formRow {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-}
-
-.nameInput {
-  max-width: 320px;
-}
-
-.slugPreview {
-  color: var(--text-muted);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .searchRow {
   position: relative;
   max-width: 420px;
@@ -114,19 +84,6 @@
 }
 
 @media (max-width: 768px) {
-  .formRow {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .nameInput {
-    max-width: none;
-  }
-
-  .slugPreview {
-    display: none;
-  }
-
   .searchRow {
     max-width: none;
   }

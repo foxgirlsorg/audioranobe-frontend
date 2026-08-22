@@ -13,14 +13,6 @@ import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
-function toSlug(s: string): string {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9а-яё]+/gi, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 function AuthorsContent() {
   const { toast } = useToast();
 
@@ -31,9 +23,6 @@ function AuthorsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
-
-  const [newName, setNewName] = useState('');
-  const [creating, setCreating] = useState(false);
 
   const [toDelete, setToDelete] = useState<Author | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -67,24 +56,6 @@ function AuthorsContent() {
     };
   }, [query, page, reload]);
 
-  const createAuthor = async () => {
-    const name = newName.trim();
-    if (!name) return;
-    setCreating(true);
-    try {
-      await api('/authors', {
-        method: 'POST',
-        body: { name, slug: toSlug(name) },
-      });
-      toast('Автор создан');
-      setNewName('');
-      setReload((n) => n + 1);
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-    setCreating(false);
-  };
-
   const deleteAuthor = async (a: Author) => {
     setBusyId(a.id);
     try {
@@ -107,35 +78,6 @@ function AuthorsContent() {
 
   return (
     <div>
-      <div className={`glass-panel ${styles.createForm}`}>
-        <h3 className={styles.formTitle}>{'Новый автор'}</h3>
-        <div className={styles.formRow}>
-          <input
-            className={`input ${styles.nameInput}`}
-            type="text"
-            placeholder={'Имя автора'}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') createAuthor();
-            }}
-          />
-          {newName.trim() ? (
-            <span className={styles.slugPreview}>
-              {' slug: '}{toSlug(newName)}
-            </span>
-          ) : null}
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={creating || !newName.trim()}
-            onClick={createAuthor}
-          >
-            {'Создать'}
-          </button>
-        </div>
-      </div>
-
       <div className={styles.searchRow}>
         <Search size={16} className={styles.searchIcon} aria-hidden="true" />
         <input
@@ -158,7 +100,7 @@ function AuthorsContent() {
         <EmptyState
           icon={Feather}
           title={'Авторов пока нет'}
-          body={'Создайте первого автора выше.'}
+          body={'Авторы создаются при заполнении настроек тайтла.'}
         />
       ) : (
         <>
@@ -227,7 +169,7 @@ function AuthorsContent() {
 export default function ModAuthorsPage() {
   const h = splitHeading('Управление авторами');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent}>
       <AuthorsContent />
     </ModShell>
   );
