@@ -411,7 +411,7 @@ export default function CollectionDetailPage() {
           }
         />
       ) : (
-        <div className={styles.items}>
+        <div className={`${styles.items} ${col.items.length < 6 ? styles.itemsFew : ''}`}>
           {col.items.map((item, index) => (
             <div key={item.title.id} className={styles.item}>
               <TitleCardC title={item.title} />

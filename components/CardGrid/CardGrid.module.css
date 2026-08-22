@@ -41,6 +41,14 @@
   column-gap: 1.25rem;
 }
 
+/* Fewer cards than fit in one row: space-between would stretch them across
+   the full width with oversized gaps, so pin them to the left with a normal
+   gap instead. */
+.grid.gridEdge.gridFew {
+  justify-content: flex-start;
+  column-gap: 1.25rem;
+}
+
 @media (max-width: 768px) {
   .grid.gridEdge {
     grid-template-columns: repeat(auto-fit, minmax(120px, 150px));

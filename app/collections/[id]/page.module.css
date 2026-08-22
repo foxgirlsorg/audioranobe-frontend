@@ -144,6 +144,12 @@
   column-gap: 1.25rem;
 }
 
+/* Fewer items than fit in one row: space-between would stretch them across
+   the full width with oversized gaps, so pin them to the left instead. */
+.items.itemsFew {
+  justify-content: flex-start;
+}
+
 .item {
   display: flex;
   flex-direction: column;

@@ -16,7 +16,13 @@ export function CardGrid({
   // viewport. See CardGrid.module.css .gridEdge for how.
   edgeToEdge?: boolean;
 }) {
-  const cls = [styles.grid, fill ? styles.gridFill : '', edgeToEdge ? styles.gridEdge : '']
+  const few = edgeToEdge && React.Children.count(children) < 6;
+  const cls = [
+    styles.grid,
+    fill ? styles.gridFill : '',
+    edgeToEdge ? styles.gridEdge : '',
+    few ? styles.gridFew : '',
+  ]
     .filter(Boolean)
     .join(' ');
   return <div className={cls}>{children}</div>;
