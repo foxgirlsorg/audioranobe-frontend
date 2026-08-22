@@ -127,7 +127,8 @@
 
 /* Segmented-switch look: the active sort reads as a pressed segment, not just
    a tinted pill — matches the "C" tab style used elsewhere on the site. */
-.sortOn {
+.sortOn,
+.sortOn:hover {
   border-color: rgba(222, 97, 97, 0.4);
   background: linear-gradient(135deg, rgba(222, 97, 97, 0.28), rgba(222, 97, 97, 0.14));
   color: #fff;
