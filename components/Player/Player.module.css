@@ -10,6 +10,41 @@
   border-top: 1px solid var(--border);
 }
 
+/* Docked bar appearing (track starts) / disappearing (playback stops). */
+@keyframes dock-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes dock-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.dockIn {
+  animation: dock-in 0.34s var(--ease-smooth);
+}
+
+.dockOut {
+  animation: dock-out 0.3s var(--ease-smooth) forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dockIn,
+  .dockOut {
+    animation: none;
+  }
+}
+
 .inner {
   max-width: 1200px;
   margin-inline: auto;
@@ -406,6 +441,62 @@
   );
 }
 
+/* ---------- single-row full-screen mobile set ---------- */
+
+/* Two complete control sets live in the markup: the wide/wrapped `.row` and
+   this flat `.oneRow`. Which one shows is decided purely here — no JS. In the
+   width band where all nine icons fit on one line the single row replaces the
+   wrapped set, for BOTH the docked bar and the full-screen player. Outside
+   that band (narrow phones, or desktop) `.oneRow` stays hidden and `.row`
+   shows. */
+.oneRow {
+  display: none;
+}
+
+@media (min-width: 400px) and (max-width: 768px) {
+  .row {
+    display: none;
+  }
+
+  .oneRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+  }
+
+  /* Shrunk just enough that all nine controls fit on one line down to the
+     400px floor; scoped to .oneRow so the wide set is untouched. */
+  .oneRow .ctrlBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .oneRow .playBtn {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+  }
+
+  .oneRow .iconBtn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .oneRow .textBtn {
+    min-width: 34px;
+    height: 28px;
+    padding: 0 5px;
+  }
+
+  .oneRow .ctrlBtn svg,
+  .oneRow .iconBtn svg,
+  .oneRow .playBtn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 /* ---------- compact (< 768px) ---------- */
 
 @media (max-width: 768px) {
@@ -517,6 +608,44 @@
   -webkit-backdrop-filter: blur(28px);
 }
 
+@keyframes player-slide-in {
+  from {
+    transform: translateY(4%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes player-slide-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(4%);
+    opacity: 0;
+  }
+}
+
+.barOpen {
+  animation: player-slide-in 0.32s var(--ease-smooth);
+}
+
+.barClosing {
+  animation: player-slide-out 0.28s var(--ease-smooth) forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barOpen,
+  .barClosing {
+    animation: none;
+  }
+}
+
 .stage {
   position: relative;
   flex: 1 1 auto;
@@ -527,6 +656,16 @@
   gap: 1.5rem;
   min-height: 0;
   padding: 2.5rem 1.5rem 1rem;
+  opacity: 1;
+  /* Fades in near the tail of the bar's slide-open, so the art/title don't
+     just pop in while the bar is still mid-transition. */
+  transition: opacity 0.25s ease 0.15s;
+}
+
+.stageOut {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
 }
 
 .stageClose {
