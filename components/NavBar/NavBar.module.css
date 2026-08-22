@@ -354,11 +354,15 @@
   flex: none;
 }
 
-/* Pulls the bell icon closer to the DM icon, without changing the gap to the
-   avatar next to it. */
 .dmSlot {
   display: flex;
-  margin-right: -0.25rem;
+}
+
+/* .inner's flex gap (1rem) is wider than .authArea's (0.5rem), so the random
+   button would otherwise sit twice as far from the DM icon as the DM icon
+   sits from the notification bell. Pull it in to match. */
+.randomBtn {
+  margin-right: -0.5rem;
 }
 
 .authGhost {
