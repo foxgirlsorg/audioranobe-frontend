@@ -22,7 +22,7 @@ import Player from '@/components/Player/Player';
 import DragScroll from '@/components/DragScroll/DragScroll';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://audioranobe.com';
-const SITE_TITLE = 'AudioRanobe — аудиокниги';
+const SITE_TITLE = 'AudioRanobe - ранобэ в формате аудиокниг';
 const SITE_DESCRIPTION = 'Сообщество аудиокниг — слушайте, отслеживайте и находите озвученные тайтлы.';
 
 export const metadata: Metadata = {
@@ -30,17 +30,28 @@ export const metadata: Metadata = {
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   icons: { icon: '/favicon.svg' },
+  alternates: {
+    canonical: '/',
+    languages: { 'ru-RU': '/', 'x-default': '/' },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     siteName: 'AudioRanobe',
     type: 'website',
     locale: 'ru_RU',
+    images: [{ url: '/banner.jpg', width: 1060, height: 1060 }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: ['/banner.jpg'],
   },
 };
 

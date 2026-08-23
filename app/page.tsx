@@ -198,6 +198,21 @@ export default function HomePage() {
 
   return (
     <div className={styles.page}>
+      <h1
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          padding: 0,
+          margin: -1,
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        AudioRanobe - ранобэ в формате аудиокниг
+      </h1>
       {!authLoading && !user ? (
         <section className={styles.hero}>
           <span className={`glow ${styles.glowA}`} aria-hidden="true" />
