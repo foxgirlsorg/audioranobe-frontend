@@ -1,0 +1,105 @@
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.hint {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  max-width: 68ch;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.titleLink {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
+.note {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.badgeImport,
+.badgeSkip {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.badgeImport {
+  color: var(--accent, #de6161);
+  background: rgba(222, 97, 97, 0.12);
+}
+
+.badgeSkip {
+  color: #f5c451;
+  background: rgba(245, 196, 81, 0.12);
+}
+
+.smallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.42rem 0.85rem;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.4rem;
+}

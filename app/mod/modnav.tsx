@@ -24,6 +24,8 @@ import {
   ListChecks,
   ChevronsLeft,
   ChevronsRight,
+  ShieldCheck,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -33,7 +35,7 @@ import { useModCollapse } from './modSidebarCollapse';
 import Spinner from '@/components/Spinner/Spinner';
 import styles from './modnav.module.css';
 
-type CountKey = 'pending_requests' | 'open_reports' | 'jobs_error';
+type CountKey = 'pending_requests' | 'open_reports' | 'jobs_error' | 'review_queue' | 'comments_unchecked';
 type Tab = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; countKey?: CountKey };
 type Group = { label: string; tabs: Tab[] };
 
@@ -47,6 +49,8 @@ const GROUPS: Group[] = [
     tabs: [
       { href: '/mod/queue', label: 'Очередь', icon: Inbox, countKey: 'pending_requests' },
       { href: '/mod/reports', label: 'Жалобы', icon: Flag, countKey: 'open_reports' },
+      { href: '/mod/review', label: 'Проверка тайтлов', icon: ShieldCheck, countKey: 'review_queue' },
+      { href: '/mod/comments', label: 'Комментарии', icon: MessageSquare, countKey: 'comments_unchecked' },
       { href: '/mod/words', label: 'Фильтр слов', icon: Filter, adminOnly: true },
       { href: '/mod/usernames', label: 'Имена', icon: Lock, adminOnly: true },
       { href: '/mod/trash', label: 'Корзина', icon: Trash2, adminOnly: true },
@@ -89,13 +93,21 @@ function useModCounts(): Partial<Record<CountKey, number>> {
   const [counts, setCounts] = useState<Partial<Record<CountKey, number>>>({});
   useEffect(() => {
     let alive = true;
-    api<{ pending_requests: number; open_reports: number; jobs_error: number }>('/mod/dashboard')
+    api<{
+      pending_requests: number;
+      open_reports: number;
+      jobs_error: number;
+      review_queue: number;
+      comments_unchecked: number;
+    }>('/mod/dashboard')
       .then((d) => {
         if (alive)
           setCounts({
             pending_requests: d.pending_requests,
             open_reports: d.open_reports,
             jobs_error: d.jobs_error,
+            review_queue: d.review_queue,
+            comments_unchecked: d.comments_unchecked,
           });
       })
       .catch(() => {});

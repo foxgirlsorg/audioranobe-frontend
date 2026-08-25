@@ -401,6 +401,13 @@ export interface UserComment extends Comment {
   target: { type: CommentTargetType; id: number; name: string; link: string };
 }
 
+/** GET /mod/comments item — every comment site-wide, for the global
+ * moderation audit list. `target` is null when the target vanished. */
+export interface ModComment extends Comment {
+  mod_reviewed: boolean;
+  target: { type: CommentTargetType; id: number; name: string; link: string } | null;
+}
+
 export interface LibraryEntry {
   title: TitleCard;
   status: LibraryStatus;
@@ -715,4 +722,24 @@ export interface DashboardStats {
   jobs_queued: number;
   jobs_processing: number;
   jobs_error: number;
+  review_queue: number;
+  comments_unchecked: number;
+}
+
+/** GET /mod/review-queue item — a title that bypassed the normal pending
+ * queue (skip_moderation user or ranobelib/panel import) and hasn't had a
+ * mod's eyes on it yet. */
+export interface ReviewQueueItem {
+  id: number;
+  slug: string;
+  name: string;
+  is_imported: boolean;
+  created_by: string | null;
+  created_by_skips_moderation: boolean;
+  created_at: string;
+}
+
+/** GET /admin/genre-settings — who may create a new tag. */
+export interface GenreSettings {
+  create_role: 'user' | 'moderator' | 'admin';
 }

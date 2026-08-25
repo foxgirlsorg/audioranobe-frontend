@@ -5,14 +5,74 @@ import { BookMarked, Pencil, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
-import type { Genre, Paginated } from '@/lib/types';
+import type { Genre, GenreSettings, Paginated } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Pagination from '@/components/Pagination/Pagination';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Toggle from '@/components/Toggle/Toggle';
+import Select, { type SelectOption } from '@/components/Select/Select';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
+
+type CreateRole = GenreSettings['create_role'];
+
+const CREATE_ROLE_LABELS: Record<CreateRole, string> = {
+  user: 'Участники команд чтецов',
+  moderator: 'Только модераторы',
+  admin: 'Только администраторы',
+};
+
+const CREATE_ROLE_OPTIONS: SelectOption<CreateRole>[] = (
+  Object.keys(CREATE_ROLE_LABELS) as CreateRole[]
+).map((r) => ({ value: r, label: CREATE_ROLE_LABELS[r] }));
+
+function CreateRoleSetting() {
+  const { toast } = useToast();
+  const [role, setRole] = useState<CreateRole | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api<GenreSettings>('/admin/genre-settings')
+      .then((d) => {
+        if (alive) setRole(d.create_role);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const change = async (next: CreateRole) => {
+    const prev = role;
+    setRole(next);
+    setSaving(true);
+    try {
+      await api<GenreSettings>('/admin/genre-settings', { method: 'PUT', body: { create_role: next } });
+      toast('Настройка сохранена');
+    } catch (e) {
+      setRole(prev);
+      toast(errMsg(e), 'error');
+    }
+    setSaving(false);
+  };
+
+  if (role === null) return null;
+
+  return (
+    <div className={`glass-panel ${styles.createForm}`}>
+      <h3 className={styles.formTitle}>{'Кто может создавать теги'}</h3>
+      <Select<CreateRole>
+        value={role}
+        options={CREATE_ROLE_OPTIONS}
+        onChange={(v) => void change(v)}
+        disabled={saving}
+        ariaLabel="Кто может создавать теги"
+      />
+    </div>
+  );
+}
 
 function GenresContent() {
   const { user: me } = useAuth();
@@ -139,6 +199,7 @@ function GenresContent() {
 
   return (
     <div>
+      {isAdmin ? <CreateRoleSetting /> : null}
       {isAdmin ? (
         <div className={`glass-panel ${styles.createForm}`}>
           <h3 className={styles.formTitle}>{'Новый тег'}</h3>

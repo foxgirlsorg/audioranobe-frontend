@@ -17,6 +17,8 @@ const TILES: {
 }[] = [
   { key: 'pending_requests', label: 'Заявки на модерации', href: '/mod/queue', accent: true },
   { key: 'open_reports', label: 'Открытые жалобы', href: '/mod/reports', accent: true },
+  { key: 'review_queue', label: 'Тайтлы на проверку', href: '/mod/review', accent: true },
+  { key: 'comments_unchecked', label: 'Непроверенные комментарии', href: '/mod/comments', accent: true },
   { key: 'jobs_error', label: 'Задачи с ошибкой', accent: true },
   { key: 'mods_online', label: 'Модераторов онлайн' },
   { key: 'users', label: 'Пользователи', href: '/mod/users' },

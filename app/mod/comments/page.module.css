@@ -1,0 +1,164 @@
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.toolbar .btn,
+.toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.hint {
+  flex: 1 1 auto;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.row {
+  padding: 0.9rem 1.1rem;
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  font-size: 12.5px;
+}
+
+.author {
+  font-weight: 700;
+  color: #fff;
+}
+
+.targetLink {
+  color: var(--accent, #de6161);
+}
+
+.note {
+  color: var(--text-muted);
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.badgeOk,
+.badgePending {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.badgeOk {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.badgePending {
+  color: #f5c451;
+  background: rgba(245, 196, 81, 0.14);
+}
+
+.body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.bodyDeleted {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  padding-left: 0.6rem;
+  border-left: 2px solid rgba(248, 113, 113, 0.4);
+}
+
+.bodyCollapsed {
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent 100%);
+}
+
+.badgeDeleted {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  white-space: nowrap;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.14);
+}
+
+.expandBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent, #de6161);
+  cursor: pointer;
+}
+
+.editBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.editBox .textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.editActions,
+.rowActions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.smallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 11px;
+}
