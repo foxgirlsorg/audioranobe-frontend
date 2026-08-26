@@ -9,5 +9,3 @@ export function usePageTitle(name: string | null | undefined): void {
     document.title = name ? `${name} — ${SITE_NAME}` : SITE_NAME;
   }, [name]);
 }
-
-export default usePageTitle;

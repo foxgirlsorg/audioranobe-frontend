@@ -34,7 +34,7 @@ function tabClass(t: Tab, active: string): string {
 
 // Tracks whether the tab strip has hidden content past either edge, so a
 // `scrollable` bar can fade its overflow the same way the horizontal rails
-// on the home page do (see TabScroller).
+// on the home page do.
 function useScrollEdges(enabled: boolean | undefined, tabs: Tab[]) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [edges, setEdges] = useState({ start: false, end: false });
