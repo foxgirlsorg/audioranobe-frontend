@@ -17,6 +17,7 @@ import {
   ListChecks,
   ShieldCheck,
   MessageSquare,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -62,6 +63,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/narration', label: 'Озвучка', icon: BookHeadphones, adminOnly: true },
       { href: '/mod/tasks', label: 'Задачи', icon: ListChecks, countKey: 'jobs_error' },
       { href: '/mod/broadcast', label: 'Рассылка', icon: Radio },
+      { href: '/mod/recap', label: 'Итоги', icon: Sparkles, adminOnly: true },
       { href: '/mod/announcements', label: 'Объявления', icon: Megaphone, adminOnly: true },
       { href: '/mod/audit', label: 'Аудит', icon: ScrollText, adminOnly: true },
     ],

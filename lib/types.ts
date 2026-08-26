@@ -745,3 +745,49 @@ export interface ReviewQueueItem {
 export interface GenreSettings {
   create_role: 'user' | 'moderator' | 'admin';
 }
+
+export interface RecapTitle {
+  slug: string;
+  name: string;
+  cover_url: string | null;
+  seconds: number;
+}
+
+export interface RecapNarrator {
+  id: number;
+  slug: string;
+  name: string;
+  seconds: number;
+}
+
+/** Admin-authored yearly recap card: raw HTML template + scoped CSS. */
+export interface RecapDesign {
+  html: string;
+  css: string;
+}
+
+/** GET /me/recap (month) or /me/recap/{year} (year). */
+export interface Recap {
+  scope: 'month' | 'year';
+  period_label: string;
+  username: string;
+  display_name: string;
+  total_seconds: number;
+  files_count: number;
+  titles_count: number;
+  books_finished: number;
+  active_days: number;
+  top_titles: RecapTitle[];
+  top_narrators: RecapNarrator[];
+  /** Present only on yearly recaps. */
+  design?: RecapDesign;
+  year?: number;
+}
+
+/** GET /mod/recap/design — admin editor state for a year's card. */
+export interface RecapDesignState {
+  year: number;
+  design: RecapDesign;
+  notify_text: string;
+  generated: number;
+}
