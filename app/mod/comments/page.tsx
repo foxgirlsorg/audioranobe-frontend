@@ -68,7 +68,7 @@ function CommentsContent() {
     if (!data) return;
     const next = new Set<number>();
     bodyRefs.current.forEach((el, id) => {
-      if (el.scrollHeight > el.clientHeight + 1) next.add(id);
+      if (el.scrollHeight > MAX_COLLAPSED_HEIGHT + 1) next.add(id);
     });
     setOverflowing(next);
   }, [data]);
@@ -158,6 +158,26 @@ function CommentsContent() {
 
   const uncheckedOnPage = data.items.filter((c) => !c.mod_reviewed).length;
 
+  const markButton = (
+    <button
+      type="button"
+      className="btn btn-primary"
+      disabled={marking || uncheckedOnPage === 0}
+      onClick={() => void markPageChecked()}
+    >
+      <CheckCheck size={15} />
+      {uncheckedOnPage === 0 ? (
+        'Страница проверена'
+      ) : (
+        <>
+          {'Отметить страницу '}
+          <span className={styles.hideMobile}>{'проверенной '}</span>
+          {`(${uncheckedOnPage})`}
+        </>
+      )}
+    </button>
+  );
+
   return (
     <>
       <div className={styles.toolbar}>
@@ -166,15 +186,7 @@ function CommentsContent() {
             'Каждый комментарий на сайте, новые сверху. Отметка "проверено" ставится сразу для всей загруженной страницы — комментарий за комментарием отмечать не нужно.'
           }
         </p>
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={marking || uncheckedOnPage === 0}
-          onClick={() => void markPageChecked()}
-        >
-          <CheckCheck size={15} />
-          {uncheckedOnPage === 0 ? 'Страница проверена' : `Отметить страницу проверенной (${uncheckedOnPage})`}
-        </button>
+        {markButton}
       </div>
 
       <div className={styles.list}>
@@ -197,10 +209,12 @@ function CommentsContent() {
                   <span className={styles.note}>{'объект удалён'}</span>
                 )}
                 <span className={styles.spacer} />
-                <span className={styles.note}>{new Date(c.created_at).toLocaleString('ru-RU')}</span>
-                {c.is_deleted ? <span className={styles.badgeDeleted}>{'удалено'}</span> : null}
-                <span className={c.mod_reviewed ? styles.badgeOk : styles.badgePending}>
-                  {c.mod_reviewed ? 'проверено' : 'не проверено'}
+                <span className={styles.badges}>
+                  <span className={styles.note}>{new Date(c.created_at).toLocaleString('ru-RU')}</span>
+                  {c.is_deleted ? <span className={styles.badgeDeleted}>{'удалено'}</span> : null}
+                  <span className={c.mod_reviewed ? styles.badgeOk : styles.badgePending}>
+                    {c.mod_reviewed ? 'проверено' : 'не проверено'}
+                  </span>
                 </span>
               </div>
 
@@ -284,6 +298,8 @@ function CommentsContent() {
       </div>
 
       <Pagination page={data.page} total={data.total} perPage={data.per_page} onPage={setPage} />
+
+      <div className={styles.bottomBar}>{markButton}</div>
 
       <ConfirmDialog
         open={!!toDelete}

@@ -41,7 +41,8 @@
 .rowHead {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
   margin-bottom: 0.4rem;
   font-size: 12.5px;
 }
@@ -49,18 +50,41 @@
 .author {
   font-weight: 700;
   color: #fff;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .targetLink {
   color: var(--accent, #de6161);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .note {
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .spacer {
   flex: 1 1 auto;
+  min-width: 0;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.hideMobile {
+  display: inline;
+}
+
+@media (max-width: 480px) {
+  .hideMobile {
+    display: none;
+  }
 }
 
 .badgeOk,
@@ -161,4 +185,34 @@
   gap: 0.3rem;
   padding: 0.4rem 0.75rem;
   font-size: 11px;
+}
+
+.bottomBar {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.bottomBar .btn,
+.bottomBar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hint {
+    max-width: none;
+  }
+
+  .toolbar .btn,
+  .toolbar button {
+    justify-content: center;
+    white-space: normal;
+  }
 }
