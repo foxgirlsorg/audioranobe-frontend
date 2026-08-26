@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { plainSummary } from '@/lib/format';
 import { fetchMeta } from '@/lib/serverFetch';
+import { API_URL } from '@/lib/api';
 import type { TitleFull } from '@/lib/types';
 
 export async function generateMetadata({
@@ -20,7 +21,10 @@ export async function generateMetadata({
   return {
     title: pageTitle,
     description,
-    alternates: { canonical: `/title/${encodeURIComponent(params.slug)}` },
+    alternates: {
+      canonical: `/title/${encodeURIComponent(params.slug)}`,
+      types: { 'application/rss+xml': `${API_URL}/titles/${encodeURIComponent(params.slug)}/feed` },
+    },
     openGraph: { title: pageTitle, description, images, type: 'book' },
     twitter: { card: 'summary_large_image', title: pageTitle, description, images },
   };
