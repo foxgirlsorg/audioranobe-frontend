@@ -18,7 +18,7 @@ const RecapMonthlyCard = forwardRef<HTMLDivElement, { recap: Recap }>(({ recap }
   const mins = Math.floor((recap.total_seconds % 3600) / 60);
   const big = hours > 0 ? hours : mins;
   const unit = hours > 0 ? ruPlural(hours, ['час', 'часа', 'часов']) : ruPlural(mins, ['минута', 'минуты', 'минут']);
-  const topTitle = recap.top_titles[0];
+  const topTitles = recap.top_titles.slice(0, 3);
   const topNarrator = recap.top_narrators[0];
   const mLabel = (sec: number) => `${Math.max(1, Math.round(sec / 60))} ${ruPlural(Math.round(sec / 60), ['минута', 'минуты', 'минут'])}`;
 
@@ -52,22 +52,26 @@ const RecapMonthlyCard = forwardRef<HTMLDivElement, { recap: Recap }>(({ recap }
             ) : null}
           </div>
 
-          {topTitle ? (
+          {topTitles.length > 0 ? (
             <div className={styles.fav}>
-              <span className={styles.favLabel}>Любимый тайтл</span>
-              <span className={styles.favRow}>
-                <span className={styles.favValue}>{topTitle.name}</span>
-                <span className={styles.favTime}>{mLabel(topTitle.seconds)}</span>
-              </span>
+              <span className={styles.favLabel}>{topTitles.length > 1 ? 'Любимые тайтлы' : 'Любимый тайтл'}</span>
+              <ol className={styles.favList}>
+                {topTitles.map((t) => (
+                  <li key={t.slug} className={styles.favRow}>
+                    <span className={styles.favValue}>{t.name}</span>
+                    <span className={styles.favTime}>{mLabel(t.seconds)}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
           ) : null}
           {topNarrator ? (
             <div className={styles.fav}>
               <span className={styles.favLabel}>Любимый чтец</span>
-              <span className={styles.favRow}>
+              <div className={styles.favRow}>
                 <span className={styles.favValue}>{topNarrator.name}</span>
                 <span className={styles.favTime}>{mLabel(topNarrator.seconds)}</span>
-              </span>
+              </div>
             </div>
           ) : null}
 
