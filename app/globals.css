@@ -185,8 +185,16 @@ html {
 
 main.container {
   flex: 1;
+  /* Fill at least the viewport so the footer always sits below the fold — it's
+     reachable by scrolling but never shown on a short page. */
+  min-height: 100vh;
   padding-top: calc(var(--nav-total) + 2rem);
   padding-bottom: 4rem;
+}
+
+/* The chat page runs its own full-viewport layout — don't force extra height. */
+body.dm-fullscreen main.container {
+  min-height: 0;
 }
 
 .skip-link {
