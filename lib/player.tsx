@@ -12,6 +12,7 @@ import React, {
 import { api, API_URL } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/lib/toast';
+import { chapterLabel } from '@/lib/format';
 import type { ChapterPlay } from '@/lib/types';
 
 interface PlayerContextValue {
@@ -447,6 +448,66 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [toggle, skip]);
+
+  // Lock-screen / headphone / Bluetooth controls (Media Session API). The
+  // action handlers delegate to the same callbacks the on-screen controls use;
+  // metadata and position ride the state the player already tracks.
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    const ms = navigator.mediaSession;
+    ms.setActionHandler('play', () => toggle());
+    ms.setActionHandler('pause', () => toggle());
+    ms.setActionHandler('previoustrack', () => prev());
+    ms.setActionHandler('nexttrack', current?.next_id ? () => next() : null);
+    ms.setActionHandler('seekbackward', (e) => skip(-(e.seekOffset || 10)));
+    ms.setActionHandler('seekforward', (e) => skip(e.seekOffset || 10));
+    ms.setActionHandler('seekto', (e) => {
+      if (e.seekTime != null) seek(e.seekTime);
+    });
+    return () => {
+      const actions: MediaSessionAction[] = [
+        'play', 'pause', 'previoustrack', 'nexttrack', 'seekbackward', 'seekforward', 'seekto',
+      ];
+      for (const a of actions) {
+        try {
+          ms.setActionHandler(a, null);
+        } catch {
+        }
+      }
+    };
+  }, [toggle, next, prev, skip, seek, current?.next_id]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    if (!current) {
+      navigator.mediaSession.metadata = null;
+      return;
+    }
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: chapterLabel(current.number, current.number_end, current.name),
+      artist: current.title.name,
+      album: current.narrator?.name || undefined,
+      artwork: current.title.cover_url ? [{ src: current.title.cover_url, sizes: '512x512' }] : [],
+    });
+  }, [current]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.playbackState = current ? (playing ? 'playing' : 'paused') : 'none';
+  }, [current, playing]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || typeof navigator.mediaSession.setPositionState !== 'function') return;
+    if (!current || !(duration > 0)) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration,
+        position: Math.min(position, duration),
+        playbackRate: rate,
+      });
+    } catch {
+    }
+  }, [current, duration, position, rate]);
 
   useEffect(() => {
     document.body.classList.toggle('has-player', !!current && !barHidden);
