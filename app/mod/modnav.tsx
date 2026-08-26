@@ -4,79 +4,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  ShieldOff,
-  LayoutDashboard,
-  Inbox,
-  Flag,
-  Users,
-  Mic,
-  BookMarked,
-  Feather,
-  Shield,
-  Filter,
-  Lock,
-  Trash2,
-  Megaphone,
-  Radio,
-  ScrollText,
-  BookHeadphones,
-  ListChecks,
-  ChevronsLeft,
-  ChevronsRight,
-  ShieldCheck,
-  MessageSquare,
-  type LucideIcon,
-} from 'lucide-react';
+import { ShieldOff, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useModSidebar } from '@/lib/modSidebar';
 import { useModCollapse } from './modSidebarCollapse';
+import { GROUPS, type CountKey } from './navGroups';
 import Spinner from '@/components/Spinner/Spinner';
 import styles from './modnav.module.css';
-
-type CountKey = 'pending_requests' | 'open_reports' | 'jobs_error' | 'review_queue' | 'comments_unchecked';
-type Tab = { href: string; label: string; icon: LucideIcon; adminOnly?: boolean; countKey?: CountKey };
-type Group = { label: string; tabs: Tab[] };
-
-const GROUPS: Group[] = [
-  {
-    label: 'Главное',
-    tabs: [{ href: '/mod', label: 'Обзор', icon: LayoutDashboard }],
-  },
-  {
-    label: 'Модерация',
-    tabs: [
-      { href: '/mod/queue', label: 'Очередь', icon: Inbox, countKey: 'pending_requests' },
-      { href: '/mod/reports', label: 'Жалобы', icon: Flag, countKey: 'open_reports' },
-      { href: '/mod/review', label: 'Проверка тайтлов', icon: ShieldCheck, countKey: 'review_queue' },
-      { href: '/mod/comments', label: 'Комментарии', icon: MessageSquare, countKey: 'comments_unchecked' },
-      { href: '/mod/words', label: 'Фильтр слов', icon: Filter, adminOnly: true },
-      { href: '/mod/usernames', label: 'Имена', icon: Lock, adminOnly: true },
-      { href: '/mod/trash', label: 'Корзина', icon: Trash2, adminOnly: true },
-    ],
-  },
-  {
-    label: 'Люди и контент',
-    tabs: [
-      { href: '/mod/users', label: 'Пользователи', icon: Users },
-      { href: '/mod/narrators', label: 'Чтецы', icon: Mic },
-      { href: '/mod/authors', label: 'Авторы', icon: Feather },
-      { href: '/mod/genres', label: 'Теги', icon: BookMarked, adminOnly: true },
-      { href: '/mod/dmca', label: 'DMCA', icon: Shield, adminOnly: true },
-    ],
-  },
-  {
-    label: 'Система',
-    tabs: [
-      { href: '/mod/narration', label: 'Озвучка', icon: BookHeadphones, adminOnly: true },
-      { href: '/mod/tasks', label: 'Задачи', icon: ListChecks, countKey: 'jobs_error' },
-      { href: '/mod/broadcast', label: 'Рассылка', icon: Radio },
-      { href: '/mod/announcements', label: 'Объявления', icon: Megaphone, adminOnly: true },
-      { href: '/mod/audit', label: 'Аудит', icon: ScrollText, adminOnly: true },
-    ],
-  },
-];
 
 export function splitHeading(heading: string): { title: string; accent?: string } {
   const i = heading.indexOf(' ');

@@ -1,0 +1,91 @@
+/* ponytail: fixed bottom-right; can overlap the player bar when a track is
+   playing — offset for player height if that becomes annoying. */
+.card {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 18px;
+  z-index: 1500;
+  width: min(340px, calc(100vw - 36px));
+  padding: 0.9rem 1rem 0.75rem;
+  animation: modAlertIn 0.22s ease;
+}
+
+@keyframes modAlertIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.bell {
+  color: #de6161;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.close {
+  margin-left: auto;
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--muted, #9a9aa2);
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.label {
+  font-size: 13px;
+}
+
+.count {
+  margin-left: auto;
+  min-width: 22px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #de6161;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
