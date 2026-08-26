@@ -291,6 +291,7 @@ export interface ChapterRow {
   id: number;
   volume_id: number;
   number: number;
+  number_end: number | null;
   name: string;
   duration_seconds: number;
   audio_status: AudioStatus;
@@ -371,6 +372,7 @@ export interface TitleFull extends TitleCard {
 export interface ChapterPlay {
   id: number;
   number: number;
+  number_end: number | null;
   name: string;
   duration_seconds: number;
   audio_url: string;

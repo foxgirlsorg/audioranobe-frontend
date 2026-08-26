@@ -17,7 +17,7 @@ import { api } from '@/lib/api';
 import { uploadInChunks } from '@/lib/upload';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
-import { formatDuration, formatDateTime, timeAgo } from '@/lib/format';
+import { formatDuration, formatDateTime, timeAgo, chapterLabel, chapterNumberLabel } from '@/lib/format';
 import type { ChapterRow, JobsPage, TitleFull, Volume } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import Pagination from '@/components/Pagination/Pagination';
@@ -38,7 +38,7 @@ const naturalCompare = (a: string, b: string) =>
   a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 
 const nextNumberIn = (v: Volume): number =>
-  Math.floor(Math.max(0, ...v.chapters.map((c) => c.number))) + 1;
+  Math.floor(Math.max(0, ...v.chapters.map((c) => c.number_end ?? c.number))) + 1;
 
 const formatNumber = (n: number): string => String(Math.round(n * 1000) / 1000);
 
@@ -104,10 +104,14 @@ export default function TitleContentManager({
   const [addChapterVol, setAddChapterVol] = useState<number | null>(null);
   const [chName, setChName] = useState('');
   const [chNumber, setChNumber] = useState('');
+  const [chRange, setChRange] = useState(false);
+  const [chNumberEnd, setChNumberEnd] = useState('');
   const [savingChapter, setSavingChapter] = useState(false);
   const [editingChapter, setEditingChapter] = useState<number | null>(null);
   const [editChName, setEditChName] = useState('');
   const [editChNumber, setEditChNumber] = useState('');
+  const [editChRange, setEditChRange] = useState(false);
+  const [editChNumberEnd, setEditChNumberEnd] = useState('');
   const [chNarratorIds, setChNarratorIds] = useState<number[]>([]);
   const [chFile, setChFile] = useState<File | null>(null);
   const [chProgress, setChProgress] = useState<number | null>(null);
@@ -268,6 +272,8 @@ export default function TitleContentManager({
     setChName('');
     setChFile(null);
     setChNarratorIds([]);
+    setChRange(false);
+    setChNumberEnd('');
   }
 
   async function addChapter(e: React.FormEvent<HTMLFormElement>, volumeId: number) {
@@ -276,6 +282,15 @@ export default function TitleContentManager({
     if (!Number.isFinite(n) || n < 0) {
       toast('Номер главы должен быть числом не меньше 0', 'error');
       return;
+    }
+    let numberEnd: number | null = null;
+    if (isMod && chRange) {
+      const end = Number(chNumberEnd);
+      if (!Number.isFinite(end) || end <= n) {
+        toast('Конец диапазона должен быть больше начального номера', 'error');
+        return;
+      }
+      numberEnd = end;
     }
     if (title.narrators.length > 0 && chNarratorIds.length === 0) {
       toast('Отметьте чтеца главы', 'error');
@@ -301,6 +316,7 @@ export default function TitleContentManager({
           body: {
             volume_id: volumeId,
             number: n,
+            number_end: numberEnd,
             name: chName.trim(),
             narrator_ids: chNarratorIds,
             upload_id: uploadId,
@@ -327,6 +343,8 @@ export default function TitleContentManager({
     setEditingChapter(c.id);
     setEditChName(c.name);
     setEditChNumber(String(c.number));
+    setEditChRange(c.number_end != null);
+    setEditChNumberEnd(c.number_end != null ? String(c.number_end) : '');
     setEditChNarratorIds((c.narrators ?? []).map((n) => n.id));
   }
 
@@ -337,11 +355,27 @@ export default function TitleContentManager({
       toast('Номер главы должен быть числом не меньше 0', 'error');
       return;
     }
+    let numberEnd: number | null = null;
+    if (isMod && editChRange) {
+      const end = Number(editChNumberEnd);
+      if (!Number.isFinite(end) || end <= n) {
+        toast('Конец диапазона должен быть больше начального номера', 'error');
+        return;
+      }
+      numberEnd = end;
+    }
     setSavingChapter(true);
     try {
+      const body: {
+        name: string;
+        number: number;
+        narrator_ids: number[];
+        number_end?: number | null;
+      } = { name: editChName.trim(), number: n, narrator_ids: editChNarratorIds };
+      if (isMod) body.number_end = numberEnd;
       const res = await api<{ applied?: boolean }>(`/panel/chapters/${chapterId}`, {
         method: 'PATCH',
-        body: { name: editChName.trim(), number: n, narrator_ids: editChNarratorIds },
+        body,
       });
       toast(res && res.applied === false ? 'Отправлено на модерацию' : 'Изменения применены');
       setEditingChapter(null);
@@ -926,9 +960,39 @@ export default function TitleContentManager({
                     min={0}
                     value={chNumber}
                     onChange={(e) => setChNumber(e.target.value)}
-                    aria-label="Номер главы"
+                    aria-label={chRange ? 'Начальный номер главы' : 'Номер главы'}
                     title="Может быть дробным: 4.1 встанет между 4 и 5"
                   />
+                  {isMod && chRange ? (
+                    <>
+                      <span className={styles.rangeDash} aria-hidden="true">
+                        –
+                      </span>
+                      <input
+                        className={`input ${styles.numInput}`}
+                        type="number"
+                        step="0.1"
+                        min={0}
+                        value={chNumberEnd}
+                        onChange={(e) => setChNumberEnd(e.target.value)}
+                        aria-label="Конечный номер главы"
+                        placeholder="по"
+                      />
+                    </>
+                  ) : null}
+                  {isMod ? (
+                    <label
+                      className={styles.rangeToggle}
+                      title="Один файл охватывает несколько глав, например 30–35"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={chRange}
+                        onChange={(e) => setChRange(e.target.checked)}
+                      />
+                      неск. глав
+                    </label>
+                  ) : null}
                   <input
                     className={`input ${styles.growInput}`}
                     type="text"
@@ -991,9 +1055,39 @@ export default function TitleContentManager({
                           min={0}
                           value={editChNumber}
                           onChange={(e) => setEditChNumber(e.target.value)}
-                          aria-label="Номер главы"
+                          aria-label={editChRange ? 'Начальный номер главы' : 'Номер главы'}
                           title="Может быть дробным: 4.1 встанет между 4 и 5"
                         />
+                        {isMod && editChRange ? (
+                          <>
+                            <span className={styles.rangeDash} aria-hidden="true">
+                              –
+                            </span>
+                            <input
+                              className={`input ${styles.numInput}`}
+                              type="number"
+                              step="0.1"
+                              min={0}
+                              value={editChNumberEnd}
+                              onChange={(e) => setEditChNumberEnd(e.target.value)}
+                              aria-label="Конечный номер главы"
+                              placeholder="по"
+                            />
+                          </>
+                        ) : null}
+                        {isMod ? (
+                          <label
+                            className={styles.rangeToggle}
+                            title="Один файл охватывает несколько глав, например 30–35"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={editChRange}
+                              onChange={(e) => setEditChRange(e.target.checked)}
+                            />
+                            неск. глав
+                          </label>
+                        ) : null}
                         <input
                           className={`input ${styles.growInput}`}
                           type="text"
@@ -1028,13 +1122,13 @@ export default function TitleContentManager({
                           onChange={() => toggleSelected(c.id)}
                           aria-label={`Выбрать главу ${c.number}`}
                         />
-                        <span className={styles.chNum}>{c.number}</span>
+                        <span className={styles.chNum}>{chapterNumberLabel(c.number, c.number_end)}</span>
                         <span
                           className={
                             c.is_deleted ? `${styles.chName} ${styles.chDeleted}` : styles.chName
                           }
                         >
-                          {c.name || `Глава ${c.number}`}
+                          {chapterLabel(c.number, c.number_end, c.name)}
                         </span>
                         {c.duration_seconds > 0 ? (
                           <span className={styles.chDuration}>

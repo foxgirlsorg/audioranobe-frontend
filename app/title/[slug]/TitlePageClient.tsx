@@ -36,7 +36,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
-import { chapterFilePrefix, formatCount, formatDuration } from '@/lib/format';
+import { chapterFilePrefix, chapterLabel, chapterNumberLabel, formatCount, formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Section from '@/components/Section/Section';
 import Tabs from '@/components/Tabs/Tabs';
@@ -291,7 +291,7 @@ export default function TitlePageClient({
     for (const v of volumes) {
       for (const c of v.chapters) {
         if (c.audio_status !== 'ready') continue;
-        const label = c.name || `Глава ${c.number}`;
+        const label = chapterLabel(c.number, c.number_end, c.name);
         out.push({
           id: c.id,
           name: `${chapterFilePrefix(c.number)}. ${label}.opus`,
@@ -760,7 +760,7 @@ export default function TitlePageClient({
                                 <Headphones size={13} />
                               </span>
                             )}
-                            <span className={styles.chNum}>{ch.number}</span>
+                            <span className={styles.chNum}>{chapterNumberLabel(ch.number, ch.number_end)}</span>
                             <Link
                               href={`/chapter/${ch.id}`}
                               className={
@@ -769,7 +769,7 @@ export default function TitlePageClient({
                                   : styles.chName
                               }
                             >
-                              {ch.name || `Глава ${ch.number}`}
+                              {chapterLabel(ch.number, ch.number_end, ch.name)}
                             </Link>
                             <span className={styles.rowRight}>
                               {(ch.narrators ?? []).length > 0 ? (

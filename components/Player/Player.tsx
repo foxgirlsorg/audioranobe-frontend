@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { usePlayer, usePlayerPosition } from '@/lib/player';
-import { formatDuration } from '@/lib/format';
+import { chapterNumberLabel, formatDuration } from '@/lib/format';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import styles from './Player.module.css';
 
@@ -155,7 +155,7 @@ export default function Player() {
   };
 
   const chapterLabel =
-    `Том ${current.volume.number} · Гл. ${current.number}` +
+    `Том ${current.volume.number} · Гл. ${chapterNumberLabel(current.number, current.number_end)}` +
     (current.name ? ` — ${current.name}` : '');
 
   const toggleMute = () => {

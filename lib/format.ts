@@ -97,6 +97,22 @@ export function formatRating(r: number | null | undefined): string {
   return r.toFixed(1);
 }
 
+const trimNum = (n: number): string => String(Math.round(n * 1000) / 1000);
+
+/** "30" for a single chapter, "30–35" when the file spans a range. */
+export function chapterNumberLabel(number: number, numberEnd?: number | null): string {
+  return numberEnd != null && numberEnd > number
+    ? `${trimNum(number)}–${trimNum(numberEnd)}`
+    : trimNum(number);
+}
+
+/** "Глава 30" / "Главы 30–35", or the chapter's own name when it has one. */
+export function chapterLabel(number: number, numberEnd: number | null | undefined, name?: string): string {
+  if (name && name.trim()) return name;
+  const ranged = numberEnd != null && numberEnd > number;
+  return `${ranged ? 'Главы' : 'Глава'} ${chapterNumberLabel(number, numberEnd)}`;
+}
+
 export function chapterFilePrefix(n: number): string {
   const whole = Math.floor(n);
   const frac = Math.round((n - whole) * 1000) / 1000;
