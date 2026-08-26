@@ -217,6 +217,7 @@ export function ModShell({
   children: React.ReactNode;
 }) {
   const { user, loading, isMod } = useAuth();
+  const { collapsed } = useModCollapse();
   const router = useRouter();
 
   useEffect(() => {
@@ -259,7 +260,7 @@ export function ModShell({
   }
 
   return (
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ''}`}>
       <ModNav />
       <div className={styles.contentCol}>
         <header className={styles.head}>

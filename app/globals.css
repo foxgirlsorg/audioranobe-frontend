@@ -77,7 +77,10 @@ body {
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* clip, not hidden: hidden makes <body> a scroll container and breaks
+     position: sticky/fixed offset math for descendants (the mod sidebar). clip
+     contains the same horizontal overflow without a scroll container. */
+  overflow-x: clip;
 }
 
 /* Clearance for the docked player bar is the footer's job — see
