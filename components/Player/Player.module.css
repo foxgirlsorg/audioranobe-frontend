@@ -668,10 +668,10 @@
   transition: opacity 0.15s ease;
 }
 
-.stageClose {
+.stageClose,
+.stageShare {
   position: absolute;
   top: 1rem;
-  right: 1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -685,7 +685,16 @@
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.stageClose:hover {
+.stageClose {
+  right: 1rem;
+}
+
+.stageShare {
+  left: 1rem;
+}
+
+.stageClose:hover,
+.stageShare:hover {
   color: #fff;
   border-color: rgba(222, 97, 97, 0.5);
 }

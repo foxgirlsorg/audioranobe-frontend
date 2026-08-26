@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -66,6 +66,19 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Arriving via a shared timestamped link (?t=754): start this chapter at that
+  // second and open the full-screen player. Autoplay may be blocked without a
+  // gesture — the chapter is still cued at t, so a single tap resumes there.
+  const primedRef = useRef(false);
+  useEffect(() => {
+    if (!chapter || primedRef.current) return;
+    const t = Number(new URLSearchParams(window.location.search).get('t'));
+    if (!Number.isFinite(t) || t <= 0) return;
+    primedRef.current = true;
+    void player.playChapter(chapter.id, t).catch(() => {});
+    player.setFull(true);
+  }, [chapter, player]);
 
   usePageTitle(
     chapter

@@ -23,7 +23,7 @@ interface PlayerContextValue {
   volume: number;
   sleepRemaining: number | null;
   sleep: number | 'chapter' | null;
-  playChapter(id: number): Promise<void>;
+  playChapter(id: number, startAt?: number): Promise<void>;
   toggle(): void;
   seek(s: number): void;
   skip(delta: number): void;
@@ -182,9 +182,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [saveProgress, toast]);
 
   const playChapter = useCallback(
-    async (id: number) => {
+    async (id: number, startAt?: number) => {
       const audio = ensureAudio();
       if (currentRef.current && currentRef.current.id === id && audio.src) {
+        if (startAt != null) {
+          try {
+            audio.currentTime = Math.max(0, startAt);
+          } catch {
+          }
+          setPosition(Math.max(0, startAt));
+        }
         audio.play().catch(reportPlayError);
         return;
       }
@@ -199,7 +206,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       setBuffered(0);
       setDuration(ch.duration_seconds || 0);
 
-      const start = Math.max(0, (ch.my_position ?? 0) - 10);
+      // A shared timestamped link lands on an exact second; otherwise resume a
+      // few seconds before the saved position to re-establish context.
+      const start = startAt != null ? Math.max(0, startAt) : Math.max(0, (ch.my_position ?? 0) - 10);
       setPosition(start);
 
       switchingRef.current = true;

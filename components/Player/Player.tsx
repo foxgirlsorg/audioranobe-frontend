@@ -11,6 +11,7 @@ import {
   Play,
   RotateCcw,
   RotateCw,
+  Share2,
   SkipBack,
   SkipForward,
   Volume2,
@@ -20,6 +21,7 @@ import {
 import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { chapterNumberLabel, formatDuration } from '@/lib/format';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
+import { useToast, errMsg } from '@/lib/toast';
 import styles from './Player.module.css';
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
@@ -55,6 +57,7 @@ export default function Player() {
     setFull,
   } = usePlayer();
   const { position, buffered } = usePlayerPosition();
+  const { toast } = useToast();
 
   const [scrub, setScrub] = useState<number | null>(null);
   const [menu, setMenu] = useState<'rate' | 'sleep' | null>(null);
@@ -164,6 +167,17 @@ export default function Player() {
       setVolume(0);
     } else {
       setVolume(lastVolumeRef.current || 1);
+    }
+  };
+
+  const share = async () => {
+    const at = Math.round(scrub !== null ? scrub : position);
+    const url = `${window.location.origin}/chapter/${current.id}?t=${at}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(`Ссылка на ${formatDuration(at)} скопирована`, 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
     }
   };
 
@@ -365,6 +379,15 @@ export default function Player() {
     <div className={barCls}>
       {stageMounted ? (
         <div className={full ? styles.stage : `${styles.stage} ${styles.stageOut}`}>
+          <button
+            type="button"
+            className={styles.stageShare}
+            onClick={() => void share()}
+            title="Поделиться с этого места"
+            aria-label="Поделиться с этого места"
+          >
+            <Share2 />
+          </button>
           <button
             type="button"
             className={styles.stageClose}
