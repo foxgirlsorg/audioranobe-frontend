@@ -21,6 +21,7 @@ export default function RecapPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportKey, setExportKey] = useState(0);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   usePageTitle('Итоги месяца');
@@ -44,10 +45,19 @@ export default function RecapPage() {
   }, [user, authLoading, load]);
 
   const exportPng = async () => {
-    if (!cardRef.current || !recap) return;
     setExporting(true);
     try {
-      await downloadNodePng(cardRef.current, `recap-${recap.period_label}`);
+      const demo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo');
+      const fresh = await api<Recap>(demo ? '/me/recap?demo=1' : '/me/recap');
+      setRecap(fresh);
+      // Force the card to fully remount from this fresh data: React skips
+      // writing unchanged text back to the DOM on a plain re-render, so a
+      // devtools edit to the rendered numbers would otherwise survive and
+      // get captured in the exported image.
+      setExportKey((k) => k + 1);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (!cardRef.current) return;
+      await downloadNodePng(cardRef.current, `recap-${fresh.period_label}`);
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -83,7 +93,7 @@ export default function RecapPage() {
         </div>
       ) : (
         <>
-          <RecapMonthlyCard recap={recap} ref={cardRef} />
+          <RecapMonthlyCard recap={recap} ref={cardRef} key={exportKey} />
           <div className={styles.actions}>
             <button type="button" className={`btn btn-primary ${styles.downloadBtn}`} onClick={exportPng} disabled={exporting}>
               <Download size={15} /> {exporting ? 'Готовим…' : 'Скачать картинку'}

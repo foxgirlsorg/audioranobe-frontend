@@ -29,9 +29,15 @@ type Card = { body?: React.ReactNode; custom?: React.ReactNode };
 export default function RecapDeck({
   recap,
   finale,
+  onBeforeDownload,
 }: {
   recap: Recap;
   finale?: React.ReactNode;
+  /** Re-fetches the recap from the backend and remounts the finale card from
+   * it right before capture — a plain re-render skips writing unchanged text
+   * back to the DOM, so a devtools edit to the numbers would otherwise
+   * survive into the exported image. */
+  onBeforeDownload?: () => Promise<Recap | null>;
 }) {
   const { toast } = useToast();
   const [idx, setIdx] = useState(0);
@@ -41,10 +47,15 @@ export default function RecapDeck({
   const bgAt = (i: number) => MONTH_PALETTE[i % MONTH_PALETTE.length];
 
   const download = async () => {
-    // Export just the admin card host, not the 9/16 deck frame around it.
-    const node = customRef.current?.firstElementChild as HTMLElement | null;
-    if (!node) return;
     try {
+      if (onBeforeDownload) {
+        const fresh = await onBeforeDownload();
+        if (!fresh) return;
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      }
+      // Export just the admin card host, not the 9/16 deck frame around it.
+      const node = customRef.current?.firstElementChild as HTMLElement | null;
+      if (!node) return;
       await downloadNodePng(node, `recap-${recap.period_label}`);
     } catch (e) {
       toast(errMsg(e), 'error');

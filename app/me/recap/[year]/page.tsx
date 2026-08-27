@@ -21,6 +21,7 @@ export default function YearRecapPage({ params }: { params: { year: string } }) 
   const [recap, setRecap] = useState<Recap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportKey, setExportKey] = useState(0);
 
   usePageTitle(`Итоги ${year}`);
 
@@ -42,6 +43,22 @@ export default function YearRecapPage({ params }: { params: { year: string } }) 
     void load();
   }, [user, authLoading, load]);
 
+  const refreshForExport = useCallback(async (): Promise<Recap | null> => {
+    try {
+      const demo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo');
+      const fresh = await api<Recap>(`/me/recap/${encodeURIComponent(year)}${demo ? '?demo=1' : ''}`);
+      setRecap(fresh);
+      // Force the finale card to fully remount from this fresh data: a plain
+      // re-render skips writing unchanged text back to the DOM, so a
+      // devtools edit to the rendered numbers would otherwise survive into
+      // the exported image.
+      setExportKey((k) => k + 1);
+      return fresh;
+    } catch {
+      return null;
+    }
+  }, [year]);
+
   if (!authLoading && !user) {
     return (
       <div className={styles.wrap}>
@@ -62,9 +79,10 @@ export default function YearRecapPage({ params }: { params: { year: string } }) 
       ) : (
         <RecapDeck
           recap={recap}
+          onBeforeDownload={refreshForExport}
           finale={
             recap.design ? (
-              <RecapCard html={fillTemplate(recap.design.html, recap)} css={recap.design.css} />
+              <RecapCard key={exportKey} html={fillTemplate(recap.design.html, recap)} css={recap.design.css} />
             ) : undefined
           }
         />
