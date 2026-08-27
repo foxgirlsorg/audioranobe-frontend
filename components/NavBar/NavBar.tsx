@@ -105,9 +105,8 @@ export default function NavBar() {
   const userWrapRef = useRef<HTMLDivElement | null>(null);
   // The mobile account menu is portalled straight to <body> (see below) so its
   // position:fixed sidebar isn't hostage to .nav's backdrop-filter, which
-  // creates its own containing block for fixed descendants once scrolled —
-  // that's what made the old nested version fall apart past the top of the
-  // page. Portalled content lives outside userWrapRef's DOM subtree, so the
+  // creates its own containing block for fixed descendants once scrolled.
+  // Portalled content lives outside userWrapRef's DOM subtree, so the
   // outside-click handler needs this second ref to still recognize it.
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   // Same deal for the desktop menu now that it's portaled too — it lives

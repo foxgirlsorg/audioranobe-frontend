@@ -70,10 +70,7 @@ export default function Player() {
   // Both the whole full-screen overlay and its .stage content stay mounted
   // a beat past `full` going false so their exit (slide-down / fade-out)
   // animations get to play instead of the layout just snapping back to
-  // docked. Kept as a slide+fade of the whole overlay rather than morphing
-  // the docked bar's own box into it — an earlier attempt at that measured
-  // the docked bar's height in JS to drive the transition, and any drift in
-  // that measurement let the controls render below the viewport.
+  // docked.
   const fullMounted = useAnimatedPresence(full, 360);
   const stageMounted = useAnimatedPresence(full, 360);
 
@@ -458,8 +455,6 @@ export default function Player() {
           <span className={styles.time}>{formatDuration(duration)}</span>
         </div>
 
-        {/* Wide/wrapped set — desktop one-line, and the mobile fallback that
-            wraps to multiple rows. */}
         <div className={styles.row} ref={extrasRef}>
           <div className={styles.info}>
             <Link
@@ -500,9 +495,6 @@ export default function Player() {
           </div>
         </div>
 
-        {/* Single-row set — full-screen mobile only, when it fits. Same
-            controls in one line: speed, close, «, «10, play, 10», », sleep,
-            fullscreen. Which set shows is decided entirely in CSS. */}
         <div className={styles.oneRow} ref={oneRowRef}>
           {speedControl}
           {closeBtn}
