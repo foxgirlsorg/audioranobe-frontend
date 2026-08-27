@@ -179,12 +179,9 @@
 @media (max-width: 480px) {
   .overlay {
     padding: 0.6rem;
-    align-items: flex-end;
   }
 
   .panel {
     max-height: 85vh;
-    border-radius: 16px 16px 0 0;
-    margin-bottom: 0;
   }
 }
