@@ -127,7 +127,7 @@ const RecapMonthlyCard = forwardRef<HTMLDivElement, { recap: Recap }>(({ recap }
             </div>
           ) : null}
 
-          <div className={styles.brand}>AudioRanobe · Итоги</div>
+          <div className={styles.brand}>AudioRanobe</div>
         </div>
       </div>
     </div>
