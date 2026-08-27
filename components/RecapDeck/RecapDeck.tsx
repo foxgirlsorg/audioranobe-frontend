@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Download, Headphones, Share2, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Headphones, Sparkles } from 'lucide-react';
 import { useToast, errMsg } from '@/lib/toast';
 import { downloadNodePng } from '@/lib/exportImage';
 import type { Recap } from '@/lib/types';
@@ -28,11 +28,9 @@ type Card = { body?: React.ReactNode; custom?: React.ReactNode };
 
 export default function RecapDeck({
   recap,
-  shareUrl,
   finale,
 }: {
   recap: Recap;
-  shareUrl: string;
   finale?: React.ReactNode;
 }) {
   const { toast } = useToast();
@@ -48,15 +46,6 @@ export default function RecapDeck({
     if (!node) return;
     try {
       await downloadNodePng(node, `recap-${recap.period_label}`);
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-  };
-
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast('Ссылка скопирована', 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -193,9 +182,6 @@ export default function RecapDeck({
             <div className={styles.customActions}>
               <button type="button" className={styles.customBtn} onClick={() => void download()}>
                 <Download size={15} /> {'Скачать'}
-              </button>
-              <button type="button" className={styles.customBtn} onClick={() => void share()}>
-                <Share2 size={15} /> {'Поделиться'}
               </button>
             </div>
           </>

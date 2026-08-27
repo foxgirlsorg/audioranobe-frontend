@@ -36,17 +36,18 @@
   background: rgba(222, 97, 97, 0.22);
 }
 
-/* Landscape SVG kept to its own aspect via `contain` — no vertical stretch,
-   in the browser or in the exported PNG. */
 .foxgirl {
   position: absolute;
-  right: -6%;
-  bottom: 0;
-  width: 78%;
-  height: 72%;
-  background: url('/foxgirl_user.svg') right bottom / contain no-repeat;
+  right: -15%;
+  bottom: 20%;
+  height: 70%;
+  width: auto;
+  aspect-ratio: 1439 / 1064;
+  background: url('/foxgirl_user.svg') center / 100% 100% no-repeat;
   opacity: 0.85;
   pointer-events: none;
+  mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
 }
 
 .shade {
@@ -66,20 +67,28 @@
 
 .head {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .who {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0;
 }
 
 .name {
+  min-width: 0;
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.01em;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .handle {
@@ -89,7 +98,7 @@
 
 .period {
   display: inline-block;
-  align-self: flex-start;
+  flex-shrink: 0;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -102,15 +111,19 @@
 .big {
   margin-top: auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.75rem;
 }
 
 .bigNum {
+  flex-shrink: 0;
+  max-width: 100%;
   font-size: 6rem;
   font-weight: 900;
   line-height: 0.82;
   letter-spacing: -0.04em;
+  white-space: nowrap;
 }
 
 .unit {
@@ -119,6 +132,17 @@
   line-height: 1.1;
   padding-bottom: 0.5rem;
   opacity: 0.92;
+}
+
+/* Two lines by default (sharing the row with the number) — a bare <br> forces
+   the break. Once .big marks itself as stacked (the unit measured onto its
+   own row below the number), the break is removed and it reads as one line. */
+.big[data-stacked] .unitBreak {
+  display: none;
+}
+
+.big[data-stacked] .unit {
+  padding-bottom: 0;
 }
 
 .foot {

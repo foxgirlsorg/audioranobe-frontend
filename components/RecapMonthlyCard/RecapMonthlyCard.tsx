@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import type { Recap } from '@/lib/types';
 import styles from './RecapMonthlyCard.module.css';
 
@@ -22,6 +22,53 @@ const RecapMonthlyCard = forwardRef<HTMLDivElement, { recap: Recap }>(({ recap }
   const topNarrator = recap.top_narrators[0];
   const mLabel = (sec: number) => `${Math.max(1, Math.round(sec / 60))} ${ruPlural(Math.round(sec / 60), ['минута', 'минуты', 'минут'])}`;
 
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const bigNumRef = useRef<HTMLSpanElement | null>(null);
+  const unitRef = useRef<HTMLSpanElement | null>(null);
+  const [stacked, setStacked] = useState(false);
+  const [bigFontSize, setBigFontSize] = useState(96);
+
+  const MAX_FONT = 96;
+  const MIN_FONT = 22;
+
+  useEffect(() => {
+    const container = innerRef.current;
+    const numEl = bigNumRef.current;
+    if (!container || !numEl) return;
+
+    const fit = () => {
+      const budget = container.clientWidth;
+      let size = MAX_FONT;
+      numEl.style.fontSize = `${size}px`;
+      while (size > MIN_FONT && numEl.scrollWidth > budget) {
+        size -= 4;
+        numEl.style.fontSize = `${size}px`;
+      }
+      setBigFontSize(size);
+    };
+
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [big]);
+
+  useEffect(() => {
+    const bigEl = bigNumRef.current;
+    const unitEl = unitRef.current;
+    if (!bigEl || !unitEl) return;
+    // The unit only reads as one line once it's actually wrapped onto its own
+    // row below the number — detected from real layout, not a digit-count guess.
+    // (offsetTop alone doesn't work: align-items:flex-end already puts a
+    // shorter same-row item lower than the tall number, without any wrap.)
+    const check = () => setStacked(unitEl.getBoundingClientRect().left < bigEl.getBoundingClientRect().right);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(bigEl);
+    ro.observe(unitEl);
+    return () => ro.disconnect();
+  }, [big, bigFontSize]);
+
   return (
     <div className={styles.card} ref={ref}>
       <div className={styles.glow} aria-hidden="true" />
@@ -29,7 +76,7 @@ const RecapMonthlyCard = forwardRef<HTMLDivElement, { recap: Recap }>(({ recap }
       <div className={styles.foxgirl} aria-hidden="true" />
       <div className={styles.shade} aria-hidden="true" />
 
-      <div className={styles.inner}>
+      <div className={styles.inner} ref={innerRef}>
         <header className={styles.head}>
           <div className={styles.who}>
             <span className={styles.name}>{recap.display_name || recap.username}</span>
@@ -38,9 +85,14 @@ const RecapMonthlyCard = forwardRef<HTMLDivElement, { recap: Recap }>(({ recap }
           <div className={styles.period}>{recap.period_label}</div>
         </header>
 
-        <div className={styles.big}>
-          <span className={styles.bigNum}>{big}</span>
-          <span className={styles.unit}>{unit}<br />прослушано</span>
+        <div className={styles.big} data-stacked={stacked || undefined}>
+          <span className={styles.bigNum} ref={bigNumRef} style={{ fontSize: `${bigFontSize}px` }}>{big}</span>
+          <span className={styles.unit} ref={unitRef}>
+            {unit}
+            <br className={styles.unitBreak} />
+            {' '}
+            прослушано
+          </span>
         </div>
 
         <div className={styles.foot}>

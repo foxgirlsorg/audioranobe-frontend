@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Download, Headphones, Share2 } from 'lucide-react';
+import { Download, Headphones } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -54,15 +54,6 @@ export default function RecapPage() {
     setExporting(false);
   };
 
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/me/recap`);
-      toast('Ссылка скопирована', 'ok');
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-  };
-
   if (!authLoading && !user) {
     return (
       <div className={styles.wrap}>
@@ -94,11 +85,8 @@ export default function RecapPage() {
         <>
           <RecapMonthlyCard recap={recap} ref={cardRef} />
           <div className={styles.actions}>
-            <button type="button" className="btn btn-primary" onClick={exportPng} disabled={exporting}>
+            <button type="button" className={`btn btn-primary ${styles.downloadBtn}`} onClick={exportPng} disabled={exporting}>
               <Download size={15} /> {exporting ? 'Готовим…' : 'Скачать картинку'}
-            </button>
-            <button type="button" className="btn" onClick={() => void share()}>
-              <Share2 size={15} /> {'Поделиться'}
             </button>
           </div>
         </>

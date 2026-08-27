@@ -62,7 +62,6 @@ export default function YearRecapPage({ params }: { params: { year: string } }) 
       ) : (
         <RecapDeck
           recap={recap}
-          shareUrl={typeof window !== 'undefined' ? `${window.location.origin}/me/recap/${year}` : ''}
           finale={
             recap.design ? (
               <RecapCard html={fillTemplate(recap.design.html, recap)} css={recap.design.css} />
