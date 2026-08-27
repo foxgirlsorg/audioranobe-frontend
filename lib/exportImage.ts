@@ -5,37 +5,37 @@ import { domToJpeg } from 'modern-screenshot';
  *  shadow — so it sits clean in a share sheet. `bg` fills the canvas behind the
  *  render so a clipped edge can't leave a lighter antialiased seam. */
 export async function downloadNodeJpg(node: HTMLElement, filename: string, bg = '#151517'): Promise<void> {
-  // modern-screenshot's `style` option only touches a wrapper, so set the flat
-  // styles inline on the node itself. For a shadow-hosted card (the admin
-  // template) the visible corners live on the shadow's own top-level element,
-  // so flatten those too. Everything is restored afterwards.
-  const restore: (() => void)[] = [];
+  const width = node.offsetWidth;
+  const height = node.offsetHeight;
+
+  const clone = node.cloneNode(true) as HTMLElement;
+  if (node.shadowRoot) {
+    clone.attachShadow({ mode: 'open' }).innerHTML = node.shadowRoot.innerHTML;
+  }
   const flatten = (el: HTMLElement) => {
-    const p = { br: el.style.borderRadius, bd: el.style.border, sh: el.style.boxShadow };
     el.style.borderRadius = '0';
     el.style.border = 'none';
     el.style.boxShadow = 'none';
-    restore.push(() => {
-      el.style.borderRadius = p.br;
-      el.style.border = p.bd;
-      el.style.boxShadow = p.sh;
-    });
   };
-
-  flatten(node);
-  if (node.shadowRoot) {
-    node.shadowRoot.querySelectorAll<HTMLElement>(':scope > *:not(style)').forEach(flatten);
+  flatten(clone);
+  if (clone.shadowRoot) {
+    clone.shadowRoot.querySelectorAll<HTMLElement>(':scope > *:not(style)').forEach(flatten);
   }
+  clone.style.position = 'fixed';
+  clone.style.top = '0';
+  clone.style.left = '-99999px';
+  clone.style.margin = '0';
+  document.body.appendChild(clone);
 
   try {
     // Use the integer layout box, not getBoundingClientRect: a fractional size
     // leaves a 1px strip and clips the aspect-ratio height (which the cloner
     // does not infer). offsetWidth/Height match the element exactly.
     const MIN_HEIGHT = 1920;
-    const scale = Math.max(2, Math.ceil(MIN_HEIGHT / node.offsetHeight));
-    const dataUrl = await domToJpeg(node, {
-      width: node.offsetWidth,
-      height: node.offsetHeight,
+    const scale = Math.max(2, Math.ceil(MIN_HEIGHT / height));
+    const dataUrl = await domToJpeg(clone, {
+      width,
+      height,
       scale,
       quality: 0.9,
       backgroundColor: bg,
@@ -46,6 +46,6 @@ export async function downloadNodeJpg(node: HTMLElement, filename: string, bg = 
     a.download = filename.endsWith('.jpg') ? filename : `${filename}.jpg`;
     a.click();
   } finally {
-    restore.forEach((f) => f());
+    clone.remove();
   }
 }
