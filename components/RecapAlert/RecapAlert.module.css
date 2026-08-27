@@ -1,0 +1,86 @@
+.card {
+  position: relative;
+  width: min(320px, calc(100vw - 36px));
+  padding: 1.1rem 1.15rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(160, 160, 165, 0.35);
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(160deg, rgba(21, 10, 15, 0.55), rgba(110, 44, 44, 0.55));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: recapAlertIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes recapAlertIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+.glow {
+  position: absolute;
+  top: -40%;
+  right: -30%;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.25), transparent 70%);
+  pointer-events: none;
+}
+
+.close {
+  position: absolute;
+  top: calc(1.1rem - 4px);
+  right: calc(1.15rem - 4px);
+  display: inline-flex;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.close:hover {
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  padding-right: 1.4rem;
+}
+
+.sparkle {
+  color: #ffd782;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.cta {
+  margin-top: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.5rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cta:hover {
+  background: rgba(0, 0, 0, 0.42);
+}

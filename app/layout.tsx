@@ -17,6 +17,7 @@ import { ModSidebarProvider } from '@/lib/modSidebar';
 import NavBar from '@/components/NavBar/NavBar';
 import BannedBanner from '@/components/BannedBanner/BannedBanner';
 import ModAlert from '@/components/ModAlert/ModAlert';
+import RecapAlert from '@/components/RecapAlert/RecapAlert';
 import CookiesBanner from '@/components/CookiesBanner/CookiesBanner';
 import Footer from '@/components/Footer/Footer';
 import Player from '@/components/Player/Player';
@@ -78,7 +79,10 @@ function AppProviders({ children }: { children: React.ReactNode }) {
                   <DragScroll />
                   <NavBar />
                   <BannedBanner />
-                  <ModAlert />
+                  <div className="corner-alert-stack">
+                    <ModAlert />
+                    <RecapAlert />
+                  </div>
                   <CookiesBanner />
                   <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
                     <PhotoProvider>

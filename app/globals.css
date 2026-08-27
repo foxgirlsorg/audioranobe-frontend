@@ -228,6 +228,19 @@ body.mod-fullscreen main.container {
   padding-top: var(--nav-total);
 }
 
+/* ---------- corner alert stack (ModAlert + RecapAlert) ---------- */
+
+.corner-alert-stack {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 18px;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
 /* ---------- noise overlay (STYLE.md 4.1) ---------- */
 
 .noise {

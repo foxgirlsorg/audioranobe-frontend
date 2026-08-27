@@ -1,10 +1,6 @@
-/* ponytail: fixed bottom-right; can overlap the player bar when a track is
-   playing — offset for player height if that becomes annoying. */
+/* ponytail: can overlap the player bar when a track is playing — offset for
+   player height if that becomes annoying. */
 .card {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 18px;
-  z-index: 1500;
   width: min(340px, calc(100vw - 36px));
   padding: 0.9rem 1rem 0.75rem;
   animation: modAlertIn 0.22s ease;
