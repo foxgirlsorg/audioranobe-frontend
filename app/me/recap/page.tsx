@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { downloadNodePng } from '@/lib/exportImage';
+import { downloadNodeJpg } from '@/lib/exportImage';
 import type { Recap } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -57,7 +57,7 @@ export default function RecapPage() {
       setExportKey((k) => k + 1);
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       if (!cardRef.current) return;
-      await downloadNodePng(cardRef.current, `recap-${fresh.period_label}`);
+      await downloadNodeJpg(cardRef.current, `recap-${fresh.period_label}`);
     } catch (e) {
       toast(errMsg(e), 'error');
     }

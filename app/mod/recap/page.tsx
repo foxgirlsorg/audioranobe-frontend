@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { RecapDesign, RecapDesignState } from '@/lib/types';
 import { fillTemplate, RECAP_TOKENS, SAMPLE_RECAP } from '@/lib/recapTemplate';
-import { downloadNodePng } from '@/lib/exportImage';
+import { downloadNodeJpg } from '@/lib/exportImage';
 import RecapCard from '@/components/RecapCard/RecapCard';
 import { ModShell, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
@@ -85,7 +85,7 @@ function RecapContent() {
     if (!previewRef.current) return;
     setRendering(true);
     try {
-      await downloadNodePng(previewRef.current, `recap-card-${year}`);
+      await downloadNodeJpg(previewRef.current, `recap-card-${year}`);
     } catch (e) {
       toast(errMsg(e), 'error');
     }

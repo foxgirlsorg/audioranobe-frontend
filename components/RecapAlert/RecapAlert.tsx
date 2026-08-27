@@ -50,14 +50,13 @@ export default function RecapAlert() {
   const hide = () => setRecap(null);
 
   return (
-    <div className={styles.card} role="status" aria-label="Итоги месяца готовы">
-      <span className={styles.glow} aria-hidden="true" />
-      <button type="button" className={styles.close} onClick={hide} aria-label="Скрыть">
-        <X size={20} />
-      </button>
+    <div className={`glass-panel ${styles.card}`} role="status" aria-label="Итоги месяца готовы">
       <div className={styles.head}>
-        <Sparkles size={18} className={styles.sparkle} aria-hidden="true" />
-        <span className={styles.title}>Итоги месяца готовы!</span>
+        <Sparkles size={15} className={styles.sparkle} aria-hidden="true" />
+        <span className={styles.title}>Итоги месяца готовы</span>
+        <button type="button" className={styles.close} onClick={hide} aria-label="Скрыть">
+          <X size={15} />
+        </button>
       </div>
       <Link href="/me/recap" className={styles.cta} onClick={hide}>
         Смотреть итоги

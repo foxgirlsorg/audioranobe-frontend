@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Download, Headphones, Sparkles } from 'lucide-react';
 import { useToast, errMsg } from '@/lib/toast';
-import { downloadNodePng } from '@/lib/exportImage';
+import { downloadNodeJpg } from '@/lib/exportImage';
 import type { Recap } from '@/lib/types';
 import styles from './RecapDeck.module.css';
 
@@ -56,7 +56,7 @@ export default function RecapDeck({
       // Export just the admin card host, not the 9/16 deck frame around it.
       const node = customRef.current?.firstElementChild as HTMLElement | null;
       if (!node) return;
-      await downloadNodePng(node, `recap-${recap.period_label}`);
+      await downloadNodeJpg(node, `recap-${recap.period_label}`);
     } catch (e) {
       toast(errMsg(e), 'error');
     }
