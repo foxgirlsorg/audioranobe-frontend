@@ -69,7 +69,10 @@ export default function Select<T extends string = string>({
       if (wrapRef.current?.contains(t) || listRef.current?.contains(t)) return;
       close(false);
     };
-    const onScroll = () => close(false);
+    const onScroll = (e: Event) => {
+      if (listRef.current?.contains(e.target as Node)) return;
+      close(false);
+    };
     document.addEventListener('mousedown', onDown);
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('resize', onScroll);
