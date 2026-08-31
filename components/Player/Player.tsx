@@ -21,6 +21,7 @@ import {
 import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { chapterNumberLabel, formatDuration } from '@/lib/format';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
+import { useBackToClose } from '@/lib/useBackToClose';
 import { useToast, errMsg } from '@/lib/toast';
 import styles from './Player.module.css';
 
@@ -73,6 +74,8 @@ export default function Player() {
   // docked.
   const fullMounted = useAnimatedPresence(full, 360);
   const stageMounted = useAnimatedPresence(full, 360);
+
+  useBackToClose(full, () => setFull(false));
 
   // The docked bar slides up when a track first starts and slides back down
   // when playback stops. `active` is "the bar should be visible"; keeping it
