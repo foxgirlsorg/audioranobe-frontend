@@ -410,8 +410,7 @@ export default function UserPageClient({
               avatar_url: updated.avatar_url,
               cover_url: updated.cover_url,
               role: updated.role,
-              is_developer: updated.is_developer,
-              is_donator: updated.is_donator,
+              badges: updated.badges,
               is_banned: updated.is_banned,
             },
           }

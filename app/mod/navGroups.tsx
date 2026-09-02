@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   MessageSquare,
   Sparkles,
+  Award,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -54,6 +55,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/narrators', label: 'Чтецы', icon: Mic },
       { href: '/mod/authors', label: 'Авторы', icon: Feather },
       { href: '/mod/genres', label: 'Теги', icon: BookMarked, adminOnly: true },
+      { href: '/mod/badges', label: 'Бейджи', icon: Award, adminOnly: true },
       { href: '/mod/dmca', label: 'DMCA', icon: Shield, adminOnly: true },
     ],
   },

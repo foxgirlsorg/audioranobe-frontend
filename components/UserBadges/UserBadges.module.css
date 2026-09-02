@@ -4,3 +4,12 @@
   gap: 5px;
   vertical-align: middle;
 }
+
+.banned {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+  color: var(--danger, #c53434);
+}

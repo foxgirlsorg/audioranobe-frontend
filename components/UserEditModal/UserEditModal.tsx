@@ -6,10 +6,11 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import { resizeToWebp } from '@/lib/image';
-import type { Me } from '@/lib/types';
+import type { Badge, Me } from '@/lib/types';
 import Modal from '@/components/Modal/Modal';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
 import Toggle from '@/components/Toggle/Toggle';
+import BadgePicker from '@/components/BadgePicker/BadgePicker';
 import styles from './UserEditModal.module.css';
 
 /**
@@ -41,8 +42,8 @@ export function UserEditModal({
   const [bio, setBio] = useState('');
   const [socials, setSocials] = useState<string[]>([]);
   const [password, setPassword] = useState('');
-  const [isDeveloper, setIsDeveloper] = useState(false);
-  const [isDonator, setIsDonator] = useState(false);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [badgeIds, setBadgeIds] = useState<number[]>([]);
 
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
@@ -65,8 +66,7 @@ export function UserEditModal({
         setBio(u.bio || '');
         setSocials(u.socials ?? []);
         setPassword('');
-        setIsDeveloper(!!u.is_developer);
-        setIsDonator(!!u.is_donator);
+        setBadgeIds(u.badges.map((b) => b.id));
       })
       .catch((e) => {
         if (alive) setLoadError(errMsg(e));
@@ -75,6 +75,19 @@ export function UserEditModal({
       alive = false;
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (!isAdmin || userId === null) return;
+    let alive = true;
+    api<{ items: Badge[] }>('/mod/badges')
+      .then((d) => {
+        if (alive) setBadges(d.items);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [isAdmin, userId]);
 
   const applyUpdate = (updated: Me, keepOpen: boolean) => {
     setTarget(updated);
@@ -99,8 +112,7 @@ export function UserEditModal({
                 ...(password ? { password } : {}),
               }
             : {}),
-          is_developer: isDeveloper,
-          is_donator: isDonator,
+          ...(isAdmin ? { badge_ids: badgeIds } : {}),
         },
       });
       applyUpdate(updated, false);
@@ -255,21 +267,15 @@ export function UserEditModal({
           </button>
 
           {isAdmin ? (
-            <Toggle
-              checked={isDeveloper}
-              onChange={setIsDeveloper}
-              label={'Командный бейдж: разработчик'}
-              disabled={imageBusy !== null || busy}
-            />
-          ) : null}
-
-          {isAdmin ? (
-            <Toggle
-              checked={isDonator}
-              onChange={setIsDonator}
-              label={'Бейдж: донатер'}
-              disabled={imageBusy !== null || busy}
-            />
+            <div className={styles.fieldLabel}>
+              {'Бейджи'}
+              <BadgePicker
+                badges={badges}
+                value={badgeIds}
+                onChange={setBadgeIds}
+                disabled={imageBusy !== null || busy}
+              />
+            </div>
           ) : null}
 
           {isAdmin ? (

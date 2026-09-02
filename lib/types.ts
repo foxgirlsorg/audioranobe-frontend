@@ -64,14 +64,20 @@ export type ModRequestEntityType = 'narrator' | 'title' | 'chapter' | 'author';
 
 export type PresenceStatus = 'online' | 'offline';
 
+export interface Badge {
+  id: number;
+  slug: string;
+  name: string;
+  svg: string;
+}
+
 export interface UserBrief {
   username: string;
   display_name: string;
   id: number;
   avatar_url: string | null;
   role: Role;
-  is_developer: boolean;
-  is_donator: boolean;
+  badges: Badge[];
   is_banned: boolean;
   /** Derived server-side; 'offline' on briefs whose query omits presence cols. */
   presence: PresenceStatus;
@@ -102,8 +108,7 @@ export interface UserPublic {
   avatar_url: string | null;
   cover_url: string | null;
   role: Role;
-  is_developer: boolean;
-  is_donator: boolean;
+  badges: Badge[];
   is_banned: boolean;
   created_at: string;
   presence: PresenceStatus;
@@ -132,8 +137,7 @@ export interface Viewer {
   avatar_url: string | null;
   cover_url: string | null;
   role: Role;
-  is_developer: boolean;
-  is_donator: boolean;
+  badges: Badge[];
   created_at: string;
   email: string | null;
   has_password: boolean;
@@ -559,7 +563,7 @@ export interface ModNarrator {
   subscribers_count: number;
   created_at: string;
   deleted_at: string | null;
-  owner: { id: number; username: string; role: Role; is_developer: boolean; is_donator: boolean } | null;
+  owner: { id: number; username: string; role: Role; badges: Badge[] } | null;
   admin_contact: string | null;
 }
 

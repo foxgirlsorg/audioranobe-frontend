@@ -8,24 +8,6 @@
 
 .badge svg {
   display: block;
-}
-
-.admin {
-  color: var(--accent);
-}
-
-.moderator {
-  color: #e0b64e;
-}
-
-.developer {
-  color: #6ea8e0;
-}
-
-.donator {
-  color: #f2c94c;
-}
-
-.banned {
-  color: var(--danger, #c53434);
+  width: 100%;
+  height: 100%;
 }
