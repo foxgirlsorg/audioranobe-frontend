@@ -282,7 +282,8 @@ function RolesContent() {
                 <section key={category} className={styles.permSection}>
                   <h4 className={styles.permSectionTitle}>{category}</h4>
                   {perms.map((p) => {
-                    const locked = !isSuper && !can(p.slug);
+                    const adminWildcard = draft.slug === 'admin' && p.slug === '*';
+                    const locked = adminWildcard || (!isSuper && !can(p.slug));
                     return (
                       <div
                         key={p.slug}
