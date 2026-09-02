@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, Pencil, Trash2, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { Badge } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
-import EmptyState from '@/components/EmptyState/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
@@ -108,17 +107,8 @@ function BadgesContent() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
-        <button type="button" className="btn btn-primary" onClick={() => setDraft({ id: null, name: '', svg: '' })}>
-          <Plus size={16} /> {'Создать бейдж'}
-        </button>
-      </div>
-
-      {items.length === 0 ? (
-        <EmptyState icon={Award} title={'Бейджей пока нет'} body={'Создайте первый бейдж.'} />
-      ) : (
-        <div className={styles.grid}>
-          {items.map((b) => (
+      <div className={styles.grid}>
+        {items.map((b) => (
             <div key={b.id} className={`glass-panel ${styles.card}`}>
               <div className={styles.cardIcon}>
                 <BadgeIcon svg={b.svg} size={40} />
@@ -144,8 +134,15 @@ function BadgesContent() {
               </div>
             </div>
           ))}
+          <button
+            type="button"
+            className={`glass-panel ${styles.addCard}`}
+            onClick={() => setDraft({ id: null, name: '', svg: '' })}
+          >
+            <Plus size={20} />
+            <span>{'Создать бейдж'}</span>
+          </button>
         </div>
-      )}
 
       <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id === null ? 'Новый бейдж' : 'Изменение бейджа'}>
         {draft ? (

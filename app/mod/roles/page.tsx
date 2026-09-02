@@ -7,7 +7,6 @@ import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import type { Badge, ModPermission, ModRole } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
-import EmptyState from '@/components/EmptyState/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
 import Toggle from '@/components/Toggle/Toggle';
@@ -172,57 +171,51 @@ function RolesContent() {
 
   return (
     <div>
-      <div className={styles.toolbar}>
-        <button type="button" className="btn btn-primary" onClick={openNew}>
-          <Plus size={16} /> {'Создать роль'}
-        </button>
-      </div>
-
-      {roles.length === 0 ? (
-        <EmptyState icon={KeyRound} title={'Ролей пока нет'} body={'Создайте первую роль.'} />
-      ) : (
-        <div className={styles.grid}>
-          {roles.map((r) => (
+      <div className={styles.grid}>
+        {roles.map((r) => (
             <div key={r.id} className={`glass-panel ${styles.card}`}>
               <div className={styles.cardHead}>
-                {r.badge ? <BadgeSwatch svg={r.badge.svg} /> : <KeyRound size={18} className={styles.cardIcon} />}
-                <div className={styles.cardName}>
-                  <span className={styles.roleName}>{r.name}</span>
-                  <span className={styles.roleSlug}>{`на профиле: ${r.public_name || '—'}`}</span>
-                </div>
-              </div>
-              <div className={styles.cardMeta}>
-                <span className={styles.metaItem}>
-                  <Users size={13} /> {r.member_count}
-                </span>
-                <span className={styles.metaItem}>
-                  {r.is_wildcard ? 'все права' : `${r.permissions.length} прав`}
-                </span>
+                {r.badge ? <BadgeSwatch svg={r.badge.svg} /> : <KeyRound size={20} className={styles.cardIcon} />}
+                <span className={styles.roleName}>{r.name}</span>
                 {r.is_system ? <span className={styles.sysTag}>{'системная'}</span> : null}
               </div>
-              <div className={styles.cardActions}>
-                <button type="button" className={`btn btn-ghost ${styles.smallBtn}`} onClick={() => openEdit(r)}>
-                  <Pencil size={14} /> {'Изменить'}
-                </button>
-                <button type="button" className={`btn btn-ghost ${styles.smallBtn}`} onClick={() => openCopy(r)}>
-                  <Copy size={14} /> {'Копировать'}
-                </button>
-                {!r.is_system ? (
-                  <button
-                    type="button"
-                    className={`btn btn-ghost ${styles.smallBtn}`}
-                    onClick={() => setToDelete(r)}
-                    disabled={r.member_count > 0}
-                    title={r.member_count > 0 ? 'Сначала переведите пользователей на другую роль' : 'Удалить'}
-                  >
-                    <Trash2 size={14} />
+              <div className={styles.cardBody}>
+                <span className={styles.roleSlug}>{`на профиле: ${r.public_name || '—'}`}</span>
+                <div className={styles.cardMeta}>
+                  <span className={styles.metaItem}>
+                    <Users size={14} /> {`${r.member_count} польз.`}
+                  </span>
+                  <span className={styles.metaItem}>
+                    <KeyRound size={14} /> {r.is_wildcard ? 'все права' : `${r.permissions.length} прав`}
+                  </span>
+                </div>
+                <div className={styles.cardActions}>
+                  <button type="button" className={`${styles.smallBtn} ${styles.grow} ${styles.editBtn}`} onClick={() => openEdit(r)}>
+                    <Pencil size={14} /> {'Изменить'}
                   </button>
-                ) : null}
+                  <button type="button" className={`btn btn-ghost ${styles.smallBtn}`} onClick={() => openCopy(r)} title={'Копировать'}>
+                    <Copy size={14} />
+                  </button>
+                  {!r.is_system ? (
+                    <button
+                      type="button"
+                      className={`btn btn-ghost ${styles.smallBtn}`}
+                      onClick={() => setToDelete(r)}
+                      disabled={r.member_count > 0}
+                      title={r.member_count > 0 ? 'Сначала переведите пользователей на другую роль' : 'Удалить'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
           ))}
+          <button type="button" className={`glass-panel ${styles.addCard}`} onClick={openNew}>
+            <Plus size={20} />
+            <span>{'Создать роль'}</span>
+          </button>
         </div>
-      )}
 
       <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id === null ? 'Новая роль' : 'Изменение роли'} size="wide">
         {draft ? (

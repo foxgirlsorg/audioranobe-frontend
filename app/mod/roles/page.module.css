@@ -4,35 +4,56 @@
   padding: 4rem 0;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1.25rem;
-}
-
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1rem;
 }
 
 .card {
-  padding: 1.1rem 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  overflow: hidden;
+}
+
+.addCard {
+  padding: 1.1rem 1.2rem;
+  min-height: 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.addCard:hover {
+  color: var(--accent, #de6161);
+  border-color: var(--accent, #de6161);
 }
 
 .cardHead {
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
+  align-items: center;
+  gap: 0.55rem;
+  height: 52px;
+  padding: 0 0.9rem;
+  background: color-mix(in srgb, var(--accent, #de6161) 10%, transparent);
 }
 
 .badgeSwatch {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .badgeSwatch svg {
@@ -41,44 +62,46 @@
 }
 
 .cardIcon {
-  color: var(--text-muted);
-}
-
-.cardName {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
+  color: var(--accent, #de6161);
+  flex-shrink: 0;
 }
 
 .roleName {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 600;
   color: #fff;
-  overflow-wrap: anywhere;
-  line-height: 1.25;
-}
-
-.roleSlug {
-  font-size: 11px;
-  color: var(--text-muted);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sysTag {
-  margin-left: auto;
+  flex-shrink: 0;
   font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--accent, #de6161);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+}
+
+.roleSlug {
+  font-size: 12px;
   color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.15rem 0.4rem;
+  overflow-wrap: anywhere;
 }
 
 .cardMeta {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   font-size: 12.5px;
   color: var(--text-muted);
@@ -93,15 +116,34 @@
 .cardActions {
   display: flex;
   gap: 0.35rem;
-  margin-top: auto;
 }
 
 .smallBtn {
-  padding: 0.42rem 0.7rem;
+  flex: 0 0 auto;
+  padding: 0.42rem 0.55rem;
   font-size: 11.5px;
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  justify-content: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.grow {
+  flex: 1 1 auto;
+}
+
+.editBtn {
+  border: none;
+  border-radius: var(--radius, 8px);
+  cursor: pointer;
+  color: var(--accent, #de6161);
+  background: color-mix(in srgb, var(--accent, #de6161) 14%, transparent);
+  transition: background 0.15s;
+}
+
+.editBtn:hover {
+  background: color-mix(in srgb, var(--accent, #de6161) 22%, transparent);
 }
 
 .editor {
