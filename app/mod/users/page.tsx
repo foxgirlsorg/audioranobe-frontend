@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
-import type { Me, Paginated, Role } from '@/lib/types';
+import type { Me, Paginated, RoleOption } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
@@ -21,16 +21,44 @@ import Select from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
-const ROLE_LABELS: Record<string, string> = {
-  user: 'пользователь',
-  moderator: 'модератор',
-  admin: 'админ',
-};
-
 function UsersContent() {
-  const { user: me } = useAuth();
+  const { user: me, can } = useAuth();
   const { toast } = useToast();
-  const isAdmin = me?.role === 'admin';
+  const canRole = can('users.role');
+  const canBan = can('users.ban');
+  const canSkip = can('users.grant_skip_moderation');
+  const canDelete = can('users.delete');
+  // Email verification and the ban-reason dialog stay '*'-only, as before.
+  const isAdmin = can('*');
+
+  const [roleOptions, setRoleOptions] = useState<RoleOption[]>([]);
+  useEffect(() => {
+    let alive = true;
+    api<{ items: RoleOption[] }>('/mod/role-options')
+      .then((d) => {
+        if (alive) setRoleOptions(d.items);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const roleLabel = useCallback(
+    (slug: string) => roleOptions.find((r) => r.slug === slug)?.name ?? slug,
+    [roleOptions]
+  );
+
+  // Hierarchy: your rank is your role's priority ('*' outranks everyone). You
+  // can only manage users — and assign roles — strictly below your own rank.
+  const priorityOf = useCallback(
+    (slug: string) => roleOptions.find((r) => r.slug === slug)?.priority ?? 0,
+    [roleOptions]
+  );
+  const myRank = isAdmin ? Infinity : priorityOf(me?.role ?? '');
+  const outranks = useCallback(
+    (u: Me) => isAdmin || priorityOf(u.role) < myRank,
+    [isAdmin, priorityOf, myRank]
+  );
 
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
@@ -62,9 +90,7 @@ function UsersContent() {
         body: { role },
       });
       replaceRow(updated);
-      toast(
-        `${u.username} теперь ${ROLE_LABELS[role] ? ROLE_LABELS[role] : role}`
-      );
+      toast(`${u.username} теперь ${roleLabel(role)}`);
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -108,8 +134,6 @@ function UsersContent() {
     }
     setBusyId(null);
   };
-
-  const roles: Role[] = ['user', 'moderator', 'admin'];
 
   const verifyEmail = async (u: Me, value: boolean) => {
     setBusyId(u.id);
@@ -236,11 +260,10 @@ function UsersContent() {
                           size="sm"
                           className={styles.roleSelect}
                           value={u.role}
-                          disabled={!isAdmin || self || busy}
-                          options={roles.map((r) => ({
-                            value: r,
-                            label: ROLE_LABELS[r] ? ROLE_LABELS[r] : r,
-                          }))}
+                          disabled={!canRole || self || busy || !outranks(u)}
+                          options={roleOptions
+                            .filter((r) => isAdmin || r.priority < myRank || r.slug === u.role)
+                            .map((r) => ({ value: r.slug, label: r.name }))}
                           onChange={(v) => changeRole(u, v)}
                           ariaLabel={`Роль пользователя ${u.username}`}
                         />
@@ -248,7 +271,7 @@ function UsersContent() {
                       <td>
                         <Toggle
                           checked={u.skip_moderation}
-                          disabled={!isAdmin || busy}
+                          disabled={!canSkip || busy || !outranks(u)}
                           onChange={() => void toggleSkipModeration(u)}
                         />
                       </td>
@@ -260,7 +283,7 @@ function UsersContent() {
                               ? `btn ${styles.smallBtn}`
                               : `btn btn-danger ${styles.smallBtn}`
                           }
-                          disabled={self || busy}
+                          disabled={self || busy || !canBan || !outranks(u)}
                           onClick={() => {
                             setToBan(u);
                             setBanReason('');
@@ -295,18 +318,18 @@ function UsersContent() {
                           <button
                             type="button"
                             className={`btn btn-ghost ${styles.smallBtn}`}
-                            disabled={busy}
+                            disabled={busy || (!self && !outranks(u))}
                             onClick={() => setToEditId(u.id)}
                             aria-label={`Редактировать ${u.username}`}
                             title={'Редактировать'}
                           >
                             <Pencil size={15} />
                           </button>
-                          {isAdmin ? (
+                          {canDelete ? (
                             <button
                               type="button"
                               className={`btn btn-ghost ${styles.smallBtn}`}
-                              disabled={self || busy}
+                              disabled={self || busy || !outranks(u)}
                               onClick={() => setToDelete(u)}
                               aria-label={`Удалить ${u.username}`}
                               title={'Удалить аккаунт'}
@@ -399,7 +422,7 @@ function UsersContent() {
 export default function ModUsersPage() {
   const h = splitHeading('Управление пользователями');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="users.edit">
       <UsersContent />
     </ModShell>
   );

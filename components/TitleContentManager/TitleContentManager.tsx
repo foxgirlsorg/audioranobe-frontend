@@ -80,8 +80,8 @@ export default function TitleContentManager({
 }) {
   const titleId = title.id;
   const { toast } = useToast();
-  const { user, isMod } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { user, isMod, can } = useAuth();
+  const isAdmin = can('chapters.edit');
 
   const [showAddVolume, setShowAddVolume] = useState(false);
   const [volNumber, setVolNumber] = useState('');

@@ -176,13 +176,7 @@ function ProfileMeta({ user }: { user: UserProfile['user'] }) {
   return (
     <span ref={ref} className={styles.metaSub}>
       {user.display_name ? <span className={styles.metaHandle}>@{user.username}</span> : null}
-      {user.role === 'admin' ? (
-        <span className={styles.metaRole}> Администратор</span>
-      ) : user.role === 'moderator' ? (
-        <span className={styles.metaRole}>Модератор</span>
-      ) : (
-        ''
-      )}
+      {user.role_name ? <span className={styles.metaRole}>{user.role_name}</span> : ''}
       <PresenceLabel status={user.presence} lastSeenAt={user.last_seen_at} className={styles.metaPresence} />
       <span className={styles.metaJoined}>{`На сайте с ${formatDate(user.created_at)}`}</span>
     </span>
@@ -243,7 +237,7 @@ export default function UserPageClient({
   const userRef = decodeURIComponent(id);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user: viewer, isMod } = useAuth();
+  const { user: viewer, can } = useAuth();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
@@ -383,7 +377,7 @@ export default function UserPageClient({
   const { user, stats, can_message } = profile;
 
   const canEditLibrary =
-    viewer != null && (viewer.id === user.id || viewer.role === 'admin');
+    viewer != null && (viewer.id === user.id || can('users.edit'));
   const isOwnProfile = viewer != null && viewer.id === user.id;
   const libraryTotal = LIBRARY_STATUS_VALUES.reduce(
     (sum, k) => sum + (stats[k as keyof UserProfile['stats']] ?? 0),
@@ -481,7 +475,7 @@ export default function UserPageClient({
                 <Link href="/me/settings" className={styles.editBtn} title="Редактировать">
                   <Pencil size={16} />
                 </Link>
-              ) : isMod ? (
+              ) : can('users.edit') ? (
                 <button
                   type="button"
                   className={styles.editBtn}
@@ -716,7 +710,7 @@ export default function UserPageClient({
                       <span className={styles.commentWhen}>{timeAgo(c.created_at)}</span>
                     </div>
                     {c.is_deleted ? (
-                      viewer?.role === 'admin' ? (
+                      can('comments.moderate') ? (
                         <>
                           <p className={styles.commentDeleted}>Комментарий удалён</p>
                           <CommentBody body={c.body} />

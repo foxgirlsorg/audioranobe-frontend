@@ -55,13 +55,13 @@ function useModCounts(): Partial<Record<CountKey, number>> {
 
 function NavGroups({
   pathname,
-  isAdmin,
+  can,
   counts,
   collapsed,
   onNavigate,
 }: {
   pathname: string | null;
-  isAdmin: boolean;
+  can: (perm: string) => boolean;
   counts: Partial<Record<CountKey, number>>;
   collapsed?: boolean;
   onNavigate?: () => void;
@@ -69,7 +69,9 @@ function NavGroups({
   return (
     <>
       {GROUPS.map((group, gi) => {
-        const tabs = group.tabs.filter((t) => !t.adminOnly || isAdmin);
+        const tabs = group.tabs.filter(
+          (t) => (!t.perm || can(t.perm)) && (!t.anyPerm || t.anyPerm.some(can))
+        );
         if (tabs.length === 0) return null;
         return (
           <div key={group.label} className={styles.group}>
@@ -99,7 +101,6 @@ function NavGroups({
                     <>
                       <span className={styles.itemLabel}>{tab.label}</span>
                       {!!count && <span className={styles.itemBadge}>{count > 99 ? '99+' : count}</span>}
-                      {tab.adminOnly && <span className={styles.tagAdmin}>admin</span>}
                     </>
                   )}
                 </Link>
@@ -114,8 +115,7 @@ function NavGroups({
 
 export function ModNav() {
   const pathname = usePathname();
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { can } = useAuth();
   const { open, setOpen } = useModSidebar();
   const { collapsed, setCollapsed } = useModCollapse();
   const counts = useModCounts();
@@ -145,7 +145,7 @@ export function ModNav() {
         aria-label="Разделы модерации"
         className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''}`}
       >
-        <NavGroups pathname={pathname} isAdmin={isAdmin} counts={counts} collapsed={collapsed} />
+        <NavGroups pathname={pathname} can={can} counts={counts} collapsed={collapsed} />
         <button
           type="button"
           className={styles.collapseBtn}
@@ -174,7 +174,7 @@ export function ModNav() {
             >
               <NavGroups
                 pathname={pathname}
-                isAdmin={isAdmin}
+                can={can}
                 counts={counts}
                 onNavigate={() => setOpen(false)}
               />
@@ -208,15 +208,19 @@ export function ErrorPanel({
 export function ModShell({
   title,
   accent,
-  adminOnly = false,
+  perm,
+  anyPerm,
   children,
 }: {
   title: string;
   accent?: string;
-  adminOnly?: boolean;
+  /** Permission required for this page beyond panel access. */
+  perm?: string;
+  /** Access granted if the user holds ANY of these permissions. */
+  anyPerm?: string[];
   children: React.ReactNode;
 }) {
-  const { user, loading, isMod } = useAuth();
+  const { user, loading, isMod, can } = useAuth();
   const { collapsed } = useModCollapse();
   const router = useRouter();
 
@@ -239,8 +243,9 @@ export function ModShell({
     );
   }
 
-  if (!isMod || (adminOnly && user.role !== 'admin')) {
-    const modButNotAdmin = isMod && adminOnly;
+  const permOk = (!perm || can(perm)) && (!anyPerm || anyPerm.some(can));
+  if (!isMod || !permOk) {
+    const modButNotAllowed = isMod && !permOk;
     return (
       <div className={`glass-panel ${styles.forbidden}`}>
         <span className={styles.forbiddenGlow} aria-hidden="true" />
@@ -248,12 +253,12 @@ export function ModShell({
         <div className={styles.forbiddenCode}>403</div>
         <span className="eyebrow">{'Доступ ограничен'}</span>
         <p className={styles.forbiddenBody}>
-          {modButNotAdmin
-            ? 'Этот раздел доступен только администраторам.'
+          {modButNotAllowed
+            ? 'У вас нет прав для этого раздела.'
             : 'Раздел модерации доступен только команде AudioRanobe.'}
         </p>
-        <Link href={modButNotAdmin ? '/mod' : '/'} className="btn btn-primary">
-          {modButNotAdmin ? 'Назад к обзору' : 'На главную'}
+        <Link href={modButNotAllowed ? '/mod' : '/'} className="btn btn-primary">
+          {modButNotAllowed ? 'Назад к обзору' : 'На главную'}
         </Link>
       </div>
     );

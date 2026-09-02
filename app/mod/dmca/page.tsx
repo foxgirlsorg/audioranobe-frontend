@@ -204,7 +204,7 @@ function DmcaContent() {
 export default function ModDmcaPage() {
   const h = splitHeading('Заявки DMCA');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent} perm="dmca.manage">
       <DmcaContent />
     </ModShell>
   );

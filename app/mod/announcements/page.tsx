@@ -339,7 +339,7 @@ function AnnouncementsContent() {
 export default function ModAnnouncementsPage() {
   const h = splitHeading('Объявления сайта');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent} perm="announcements.manage">
       <AnnouncementsContent />
     </ModShell>
   );

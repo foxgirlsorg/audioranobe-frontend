@@ -22,8 +22,8 @@ const MAX_COLLAPSED_HEIGHT = 400;
 
 function CommentsContent() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { can } = useAuth();
+  const isAdmin = can('comments.moderate');
 
   const [data, setData] = useState<Paginated<ModComment> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -318,7 +318,7 @@ function CommentsContent() {
 export default function ModCommentsPage() {
   const h = splitHeading('Все комментарии');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="comments.moderate">
       <CommentsContent />
     </ModShell>
   );

@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import type { Me, Paginated, SearchSuggest } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import { ModShell, splitHeading } from '@/app/mod/modnav';
+import { NOTIFY_PERMS } from '@/app/mod/navGroups';
 import styles from './page.module.css';
 
 type Audience = 'all' | 'user' | 'narrator_subs' | 'title_followers';
@@ -206,10 +207,17 @@ function SuggestPicker({
 
 function BroadcastContent() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
-  const audiences = isAdmin ? AUDIENCES : AUDIENCES.filter((a) => a.key !== 'all');
-  const [audience, setAudience] = useState<Audience>(isAdmin ? 'all' : 'user');
+  const { can } = useAuth();
+  const audiencePerm = (k: Audience): string =>
+    k === 'all'
+      ? 'notify.all'
+      : k === 'user'
+        ? 'notify.user'
+        : k === 'narrator_subs'
+          ? 'notify.narrator_subs'
+          : 'notify.title_followers';
+  const audiences = AUDIENCES.filter((a) => can(audiencePerm(a.key)));
+  const [audience, setAudience] = useState<Audience>(audiences[0]?.key ?? 'user');
   const [pickedUser, setPickedUser] = useState<Picked | null>(null);
   const [pickedNarrator, setPickedNarrator] = useState<Picked | null>(null);
   const [pickedTitle, setPickedTitle] = useState<Picked | null>(null);
@@ -361,7 +369,7 @@ function BroadcastContent() {
 export default function ModBroadcastPage() {
   const h = splitHeading('Системная рассылка');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} anyPerm={NOTIFY_PERMS}>
       <BroadcastContent />
     </ModShell>
   );

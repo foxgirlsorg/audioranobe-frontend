@@ -120,8 +120,8 @@ function EditorModal({
 }
 
 export default function NewsPage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { can } = useAuth();
+  const isAdmin = can('announcements.manage');
   const { toast } = useToast();
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Paginated<Announcement> | null>(null);

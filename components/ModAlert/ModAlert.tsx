@@ -27,9 +27,8 @@ function due(): boolean {
 type Counts = Partial<Record<CountKey, number>>;
 
 export default function ModAlert() {
-  const { user } = useAuth();
-  const eligible = user?.role === 'moderator' || user?.role === 'admin';
-  const isAdmin = user?.role === 'admin';
+  const { can } = useAuth();
+  const eligible = can('mod.panel');
   const [items, setItems] = useState<{ href: string; label: string; count: number }[] | null>(null);
   const checking = useRef(false);
 
@@ -39,7 +38,7 @@ export default function ModAlert() {
     checking.current = true;
     api<Counts>('/mod/dashboard')
       .then((counts) => {
-        const list = COUNTABLE.filter((t) => !t.adminOnly || isAdmin)
+        const list = COUNTABLE.filter((t) => !t.perm || can(t.perm))
           .map((t) => ({ href: t.href, label: t.label, count: counts[t.countKey] ?? 0 }))
           .filter((i) => i.count > 0);
         if (list.length) setItems(list);
@@ -48,7 +47,7 @@ export default function ModAlert() {
       .catch(() => {
         checking.current = false;
       });
-  }, [eligible, isAdmin]);
+  }, [eligible, can]);
 
   useEffect(() => {
     if (!eligible) return;

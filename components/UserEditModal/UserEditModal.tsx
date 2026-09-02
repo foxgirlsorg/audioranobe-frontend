@@ -27,8 +27,9 @@ export function UserEditModal({
   onClose: () => void;
   onSaved: (updated: Me) => void;
 }) {
-  const { user: viewer } = useAuth();
-  const isAdmin = viewer?.role === 'admin';
+  const { can } = useAuth();
+  // Email/password/badges/verification stay '*'-only, matching the backend.
+  const isAdmin = can('*');
   const { toast } = useToast();
 
   const [target, setTarget] = useState<Me | null>(null);

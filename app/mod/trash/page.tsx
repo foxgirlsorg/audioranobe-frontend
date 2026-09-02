@@ -14,6 +14,7 @@ import Pagination from '@/components/Pagination/Pagination';
 import Tabs from '@/components/Tabs/Tabs';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
+import { TRASH_VIEW_PERMS } from '@/app/mod/navGroups';
 import styles from './page.module.css';
 
 const KIND_TABS: { key: TrashKind; label: string }[] = [
@@ -25,11 +26,13 @@ const KIND_TABS: { key: TrashKind; label: string }[] = [
 ];
 
 function TrashContent() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { can } = useAuth();
+  const canRestore = can('trash.restore');
+  const canPurge = can('trash.purge');
   const { toast } = useToast();
 
-  const [kind, setKind] = useState<TrashKind>('title');
+  const visibleTabs = KIND_TABS.filter((t) => can(`trash.view.${t.key}`));
+  const [kind, setKind] = useState<TrashKind>(() => visibleTabs[0]?.key ?? 'title');
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Paginated<TrashEntry> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,7 +103,7 @@ function TrashContent() {
 
       <Tabs
         variant="underline"
-        tabs={KIND_TABS}
+        tabs={visibleTabs}
         active={kind}
         onChange={(k) => {
           setKind(k as TrashKind);
@@ -148,16 +151,18 @@ function TrashContent() {
                       </td>
                       <td>
                         <div className={styles.rowActions}>
-                          <button
-                            type="button"
-                            className={`btn ${styles.smallBtn}`}
-                            disabled={busy}
-                            onClick={() => void restore(e)}
-                          >
-                            <RotateCcw size={14} />
-                            Вернуть
-                          </button>
-                          {isAdmin ? (
+                          {canRestore ? (
+                            <button
+                              type="button"
+                              className={`btn ${styles.smallBtn}`}
+                              disabled={busy}
+                              onClick={() => void restore(e)}
+                            >
+                              <RotateCcw size={14} />
+                              Вернуть
+                            </button>
+                          ) : null}
+                          {canPurge ? (
                             <button
                               type="button"
                               className={`btn btn-danger ${styles.smallBtn}`}
@@ -201,7 +206,7 @@ function TrashContent() {
 export default function ModTrashPage() {
   const h = splitHeading('Корзина модерации');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent} anyPerm={TRASH_VIEW_PERMS}>
       <TrashContent />
     </ModShell>
   );

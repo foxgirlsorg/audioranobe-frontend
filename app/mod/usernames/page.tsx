@@ -215,7 +215,7 @@ function UsernamesContent() {
 export default function ModUsernamesPage() {
   const h = splitHeading('Зарезервированные имена');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent} perm="usernames.manage">
       <UsernamesContent />
     </ModShell>
   );

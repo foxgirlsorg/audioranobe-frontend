@@ -33,8 +33,10 @@ export default function DangerZone({
   redirectTo: string;
   onChanged?: () => void | Promise<void>;
 }) {
-  const { user, isMod } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { isMod, can } = useAuth();
+  const trashView = can(`trash.view.${kind}`);
+  const canRestore = trashView && can('trash.restore');
+  const canPurge = trashView && can('trash.purge');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -43,7 +45,7 @@ export default function DangerZone({
 
   const label = LABELS[kind];
   const canDelete = kind === 'title' || kind === 'narrator' ? true : isMod;
-  if (!canDelete && !isAdmin) return null;
+  if (!canDelete && !canRestore && !canPurge) return null;
 
   async function doDelete() {
     setBusy(true);
@@ -100,7 +102,7 @@ export default function DangerZone({
         <span className={styles.title}>Опасная зона</span>
       </div>
 
-      {isDeleted && isAdmin ? (
+      {isDeleted && (canRestore || canPurge) ? (
         <p className={styles.text}>
           {`Этот ${label} удалён и не виден на сайте. Восстановить его можно только отсюда или из корзины.`}
         </p>
@@ -111,7 +113,7 @@ export default function DangerZone({
       )}
 
       <div className={styles.actions}>
-        {isDeleted && isAdmin ? (
+        {isDeleted && canRestore ? (
           <button type="button" className="btn" disabled={busy} onClick={() => void doRestore()}>
             <RotateCcw size={15} />
             Восстановить
@@ -130,7 +132,7 @@ export default function DangerZone({
           </button>
         ) : null}
 
-        {isAdmin ? (
+        {canPurge ? (
           <button
             type="button"
             className="btn btn-danger"

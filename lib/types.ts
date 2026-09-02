@@ -1,5 +1,6 @@
 
-export type Role = 'user' | 'moderator' | 'admin';
+/** A role slug. Built-in roles are user/moderator/admin; admins can add more. */
+export type Role = string;
 export type ModStatus = 'pending' | 'approved' | 'rejected';
 export type ReleaseStatus = 'ongoing' | 'completed' | 'abandoned' | 'frozen';
 export type NarrationStatus = ReleaseStatus;
@@ -77,6 +78,8 @@ export interface UserBrief {
   id: number;
   avatar_url: string | null;
   role: Role;
+  /** Russian display name of the role. */
+  role_name: string;
   badges: Badge[];
   is_banned: boolean;
   /** Derived server-side; 'offline' on briefs whose query omits presence cols. */
@@ -108,6 +111,7 @@ export interface UserPublic {
   avatar_url: string | null;
   cover_url: string | null;
   role: Role;
+  role_name: string;
   badges: Badge[];
   is_banned: boolean;
   created_at: string;
@@ -137,6 +141,9 @@ export interface Viewer {
   avatar_url: string | null;
   cover_url: string | null;
   role: Role;
+  role_name: string;
+  /** Permission slugs the role grants; ['*'] for admin. */
+  permissions: string[];
   badges: Badge[];
   created_at: string;
   email: string | null;
@@ -745,9 +752,36 @@ export interface ReviewQueueItem {
   created_at: string;
 }
 
-/** GET /admin/genre-settings — who may create a new tag. */
-export interface GenreSettings {
-  create_role: 'user' | 'moderator' | 'admin';
+/** One entry of the permission catalog (GET /mod/roles). */
+export interface ModPermission {
+  slug: string;
+  name: string;
+  category: string;
+  description: string;
+}
+
+/** A role with its permissions, as returned by /mod/roles. */
+export interface ModRole {
+  id: number;
+  slug: string;
+  /** The role's name, shown in mod menus. */
+  name: string;
+  /** Optional label shown on profiles (may be empty / shared). */
+  public_name: string;
+  is_system: boolean;
+  priority: number;
+  badge_id: number | null;
+  badge: Badge | null;
+  permissions: string[];
+  is_wildcard: boolean;
+  member_count: number;
+}
+
+/** {slug, name, priority} for the user-editor role dropdown (GET /mod/role-options). */
+export interface RoleOption {
+  slug: string;
+  name: string;
+  priority: number;
 }
 
 export interface RecapTitle {

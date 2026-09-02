@@ -247,7 +247,7 @@ function ReportsContent() {
 export default function ModReportsPage() {
   const h = splitHeading('Жалобы пользователей');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="reports.handle">
       <ReportsContent />
     </ModShell>
   );

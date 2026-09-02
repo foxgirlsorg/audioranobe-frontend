@@ -807,9 +807,9 @@ export function CommentSection({
    *  redundant with the tab label above it. */
   compactMobileHead?: boolean;
 }) {
-  const { user, isMod } = useAuth();
+  const { user, isMod, can } = useAuth();
   const { toast } = useToast();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = can('comments.moderate');
 
   const [items, setItems] = useState<Comment[]>(initialComments?.items ?? []);
   const [total, setTotal] = useState(initialComments?.total ?? 0);

@@ -24,7 +24,7 @@ const FILTERS: { key: '' | JobStatus; label: string }[] = [
 
 export default function TasksPage() {
   return (
-    <ModShell title="Задачи озвучки" accent="">
+    <ModShell title="Задачи озвучки" accent="" perm="narration.jobs">
       <TasksInner />
     </ModShell>
   );

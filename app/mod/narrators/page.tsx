@@ -20,8 +20,7 @@ import styles from './page.module.css';
 type Status = 'all' | 'pending' | 'approved' | 'rejected' | 'deleted';
 
 function NarratorsContent() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { can } = useAuth();
   const { toast } = useToast();
 
   const [status, setStatus] = useState<Status>('pending');
@@ -162,7 +161,7 @@ function NarratorsContent() {
                         </Link>
                         <span className={styles.slug}>{n.slug}</span>
                         {n.is_self ? <span className={styles.selfTag}>{'сам чтец'}</span> : null}
-                        {isAdmin && n.admin_contact ? (
+                        {can('narrators.contact') && n.admin_contact ? (
                           <span className={styles.contact} title={'Контакт для админов'}>
                             {n.admin_contact}
                           </span>
@@ -190,7 +189,7 @@ function NarratorsContent() {
                         <div className={styles.rowActions}>
                           {deleted ? (
                             <>
-                              {isAdmin ? (
+                              {can('trash.view.narrator') && can('trash.restore') ? (
                               <button
                                 type="button"
                                 className={`btn ${styles.smallBtn}`}
@@ -211,7 +210,7 @@ function NarratorsContent() {
                                 {'Вернуть'}
                               </button>
                               ) : null}
-                              {isAdmin ? (
+                              {can('trash.view.narrator') && can('trash.purge') ? (
                                 <button
                                   type="button"
                                   className={`btn btn-danger ${styles.smallBtn}`}
@@ -256,15 +255,17 @@ function NarratorsContent() {
                               >
                                 <Pencil size={14} />
                               </Link>
-                              <button
-                                type="button"
-                                className={`btn btn-ghost ${styles.smallBtn}`}
-                                disabled={busy}
-                                onClick={() => setToDelete(n)}
-                                title={'Удалить'}
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              {can('narrators.delete') ? (
+                                <button
+                                  type="button"
+                                  className={`btn btn-ghost ${styles.smallBtn}`}
+                                  disabled={busy}
+                                  onClick={() => setToDelete(n)}
+                                  title={'Удалить'}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              ) : null}
                             </>
                           )}
                         </div>
@@ -330,7 +331,7 @@ function NarratorsContent() {
 export default function ModNarratorsPage() {
   const h = splitHeading('Управление чтецами');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="narrators.edit">
       <NarratorsContent />
     </ModShell>
   );

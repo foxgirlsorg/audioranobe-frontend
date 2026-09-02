@@ -222,7 +222,7 @@ function RecapContent() {
 export default function ModRecapPage() {
   const h = splitHeading('Итоги года');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="recap.manage">
       <RecapContent />
     </ModShell>
   );

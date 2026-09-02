@@ -104,7 +104,7 @@ function AuditContent() {
 export default function ModAuditPage() {
   const h = splitHeading('Аудит действий');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent} perm="audit.view">
       <AuditContent />
     </ModShell>
   );

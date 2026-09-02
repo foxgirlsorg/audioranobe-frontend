@@ -29,6 +29,8 @@ interface AuthContextValue {
   logout(): void;
   refresh(): Promise<void>;
   isMod: boolean;
+  /** True when the viewer's role grants the permission (or holds '*'). */
+  can(perm: string): boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -129,11 +131,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     api('/auth/logout', { method: 'POST' }).catch(() => {});
   }, []);
 
-  const isMod = !!user && (user.role === 'moderator' || user.role === 'admin');
+  const permissions = user?.permissions ?? [];
+  const can = useCallback(
+    (perm: string) => permissions.includes('*') || permissions.includes(perm),
+    [permissions]
+  );
+  const isMod = can('mod.panel');
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, loading, login, register, adoptSession, logout, refresh, isMod }),
-    [user, loading, login, register, adoptSession, logout, refresh, isMod]
+    () => ({ user, loading, login, register, adoptSession, logout, refresh, isMod, can }),
+    [user, loading, login, register, adoptSession, logout, refresh, isMod, can]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -16,7 +16,7 @@ const RATES = ['48000', '24000', '8000'];
 
 export default function NarrationSettingsPage() {
   return (
-    <ModShell title="Настройки озвучки" adminOnly>
+    <ModShell title="Настройки озвучки" perm="narration.manage">
       <NarrationSettingsInner />
     </ModShell>
   );

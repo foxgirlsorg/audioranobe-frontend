@@ -169,7 +169,7 @@ function AuthorsContent() {
 export default function ModAuthorsPage() {
   const h = splitHeading('Управление авторами');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="authors.edit">
       <AuthorsContent />
     </ModShell>
   );

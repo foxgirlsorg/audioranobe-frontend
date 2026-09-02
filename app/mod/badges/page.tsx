@@ -1,64 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, Pencil, Trash2 } from 'lucide-react';
+import { Award, Pencil, Trash2, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { Badge } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import Modal from '@/components/Modal/Modal';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
-function BadgePreview({ svg }: { svg: string }) {
-  return <span className={styles.preview} dangerouslySetInnerHTML={{ __html: svg }} />;
+/** Renders trusted, admin-authored SVG at a given box size. */
+function BadgeIcon({ svg, size }: { svg: string; size: number }) {
+  return (
+    <span
+      className={styles.icon}
+      style={{ width: size, height: size }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
 }
 
-function BadgeForm({
-  name,
-  svg,
-  onName,
-  onSvg,
-  onSubmit,
-  busy,
-  submitLabel,
-}: {
+interface Draft {
+  id: number | null;
   name: string;
   svg: string;
-  onName: (v: string) => void;
-  onSvg: (v: string) => void;
-  onSubmit: () => void;
-  busy: boolean;
-  submitLabel: string;
-}) {
-  return (
-    <div className={styles.formRow}>
-      <input
-        className={`input ${styles.nameInput}`}
-        type="text"
-        placeholder={'Название бейджа'}
-        value={name}
-        onChange={(e) => onName(e.target.value)}
-      />
-      <textarea
-        className={`textarea ${styles.svgInput}`}
-        rows={3}
-        placeholder={'<svg viewBox="0 0 24 24">…</svg>'}
-        value={svg}
-        onChange={(e) => onSvg(e.target.value)}
-      />
-      {svg.trim() ? <BadgePreview svg={svg} /> : null}
-      <button
-        type="button"
-        className="btn btn-primary"
-        disabled={busy || !name.trim() || !svg.trim()}
-        onClick={onSubmit}
-      >
-        {submitLabel}
-      </button>
-    </div>
-  );
 }
 
 function BadgesContent() {
@@ -69,15 +37,8 @@ function BadgesContent() {
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
 
-  const [newName, setNewName] = useState('');
-  const [newSvg, setNewSvg] = useState('');
-  const [creating, setCreating] = useState(false);
-
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editSvg, setEditSvg] = useState('');
-  const [busyId, setBusyId] = useState<number | null>(null);
-
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState<Badge | null>(null);
 
   useEffect(() => {
@@ -101,47 +62,32 @@ function BadgesContent() {
     };
   }, [reload]);
 
-  const createBadge = async () => {
-    const name = newName.trim();
-    const svg = newSvg.trim();
-    if (!name || !svg) return;
-    setCreating(true);
+  const save = async () => {
+    if (!draft) return;
+    const name = draft.name.trim();
+    const svg = draft.svg.trim();
+    if (!name || !svg) {
+      toast('Укажите название и SVG', 'error');
+      return;
+    }
+    setSaving(true);
     try {
-      await api('/mod/badges', { method: 'POST', body: { name, svg } });
-      toast('Бейдж создан');
-      setNewName('');
-      setNewSvg('');
+      if (draft.id === null) {
+        await api('/mod/badges', { method: 'POST', body: { name, svg } });
+        toast('Бейдж создан');
+      } else {
+        await api(`/mod/badges/${draft.id}`, { method: 'PATCH', body: { name, svg } });
+        toast('Бейдж обновлён');
+      }
+      setDraft(null);
       setReload((n) => n + 1);
     } catch (e) {
       toast(errMsg(e), 'error');
     }
-    setCreating(false);
-  };
-
-  const startEdit = (b: Badge) => {
-    setEditingId(b.id);
-    setEditName(b.name);
-    setEditSvg(b.svg);
-  };
-
-  const saveEdit = async (b: Badge) => {
-    const name = editName.trim();
-    const svg = editSvg.trim();
-    if (!name || !svg) return;
-    setBusyId(b.id);
-    try {
-      await api(`/mod/badges/${b.id}`, { method: 'PATCH', body: { name, svg } });
-      toast('Бейдж обновлён');
-      setEditingId(null);
-      setReload((n) => n + 1);
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-    setBusyId(null);
+    setSaving(false);
   };
 
   const deleteBadge = async (b: Badge) => {
-    setBusyId(b.id);
     try {
       await api(`/mod/badges/${b.id}`, { method: 'DELETE' });
       toast('Бейдж удалён');
@@ -149,102 +95,114 @@ function BadgesContent() {
     } catch (e) {
       toast(errMsg(e), 'error');
     }
-    setBusyId(null);
   };
+
+  if (error) return <ErrorPanel message={error} onRetry={() => setReload((n) => n + 1)} />;
+  if (loading || !items) {
+    return (
+      <div className={styles.loading}>
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div>
-      <div className={`glass-panel ${styles.createForm}`}>
-        <h3 className={styles.formTitle}>{'Новый бейдж'}</h3>
-        <BadgeForm
-          name={newName}
-          svg={newSvg}
-          onName={setNewName}
-          onSvg={setNewSvg}
-          onSubmit={createBadge}
-          busy={creating}
-          submitLabel={'Создать'}
-        />
+      <div className={styles.toolbar}>
+        <button type="button" className="btn btn-primary" onClick={() => setDraft({ id: null, name: '', svg: '' })}>
+          <Plus size={16} /> {'Создать бейдж'}
+        </button>
       </div>
 
-      {error ? (
-        <ErrorPanel message={error} onRetry={() => setReload((n) => n + 1)} />
-      ) : loading || !items ? (
-        <div className={styles.loading}>
-          <Spinner />
-        </div>
-      ) : items.length === 0 ? (
-        <EmptyState icon={Award} title={'Бейджей пока нет'} body={'Создайте первый бейдж выше.'} />
+      {items.length === 0 ? (
+        <EmptyState icon={Award} title={'Бейджей пока нет'} body={'Создайте первый бейдж.'} />
       ) : (
-        <div className={`glass-panel ${styles.tableWrap}`}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th aria-label={'Иконка'} />
-                <th>{'Название'}</th>
-                <th aria-label={'Действия'} />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((b) => {
-                const editing = editingId === b.id;
-                const busy = busyId === b.id;
-                return editing ? (
-                  <tr key={b.id}>
-                    <td colSpan={3}>
-                      <BadgeForm
-                        name={editName}
-                        svg={editSvg}
-                        onName={setEditName}
-                        onSvg={setEditSvg}
-                        onSubmit={() => saveEdit(b)}
-                        busy={busy}
-                        submitLabel={'Сохранить'}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setEditingId(null)}
-                      >
-                        {'Отмена'}
-                      </button>
-                    </td>
-                  </tr>
-                ) : (
-                  <tr key={b.id}>
-                    <td>
-                      <BadgePreview svg={b.svg} />
-                    </td>
-                    <td className={styles.badgeName}>{b.name}</td>
-                    <td>
-                      <div className={styles.rowActions}>
-                        <button
-                          type="button"
-                          className={`btn btn-ghost ${styles.smallBtn}`}
-                          disabled={busy}
-                          onClick={() => startEdit(b)}
-                          title={'Редактировать'}
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn btn-ghost ${styles.smallBtn}`}
-                          disabled={busy}
-                          onClick={() => setToDelete(b)}
-                          title={'Удалить'}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className={styles.grid}>
+          {items.map((b) => (
+            <div key={b.id} className={`glass-panel ${styles.card}`}>
+              <div className={styles.cardIcon}>
+                <BadgeIcon svg={b.svg} size={40} />
+              </div>
+              <span className={styles.cardName}>{b.name}</span>
+              <div className={styles.cardActions}>
+                <button
+                  type="button"
+                  className={`btn btn-ghost ${styles.smallBtn}`}
+                  onClick={() => setDraft({ id: b.id, name: b.name, svg: b.svg })}
+                  title={'Редактировать'}
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-ghost ${styles.smallBtn}`}
+                  onClick={() => setToDelete(b)}
+                  title={'Удалить'}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id === null ? 'Новый бейдж' : 'Изменение бейджа'}>
+        {draft ? (
+          <div className={styles.editor}>
+            <div className={styles.previewPane}>
+              {draft.svg.trim() ? (
+                <>
+                  <BadgeIcon svg={draft.svg} size={64} />
+                  <span className={styles.previewInline}>
+                    <BadgeIcon svg={draft.svg} size={16} /> {draft.name || 'Название'}
+                  </span>
+                </>
+              ) : (
+                <span className={styles.previewEmpty}>{'Предпросмотр иконки'}</span>
+              )}
+            </div>
+
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>{'Название'}</span>
+              <input
+                className="input"
+                type="text"
+                placeholder={'Название бейджа'}
+                value={draft.name}
+                maxLength={40}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                autoFocus
+              />
+            </label>
+
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>{'SVG-иконка'}</span>
+              <textarea
+                className={`textarea ${styles.svgInput}`}
+                rows={6}
+                placeholder={'<svg viewBox="0 0 24 24">…</svg>'}
+                value={draft.svg}
+                onChange={(e) => setDraft({ ...draft, svg: e.target.value })}
+              />
+            </label>
+
+            <div className={styles.editorActions}>
+              <button type="button" className="btn btn-ghost" onClick={() => setDraft(null)}>
+                {'Отмена'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={saving || !draft.name.trim() || !draft.svg.trim()}
+                onClick={save}
+              >
+                {draft.id === null ? 'Создать' : 'Сохранить'}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <ConfirmDialog
         open={!!toDelete}
@@ -253,11 +211,7 @@ function BadgesContent() {
           if (toDelete) void deleteBadge(toDelete);
         }}
         title={'Удалить бейдж'}
-        body={
-          toDelete
-            ? `Удалить бейдж «${toDelete.name}»? Он будет снят со всех пользователей.`
-            : ''
-        }
+        body={toDelete ? `Удалить бейдж «${toDelete.name}»? Он будет снят со всех пользователей.` : ''}
         danger
       />
     </div>
@@ -267,7 +221,7 @@ function BadgesContent() {
 export default function ModBadgesPage() {
   const h = splitHeading('Управление бейджами');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent} perm="badges.manage">
       <BadgesContent />
     </ModShell>
   );

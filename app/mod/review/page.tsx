@@ -161,7 +161,7 @@ function ReviewQueueContent() {
 export default function ModReviewPage() {
   const h = splitHeading('Проверка тайтлов');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="content.review">
       <ReviewQueueContent />
     </ModShell>
   );

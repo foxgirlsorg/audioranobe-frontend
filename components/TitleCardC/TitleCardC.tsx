@@ -8,8 +8,8 @@ import AiBadge from '@/components/AiBadge/AiBadge';
 import styles from './TitleCardC.module.css';
 
 export function TitleCardC({ title }: { title: TitleCard }) {
-  const { user: me } = useAuth();
-  const isAdmin = me?.role === 'admin';
+  const { user: me, can } = useAuth();
+  const isAdmin = can('titles.edit');
   const avg =
     title.avg_rating != null && !Number.isNaN(Number(title.avg_rating))
       ? Number(title.avg_rating).toFixed(1)

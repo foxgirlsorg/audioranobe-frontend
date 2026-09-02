@@ -289,7 +289,7 @@ function QueueContent() {
 export default function ModQueuePage() {
   const h = splitHeading('Очередь заявок');
   return (
-    <ModShell title={h.title} accent={h.accent}>
+    <ModShell title={h.title} accent={h.accent} perm="moderation.queue">
       <QueueContent />
     </ModShell>
   );

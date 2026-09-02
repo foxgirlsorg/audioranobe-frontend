@@ -313,7 +313,7 @@ function WordsContent() {
 export default function ModWordsPage() {
   const h = splitHeading('Фильтр слов');
   return (
-    <ModShell title={h.title} accent={h.accent} adminOnly>
+    <ModShell title={h.title} accent={h.accent} perm="words.manage">
       <WordsContent />
     </ModShell>
   );

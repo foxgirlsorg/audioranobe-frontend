@@ -45,8 +45,8 @@ interface Form {
 
 export default function TitleEditPage({ params }: { params: { slug: string } }) {
   const routeSlug = decodeURIComponent(params.slug);
-  const { user, loading: authLoading, isMod } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { user, loading: authLoading, isMod, can } = useAuth();
+  const isAdmin = can('titles.edit');
   const { toast } = useToast();
   const router = useRouter();
 
