@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, RotateCcw, Trash2 } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, RotateCcw, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -23,6 +23,7 @@ export default function DangerZone({
   id,
   name,
   isDeleted = false,
+  isHidden = false,
   redirectTo,
   onChanged,
 }: {
@@ -30,6 +31,7 @@ export default function DangerZone({
   id: number;
   name: string;
   isDeleted?: boolean;
+  isHidden?: boolean;
   redirectTo: string;
   onChanged?: () => void | Promise<void>;
 }) {
@@ -37,6 +39,7 @@ export default function DangerZone({
   const trashView = can(`trash.view.${kind}`);
   const canRestore = trashView && can('trash.restore');
   const canPurge = trashView && can('trash.purge');
+  const canHide = kind === 'title' && can('titles.hide');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -45,7 +48,20 @@ export default function DangerZone({
 
   const label = LABELS[kind];
   const canDelete = kind === 'title' || kind === 'narrator' ? true : isMod;
-  if (!canDelete && !canRestore && !canPurge) return null;
+  if (!canDelete && !canRestore && !canPurge && !canHide) return null;
+
+  async function doToggleHide() {
+    setBusy(true);
+    try {
+      await api(`/titles/${id}/hide`, { method: 'POST' });
+      toast(isHidden ? 'Тайтл снова виден всем' : 'Тайтл скрыт');
+      await onChanged?.();
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function doDelete() {
     setBusy(true);
@@ -106,6 +122,10 @@ export default function DangerZone({
         <p className={styles.text}>
           {`Этот ${label} удалён и не виден на сайте. Восстановить его можно только отсюда или из корзины.`}
         </p>
+      ) : isHidden && canHide ? (
+        <p className={styles.text}>
+          {`Этот ${label} скрыт: его не видно в каталоге, поиске и рекомендациях. Прямая ссылка тоже не работает ни у кого, кроме тех, у кого есть право «Просмотр скрытых тайтлов».`}
+        </p>
       ) : (
         <p className={styles.text}>
           {`Этот ${label} исчезнет с сайта, из каталога и из списков пользователей. Отменить удаление нельзя.`}
@@ -117,6 +137,13 @@ export default function DangerZone({
           <button type="button" className="btn" disabled={busy} onClick={() => void doRestore()}>
             <RotateCcw size={15} />
             Восстановить
+          </button>
+        ) : null}
+
+        {!isDeleted && canHide ? (
+          <button type="button" className="btn" disabled={busy} onClick={() => void doToggleHide()}>
+            {isHidden ? <Eye size={15} /> : <EyeOff size={15} />}
+            {isHidden ? 'Показать' : 'Скрыть'}
           </button>
         ) : null}
 

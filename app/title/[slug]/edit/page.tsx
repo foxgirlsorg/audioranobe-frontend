@@ -521,6 +521,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
           id={title.id}
           name={title.name}
           isDeleted={title.is_deleted}
+          isHidden={title.is_hidden}
           redirectTo="/catalog"
           onChanged={reloadTitle}
         />

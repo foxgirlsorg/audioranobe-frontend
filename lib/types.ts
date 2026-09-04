@@ -292,6 +292,7 @@ export interface TitleCard {
   age_rating: string | null;
   my_favorite: boolean;
   is_deleted: boolean;
+  is_hidden: boolean;
   is_nsfw: boolean;
   is_ai: boolean;
   has_sensitive_genre: boolean;
