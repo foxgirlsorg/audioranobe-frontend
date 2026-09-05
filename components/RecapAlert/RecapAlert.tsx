@@ -8,39 +8,16 @@ import { useAuth } from '@/lib/auth';
 import type { Recap } from '@/lib/types';
 import styles from './RecapAlert.module.css';
 
-const STORAGE_KEY = 'audioranobe_recap_alert_month';
-const MIN_ACCOUNT_AGE_MS = 30 * 24 * 60 * 60 * 1000;
-const MIN_LISTEN_SECONDS = 10 * 60;
-
-function monthKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}`;
-}
-
 export default function RecapAlert() {
   const { user, loading } = useAuth();
   const [recap, setRecap] = useState<Recap | null>(null);
 
   useEffect(() => {
     if (loading || !user) return;
-    let stored: string | null = null;
-    try {
-      stored = window.localStorage.getItem(STORAGE_KEY);
-    } catch {
-    }
-    if (stored === monthKey()) return;
-    if (Date.now() - new Date(user.created_at).getTime() < MIN_ACCOUNT_AGE_MS) return;
-
-    api<Recap>('/me/recap')
-      .then((r) => {
-        if (r.total_seconds >= MIN_LISTEN_SECONDS) {
-          setRecap(r);
-          try {
-            window.localStorage.setItem(STORAGE_KEY, monthKey());
-          } catch {
-          }
-        }
-      })
+    // Server decides eligibility and claims the month atomically — one
+    // popup per calendar month no matter how many devices the user has.
+    api<{ recap: Recap | null }>('/me/recap/alert')
+      .then((r) => setRecap(r.recap))
       .catch(() => {
       });
   }, [loading, user]);
