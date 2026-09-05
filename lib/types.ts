@@ -641,6 +641,53 @@ export interface NarrationSettings {
   has_token: boolean;
 }
 
+export interface BackupSchedule {
+  enabled: boolean;
+  frequency: 'daily' | 'weekly';
+  hour: number;
+  minute: number;
+  weekday: number;
+  last_run_at: string | null;
+}
+
+export type BackupDestType = 's3' | 'r2' | 'webdav' | 'local';
+
+export interface BackupDestination {
+  id: string;
+  label: string;
+  type: BackupDestType;
+  path: string;
+  bucket?: string;
+  region?: string;
+  endpoint?: string;
+  account_id?: string;
+  access_key_id?: string;
+  secret_access_key?: string;
+  url?: string;
+  username?: string;
+  password?: string;
+  headers?: { key: string; value: string }[];
+}
+
+export interface BackupSettings {
+  db: BackupSchedule;
+  files: BackupSchedule;
+  destinations: BackupDestination[];
+  notify_on_success: boolean;
+  retention: number;
+}
+
+export interface BackupRunItem {
+  id: number;
+  type: 'db' | 'files';
+  status: 'running' | 'success' | 'failed';
+  destination: string;
+  error: string | null;
+  size_bytes: number | null;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
 export type FriendStatus = 'self' | 'none' | 'friends' | 'outgoing' | 'incoming';
 
 export interface Friendship {

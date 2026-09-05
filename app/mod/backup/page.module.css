@@ -1,0 +1,219 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lead {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 70ch;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+.scheduleHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scheduleTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label,
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeRow input {
+  width: 70px;
+}
+
+.headerRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.center {
+  display: grid;
+  place-items: center;
+  padding: 60px 0;
+}
+
+.spin {
+  animation: backup-spin 0.9s linear infinite;
+}
+
+@keyframes backup-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.destTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.destRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.destInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.destLabel {
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.destType {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.destActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.smallBtn {
+  padding: 0.4rem 0.55rem;
+  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.historyTable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.historyRow {
+  display: grid;
+  grid-template-columns: 60px 90px 1fr 90px 160px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.historyType {
+  font-weight: 600;
+  color: #fff;
+}
+
+.historyStatus {
+  font-weight: 600;
+}
+
+.status_success {
+  color: #4caf7d;
+}
+
+.status_failed {
+  color: var(--accent, #de6161);
+}
+
+.status_running {
+  color: var(--text-muted);
+}
+
+.historyDest,
+.historySize,
+.historyDate {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyError {
+  grid-column: 1 / -1;
+  color: var(--accent, #de6161);
+  font-size: 11.5px;
+}
+
+@media (max-width: 640px) {
+  .historyRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}

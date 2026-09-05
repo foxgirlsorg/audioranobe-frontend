@@ -13,6 +13,7 @@ import {
   Megaphone,
   Radio,
   ScrollText,
+  DatabaseBackup,
   BookHeadphones,
   ListChecks,
   ShieldCheck,
@@ -88,6 +89,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/recap', label: 'Итоги', icon: Sparkles, perm: 'recap.manage' },
       { href: '/mod/announcements', label: 'Объявления', icon: Megaphone, perm: 'announcements.manage' },
       { href: '/mod/audit', label: 'Аудит', icon: ScrollText, perm: 'audit.view' },
+      { href: '/mod/backup', label: 'Бэкапы', icon: DatabaseBackup, perm: 'backup.manage' },
     ],
   },
 ];
