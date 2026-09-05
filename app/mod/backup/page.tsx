@@ -394,7 +394,10 @@ function BackupInner() {
               <div key={d.id} className={styles.destRow}>
                 <div className={styles.destInfo}>
                   <span className={styles.destLabel}>{d.label || destLabel(d.type)}</span>
-                  <span className={styles.destType}>{destLabel(d.type)}</span>
+                  <span className={styles.destType}>
+                    {destLabel(d.type)}
+                    {d.mirror ? ' · зеркало файлов' : ''}
+                  </span>
                 </div>
                 <div className={styles.destActions}>
                   <button type="button" className={`btn btn-ghost ${styles.smallBtn}`} onClick={() => testDestination(d)} disabled={testing === d.id}>
@@ -469,6 +472,12 @@ function BackupInner() {
               />
             </label>
             {destFields(draft, setDraft)}
+            <Toggle
+              checked={!!draft.mirror}
+              onChange={(on) => setDraft({ ...draft, mirror: on })}
+              label="Зеркалировать файлы вместо архива"
+              hint="Только для бэкапа файлов: копирует медиатеку как есть, пропуская уже загруженные файлы, вместо одного .tar.gz"
+            />
             <div className={styles.editorActions}>
               <button type="button" className="btn btn-ghost" onClick={() => testDestination(draft)} disabled={testing === (draft.id || 'draft')}>
                 {testing === (draft.id || 'draft') ? <Loader2 size={14} className={styles.spin} /> : <FlaskConical size={14} />}

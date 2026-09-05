@@ -667,6 +667,8 @@ export interface BackupDestination {
   username?: string;
   password?: string;
   headers?: { key: string; value: string }[];
+  /** Files backups only: mirror the media tree file-by-file instead of uploading a .tar.gz, skipping files already there. */
+  mirror?: boolean;
 }
 
 export interface BackupSettings {
