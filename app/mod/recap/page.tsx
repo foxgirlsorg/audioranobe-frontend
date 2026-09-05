@@ -82,10 +82,14 @@ function RecapContent() {
   };
 
   const testRender = async () => {
-    if (!previewRef.current) return;
+    // previewRef wraps RecapCard's own host div — that inner div is the actual
+    // shadow-DOM host downloadNodeJpg needs to see (it special-cases
+    // node.shadowRoot); the wrapper itself has no shadow root of its own.
+    const node = previewRef.current?.firstElementChild as HTMLElement | null;
+    if (!node) return;
     setRendering(true);
     try {
-      await downloadNodeJpg(previewRef.current, `recap-card-${year}`);
+      await downloadNodeJpg(node, `recap-card-${year}`);
     } catch (e) {
       toast(errMsg(e), 'error');
     }

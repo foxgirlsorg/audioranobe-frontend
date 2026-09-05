@@ -1,14 +1,22 @@
 import { domToJpeg } from 'modern-screenshot';
 
-/** Render a DOM node (incl. shadow DOM) to a JPEG and download it. The exported
- *  image is flattened to a flush rectangle — no border, rounded corners, or
- *  shadow — so it sits clean in a share sheet. `bg` fills the canvas behind the
- *  render so a clipped edge can't leave a lighter antialiased seam. */
-export async function downloadNodeJpg(node: HTMLElement, filename: string, bg = '#151517'): Promise<void> {
+/** Render a DOM node (incl. shadow DOM) to a JPEG data URL. Flattened to a
+ *  flush rectangle — no border, rounded corners, or shadow — so it sits clean
+ *  in a share sheet. `bg` fills the canvas behind the render so a clipped edge
+ *  can't leave a lighter antialiased seam. */
+export async function renderNodeToJpeg(node: HTMLElement, bg = '#151517'): Promise<string> {
   const width = node.offsetWidth;
   const height = node.offsetHeight;
 
   const clone = node.cloneNode(true) as HTMLElement;
+  // Pin the clone to the exact measured pixel box with an inline style (wins
+  // over any CSS, shadow-DOM included). Without this, relative sizing like
+  // `max-width: 100%` inside the shadow root can resolve differently once
+  // modern-screenshot renders the clone through its SVG foreignObject than it
+  // did in the live page, silently shrinking the box the admin's card was
+  // designed for and causing its fixed-px content to wrap/overlap.
+  clone.style.width = `${width}px`;
+  clone.style.height = `${height}px`;
   if (node.shadowRoot) {
     clone.attachShadow({ mode: 'open' }).innerHTML = node.shadowRoot.innerHTML;
   }
@@ -41,11 +49,17 @@ export async function downloadNodeJpg(node: HTMLElement, filename: string, bg = 
       backgroundColor: bg,
       features: { restoreScrollPosition: true },
     });
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = filename.endsWith('.jpg') ? filename : `${filename}.jpg`;
-    a.click();
+    return dataUrl;
   } finally {
     clone.remove();
   }
+}
+
+/** Render a node to a JPEG and trigger a download. */
+export async function downloadNodeJpg(node: HTMLElement, filename: string, bg = '#151517'): Promise<void> {
+  const dataUrl = await renderNodeToJpeg(node, bg);
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename.endsWith('.jpg') ? filename : `${filename}.jpg`;
+  a.click();
 }

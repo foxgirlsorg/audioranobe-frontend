@@ -14,7 +14,14 @@ export default function RecapCard({ html, css }: { html: string; css: string }) 
     const host = hostRef.current;
     if (!host) return;
     const root = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
-    root.innerHTML = `<style>:host{display:block;width:min(380px,100%);}${css}</style>${html}`;
+    // A definite width (not a percentage) avoids the classic circular-sizing
+    // trap: this host sits in a shrink-to-fit flex wrapper, so a `%` width
+    // here would need the wrapper's size to already be known while the
+    // wrapper's own shrink-to-fit size depends on this host — CSS leaves that
+    // undefined, and browsers resolved it by cropping the card's right/bottom
+    // edge. `max-width` alone is a post-hoc clamp, not a circular input, so it
+    // stays safe.
+    root.innerHTML = `<style>:host{display:block;width:380px;max-width:100%;}${css}</style>${html}`;
   }, [html, css]);
 
   return <div ref={hostRef} />;

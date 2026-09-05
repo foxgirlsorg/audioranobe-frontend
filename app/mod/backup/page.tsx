@@ -396,7 +396,7 @@ function BackupInner() {
                   <span className={styles.destLabel}>{d.label || destLabel(d.type)}</span>
                   <span className={styles.destType}>
                     {destLabel(d.type)}
-                    {d.mirror ? ' · зеркало файлов' : ''}
+                    {d.mirror ? ' · копия файлов' : ''}
                   </span>
                 </div>
                 <div className={styles.destActions}>
@@ -475,7 +475,7 @@ function BackupInner() {
             <Toggle
               checked={!!draft.mirror}
               onChange={(on) => setDraft({ ...draft, mirror: on })}
-              label="Зеркалировать файлы вместо архива"
+              label="Копировать файлы напрямую вместо архива"
               hint="Только для бэкапа файлов: копирует медиатеку как есть, пропуская уже загруженные файлы, вместо одного .tar.gz"
             />
             <div className={styles.editorActions}>
