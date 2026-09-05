@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, Save, Plus, Pencil, Trash2, PlayCircle, FlaskConical } from 'lucide-react';
+import { Loader2, Save, Plus, Pencil, Trash2, PlayCircle, FlaskConical, RefreshCw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { BackupDestination, BackupDestType, BackupRunItem, BackupSchedule, BackupSettings } from '@/lib/types';
@@ -263,6 +263,9 @@ function BackupInner() {
   const [testing, setTesting] = useState<string | null>(null);
   const [draft, setDraft] = useState<BackupDestination | null>(null);
   const [toDelete, setToDelete] = useState<BackupDestination | null>(null);
+  const [syncDest, setSyncDest] = useState<BackupDestination | null>(null);
+  const [syncPassword, setSyncPassword] = useState('');
+  const [syncing, setSyncing] = useState(false);
   const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
@@ -327,6 +330,29 @@ function BackupInner() {
       toast(errMsg(e), 'error');
     } finally {
       setTesting(null);
+    }
+  };
+
+  const runSync = async () => {
+    if (!syncDest || !syncPassword || syncing) return;
+    setSyncing(true);
+    try {
+      const r = await api<{ ok: boolean; error?: string }>('/admin/backup/sync', {
+        method: 'POST',
+        body: { id: syncDest.id, password: syncPassword },
+      });
+      if (r.ok) {
+        toast('Синхронизация завершена', 'ok');
+        setSyncDest(null);
+        setSyncPassword('');
+        setNonce((n) => n + 1);
+      } else {
+        toast(r.error ?? 'Синхронизация не удалась', 'error');
+      }
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -400,6 +426,19 @@ function BackupInner() {
                   </span>
                 </div>
                 <div className={styles.destActions}>
+                  {d.mirror && (d.type === 's3' || d.type === 'r2') ? (
+                    <button
+                      type="button"
+                      className={`btn btn-ghost ${styles.smallBtn}`}
+                      onClick={() => {
+                        setSyncPassword('');
+                        setSyncDest(d);
+                      }}
+                      title="Синхронизировать (с удалением)"
+                    >
+                      <RefreshCw size={13} /> Синхр.
+                    </button>
+                  ) : null}
                   <button type="button" className={`btn btn-ghost ${styles.smallBtn}`} onClick={() => testDestination(d)} disabled={testing === d.id}>
                     {testing === d.id ? <Loader2 size={13} className={styles.spin} /> : <FlaskConical size={13} />}
                     Проверить
@@ -504,6 +543,51 @@ function BackupInner() {
         body={toDelete ? `Удалить «${toDelete.label || toDelete.type}»?` : ''}
         danger
       />
+
+      <Modal
+        open={!!syncDest}
+        onClose={() => {
+          if (!syncing) setSyncDest(null);
+        }}
+        title="Синхронизация с удалением"
+      >
+        {syncDest ? (
+          <div className={styles.editor}>
+            <p className={styles.hint}>
+              Точное зеркало «{syncDest.label || syncDest.type}» с прод-сервером: файлы, удалённые
+              с сервера, будут <b>безвозвратно удалены</b> и из этого места хранения. Обычный бэкап
+              так не делает. Для подтверждения введите пароль аккаунта.
+            </p>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Пароль</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                className="input"
+                value={syncPassword}
+                onChange={(e) => setSyncPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void runSync();
+                }}
+              />
+            </label>
+            <div className={styles.editorActions}>
+              <button type="button" className="btn btn-ghost" onClick={() => setSyncDest(null)} disabled={syncing}>
+                Отмена
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => void runSync()}
+                disabled={syncing || syncPassword === ''}
+              >
+                {syncing ? <Loader2 size={14} className={styles.spin} /> : <RefreshCw size={14} />}
+                Синхронизировать
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }
