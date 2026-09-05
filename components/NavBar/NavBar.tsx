@@ -257,7 +257,7 @@ export default function NavBar() {
           name: t.name,
           sub: t.author?.name ?? '',
           href: `/title/${t.slug}`,
-          cover: t.cover_url,
+          cover: t.cover_thumb_url ?? t.cover_url,
         })),
         ...sug.narrators.map<SuggestItem>((n) => ({
           kind: 'narrator',
@@ -340,8 +340,8 @@ export default function NavBar() {
   };
 
   const avatar = () =>
-    user?.avatar_url ? (
-      <img className={styles.avatarImg} src={user.avatar_url} alt={user.username} />
+    user?.avatar_url || user?.avatar_thumb_url ? (
+      <img className={styles.avatarImg} src={user.avatar_thumb_url ?? user.avatar_url ?? ''} alt={user.username} />
     ) : (
       <span className={styles.avatarFallback}>{user?.username?.charAt(0) || '?'}</span>
     );

@@ -451,10 +451,10 @@ export default function UserPageClient({
 
         <div className={styles.dock}>
           <div className={styles.dockAvatar}>
-            {user.avatar_url ? (
-              <PhotoView src={user.avatar_url}>
+            {user.avatar_url || user.avatar_thumb_url ? (
+              <PhotoView src={user.avatar_url ?? user.avatar_thumb_url ?? ''}>
                 <button type="button" className={styles.avatarBtn} aria-label="Увеличить аватар">
-                  <img src={user.avatar_url} alt={user.username} className={styles.avatarImg} />
+                  <img src={user.avatar_thumb_url ?? user.avatar_url ?? ''} alt={user.username} className={styles.avatarImg} />
                 </button>
               </PhotoView>
             ) : (

@@ -14,7 +14,7 @@ export function UserAvatar({
   presence,
   lastSeenAt,
 }: {
-  user: { username: string; avatar_url?: string | null } | null;
+  user: { username: string; avatar_url?: string | null; avatar_thumb_url?: string | null } | null;
   size: number;
   /** When set (and online/away), overlays a status dot at the corner. */
   presence?: PresenceStatus | null;
@@ -37,8 +37,8 @@ export function UserAvatar({
       style={dim}
       title={user.username}
     >
-      {user.avatar_url ? (
-        <img src={user.avatar_url} alt={user.username} className={styles.img} loading="lazy" />
+      {user.avatar_url || user.avatar_thumb_url ? (
+        <img src={user.avatar_thumb_url || user.avatar_url || ''} alt={user.username} className={styles.img} loading="lazy" />
       ) : (
         <span className={styles.initials}>{initialsOf(user.username)}</span>
       )}

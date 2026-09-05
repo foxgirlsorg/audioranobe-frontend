@@ -109,6 +109,7 @@ export interface UserPublic {
   bio: string;
   socials: string[];
   avatar_url: string | null;
+  avatar_thumb_url?: string | null;
   cover_url: string | null;
   role: Role;
   role_name: string;
@@ -139,6 +140,7 @@ export interface Viewer {
   /** Raw value (may be empty); callers fall back to username themselves. */
   display_name: string;
   avatar_url: string | null;
+  avatar_thumb_url?: string | null;
   cover_url: string | null;
   role: Role;
   role_name: string;
@@ -595,7 +597,7 @@ export interface RequestableTitle {
 }
 
 export interface SearchSuggest {
-  titles: { id: number; slug: string; name: string; author: AuthorBrief | null; cover_url: string | null }[];
+  titles: { id: number; slug: string; name: string; author: AuthorBrief | null; cover_url: string | null; cover_thumb_url?: string | null }[];
   narrators: { id: number; slug: string; name: string; avatar_url: string | null }[];
   authors: { id: number; slug: string; name: string; titles_count: number }[];
   collections: { id: number; name: string; items_count: number }[];

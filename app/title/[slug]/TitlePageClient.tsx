@@ -361,7 +361,9 @@ export default function TitlePageClient({
     );
   }
 
-  const bg = title.bg_url ?? title.cover_url;
+  // Blurred, scaled hero backdrop — the small thumb is plenty; only fall back
+  // to the full cover when no thumb exists.
+  const bg = title.bg_url ?? title.cover_thumb_url ?? title.cover_url;
   const descLong = title.description.length > DESC_CLAMP_CHARS;
   const chaptersTotal = title.volumes.reduce((n, v) => n + v.chapters.length, 0);
   const commentsTotal = title.comments?.total ?? 0;
