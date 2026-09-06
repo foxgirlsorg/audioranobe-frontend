@@ -48,7 +48,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.3rem;
+  gap: 0.8rem;
   position: fixed;
   top: var(--nav-total, 72px);
   left: 0;
@@ -56,14 +56,27 @@
   height: calc(100vh - var(--nav-total, 72px));
   padding: 1.6rem 0.8rem 1.6rem;
   background: rgba(15, 15, 17, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid var(--border);
-  overflow-y: auto;
   transition: width 0.2s ease;
 }
 
 .sidebarCollapsed {
   width: 68px;
   align-items: center;
+}
+
+/* The nav list scrolls on its own — kept out of .sidebar itself so the
+   collapse button (a sibling below it) never scrolls with it. */
+.sidebarScroll {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+  overflow-y: auto;
 }
 
 .group {
@@ -174,7 +187,7 @@
 }
 
 .collapseBtn {
-  margin-top: auto;
+  flex-shrink: 0;
   align-self: flex-end;
   width: 30px;
   height: 30px;
@@ -184,6 +197,19 @@
   border-radius: 8px;
   color: var(--text-muted);
   border: 1px solid var(--border);
+}
+
+/* Uncollapsed only: pinned to the sidebar's own (non-scrolling) box, so it
+   never moves when the nav list below it scrolls. */
+.sidebar:not(.sidebarCollapsed) .collapseBtn {
+  position: fixed;
+  right: 0.8rem;
+  bottom: 1rem;
+  z-index: 5;
+  background: rgba(15, 15, 17, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .sidebarCollapsed .collapseBtn {

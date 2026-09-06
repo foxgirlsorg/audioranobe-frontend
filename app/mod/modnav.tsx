@@ -145,7 +145,9 @@ export function ModNav() {
         aria-label="Разделы модерации"
         className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ''}`}
       >
-        <NavGroups pathname={pathname} can={can} counts={counts} collapsed={collapsed} />
+        <div className={styles.sidebarScroll}>
+          <NavGroups pathname={pathname} can={can} counts={counts} collapsed={collapsed} />
+        </div>
         <button
           type="button"
           className={styles.collapseBtn}
