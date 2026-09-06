@@ -21,9 +21,9 @@
 }
 
 .bannerFoxgirl {
-  height: 360px;
+  height: 350px;
   position: absolute;
-  top: -10%;
+  top: -15%;
   right: 5%;
   opacity: .9;
 }
@@ -370,6 +370,10 @@
     height: 170px;
     border-radius: var(--radius) var(--radius) 0 0;
   }
+  .bannerFoxgirl {
+    height: 250px;
+  }
+
 
   .dock {
     position: static;
