@@ -692,6 +692,15 @@ export interface BackupRunItem {
   finished_at: string | null;
 }
 
+export interface Banner {
+  id: number;
+  image_url: string;
+  url: string;
+  is_enabled?: boolean;
+  is_public?: boolean;
+  sort_order?: number;
+}
+
 export type FriendStatus = 'self' | 'none' | 'friends' | 'outgoing' | 'incoming';
 
 export interface Friendship {

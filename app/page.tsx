@@ -18,6 +18,7 @@ import CatalogGrid from '@/components/CatalogGrid/CatalogGrid';
 import CatalogGridSkeleton from '@/components/CatalogGrid/CatalogGridSkeleton';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import TitleCardSkeleton from '@/components/TitleCardC/TitleCardSkeleton';
+import BannerCarousel from '@/components/BannerCarousel/BannerCarousel';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import styles from './page.module.css';
 
@@ -325,6 +326,8 @@ export default function HomePage() {
       <Section eyebrow="Свежее на полке" title="Новые" accent="тайтлы">
         <TitleRail titles={data.new_titles} />
       </Section>
+
+      <BannerCarousel />
 
       <CatalogGrid />
     </div>

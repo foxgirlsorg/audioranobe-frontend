@@ -1,0 +1,100 @@
+.wrap {
+  width: 100%;
+}
+
+.viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+}
+
+.track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.5s ease;
+}
+
+.slide {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.link {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.wrap:hover .nav,
+.nav:focus-visible {
+  opacity: 1;
+}
+
+.nav:hover {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.prev {
+  left: 10px;
+}
+
+.next {
+  right: 10px;
+}
+
+.dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.dotOn {
+  background: #fff;
+}
+
+@media (max-width: 640px) {
+  .nav {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
+}

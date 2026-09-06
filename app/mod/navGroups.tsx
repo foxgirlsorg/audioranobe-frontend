@@ -14,6 +14,7 @@ import {
   Radio,
   ScrollText,
   DatabaseBackup,
+  GalleryHorizontal,
   BookHeadphones,
   ListChecks,
   ShieldCheck,
@@ -90,6 +91,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/announcements', label: 'Объявления', icon: Megaphone, perm: 'announcements.manage' },
       { href: '/mod/audit', label: 'Аудит', icon: ScrollText, perm: 'audit.view' },
       { href: '/mod/backup', label: 'Бэкапы', icon: DatabaseBackup, perm: 'backup.manage' },
+      { href: '/mod/banners', label: 'Баннеры', icon: GalleryHorizontal, perm: 'banners.manage' },
     ],
   },
 ];
