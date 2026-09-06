@@ -9,6 +9,8 @@
     "build:check": "node scripts/build-check.mjs"
   },
   "dependencies": {
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.441.0",
     "marked": "^14.0.0",
     "modern-screenshot": "^4.7.0",
