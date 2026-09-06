@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Home, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react';
+import AddCard from '@/components/AddCard/AddCard';
 import { api } from '@/lib/api';
 import { LIMITS } from '@/lib/limits';
 import { errMsg, useToast } from '@/lib/toast';
@@ -213,13 +214,7 @@ function AnnouncementsContent() {
   return (
     <div>
       <div className={styles.topRow}>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setEditor({ a: null })}
-        >
-          <Plus size={15} /> {'Новое объявление'}
-        </button>
+        <AddCard icon={Plus} label="Новое объявление" onClick={() => setEditor({ a: null })} />
       </div>
 
       {error ? (
@@ -337,7 +332,7 @@ function AnnouncementsContent() {
 }
 
 export default function ModAnnouncementsPage() {
-  const h = splitHeading('Объявления сайта');
+  const h = splitHeading('Новости сайта');
   return (
     <ModShell title={h.title} accent={h.accent} perm="announcements.manage">
       <AnnouncementsContent />

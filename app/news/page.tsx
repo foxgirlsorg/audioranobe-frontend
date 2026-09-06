@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
@@ -19,7 +19,8 @@ import type { Announcement, Paginated } from '@/lib/types';
 import { errMsg, useToast } from '@/lib/toast';
 import { formatDate } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
-import Pagination from '@/components/Pagination/Pagination';
+import { useInfiniteList } from '@/lib/useInfiniteList';
+import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Markdown from '@/components/Markdown/Markdown';
@@ -27,6 +28,7 @@ import Modal from '@/components/Modal/Modal';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Toggle from '@/components/Toggle/Toggle';
+import AddCard from '@/components/AddCard/AddCard';
 import styles from './page.module.css';
 
 function EditorModal({
@@ -123,46 +125,25 @@ export default function NewsPage() {
   const { can } = useAuth();
   const isAdmin = can('announcements.manage');
   const { toast } = useToast();
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<Paginated<Announcement> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [nonce, setNonce] = useState(0);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [editor, setEditor] = useState<{ a: Announcement | null } | null>(null);
   const [toDelete, setToDelete] = useState<Announcement | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError(null);
-    const ep = isAdmin ? '/mod/announcements' : '/announcements';
-    api<Paginated<Announcement>>(ep, { params: { page } })
-      .then((d) => {
-        if (alive) setData(d);
-      })
-      .catch((e) => {
-        if (alive) setError(errMsg(e));
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [page, nonce, isAdmin]);
-
-  const onPage = (p: number) => {
-    setPage(p);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const fetchPage = useCallback(
+    (page: number) =>
+      api<Paginated<Announcement>>(isAdmin ? '/mod/announcements' : '/announcements', {
+        params: { page },
+      }),
+    [isAdmin]
+  );
+  const list = useInfiniteList<Announcement>(fetchPage);
 
   const onSaved = (a: Announcement, created: boolean) => {
-    setData((prev) => {
-      if (!prev) return prev;
-      if (created) return { ...prev, items: [a, ...prev.items], total: prev.total + 1 };
-      return { ...prev, items: prev.items.map((x) => (x.id === a.id ? a : x)) };
-    });
+    if (created) {
+      list.reload();
+    } else {
+      list.patch((x) => x.id === a.id, () => a);
+    }
     toast(created ? 'Объявление создано' : 'Объявление обновлено');
   };
 
@@ -173,11 +154,7 @@ export default function NewsPage() {
         method: 'PATCH',
         body: { is_published: !a.is_published },
       });
-      setData((prev) =>
-        prev
-          ? { ...prev, items: prev.items.map((x) => (x.id === updated.id ? updated : x)) }
-          : prev
-      );
+      list.patch((x) => x.id === updated.id, () => updated);
       toast(updated.is_published ? 'Опубликовано' : 'Снято с публикации');
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -192,11 +169,7 @@ export default function NewsPage() {
         method: 'PATCH',
         body: { is_hidden: !a.is_hidden },
       });
-      setData((prev) =>
-        prev
-          ? { ...prev, items: prev.items.map((x) => (x.id === updated.id ? updated : x)) }
-          : prev
-      );
+      list.patch((x) => x.id === updated.id, () => updated);
       toast(updated.is_hidden ? 'Скрыто с главной' : 'Показывается на главной');
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -209,15 +182,7 @@ export default function NewsPage() {
     try {
       await api(`/mod/announcements/${a.id}`, { method: 'DELETE' });
       toast('Объявление удалено');
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              items: prev.items.filter((x) => x.id !== a.id),
-              total: Math.max(0, prev.total - 1),
-            }
-          : prev
-      );
+      list.remove((x) => x.id === a.id);
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -235,24 +200,22 @@ export default function NewsPage() {
 
       {isAdmin ? (
         <div className={styles.topRow}>
-          <button type="button" className="btn btn-primary" onClick={() => setEditor({ a: null })}>
-            <Plus size={15} /> {'Новое объявление'}
-          </button>
+          <AddCard icon={Plus} label="Новое объявление" onClick={() => setEditor({ a: null })} />
         </div>
       ) : null}
 
-      {loading && !data ? (
+      {list.loading && !list.items ? (
         <div className={styles.center}>
           <Spinner size={34} />
         </div>
-      ) : error ? (
+      ) : list.error ? (
         <div className={styles.center}>
-          <EmptyState icon={AlertTriangle} title={'Не удалось загрузить новости'} body={error} />
-          <button type="button" className="btn" onClick={() => setNonce((n) => n + 1)}>
+          <EmptyState icon={AlertTriangle} title={'Не удалось загрузить новости'} body={list.error} />
+          <button type="button" className="btn" onClick={list.reload}>
             {'Попробовать ещё раз'}
           </button>
         </div>
-      ) : !data || data.items.length === 0 ? (
+      ) : !list.items || list.items.length === 0 ? (
         <EmptyState
           icon={Newspaper}
           title={'Объявлений пока нет'}
@@ -260,8 +223,8 @@ export default function NewsPage() {
         />
       ) : (
         <>
-          <div className={loading ? `${styles.list} ${styles.listLoading}` : styles.list}>
-            {data.items.map((a) => (
+          <div className={styles.list}>
+            {list.items.map((a) => (
               <article key={a.id} className={`glass-panel ${styles.card}`}>
                 <div className={styles.cardHead}>
                   <span className={styles.cardIcon}>
@@ -347,9 +310,14 @@ export default function NewsPage() {
               </article>
             ))}
           </div>
-          <div className={styles.pagerWrap}>
-            <Pagination page={data.page} total={data.total} perPage={data.per_page} onPage={onPage} />
-          </div>
+          <InfiniteScroll
+            hasMore={list.hasMore}
+            loading={list.loadingMore}
+            error={list.moreError}
+            onLoad={list.loadMore}
+            total={list.total}
+            shown={list.items.length}
+          />
         </>
       )}
 

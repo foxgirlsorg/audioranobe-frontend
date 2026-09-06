@@ -54,27 +54,6 @@
   flex-shrink: 0;
 }
 
-.addCard {
-  padding: 1.1rem 1.2rem;
-  min-height: 62px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border: 1px dashed var(--border);
-  border-radius: 14px;
-  color: var(--text-muted);
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.addCard:hover {
-  color: var(--accent, #de6161);
-  border-color: var(--accent, #de6161);
-}
-
 .smallBtn {
   padding: 0.3rem 0.4rem;
   font-size: 11px;

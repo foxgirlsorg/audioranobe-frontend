@@ -143,9 +143,6 @@
 
 .annCard {
   position: relative;
-  display: flex;
-  gap: 0.9rem;
-  padding: 0.9rem 2.4rem 0.9rem 1.1rem;
   border-radius: var(--radius);
   border: 1px solid rgba(222, 97, 97, 0.28);
   background: rgba(222, 97, 97, 0.07);
@@ -156,6 +153,12 @@
 
 .annCard:hover {
   border-color: rgba(222, 97, 97, 0.45);
+}
+
+.annCardLink {
+  display: flex;
+  gap: 0.9rem;
+  padding: 0.9rem 2.4rem 0.9rem 1.1rem;
 }
 
 .annIcon {

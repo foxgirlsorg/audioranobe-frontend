@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { GripVertical, Trash2, Upload, Loader2 } from 'lucide-react';
+import { GripVertical, Trash2, Upload } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { Banner } from '@/lib/types';
@@ -10,6 +10,7 @@ import Toggle from '@/components/Toggle/Toggle';
 import Spinner from '@/components/Spinner/Spinner';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { ImageCropper } from '@/components/ImageCropper/ImageCropper';
+import AddCard from '@/components/AddCard/AddCard';
 import styles from './page.module.css';
 
 const BANNER_WIDTH = 2048;
@@ -48,7 +49,6 @@ function BannersInner() {
   const [pickFile, setPickFile] = useState<File | null>(null);
   const [toDelete, setToDelete] = useState<Banner | null>(null);
   const [dragId, setDragId] = useState<number | null>(null);
-  const [dropHover, setDropHover] = useState(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -185,26 +185,13 @@ function BannersInner() {
         </div>
       )}
 
-      <button
-        type="button"
-        className={`${styles.addCard} ${dropHover ? styles.addCardHover : ''}`}
-        disabled={uploading}
+      <AddCard
+        icon={Upload}
+        label="Добавить баннер"
+        loading={uploading}
         onClick={() => fileInput.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDropHover(true);
-        }}
-        onDragLeave={() => setDropHover(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDropHover(false);
-          const f = e.dataTransfer.files?.[0] ?? null;
-          if (f) void pick(f);
-        }}
-      >
-        {uploading ? <Loader2 size={20} className={styles.spin} /> : <Upload size={20} />}
-        Добавить баннер
-      </button>
+        onDropFile={(f) => void pick(f)}
+      />
       <input
         ref={fileInput}
         type="file"

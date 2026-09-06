@@ -10,8 +10,6 @@
 }
 
 .topRow {
-  display: flex;
-  justify-content: flex-end;
   margin-bottom: 1.4rem;
 }
 
@@ -45,11 +43,6 @@
   flex-direction: column;
   gap: 1.1rem;
   transition: opacity 0.25s ease;
-}
-
-.listLoading {
-  opacity: 0.55;
-  pointer-events: none;
 }
 
 .card {
@@ -106,11 +99,6 @@
   overflow: hidden;
 }
 
-.pagerWrap {
-  margin-top: 2.2rem;
-  display: flex;
-  justify-content: center;
-}
 
 @media (max-width: 768px) {
   .card {

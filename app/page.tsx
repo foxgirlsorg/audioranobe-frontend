@@ -244,16 +244,16 @@ export default function HomePage() {
         <div className={styles.annStrip}>
           {visibleAnnouncements.map((a) => (
             <div key={a.id} className={styles.annCard}>
-              <span className={styles.annIcon}>
-                <Megaphone size={16} />
-              </span>
-              <div className={styles.annBody}>
-                <span className={styles.annDate}>{formatDate(a.created_at)}</span>
-                <Link href={`/news/${a.slug}`} className={styles.annTitle}>
-                  {a.title}
-                </Link>
-                {a.body ? <p className={styles.annText}>{a.body}</p> : null}
-              </div>
+              <Link href={`/news/${a.slug}`} className={styles.annCardLink}>
+                <span className={styles.annIcon}>
+                  <Megaphone size={16} />
+                </span>
+                <div className={styles.annBody}>
+                  <span className={styles.annDate}>{formatDate(a.created_at)}</span>
+                  <span className={styles.annTitle}>{a.title}</span>
+                  {a.body ? <p className={styles.annText}>{a.body}</p> : null}
+                </div>
+              </Link>
               <button
                 type="button"
                 className={styles.annDismiss}

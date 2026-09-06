@@ -11,6 +11,7 @@ import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
 import Toggle from '@/components/Toggle/Toggle';
 import Select, { type SelectOption } from '@/components/Select/Select';
+import AddCard from '@/components/AddCard/AddCard';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -211,10 +212,7 @@ function RolesContent() {
               </div>
             </div>
           ))}
-          <button type="button" className={`glass-panel ${styles.addCard}`} onClick={openNew}>
-            <Plus size={20} />
-            <span>{'Создать роль'}</span>
-          </button>
+          <AddCard icon={Plus} label="Создать роль" variant="tile" onClick={openNew} />
         </div>
 
       <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id === null ? 'Новая роль' : 'Изменение роли'} size="wide">

@@ -8,6 +8,7 @@ import type { Badge } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
+import AddCard from '@/components/AddCard/AddCard';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -134,14 +135,7 @@ function BadgesContent() {
               </div>
             </div>
           ))}
-          <button
-            type="button"
-            className={`glass-panel ${styles.addCard}`}
-            onClick={() => setDraft({ id: null, name: '', svg: '' })}
-          >
-            <Plus size={20} />
-            <span>{'Создать бейдж'}</span>
-          </button>
+          <AddCard icon={Plus} label="Создать бейдж" onClick={() => setDraft({ id: null, name: '', svg: '' })} />
         </div>
 
       <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id === null ? 'Новый бейдж' : 'Изменение бейджа'}>
