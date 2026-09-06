@@ -26,7 +26,7 @@ function destLabel(t: BackupDestType): string {
 }
 
 function emptyDestination(): BackupDestination {
-  return { id: '', label: '', type: 's3', path: '', headers: [] };
+  return { id: '', label: '', type: 's3', path: '', headers: [], db_keep: 7, files_keep: 7 };
 }
 
 function humanSize(n: number | null): string {
@@ -86,6 +86,7 @@ function ScheduleCard({
             options={[
               { value: 'daily', label: 'Каждый день' },
               { value: 'weekly', label: 'Раз в неделю' },
+              { value: 'interval', label: 'Раз в N дней' },
             ]}
             onChange={(v) => onChange({ ...sched, frequency: v as BackupSchedule['frequency'] })}
           />
@@ -98,6 +99,19 @@ function ScheduleCard({
               value={String(sched.weekday)}
               options={WEEKDAYS.map((d, i) => ({ value: String(i), label: d }))}
               onChange={(v) => onChange({ ...sched, weekday: Number(v) })}
+            />
+          </div>
+        ) : null}
+        {sched.frequency === 'interval' ? (
+          <div className={styles.field}>
+            <label className={styles.label}>Каждые N дней</label>
+            <input
+              type="number"
+              className="input"
+              min={1}
+              max={365}
+              value={sched.interval_days}
+              onChange={(e) => onChange({ ...sched, interval_days: Number(e.target.value) })}
             />
           </div>
         ) : null}
@@ -517,6 +531,48 @@ function BackupInner() {
               label="Копировать файлы напрямую вместо архива"
               hint="Только для бэкапа файлов: копирует медиатеку как есть, пропуская уже загруженные файлы, вместо одного .tar.gz"
             />
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Подпапка для бэкапов БД (опционально)</span>
+              <input
+                className="input"
+                value={draft.db_path ?? ''}
+                onChange={(e) => setDraft({ ...draft, db_path: e.target.value })}
+                placeholder="db"
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Подпапка для бэкапов файлов (опционально)</span>
+              <input
+                className="input"
+                value={draft.files_path ?? ''}
+                onChange={(e) => setDraft({ ...draft, files_path: e.target.value })}
+                placeholder="files"
+              />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.fieldLabel}>Хранить бэкапов БД</span>
+              <input
+                type="number"
+                className="input"
+                min={1}
+                max={365}
+                value={draft.db_keep}
+                onChange={(e) => setDraft({ ...draft, db_keep: Number(e.target.value) })}
+              />
+            </label>
+            {!draft.mirror ? (
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>Хранить бэкапов файлов</span>
+                <input
+                  type="number"
+                  className="input"
+                  min={1}
+                  max={365}
+                  value={draft.files_keep ?? 7}
+                  onChange={(e) => setDraft({ ...draft, files_keep: Number(e.target.value) })}
+                />
+              </label>
+            ) : null}
             <div className={styles.editorActions}>
               <button type="button" className="btn btn-ghost" onClick={() => testDestination(draft)} disabled={testing === (draft.id || 'draft')}>
                 {testing === (draft.id || 'draft') ? <Loader2 size={14} className={styles.spin} /> : <FlaskConical size={14} />}

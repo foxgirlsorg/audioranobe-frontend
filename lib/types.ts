@@ -645,10 +645,11 @@ export interface NarrationSettings {
 
 export interface BackupSchedule {
   enabled: boolean;
-  frequency: 'daily' | 'weekly';
+  frequency: 'daily' | 'weekly' | 'interval';
   hour: number;
   minute: number;
   weekday: number;
+  interval_days: number;
   last_run_at: string | null;
 }
 
@@ -671,6 +672,14 @@ export interface BackupDestination {
   headers?: { key: string; value: string }[];
   /** Files backups only: mirror the media tree file-by-file instead of uploading a .tar.gz, skipping files already there. */
   mirror?: boolean;
+  /** How many DB backups to keep at this destination before pruning the oldest. */
+  db_keep: number;
+  /** How many file backups to keep here. Only applies when mirror is off (a mirror has no versions to prune). */
+  files_keep?: number;
+  /** Subfolder under `path` for DB backups, on top of it regardless of type/mirror mode. */
+  db_path?: string;
+  /** Subfolder under `path` for file backups, on top of it regardless of type/mirror mode. */
+  files_path?: string;
 }
 
 export interface BackupSettings {
