@@ -42,6 +42,7 @@
 }
 
 .value {
+  margin-top: auto;
   font-size: clamp(1.7rem, 3vw, 2.4rem);
   font-weight: 200;
   color: #fff;
