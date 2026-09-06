@@ -7,8 +7,6 @@ import {
   Minimize2,
   Moon,
   Music,
-  Pause,
-  Play,
   RotateCcw,
   RotateCw,
   Share2,
@@ -23,6 +21,7 @@ import { chapterNumberLabel, formatDuration } from '@/lib/format';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import { useBackToClose } from '@/lib/useBackToClose';
 import { useToast, errMsg } from '@/lib/toast';
+import PlayPauseIcon from '@/components/PlayPauseIcon/PlayPauseIcon';
 import styles from './Player.module.css';
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
@@ -215,7 +214,7 @@ export default function Player() {
       title={playing ? 'Пауза' : 'Воспроизвести'}
       aria-label={playing ? 'Пауза' : 'Воспроизвести'}
     >
-      {playing ? <Pause /> : <Play className={styles.playIcon} />}
+      <PlayPauseIcon playing={playing} playClassName={styles.playIcon} />
     </button>
   );
   const fwd10Btn = (

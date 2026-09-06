@@ -321,12 +321,16 @@ body.mod-fullscreen main.container {
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease, transform 0.1s ease;
 }
 
 .btn:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .btn:disabled {
@@ -353,13 +357,18 @@ body.mod-fullscreen main.container {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease,
+    transform 0.1s ease;
 }
 
 .back-link:hover {
   border-color: var(--border-hover);
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
+}
+
+.back-link:active {
+  transform: scale(0.96);
 }
 
 .btn svg {
@@ -455,7 +464,8 @@ body.mod-fullscreen main.container {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
-  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease,
+    transform 0.1s ease;
 }
 
 a.pill:hover,
@@ -463,6 +473,10 @@ button.pill:hover,
 .pill-active {
   border-color: var(--border-hover);
   color: var(--accent-hover);
+}
+
+button.pill:active {
+  transform: scale(0.96);
 }
 
 .pill-active {

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShieldOff, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ShieldOff, ChevronsLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useModSidebar } from '@/lib/modSidebar';
@@ -155,7 +155,7 @@ export function ModNav() {
           aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
           title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
         >
-          {collapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
+          <ChevronsLeft size={15} className={collapsed ? styles.collapseBtnFlipped : undefined} />
         </button>
       </nav>
 

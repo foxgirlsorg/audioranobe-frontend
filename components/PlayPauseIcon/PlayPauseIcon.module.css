@@ -1,0 +1,32 @@
+.stack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stack svg {
+  position: absolute;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.play {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.playing .play {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.pause {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.playing .pause {
+  opacity: 1;
+  transform: scale(1);
+}

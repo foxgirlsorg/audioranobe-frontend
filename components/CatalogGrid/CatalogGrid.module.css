@@ -307,3 +307,11 @@
   border-color: var(--border-hover);
   color: var(--text);
 }
+
+.invertBtn svg {
+  transition: transform 0.2s ease;
+}
+
+.invertBtnFlipped {
+  transform: rotate(180deg);
+}

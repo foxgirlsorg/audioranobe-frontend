@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
-  ArrowDownWideNarrow,
   ArrowUpNarrowWide,
   CheckCheck,
   Clock,
@@ -136,10 +135,10 @@ export default function CatalogGrid() {
             className={styles.invertBtn}
             onClick={() => setAsc((v) => !v)}
             aria-pressed={asc}
-            title={asc ? 'Сейчас по возрастанию' : 'Сейчас по убыванию'}
+            title={asc ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'}
             aria-label={asc ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'}
           >
-            {asc ? <ArrowUpNarrowWide size={15} /> : <ArrowDownWideNarrow size={15} />}
+            <ArrowUpNarrowWide size={15} className={asc ? undefined : styles.invertBtnFlipped} />
           </button>
 
           <button

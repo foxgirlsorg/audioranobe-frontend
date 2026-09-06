@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './Tabs.module.css';
 
@@ -86,6 +86,28 @@ function TabsRender({
 }) {
   const { ref, edges } = useScrollEdges(scrollable, tabs);
 
+  // Underline variant only: a single indicator bar that slides between tabs
+  // instead of each tab drawing its own static ::after.
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
+  const isUnderline = variant === 'underline';
+
+  useLayoutEffect(() => {
+    if (!isUnderline) return;
+    const el = tabRefs.current[active];
+    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [isUnderline, active, tabs]);
+
+  useEffect(() => {
+    if (!isUnderline) return;
+    const onResize = () => {
+      const el = tabRefs.current[active];
+      if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [isUnderline, active]);
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') return;
     e.preventDefault();
@@ -118,6 +140,9 @@ function TabsRender({
       {tabs.map((t) => (
         <button
           key={t.key}
+          ref={(el) => {
+            tabRefs.current[t.key] = el;
+          }}
           type="button"
           role="tab"
           aria-selected={t.key === active}
@@ -129,6 +154,12 @@ function TabsRender({
           {t.count != null ? <span className={styles.count}>{t.count}</span> : null}
         </button>
       ))}
+      {isUnderline && indicator ? (
+        <span
+          className={styles.underlineIndicator}
+          style={{ left: indicator.left, width: indicator.width }}
+        />
+      ) : null}
     </div>
   );
 }

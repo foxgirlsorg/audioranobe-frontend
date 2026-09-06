@@ -10,8 +10,6 @@ import {
   Download,
   Headphones,
   History,
-  Pause,
-  Play,
   RefreshCw,
   Search,
 } from 'lucide-react';
@@ -23,6 +21,7 @@ import { formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
+import PlayPauseIcon from '@/components/PlayPauseIcon/PlayPauseIcon';
 import styles from './page.module.css';
 
 export default function ChapterPage({ params }: { params: { id: string } }) {
@@ -137,7 +136,7 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
         <EmptyState
           icon={Headphones}
           title={'Не удалось загрузить главу'}
-          body={error ?? 'Что-то пошло не так.'}
+          body={error ?? 'Проверьте соединение и обновите страницу.'}
         />
         <button type="button" className="btn" onClick={() => void load()}>
           <RefreshCw size={14} />
@@ -210,7 +209,7 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
           onClick={() => void onPlayPause()}
           aria-label={playing ? 'Пауза' : 'Воспроизвести'}
         >
-          {playing ? <Pause size={30} /> : <Play size={30} className={styles.bigPlayIcon} />}
+          <PlayPauseIcon playing={playing} size={30} playClassName={styles.bigPlayIcon} />
         </button>
         <span className={styles.playState}>
           {playing ? 'Играет' : isCurrent ? 'На паузе' : 'Слушать главу'}

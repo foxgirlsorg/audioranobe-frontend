@@ -17,8 +17,6 @@ import {
   Mic,
   PenLine,
   Pencil,
-  Pause,
-  Play,
   RefreshCw,
   ShieldAlert,
   Star,
@@ -47,6 +45,7 @@ import RatingBars from '@/components/RatingBars/RatingBars';
 import CommentSection from '@/components/CommentSection/CommentSection';
 import LibraryWidget from '@/components/LibraryWidget/LibraryWidget';
 import FavoriteButton from '@/components/FavoriteButton/FavoriteButton';
+import PlayPauseIcon from '@/components/PlayPauseIcon/PlayPauseIcon';
 import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import Skeleton from 'react-loading-skeleton';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -457,11 +456,7 @@ export default function TitlePageClient({
           className="btn btn-primary"
           onClick={() => void playChapter(resume.chapter)}
         >
-          {player.current?.id === resume.chapter.id && player.playing ? (
-            <Pause size={14} />
-          ) : (
-            <Play size={14} />
-          )}
+          <PlayPauseIcon playing={player.current?.id === resume.chapter.id && player.playing} size={14} />
           {resume.continued ? 'Продолжить слушать' : 'Начать слушать'}
         </button>
       ) : null}
@@ -751,11 +746,7 @@ export default function TitlePageClient({
                                     : `Включить главу ${ch.number}`
                                 }
                               >
-                                {isCurrent && player.playing ? (
-                                  <Pause size={13} />
-                                ) : (
-                                  <Play size={13} className={styles.playIcon} />
-                                )}
+                                <PlayPauseIcon playing={isCurrent && player.playing} size={13} playClassName={styles.playIcon} />
                               </button>
                             ) : (
                               <span className={styles.noPlay} title={'Аудио ещё не готово'}>

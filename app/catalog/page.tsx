@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
-  ArrowDownWideNarrow,
   ArrowUpNarrowWide,
   RotateCcw,
   SearchX,
@@ -348,16 +347,17 @@ function CatalogInner() {
                   className={styles.invertBtn}
                   onClick={() => setParams({ order: order === 'asc' ? null : 'asc' })}
                   aria-pressed={order === 'asc'}
-                  title={order === 'asc' ? 'Сейчас по возрастанию' : 'Сейчас по убыванию'}
+                  title={
+                    order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'
+                  }
                   aria-label={
                     order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'
                   }
                 >
-                  {order === 'asc' ? (
-                    <ArrowUpNarrowWide size={15} />
-                  ) : (
-                    <ArrowDownWideNarrow size={15} />
-                  )}
+                  <ArrowUpNarrowWide
+                    size={15}
+                    className={order === 'asc' ? undefined : styles.invertBtnFlipped}
+                  />
                 </button>
               </div>
             </div>

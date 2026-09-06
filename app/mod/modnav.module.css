@@ -222,6 +222,14 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
+.collapseBtn svg {
+  transition: transform 0.2s ease;
+}
+
+.collapseBtnFlipped {
+  transform: rotate(180deg);
+}
+
 .content {
   min-width: 0;
 }

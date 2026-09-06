@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Maximize2, Pause, Play, RotateCcw, RotateCw } from 'lucide-react';
+import { Maximize2, RotateCcw, RotateCw } from 'lucide-react';
 import { usePlayer, usePlayerPosition } from '@/lib/player';
+import PlayPauseIcon from '@/components/PlayPauseIcon/PlayPauseIcon';
 import styles from './CompactPlayer.module.css';
 
 export default function CompactPlayer() {
@@ -36,7 +37,7 @@ export default function CompactPlayer() {
             title={playing ? 'Пауза' : 'Воспроизвести'}
             aria-label={playing ? 'Пауза' : 'Воспроизвести'}
           >
-            {playing ? <Pause /> : <Play className={styles.playIcon} />}
+            <PlayPauseIcon playing={playing} playClassName={styles.playIcon} />
           </button>
           <button
             type="button"

@@ -143,6 +143,7 @@
 /* ---------- underline variant: quiet, text-first, section-switcher feel ---------- */
 
 .underline {
+  position: relative;
   display: flex;
   width: 100%;
   max-width: none;
@@ -179,14 +180,13 @@
   border-color: transparent;
 }
 
-.underline .active::after {
-  content: '';
+.underlineIndicator {
   position: absolute;
   left: 0;
-  right: 0;
   bottom: -1px;
   height: 2px;
   background: var(--accent, #de6161);
+  transition: left 180ms ease, width 180ms ease;
 }
 
 .underline .count {
