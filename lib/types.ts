@@ -730,6 +730,11 @@ export interface BackupRunItem {
   finished_at: string | null;
 }
 
+export interface BackupRestorePoint {
+  name: string;
+  at: string;
+}
+
 export interface Banner {
   id: number;
   image_url: string;

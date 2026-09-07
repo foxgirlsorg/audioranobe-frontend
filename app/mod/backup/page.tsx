@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, Save, Plus, Pencil, Trash2, PlayCircle, FlaskConical, RefreshCw } from 'lucide-react';
-import { api } from '@/lib/api';
+import { Loader2, Save, Plus, Pencil, Trash2, PlayCircle, FlaskConical, RefreshCw, Download, RotateCcw } from 'lucide-react';
+import { api, API_URL } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
-import type { BackupDestination, BackupDestType, BackupRunItem, BackupSchedule, BackupSettings } from '@/lib/types';
+import type { BackupDestination, BackupDestType, BackupRestorePoint, BackupRunItem, BackupSchedule, BackupSettings } from '@/lib/types';
 import { ModShell, ErrorPanel } from '../modnav';
 import Select from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
@@ -282,6 +282,18 @@ function BackupInner() {
   const [syncing, setSyncing] = useState(false);
   const [nonce, setNonce] = useState(0);
 
+  const [exporting, setExporting] = useState<'db' | 'files' | null>(null);
+  const [rsType, setRsType] = useState<'db' | 'files'>('db');
+  const [rsSource, setRsSource] = useState<'destination' | 'upload'>('destination');
+  const [rsDestId, setRsDestId] = useState('');
+  const [rsPoints, setRsPoints] = useState<BackupRestorePoint[]>([]);
+  const [rsPointsLoading, setRsPointsLoading] = useState(false);
+  const [rsName, setRsName] = useState('');
+  const [rsFile, setRsFile] = useState<File | null>(null);
+  const [rsPassword, setRsPassword] = useState('');
+  const [restoring, setRestoring] = useState(false);
+  const [rsConfirm, setRsConfirm] = useState(false);
+
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -370,6 +382,79 @@ function BackupInner() {
     }
   };
 
+  const doExport = async (type: 'db' | 'files') => {
+    setExporting(type);
+    try {
+      const { token } = await api<{ token: string }>('/admin/backup/export-token', { method: 'POST', body: { type } });
+      // Stream the download via a plain GET navigation; the token authorizes it.
+      window.location.href = `${API_URL}/admin/backup/export?token=${encodeURIComponent(token)}`;
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const loadPoints = async (destId: string, type: 'db' | 'files') => {
+    if (!destId) {
+      setRsPoints([]);
+      setRsName('');
+      return;
+    }
+    setRsPointsLoading(true);
+    try {
+      const r = await api<{ items: BackupRestorePoint[]; error?: string }>('/admin/backup/list', {
+        params: { dest_id: destId, type },
+      });
+      setRsPoints(r.items);
+      setRsName(r.items[0]?.name ?? '');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+      setRsPoints([]);
+      setRsName('');
+    } finally {
+      setRsPointsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (rsSource === 'destination') void loadPoints(rsDestId, rsType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rsDestId, rsType, rsSource]);
+
+  const doRestore = async () => {
+    setRestoring(true);
+    try {
+      let r: { ok: boolean; error?: string };
+      if (rsSource === 'upload') {
+        if (!rsFile) return;
+        const fd = new FormData();
+        fd.append('file', rsFile);
+        fd.append('type', rsType);
+        fd.append('password', rsPassword);
+        r = await api<{ ok: boolean; error?: string }>('/admin/backup/restore', { method: 'POST', formData: fd });
+      } else {
+        r = await api<{ ok: boolean; error?: string }>('/admin/backup/restore', {
+          method: 'POST',
+          body: { type: rsType, dest_id: rsDestId, name: rsName, password: rsPassword },
+        });
+      }
+      if (r.ok) {
+        toast(rsType === 'db' ? 'База данных восстановлена' : 'Медиафайлы восстановлены', 'ok');
+        setRsPassword('');
+        setRsFile(null);
+        setNonce((n) => n + 1);
+      } else {
+        toast(r.error ?? 'Не удалось восстановить', 'error');
+      }
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setRestoring(false);
+      setRsConfirm(false);
+    }
+  };
+
   const saveDestination = () => {
     if (!cfg || !draft) return;
     const exists = cfg.destinations.some((d) => d.id === draft.id);
@@ -418,6 +503,24 @@ function BackupInner() {
         onChange={(s) => setCfg({ ...cfg, files: s })}
         onRunNow={() => runNow('files')}
       />
+
+      <div className={`glass-panel ${styles.panel}`}>
+        <h4 className={styles.scheduleTitle}>Скачать бэкап</h4>
+        <span className={styles.hint}>
+          Создаёт свежий бэкап и отдаёт его прямо в браузер. Файлы стримятся на лету — на диске сервера ничего не
+          сохраняется.
+        </span>
+        <div className={styles.actions}>
+          <button type="button" className="btn btn-ghost" disabled={exporting !== null} onClick={() => doExport('db')}>
+            {exporting === 'db' ? <Loader2 size={15} className={styles.spin} /> : <Download size={15} />}
+            Скачать БД
+          </button>
+          <button type="button" className="btn btn-ghost" disabled={exporting !== null} onClick={() => doExport('files')}>
+            {exporting === 'files' ? <Loader2 size={15} className={styles.spin} /> : <Download size={15} />}
+            Скачать файлы
+          </button>
+        </div>
+      </div>
 
       <div className={`glass-panel ${styles.panel}`}>
         <div className={styles.scheduleHead}>
@@ -507,6 +610,103 @@ function BackupInner() {
           </div>
         )}
       </div>
+
+      <div className={`glass-panel ${styles.panel}`}>
+        <h4 className={styles.scheduleTitle}>Восстановление</h4>
+        <span className={styles.hint}>
+          Перезаписывает текущие данные из выбранного бэкапа. Действие необратимо — требуется пароль аккаунта. Файл
+          проверяется перед восстановлением.
+        </span>
+        <div className={styles.row}>
+          <div className={styles.field}>
+            <label className={styles.label}>Что восстановить</label>
+            <Select
+              block
+              value={rsType}
+              options={[
+                { value: 'db', label: 'База данных' },
+                { value: 'files', label: 'Медиафайлы' },
+              ]}
+              onChange={(v) => setRsType(v as 'db' | 'files')}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Источник</label>
+            <Select
+              block
+              value={rsSource}
+              options={[
+                { value: 'destination', label: 'Из места хранения' },
+                { value: 'upload', label: 'Загрузить файл' },
+              ]}
+              onChange={(v) => setRsSource(v as 'destination' | 'upload')}
+            />
+          </div>
+        </div>
+
+        {rsSource === 'destination' ? (
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label}>Место хранения</label>
+              <Select
+                block
+                value={rsDestId}
+                options={cfg.destinations.map((d) => ({ value: d.id, label: d.label || destLabel(d.type) }))}
+                onChange={setRsDestId}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Точка восстановления</label>
+              <Select
+                block
+                value={rsName}
+                options={rsPoints.map((p) => ({ value: p.name, label: p.at || p.name }))}
+                onChange={setRsName}
+              />
+              {rsDestId && !rsPointsLoading && rsPoints.length === 0 ? (
+                <span className={styles.hint}>Здесь нет подходящих бэкапов.</span>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <label className={styles.field}>
+            <span className={styles.fieldLabel}>Файл бэкапа (.sql.gz или .tar.gz)</span>
+            <input className="input" type="file" accept=".gz" onChange={(e) => setRsFile(e.target.files?.[0] ?? null)} />
+          </label>
+        )}
+
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>Пароль аккаунта</span>
+          <input
+            className="input"
+            type="password"
+            value={rsPassword}
+            onChange={(e) => setRsPassword(e.target.value)}
+            autoComplete="current-password"
+          />
+        </label>
+
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className="btn btn-danger"
+            disabled={restoring || !rsPassword || (rsSource === 'upload' ? !rsFile : !rsName)}
+            onClick={() => setRsConfirm(true)}
+          >
+            {restoring ? <Loader2 size={15} className={styles.spin} /> : <RotateCcw size={15} />}
+            Восстановить
+          </button>
+        </div>
+      </div>
+
+      <ConfirmDialog
+        open={rsConfirm}
+        onClose={() => setRsConfirm(false)}
+        onConfirm={() => void doRestore()}
+        title="Восстановить из бэкапа"
+        body={`Текущие ${rsType === 'db' ? 'данные базы' : 'медиафайлы'} будут перезаписаны. Это необратимо. Продолжить?`}
+        danger
+      />
 
       <Modal open={!!draft} onClose={() => setDraft(null)} title={draft?.id ? 'Изменение места хранения' : 'Новое место хранения'}>
         {draft ? (
