@@ -70,6 +70,14 @@ function NarratorPageSkeleton() {
         <SectionHeaderSkeleton eyebrowWidth={100} titleWidth={180} />
         <CatalogGridSkeleton count={12} />
       </section>
+      <section className={sectionStyles.section}>
+        <SectionHeaderSkeleton eyebrowWidth={80} titleWidth={140} />
+        <Skeleton width="100%" height={120} borderRadius={12} count={2} />
+      </section>
+      <section className={sectionStyles.section}>
+        <Skeleton width={160} height={20} />
+        <Skeleton width="100%" height={80} borderRadius={12} count={3} />
+      </section>
     </div>
   );
 }

@@ -135,7 +135,34 @@ function TitlePageSkeleton() {
             <Skeleton width={160} height={38} borderRadius={10} />
           </div>
         </div>
+
+        <div className={styles.subrow}>
+          <div className={`glass-panel ${styles.factsCard} ${styles.factsCardCol}`}>
+            <Skeleton width={100} height={12} />
+            <div className={styles.factsCardBody}>
+              <Skeleton width="100%" height={18} count={5} />
+            </div>
+          </div>
+          <Skeleton height={140} borderRadius={14} />
+          <Skeleton height={140} borderRadius={14} />
+        </div>
       </header>
+
+      <div className={styles.tabsRow}>
+        <Skeleton width={280} height={32} />
+      </div>
+
+      <section className={styles.tabPanel}>
+        <div className={styles.volumes}>
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className={`glass-panel ${styles.volume}`}>
+              <div className={styles.volHeadRow}>
+                <Skeleton width="100%" height={44} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

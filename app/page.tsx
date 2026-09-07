@@ -16,6 +16,7 @@ import ScrollRail from '@/components/ScrollRail/ScrollRail';
 import railStyles from '@/components/ScrollRail/ScrollRail.module.css';
 import CatalogGrid from '@/components/CatalogGrid/CatalogGrid';
 import CatalogGridSkeleton from '@/components/CatalogGrid/CatalogGridSkeleton';
+import catalogStyles from '@/components/CatalogGrid/CatalogGrid.module.css';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import TitleCardSkeleton from '@/components/TitleCardC/TitleCardSkeleton';
 import BannerCarousel from '@/components/BannerCarousel/BannerCarousel';
@@ -118,8 +119,16 @@ function HomeSkeleton() {
         <RailSkeleton />
       </section>
 
-      <section className={sectionStyles.section}>
-        <SectionHeaderSkeleton eyebrowWidth={100} titleWidth={180} />
+      <Skeleton style={{ aspectRatio: '3 / 1', display: 'block' }} borderRadius={16} />
+
+      <section className={catalogStyles.wrap}>
+        <header className={catalogStyles.head}>
+          <div className={catalogStyles.headText}>
+            <Skeleton width={90} height={12} />
+            <Skeleton width={180} height={26} />
+          </div>
+          <Skeleton width={320} height={34} />
+        </header>
         <CatalogGridSkeleton count={12} />
       </section>
     </div>

@@ -124,15 +124,22 @@ function ConvListSkeleton({ count = 8 }: { count?: number }) {
 
 function ChatPageSkeleton() {
   return (
-    <div className={styles.page}>
-      <aside className={styles.sidebar}>
-        <header className={styles.sidebarHead}>
-          <h1 className={styles.sidebarTitle}>Сообщения</h1>
-        </header>
-        <div className={styles.convList}>
-          <ConvListSkeleton />
-        </div>
-      </aside>
+    <div className={styles.dmShell}>
+      <div className={styles.page}>
+        <aside className={styles.sidebar}>
+          <header className={styles.sidebarHead}>
+            <h1 className={styles.sidebarTitle}>Сообщения</h1>
+          </header>
+          <div className={styles.convList}>
+            <ConvListSkeleton />
+          </div>
+        </aside>
+        <section className={styles.thread}>
+          <div className={styles.noThread}>
+            <EmptyState icon={MessageCircle} title="Выберите переписку" body="Сообщения появятся здесь." />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

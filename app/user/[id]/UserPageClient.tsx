@@ -205,23 +205,20 @@ function UserPageSkeleton() {
           </div>
         </div>
       </div>
-      <section className={sectionStyles.section}>
-        <Skeleton width="100%" height={200} />
-      </section>
-      <section className={sectionStyles.section}>
-        <Skeleton width="60%"  height={50} />
-        <Skeleton width="60%"  height={50} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-        <Skeleton width="100%"  height={100} />
-
-      </section>
+      <div className={`glass-panel ${styles.aboutCard}`}>
+        <Skeleton width={80} height={12} />
+        <Skeleton width="90%" count={2} />
+      </div>
+      <div className={styles.tabsWrap}>
+        <Skeleton width={340} height={38} />
+      </div>
+      <div className={styles.tabBody}>
+        <div className={styles.entries}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <Skeleton key={i} width="100%" height={92} borderRadius={12} style={{ marginBottom: '0.6rem', display: 'block' }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
