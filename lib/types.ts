@@ -424,6 +424,35 @@ export interface ModComment extends Comment {
   target: { type: CommentTargetType; id: number; name: string; link: string } | null;
 }
 
+export type NodeType = 'converter' | 'narrator';
+export type NodeState = 'offline' | 'idle' | 'working';
+
+/** GET /mod/nodes item — a worker node authorized in the mod panel. */
+export interface WorkerNode {
+  id: number;
+  name: string;
+  type: NodeType;
+  rmq_username: string;
+  enabled: boolean;
+  online: boolean;
+  state: NodeState;
+  current_job: number | null;
+  version: string;
+  jobs_done: number;
+  last_error: string;
+  last_error_at: string | null;
+  last_seen_at: string | null;
+  created_at: string | null;
+}
+
+/** One-time credentials returned when a node is created. */
+export interface NodeCredentials {
+  rmq_username: string;
+  secret: string;
+  queue: string;
+  vhost: string;
+}
+
 export interface LibraryEntry {
   title: TitleCard;
   status: LibraryStatus;

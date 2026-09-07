@@ -22,6 +22,7 @@ import {
   Sparkles,
   Award,
   KeyRound,
+  Server,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -91,6 +92,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/recap', label: 'Итоги', icon: Sparkles, perm: 'recap.manage' },
       { href: '/mod/narration', label: 'Озвучка', icon: BookHeadphones, perm: 'narration.manage' },
       { href: '/mod/tasks', label: 'Задачи', icon: ListChecks, perm: 'narration.jobs', countKey: 'jobs_error' },
+      { href: '/mod/nodes', label: 'Ноды', icon: Server, perm: 'nodes.manage' },
       { href: '/mod/backup', label: 'Бэкапы', icon: DatabaseBackup, perm: 'backup.manage' },
     ],
   },
