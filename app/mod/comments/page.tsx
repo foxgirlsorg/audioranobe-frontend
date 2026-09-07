@@ -90,6 +90,19 @@ function CommentsContent() {
     setMarking(false);
   };
 
+  const markOneChecked = async (c: ModComment) => {
+    setBusyId(c.id);
+    try {
+      await api('/mod/comments/mark-checked', { method: 'POST', body: { ids: [c.id] } });
+      setData((prev) =>
+        prev ? { ...prev, items: prev.items.map((x) => (x.id === c.id ? { ...x, mod_reviewed: true } : x)) } : prev
+      );
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+    setBusyId(null);
+  };
+
   const toggleExpanded = (id: number) =>
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -270,6 +283,15 @@ function CommentsContent() {
                   ) : null}
                   {!c.is_deleted ? (
                     <div className={styles.rowActions}>
+                      <button
+                        type="button"
+                        className={`btn btn-ghost ${styles.smallBtn}`}
+                        disabled={busy || c.mod_reviewed}
+                        onClick={() => void markOneChecked(c)}
+                        title={'Отметить проверенным'}
+                      >
+                        <CheckCheck size={13} /> {'Проверено'}
+                      </button>
                       <button
                         type="button"
                         className={`btn btn-ghost ${styles.smallBtn}`}
