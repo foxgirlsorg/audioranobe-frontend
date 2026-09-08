@@ -67,10 +67,11 @@ function putChunk(
 export async function uploadInChunks(
   file: File,
   onProgress?: (frac: number) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  kind?: 'audio' | 'backup'
 ): Promise<number> {
   const session = await api<UploadSession>('/panel/uploads', {
-    body: { filename: file.name, size: file.size },
+    body: { filename: file.name, size: file.size, ...(kind ? { kind } : {}) },
   });
 
   const chunkSize = session.chunk_size > 0 ? session.chunk_size : 5 * 1024 * 1024;

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Save, Plus, Pencil, Trash2, PlayCircle, FlaskConical, RefreshCw, Download, RotateCcw } from 'lucide-react';
 import { api, API_URL } from '@/lib/api';
+import { uploadInChunks } from '@/lib/upload';
 import { errMsg, useToast } from '@/lib/toast';
 import type { BackupDestination, BackupDestType, BackupRestorePoint, BackupRunItem, BackupSchedule, BackupSettings } from '@/lib/types';
 import { ModShell, ErrorPanel } from '../modnav';
@@ -424,35 +425,6 @@ function BackupInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rsDestId, rsType, rsSource]);
 
-  // Upload restore via XHR so we get real upload progress (fetch cannot report
-  // it). Once the bytes are up, the server streams the extract — no progress
-  // events for that, so we flip to an indeterminate "processing" phase.
-  const uploadRestore = (fd: FormData): Promise<{ ok: boolean; error?: string }> =>
-    new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${API_URL}/admin/backup/restore`);
-      xhr.withCredentials = true;
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) setRsProgress(Math.round((e.loaded / e.total) * 100));
-      };
-      xhr.upload.onload = () => {
-        setRsProgress(null);
-        setRsPhase('processing');
-      };
-      xhr.onload = () => {
-        let data: { ok?: boolean; error?: string } = {};
-        try {
-          data = JSON.parse(xhr.responseText);
-        } catch {
-          /* non-JSON error page */
-        }
-        if (xhr.status >= 200 && xhr.status < 300) resolve({ ok: data.ok ?? true, error: data.error });
-        else resolve({ ok: false, error: data.error ?? `Ошибка (${xhr.status})` });
-      };
-      xhr.onerror = () => reject(new Error('Сеть недоступна — не удалось связаться с сервером'));
-      xhr.send(fd);
-    });
-
   const doRestore = async () => {
     if (rsSource === 'upload' && !rsFile) return;
     setRestoring(true);
@@ -461,11 +433,16 @@ function BackupInner() {
     try {
       let r: { ok: boolean; error?: string };
       if (rsSource === 'upload') {
-        const fd = new FormData();
-        fd.append('file', rsFile as File);
-        fd.append('type', rsType);
-        fd.append('password', rsPassword);
-        r = await uploadRestore(fd);
+        // Chunk the archive up (dodges the proxy body cap), then restore from
+        // the assembled upload. Chunk PUTs drive the % bar; once uploaded, the
+        // server-side extract runs as an indeterminate "processing" phase.
+        const uploadId = await uploadInChunks(rsFile as File, (frac) => setRsProgress(Math.round(frac * 100)), undefined, 'backup');
+        setRsProgress(null);
+        setRsPhase('processing');
+        r = await api<{ ok: boolean; error?: string }>('/admin/backup/restore', {
+          method: 'POST',
+          body: { type: rsType, upload_id: uploadId, password: rsPassword },
+        });
       } else {
         r = await api<{ ok: boolean; error?: string }>('/admin/backup/restore', {
           method: 'POST',
