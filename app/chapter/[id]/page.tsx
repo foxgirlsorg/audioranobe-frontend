@@ -114,7 +114,7 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
         </div>
         <h1 className={styles.errTitle}>{'Глава недоступна'}</h1>
         <p className={styles.errBody}>
-          {'Этой главы не существует, её аудио ещё не готово или она всё ещё ждёт модерации. Попробуйте чуть позже.'}
+          {'Глава недоступна. Попробуйте позже.'}
         </p>
         <div className={styles.errActions}>
           <button type="button" className="btn btn-ghost" onClick={() => router.back()}>

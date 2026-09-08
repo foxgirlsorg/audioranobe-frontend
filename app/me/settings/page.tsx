@@ -763,7 +763,7 @@ export default function SettingsPage() {
             <div className={styles.prefText}>
               <span className={styles.prefLabel}>{'Только друзья могут писать мне'}</span>
               <span className={styles.prefHint}>
-                {'Новые сообщения смогут отправлять только пользователи из вашего списка друзей. Модераторы и администрация — всегда.'}
+                {'Писать вам первыми смогут только друзья.'}
               </span>
             </div>
             <button
@@ -788,7 +788,7 @@ export default function SettingsPage() {
             <div>
               <h2 className={styles.panelTitle}>{'Комментарии к вашим тайтлам'}</h2>
               <p className={styles.panelHint}>
-                {'Получайте уведомление о каждом новом комментарии к тайтлам ваших чтецов. Ответы на ваши собственные комментарии не дублируются.'}
+                {'Уведомления о новых комментариях к тайтлам ваших чтецов.'}
               </p>
             </div>
           </div>
@@ -1007,7 +1007,7 @@ export default function SettingsPage() {
           <div>
             <h2 className={styles.panelTitle}>{'Опасная зона'}</h2>
             <p className={styles.panelHint}>
-              {'Удаление аккаунта навсегда стирает профиль, библиотеку, избранное, историю и подписки. Комментарии останутся, но будут анонимными.'}
+              {'Аккаунт будет удалён навсегда — это нельзя отменить.'}
             </p>
           </div>
         </div>
@@ -1082,7 +1082,7 @@ export default function SettingsPage() {
         body={
           <div className={styles.deleteBody}>
             <p>
-              {'Это навсегда. Профиль, библиотека, избранное, история прослушивания, коллекции и подписки исчезнут безвозвратно — отменить или восстановить не получится.'}
+              {'Это необратимо. Аккаунт будет удалён навсегда.'}
             </p>
             <label className={styles.label} htmlFor="settings-delpw">
               {'Подтвердите действие паролем'}

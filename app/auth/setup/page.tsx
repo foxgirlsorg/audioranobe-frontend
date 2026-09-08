@@ -88,7 +88,7 @@ export default function AuthSetupPage() {
         </div>
 
         <p className={styles.intro}>
-          {'Вы вошли через сторонний сервис. Осталось выбрать логин — он будет адресом вашей страницы и по нему вас смогут упомянуть в комментариях.'}
+          {'Осталось выбрать логин для вашей страницы.'}
         </p>
 
         <form onSubmit={submit} noValidate>

@@ -519,8 +519,7 @@ function BackupInner() {
       <div className={`glass-panel ${styles.panel}`}>
         <h4 className={styles.scheduleTitle}>Скачать бэкап</h4>
         <span className={styles.hint}>
-          Создаёт свежий бэкап и отдаёт его прямо в браузер. Файлы стримятся на лету — на диске сервера ничего не
-          сохраняется.
+          Создаёт свежий бэкап и отдаёт его прямо в браузер.
         </span>
         <div className={styles.actions}>
           <button type="button" className="btn btn-ghost" disabled={exporting !== null} onClick={() => doExport('db')}>
@@ -626,8 +625,7 @@ function BackupInner() {
       <div className={`glass-panel ${styles.panel}`}>
         <h4 className={styles.scheduleTitle}>Восстановление</h4>
         <span className={styles.hint}>
-          Перезаписывает текущие данные из выбранного бэкапа. Действие необратимо — требуется пароль аккаунта. Файл
-          проверяется перед восстановлением.
+          Перезаписывает текущие данные из выбранного бэкапа. Действие необратимо — требуется пароль аккаунта.
         </span>
         <div className={styles.row}>
           <div className={styles.field}>
@@ -838,9 +836,8 @@ function BackupInner() {
         {syncDest ? (
           <div className={styles.editor}>
             <p className={styles.hint}>
-              Точное зеркало «{syncDest.label || syncDest.type}» с прод-сервером: файлы, удалённые
-              с сервера, будут <b>безвозвратно удалены</b> и из этого места хранения. Обычный бэкап
-              так не делает. Для подтверждения введите пароль аккаунта.
+              Точное зеркало «{syncDest.label || syncDest.type}» с прод-сервером — удалённые с сервера
+              файлы <b>удаляются и здесь</b>. Введите пароль для подтверждения.
             </p>
             <label className={styles.field}>
               <span className={styles.fieldLabel}>Пароль</span>

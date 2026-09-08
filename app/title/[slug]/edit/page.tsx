@@ -510,7 +510,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             disabled={commentSubBusy}
             onChange={toggleCommentSub}
             label="Уведомлять о новых комментариях"
-            hint="Присылать уведомление о каждом новом комментарии к этому тайтлу. Ответы на ваши собственные комментарии не дублируются."
+            hint="Уведомления о новых комментариях к этому тайтлу."
           />
         </section>
       ) : null}
