@@ -54,6 +54,7 @@ const PlayerPositionContext = createContext<PlayerPositionValue | null>(null);
 
 const RATE_KEY = 'audioranobe_rate';
 const VOL_KEY = 'audioranobe_volume';
+const OPEN_KEY = 'audioranobe_player';
 
 // Loudness is perceived roughly logarithmically, so a linear slider value
 // sounds like it's already loud within the first quarter of its travel.
@@ -114,6 +115,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         credentials: 'include',
         keepalive,
       }).catch(() => {});
+    } catch {
+    }
+  }, []);
+
+  const persistOpen = useCallback(() => {
+    const cur = currentRef.current;
+    const audio = audioRef.current;
+    if (!cur) return;
+    const pos = audio && Number.isFinite(audio.currentTime) ? Math.round(audio.currentTime) : 0;
+    try {
+      document.cookie = `${OPEN_KEY}=${cur.id}:${pos};path=/;max-age=31536000;samesite=lax`;
     } catch {
     }
   }, []);
@@ -182,7 +194,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [saveProgress, toast]);
 
   const playChapter = useCallback(
-    async (id: number, startAt?: number) => {
+    async (id: number, startAt?: number, autoplay = true) => {
       const audio = ensureAudio();
       if (currentRef.current && currentRef.current.id === id && audio.src) {
         if (startAt != null) {
@@ -192,7 +204,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
           }
           setPosition(Math.max(0, startAt));
         }
-        audio.play().catch(reportPlayError);
+        if (autoplay) audio.play().catch(reportPlayError);
         return;
       }
       if (currentRef.current && currentRef.current.id !== id) saveProgress();
@@ -227,10 +239,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         };
         audio.addEventListener('loadedmetadata', onMeta);
       }
-      try {
-        await audio.play();
-      } catch (e) {
-        reportPlayError(e);
+      if (autoplay) {
+        try {
+          await audio.play();
+        } catch (e) {
+          reportPlayError(e);
+        }
       }
     },
     [ensureAudio, saveProgress, reportPlayError]
@@ -346,6 +360,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       } catch {
       }
     }
+    try {
+      document.cookie = `${OPEN_KEY}=;path=/;max-age=0`;
+    } catch {
+    }
     currentRef.current = null;
     setCurrent(null);
     setPlaying(false);
@@ -404,15 +422,39 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
 
   useEffect(() => {
     if (!playing) return;
-    const iv = window.setInterval(() => saveProgress(), 10000);
+    const iv = window.setInterval(() => {
+      saveProgress();
+      persistOpen();
+    }, 10000);
     return () => window.clearInterval(iv);
-  }, [playing, saveProgress]);
+  }, [playing, saveProgress, persistOpen]);
 
   useEffect(() => {
-    const handler = () => saveProgress(true);
+    const handler = () => {
+      saveProgress(true);
+      persistOpen();
+    };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [saveProgress]);
+  }, [saveProgress, persistOpen]);
+
+  useEffect(() => {
+    persistOpen();
+  }, [current, persistOpen]);
+
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const m = document.cookie.match(/(?:^|; )audioranobe_player=([^;]+)/);
+    if (!m) return;
+    const [idStr, posStr] = decodeURIComponent(m[1]).split(':');
+    const id = parseInt(idStr, 10);
+    const pos = parseInt(posStr, 10);
+    if (Number.isFinite(id) && id > 0) {
+      playChapter(id, Number.isFinite(pos) ? pos : undefined, false).catch(() => {});
+    }
+  }, [playChapter]);
 
   useEffect(() => {
     if (typeof sleep !== 'number') return;
