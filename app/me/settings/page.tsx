@@ -844,6 +844,16 @@ export default function SettingsPage() {
                 {user.email ?? 'не указана'}
                 {user.email && !user.email_verified ? ' — не подтверждена' : ''}
               </span>
+              {emailVerificationOn && user.email && !user.email_verified ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  disabled={resending}
+                  onClick={resendVerification}
+                >
+                  {resending ? 'Отправляем…' : 'Отправить письмо повторно'}
+                </button>
+              ) : null}
             </div>
             <button
               type="button"

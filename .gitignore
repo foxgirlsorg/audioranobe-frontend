@@ -29,6 +29,7 @@ yarn-error.log*
 # Next.js — .next is the dev/production build, .next-build is what
 # `npm run build:check` writes so it never clobbers a running dev server.
 .next/
+.next-dbg/
 .next-build/
 out/
 next-env.d.ts
