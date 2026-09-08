@@ -6,13 +6,18 @@ import { Mail } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg } from '@/lib/toast';
 import { useToast } from '@/lib/toast';
+import { useEnsureConfig } from '@/lib/config';
+import Captcha from '@/components/Captcha/Captcha';
 import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from '../login/login.module.css';
 
 export default function ForgotPage() {
   useResolveAuth();
   const { toast } = useToast();
+  const config = useEnsureConfig();
   const [email, setEmail] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -24,13 +29,21 @@ export default function ForgotPage() {
       setError('Введите email');
       return;
     }
+    if (config?.captcha.enabled && !captchaToken) {
+      setError('Подтвердите, что вы не робот');
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
-      await api('/auth/forgot', { body: { email: em } });
+      await api('/auth/forgot', {
+        body: { email: em, ...(captchaToken ? { captcha_token: captchaToken } : {}) },
+      });
       setSent(true);
     } catch (err) {
       toast(errMsg(err), 'error');
+      setCaptchaToken('');
+      setCaptchaNonce((n) => n + 1);
       setSubmitting(false);
     }
   }
@@ -94,6 +107,8 @@ export default function ForgotPage() {
               placeholder={'you@example.com'}
             />
           </div>
+
+          <Captcha key={captchaNonce} onToken={setCaptchaToken} />
 
           <button type="submit" className={`btn btn-primary ${styles.submit}`} disabled={submitting}>
             <Mail size={15} />

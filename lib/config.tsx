@@ -7,6 +7,7 @@ import type { ProviderInfo } from '@/lib/types';
 export interface AppConfig {
   email_verification: boolean;
   auth_providers: ProviderInfo[];
+  captcha: { enabled: boolean; site_key: string; script_url: string; widget_var: string };
 }
 
 interface ConfigCtx {
@@ -30,9 +31,30 @@ export function ConfigProvider({ children }: { children: React.ReactNode }): JSX
   const ensure = useCallback(() => {
     if (started.current) return;
     started.current = true;
-    api<{ email_verification?: boolean; auth_providers?: ProviderInfo[] }>('/config')
-      .then((c) => setConfig({ email_verification: !!c.email_verification, auth_providers: c.auth_providers ?? [] }))
-      .catch(() => setConfig({ email_verification: false, auth_providers: [] }));
+    api<{
+      email_verification?: boolean;
+      auth_providers?: ProviderInfo[];
+      captcha?: { enabled?: boolean; site_key?: string; script_url?: string; widget_var?: string };
+    }>('/config')
+      .then((c) =>
+        setConfig({
+          email_verification: !!c.email_verification,
+          auth_providers: c.auth_providers ?? [],
+          captcha: {
+            enabled: !!c.captcha?.enabled,
+            site_key: c.captcha?.site_key ?? '',
+            script_url: c.captcha?.script_url ?? '',
+            widget_var: c.captcha?.widget_var ?? '',
+          },
+        })
+      )
+      .catch(() =>
+        setConfig({
+          email_verification: false,
+          auth_providers: [],
+          captcha: { enabled: false, site_key: '', script_url: '', widget_var: '' },
+        })
+      );
   }, []);
 
   return <ConfigContext.Provider value={{ config, ensure }}>{children}</ConfigContext.Provider>;

@@ -55,6 +55,177 @@ function blank(type: AuthProviderType): AuthProviderConfig {
   };
 }
 
+interface CaptchaCfg {
+  enabled: boolean;
+  site_key: string;
+  verify_url: string;
+  script_url: string;
+  widget_var: string;
+  has_secret: boolean;
+}
+
+/** Known providers that fill the generic fields; "custom" leaves them editable. */
+const CAPTCHA_PRESETS: { key: string; label: string; verify_url: string; script_url: string; widget_var: string }[] = [
+  {
+    key: 'turnstile',
+    label: 'Cloudflare Turnstile',
+    verify_url: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    script_url: 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',
+    widget_var: 'turnstile',
+  },
+  {
+    key: 'recaptcha',
+    label: 'Google reCAPTCHA v2',
+    verify_url: 'https://www.google.com/recaptcha/api/siteverify',
+    script_url: 'https://www.google.com/recaptcha/api.js?render=explicit',
+    widget_var: 'grecaptcha',
+  },
+  {
+    key: 'hcaptcha',
+    label: 'hCaptcha',
+    verify_url: 'https://api.hcaptcha.com/siteverify',
+    script_url: 'https://js.hcaptcha.com/1/api.js?render=explicit',
+    widget_var: 'hcaptcha',
+  },
+];
+
+function matchPreset(cfg: CaptchaCfg): string {
+  const p = CAPTCHA_PRESETS.find(
+    (x) => x.verify_url === cfg.verify_url && x.script_url === cfg.script_url && x.widget_var === cfg.widget_var
+  );
+  return p ? p.key : 'custom';
+}
+
+function CaptchaSettings() {
+  const { toast } = useToast();
+  const [cfg, setCfg] = useState<CaptchaCfg | null>(null);
+  const [preset, setPreset] = useState('turnstile');
+  const [secret, setSecret] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api<CaptchaCfg>('/admin/auth/captcha')
+      .then((d) => {
+        if (!alive) return;
+        setCfg(d);
+        setPreset(d.verify_url ? matchPreset(d) : 'turnstile');
+      })
+      .catch((e) => alive && toast(errMsg(e), 'error'));
+    return () => {
+      alive = false;
+    };
+  }, [toast]);
+
+  if (!cfg) return null;
+
+  const applyPreset = (key: string) => {
+    setPreset(key);
+    if (key === 'custom') return;
+    const p = CAPTCHA_PRESETS.find((x) => x.key === key);
+    if (p) setCfg({ ...cfg, verify_url: p.verify_url, script_url: p.script_url, widget_var: p.widget_var });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const d = await api<CaptchaCfg>('/admin/auth/captcha', {
+        method: 'PUT',
+        body: {
+          enabled: cfg.enabled,
+          site_key: cfg.site_key,
+          verify_url: cfg.verify_url,
+          script_url: cfg.script_url,
+          widget_var: cfg.widget_var,
+          ...(secret ? { secret } : {}),
+        },
+      });
+      setCfg(d);
+      setPreset(d.verify_url ? matchPreset(d) : 'custom');
+      setSecret('');
+      toast('Капча сохранена', 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+    setSaving(false);
+  };
+
+  const custom = preset === 'custom';
+
+  return (
+    <div className={`glass-panel ${styles.row}`} style={{ padding: 16, marginBottom: 20 }}>
+      <div className={styles.head} style={{ cursor: 'default' }}>
+        <span className={styles.name}>{'Капча'}</span>
+        <span className={styles.spacer} />
+        <span className={styles.switch}>
+          <Toggle checked={cfg.enabled} onChange={(on) => setCfg({ ...cfg, enabled: on })} label={''} />
+        </span>
+      </div>
+      <p className={styles.hint}>
+        {'Защищает вход, регистрацию и восстановление пароля. Выберите провайдера (или «Свой») и задайте ключи. Выключите переключатель, чтобы убрать капчу.'}
+      </p>
+
+      <div className={styles.grid2}>
+        <label className={styles.field}>
+          <span className={styles.label}>{'Провайдер'}</span>
+          <select className="input" value={preset} onChange={(e) => applyPreset(e.target.value)}>
+            {CAPTCHA_PRESETS.map((p) => (
+              <option key={p.key} value={p.key}>
+                {p.label}
+              </option>
+            ))}
+            <option value="custom">{'Свой (custom)'}</option>
+          </select>
+        </label>
+      </div>
+
+      <div className={styles.grid2}>
+        <label className={styles.field}>
+          <span className={styles.label}>{'Site key'}</span>
+          <input className="input" value={cfg.site_key} onChange={(e) => setCfg({ ...cfg, site_key: e.target.value })} />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>{'Secret key'}</span>
+          <input
+            className="input"
+            type="password"
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder={cfg.has_secret ? 'сохранён — оставьте пустым' : ''}
+          />
+        </label>
+      </div>
+
+      <label className={styles.field}>
+        <span className={styles.label}>{'Verify URL (сервер)'}</span>
+        <input className="input" value={cfg.verify_url} readOnly={!custom} onChange={(e) => setCfg({ ...cfg, verify_url: e.target.value })} placeholder="https://…/siteverify" />
+      </label>
+      <div className={styles.grid2}>
+        <label className={styles.field}>
+          <span className={styles.label}>{'Script URL (виджет)'}</span>
+          <input className="input" value={cfg.script_url} readOnly={!custom} onChange={(e) => setCfg({ ...cfg, script_url: e.target.value })} placeholder="https://…/api.js?render=explicit" />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>{'Имя виджета (window.*)'}</span>
+          <input className="input" value={cfg.widget_var} readOnly={!custom} onChange={(e) => setCfg({ ...cfg, widget_var: e.target.value })} placeholder="turnstile / grecaptcha / hcaptcha" />
+        </label>
+      </div>
+      {custom ? (
+        <p className={styles.hint}>
+          {'Свой провайдер должен работать по протоколу reCAPTCHA: siteverify принимает secret+response и возвращает {"success": bool}, а скрипт задаёт глобальный объект с методом render(el, opts).'}
+        </p>
+      ) : null}
+
+      <div className={styles.rowActions}>
+        <button type="button" className="btn btn-primary" disabled={saving} onClick={() => void save()}>
+          {saving ? <Loader2 size={15} className={styles.spin} /> : <Save size={15} />}
+          {'Сохранить'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AuthContent() {
   const { toast } = useToast();
   const [providers, setProviders] = useState<AuthProviderConfig[] | null>(null);
@@ -210,6 +381,8 @@ function AuthContent() {
 
   return (
     <>
+      <CaptchaSettings />
+
       <p className={styles.hint}>
         {
           'Провайдеры входа, которые видит окно входа/регистрации. Встроенные (Google, Discord, Telegram) используют свои готовые эндпоинты — задайте только ключи и иконку. Переключатель сохраняется сразу; изменение ключей и удаление требуют пароль.'
@@ -438,7 +611,7 @@ function AuthContent() {
 }
 
 export default function ModAuthPage() {
-  const h = splitHeading('Способы входа');
+  const h = splitHeading('Авторизация');
   return (
     <ModShell title={h.title} accent={h.accent} perm="auth.manage">
       <AuthContent />

@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useEnsureConfig } from '@/lib/config';
 import { LIMITS } from '@/lib/limits';
 import { errMsg } from '@/lib/toast';
 import { ProviderSection } from '@/components/ProviderAuth/ProviderAuth';
+import Captcha from '@/components/Captcha/Captcha';
 import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './login.module.css';
 
@@ -19,11 +21,14 @@ function safeNext(raw: string | null): string {
 export default function LoginPage() {
   useResolveAuth();
   const { user, loading, login } = useAuth();
+  const config = useEnsureConfig();
   const router = useRouter();
 
   const [next, setNext] = useState('/');
   const [loginValue, setLoginValue] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const [errors, setErrors] = useState<{ login?: string; password?: string }>({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -44,13 +49,19 @@ export default function LoginPage() {
     setErrors(errs);
     setFormError('');
     if (errs.login || errs.password) return;
+    if (config?.captcha.enabled && !captchaToken) {
+      setFormError('Подтвердите, что вы не робот');
+      return;
+    }
 
     setSubmitting(true);
     try {
-      await login(loginValue.trim(), password);
+      await login(loginValue.trim(), password, captchaToken);
       router.replace(next);
     } catch (err) {
       setFormError(errMsg(err));
+      setCaptchaToken('');
+      setCaptchaNonce((n) => n + 1);
       setSubmitting(false);
     }
   }
@@ -115,6 +126,8 @@ export default function LoginPage() {
             />
             {errors.password ? <div className={styles.fieldError}>{errors.password}</div> : null}
           </div>
+
+          <Captcha key={captchaNonce} onToken={setCaptchaToken} />
 
           <button type="submit" className={`btn btn-primary ${styles.submit}`} disabled={submitting}>
             <LogIn size={15} />

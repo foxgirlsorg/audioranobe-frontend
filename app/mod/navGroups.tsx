@@ -96,7 +96,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/tasks', label: 'Задачи', icon: ListChecks, perm: 'narration.jobs', countKey: 'jobs_error' },
       { href: '/mod/nodes', label: 'Ноды', icon: Server, perm: 'nodes.manage' },
       { href: '/mod/storage', label: 'Хранилище', icon: HardDrive, perm: 'storage.manage' },
-      { href: '/mod/auth', label: 'Способы входа', icon: LogIn, perm: 'auth.manage' },
+      { href: '/mod/auth', label: 'Авторизация', icon: LogIn, perm: 'auth.manage' },
       { href: '/mod/backup', label: 'Бэкапы', icon: DatabaseBackup, perm: 'backup.manage' },
     ],
   },

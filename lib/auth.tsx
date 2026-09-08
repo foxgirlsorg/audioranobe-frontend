@@ -17,13 +17,14 @@ interface AuthContextValue {
   // where they're needed (the settings page).
   user: Viewer | null;
   loading: boolean;
-  login(login: string, password: string): Promise<void>;
+  login(login: string, password: string, captchaToken?: string): Promise<void>;
   register(
     username: string,
     email: string,
     password: string,
     acceptTerms: boolean,
-    displayName?: string
+    displayName?: string,
+    captchaToken?: string
   ): Promise<void>;
   adoptSession(user: Me): void;
   logout(): void;
@@ -87,11 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     }
   }, []);
 
-  const login = useCallback(async (login: string, password: string) => {
+  const login = useCallback(async (login: string, password: string, captchaToken = '') => {
     // The server sets the auth cookie on this response; we just take the user.
     const res = await api<{ token: string; user: Me }>('/auth/login', {
       method: 'POST',
-      body: { login, password },
+      body: { login, password, ...(captchaToken ? { captcha_token: captchaToken } : {}) },
     });
     setUser(res.user);
   }, []);
@@ -102,7 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       email: string,
       password: string,
       acceptTerms: boolean,
-      displayName = ''
+      displayName = '',
+      captchaToken = ''
     ) => {
       const res = await api<{ token: string; user: Me }>('/auth/register', {
         method: 'POST',
@@ -112,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
           password,
           accept_terms: acceptTerms,
           ...(displayName ? { display_name: displayName } : {}),
+          ...(captchaToken ? { captcha_token: captchaToken } : {}),
         },
       });
       setUser(res.user);

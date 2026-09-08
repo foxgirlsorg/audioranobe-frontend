@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { UserPlus, Check } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useEnsureConfig } from '@/lib/config';
 import { LIMITS } from '@/lib/limits';
 import { errMsg } from '@/lib/toast';
 import { ProviderSection } from '@/components/ProviderAuth/ProviderAuth';
+import Captcha from '@/components/Captcha/Captcha';
 import { useResolveAuth } from '@/lib/useResolveAuth';
 import styles from './register.module.css';
 
@@ -32,6 +34,7 @@ interface FieldErrors {
 export default function RegisterPage() {
   useResolveAuth();
   const { user, loading, register } = useAuth();
+  const config = useEnsureConfig();
   const router = useRouter();
 
   const [next, setNext] = useState('/');
@@ -41,6 +44,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState('');
   const [emailTaken, setEmailTaken] = useState(false);
@@ -85,15 +90,21 @@ export default function RegisterPage() {
     setErrors(errs);
     setFormError('');
     if (Object.values(errs).some(Boolean)) return;
+    if (config?.captcha.enabled && !captchaToken) {
+      setFormError('Подтвердите, что вы не робот');
+      return;
+    }
 
     setSubmitting(true);
     try {
-      await register(u, em, password, acceptTerms, dn);
+      await register(u, em, password, acceptTerms, dn, captchaToken);
       router.replace(next);
     } catch (err) {
       const msg = errMsg(err);
       setFormError(msg);
       setEmailTaken(/уже зарегистрирован|уже заняты/.test(msg));
+      setCaptchaToken('');
+      setCaptchaNonce((n) => n + 1);
       setSubmitting(false);
     }
   }
@@ -266,6 +277,8 @@ export default function RegisterPage() {
             </label>
             {errors.terms ? <div className={styles.fieldError}>{errors.terms}</div> : null}
           </div>
+
+          <Captcha key={captchaNonce} onToken={setCaptchaToken} />
 
           <button type="submit" className={`btn btn-primary ${styles.submit}`} disabled={submitting}>
             <UserPlus size={15} />
