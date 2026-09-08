@@ -196,6 +196,19 @@ export default function Select<T extends string = string>({
 
   return (
     <div className={wrapCls} ref={wrapRef}>
+      {!block ? (
+        <span
+          className={[styles.sizer, size === 'sm' ? styles.sizerSm : ''].filter(Boolean).join(' ')}
+          aria-hidden="true"
+        >
+          {options.map((o) => (
+            <span key={o.value} className={styles.sizerItem}>
+              {o.label}
+            </span>
+          ))}
+          <span className={styles.sizerItem}>{placeholder}</span>
+        </span>
+      ) : null}
       <button
         type="button"
         id={id}

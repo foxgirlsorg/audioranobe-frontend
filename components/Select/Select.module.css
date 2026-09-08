@@ -2,18 +2,50 @@
 
 .wrap {
   position: relative;
-  display: inline-flex;
+  display: inline-grid;
   min-width: 0;
+  /* Reserve the widest option's width (via .sizer) so the trigger never has to
+     grow/shrink as the selection changes, capped so a very long option can't
+     blow out the layout. */
+  max-width: 600px;
 }
 
 .block {
-  display: flex;
+  display: grid;
   width: 100%;
+  max-width: none;
+}
+
+/* Invisible stack of every option label, sharing the trigger's grid cell so the
+   grid column grows to the longest one. Mirrors the button's horizontal box
+   (padding + gap + chevron) so the reserved width matches what the button needs. */
+.sizer {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  padding: 0 calc(12px + 0.6rem + 14px) 0 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.sizerSm {
+  padding: 0 calc(8px + 0.6rem + 14px) 0 11px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sizerItem {
+  display: block;
+  white-space: nowrap;
 }
 
 /* ---------- trigger ---------- */
 
 .button {
+  grid-area: 1 / 1;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
