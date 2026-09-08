@@ -62,6 +62,12 @@
   transition: width 0.2s ease;
 }
 
+/* When the player bar is docked at the bottom, lift the sidebar's own bottom
+   edge (its collapse button) above it. */
+:global(body.has-player) .sidebar {
+  padding-bottom: calc(1.6rem + var(--player-height));
+}
+
 .sidebarCollapsed {
   width: 68px;
   align-items: center;

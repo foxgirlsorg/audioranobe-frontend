@@ -42,6 +42,11 @@
   top: calc(var(--nav-height) + 1.5rem);
 }
 
+/* Clear the docked player bar so a tall filter panel isn't hidden behind it. */
+:global(body.has-player) .side {
+  padding-bottom: calc(var(--player-height) + 12px);
+}
+
 .main {
   flex: 1;
   min-width: 0;
