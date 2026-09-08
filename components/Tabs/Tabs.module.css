@@ -183,7 +183,7 @@
 .underlineIndicator {
   position: absolute;
   left: 0;
-  bottom: -1px;
+  bottom: 0;
   height: 2px;
   background: var(--accent, #de6161);
   transition: left 180ms ease, width 180ms ease;
