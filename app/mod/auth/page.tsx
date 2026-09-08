@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Save, Loader2, Plus, Trash2, ChevronDown, ChevronRight, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { AuthProviderConfig, AuthProviderType } from '@/lib/types';
@@ -9,6 +9,7 @@ import Spinner from '@/components/Spinner/Spinner';
 import Toggle from '@/components/Toggle/Toggle';
 import Modal from '@/components/Modal/Modal';
 import AddCard from '@/components/AddCard/AddCard';
+import Select from '@/components/Select/Select';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -155,6 +156,7 @@ function CaptchaSettings() {
   return (
     <div className={`glass-panel ${styles.row}`} style={{ padding: 16, marginBottom: 20 }}>
       <div className={styles.head} style={{ cursor: 'default' }}>
+        <ShieldCheck size={16} aria-hidden="true" />
         <span className={styles.name}>{'Капча'}</span>
         <span className={styles.spacer} />
         <span className={styles.switch}>
@@ -168,14 +170,15 @@ function CaptchaSettings() {
       <div className={styles.grid2}>
         <label className={styles.field}>
           <span className={styles.label}>{'Провайдер'}</span>
-          <select className="input" value={preset} onChange={(e) => applyPreset(e.target.value)}>
-            {CAPTCHA_PRESETS.map((p) => (
-              <option key={p.key} value={p.key}>
-                {p.label}
-              </option>
-            ))}
-            <option value="custom">{'Свой (custom)'}</option>
-          </select>
+          <Select
+            block
+            value={preset}
+            options={[
+              ...CAPTCHA_PRESETS.map((p) => ({ value: p.key, label: p.label })),
+              { value: 'custom', label: 'Свой (custom)' },
+            ]}
+            onChange={applyPreset}
+          />
         </label>
       </div>
 
