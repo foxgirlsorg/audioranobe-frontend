@@ -293,6 +293,8 @@ function BackupInner() {
   const [rsPassword, setRsPassword] = useState('');
   const [restoring, setRestoring] = useState(false);
   const [rsConfirm, setRsConfirm] = useState(false);
+  const [rsPhase, setRsPhase] = useState<'uploading' | 'processing' | null>(null);
+  const [rsProgress, setRsProgress] = useState<number | null>(null); // upload %, null = indeterminate
 
   useEffect(() => {
     let alive = true;
@@ -422,17 +424,48 @@ function BackupInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rsDestId, rsType, rsSource]);
 
+  // Upload restore via XHR so we get real upload progress (fetch cannot report
+  // it). Once the bytes are up, the server streams the extract — no progress
+  // events for that, so we flip to an indeterminate "processing" phase.
+  const uploadRestore = (fd: FormData): Promise<{ ok: boolean; error?: string }> =>
+    new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_URL}/admin/backup/restore`);
+      xhr.withCredentials = true;
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) setRsProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.upload.onload = () => {
+        setRsProgress(null);
+        setRsPhase('processing');
+      };
+      xhr.onload = () => {
+        let data: { ok?: boolean; error?: string } = {};
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch {
+          /* non-JSON error page */
+        }
+        if (xhr.status >= 200 && xhr.status < 300) resolve({ ok: data.ok ?? true, error: data.error });
+        else resolve({ ok: false, error: data.error ?? `Ошибка (${xhr.status})` });
+      };
+      xhr.onerror = () => reject(new Error('Сеть недоступна — не удалось связаться с сервером'));
+      xhr.send(fd);
+    });
+
   const doRestore = async () => {
+    if (rsSource === 'upload' && !rsFile) return;
     setRestoring(true);
+    setRsProgress(rsSource === 'upload' ? 0 : null);
+    setRsPhase(rsSource === 'upload' ? 'uploading' : 'processing');
     try {
       let r: { ok: boolean; error?: string };
       if (rsSource === 'upload') {
-        if (!rsFile) return;
         const fd = new FormData();
-        fd.append('file', rsFile);
+        fd.append('file', rsFile as File);
         fd.append('type', rsType);
         fd.append('password', rsPassword);
-        r = await api<{ ok: boolean; error?: string }>('/admin/backup/restore', { method: 'POST', formData: fd });
+        r = await uploadRestore(fd);
       } else {
         r = await api<{ ok: boolean; error?: string }>('/admin/backup/restore', {
           method: 'POST',
@@ -452,6 +485,8 @@ function BackupInner() {
     } finally {
       setRestoring(false);
       setRsConfirm(false);
+      setRsPhase(null);
+      setRsProgress(null);
     }
   };
 
@@ -697,6 +732,22 @@ function BackupInner() {
             Восстановить
           </button>
         </div>
+
+        {rsPhase ? (
+          <div className={styles.progress}>
+            <div className={styles.progressTrack}>
+              <div
+                className={rsProgress === null ? styles.progressFillIndet : styles.progressFill}
+                style={rsProgress === null ? undefined : { width: `${rsProgress}%` }}
+              />
+            </div>
+            <span className={styles.progressLabel}>
+              {rsPhase === 'uploading' && rsProgress !== null
+                ? `Загрузка файла… ${rsProgress}%`
+                : 'Восстановление на сервере…'}
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <ConfirmDialog
