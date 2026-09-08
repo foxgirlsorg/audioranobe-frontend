@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Server, Trash2, Power, PowerOff } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, API_URL } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import type { WorkerNode, NodeCredentials, NodeType } from '@/lib/types';
+import Select from '@/components/Select/Select';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
@@ -20,6 +21,21 @@ function stateLabel(n: WorkerNode): string {
   if (!n.online) return 'офлайн';
   return n.state === 'working' ? 'работает' : 'ожидает';
 }
+
+// The broker runs on the backend box; its hostname is the API host (AMQP is
+// always :5672 regardless of the API's HTTP port).
+function brokerHost(): string {
+  try {
+    return new URL(API_URL).hostname;
+  } catch {
+    return 'ХОСТ';
+  }
+}
+
+const NODE_TYPE_OPTIONS: { value: NodeType; label: string }[] = [
+  { value: 'converter', label: 'Конвертер' },
+  { value: 'narrator', label: 'Озвучка' },
+];
 
 function NodesContent() {
   const { toast } = useToast();
@@ -135,10 +151,13 @@ function NodesContent() {
         </div>
         <div className={styles.field}>
           <label htmlFor="node-type">{'Тип'}</label>
-          <select id="node-type" className="input" value={type} onChange={(e) => setType(e.target.value as NodeType)}>
-            <option value="converter">{'Конвертер'}</option>
-            <option value="narrator">{'Озвучка'}</option>
-          </select>
+          <Select<NodeType>
+            id="node-type"
+            value={type}
+            options={NODE_TYPE_OPTIONS}
+            onChange={setType}
+            block
+          />
         </div>
         <button type="button" className="btn btn-primary" disabled={creating || !name.trim()} onClick={() => void create()}>
           {'Авторизовать'}
@@ -150,7 +169,7 @@ function NodesContent() {
           <h3>{'Учётные данные ноды (показаны один раз)'}</h3>
           <div className={styles.credRow}>
             <span>{'AMQP_URL:'}</span>
-            <code>{`amqp://${creds.rmq_username}:${creds.secret}@ХОСТ:5672/`}</code>
+            <code>{`amqp://${creds.rmq_username}:${creds.secret}@${brokerHost()}:5672/`}</code>
           </div>
           <div className={styles.credRow}>
             <span>{'Пользователь:'}</span> <code>{creds.rmq_username}</code>
