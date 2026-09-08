@@ -64,3 +64,14 @@
   flex-direction: row;
   justify-content: center;
 }
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}

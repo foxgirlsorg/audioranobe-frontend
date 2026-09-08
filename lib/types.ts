@@ -120,7 +120,36 @@ export interface UserPublic {
   last_seen_at: string | null;
 }
 
-export type AuthProvider = 'google' | 'discord' | 'telegram';
+// A provider id — a built-in ('google'|'discord'|'telegram') or a custom slug.
+export type AuthProvider = string;
+
+/** What the login/signup modal needs to render a provider button. */
+export interface ProviderInfo {
+  id: string;
+  name: string;
+  icon_svg: string;
+}
+
+export type AuthProviderType = 'google' | 'discord' | 'telegram' | 'oauth2';
+
+/** Full provider config as the mod panel sees it (secret masked). */
+export interface AuthProviderConfig {
+  id: string;
+  type: AuthProviderType;
+  name: string;
+  enabled: boolean;
+  builtin: boolean;
+  redirect_uri: string;
+  icon_svg: string;
+  client_id: string;
+  has_secret: boolean;
+  authorize_url: string;
+  token_url: string;
+  userinfo_url: string;
+  scope: string;
+  trust_email: boolean;
+  map: Record<string, string>;
+}
 
 export interface Identity {
   provider: AuthProvider;
@@ -168,6 +197,9 @@ export interface Me extends Viewer {
   notification_prefs: NotificationPrefs;
   content_prefs: ContentPrefs;
   narrators_count: number;
+  // Included on GET /me so the settings page needs no separate /config call.
+  email_verification?: boolean;
+  auth_providers?: ProviderInfo[];
 }
 
 export type DmPrivacy = 'all' | 'friends';

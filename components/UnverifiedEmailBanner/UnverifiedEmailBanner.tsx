@@ -4,12 +4,13 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { MailWarning } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { useConfig } from '@/lib/config';
+import { useEnsureConfig } from '@/lib/config';
 import styles from './UnverifiedEmailBanner.module.css';
 
 export default function UnverifiedEmailBanner() {
   const { user } = useAuth();
-  const mailEnabled = useConfig()?.email_verification ?? false;
+  // Only load /config once a user exists — guests never trigger it here.
+  const mailEnabled = useEnsureConfig(!!user)?.email_verification ?? false;
   const ref = useRef<HTMLDivElement | null>(null);
 
   const shown = !!user && !user.email_verified && !user.is_banned && mailEnabled;

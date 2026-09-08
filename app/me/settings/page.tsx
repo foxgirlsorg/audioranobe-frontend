@@ -18,7 +18,6 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useConfig } from '@/lib/config';
 import { LIMITS } from '@/lib/limits';
 import type {
   AuthProvider,
@@ -27,6 +26,7 @@ import type {
   Identity,
   Me,
   NotificationPrefs,
+  ProviderInfo,
 } from '@/lib/types';
 import ProviderAuth from '@/components/ProviderAuth/ProviderAuth';
 import { useAuth } from '@/lib/auth';
@@ -122,7 +122,11 @@ export default function SettingsPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const emailVerificationOn = useConfig()?.email_verification ?? false;
+  // Config the settings page needs comes from GET /me (below) — no /config call.
+  const [emailVerificationOn, setEmailVerificationOn] = useState(false);
+  const [authProviders, setAuthProviders] = useState<ProviderInfo[]>([]);
+  const providerLabel = (id: AuthProvider) =>
+    authProviders.find((p) => p.id === id)?.name ?? PROVIDER_LABELS[id] ?? id;
   const [resending, setResending] = useState(false);
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -198,6 +202,8 @@ export default function SettingsPage() {
           setPrefs(me.notification_prefs);
           setContent(me.content_prefs);
           setIdentities(me.identities ?? []);
+          setEmailVerificationOn(!!me.email_verification);
+          setAuthProviders(me.auth_providers ?? []);
         })
         .catch((e) => toast(errMsg(e), 'error'));
     }
@@ -418,7 +424,7 @@ export default function SettingsPage() {
       });
       setIdentities(res.identities);
       await refresh();
-      toast(`${PROVIDER_LABELS[provider]} отвязан`, 'ok');
+      toast(`${providerLabel(provider)} отвязан`, 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
     } finally {
@@ -855,7 +861,7 @@ export default function SettingsPage() {
           {(identities ?? []).map((idn) => (
             <div key={idn.provider} className={styles.prefRow}>
               <div className={styles.prefText}>
-                <span className={styles.prefLabel}>{PROVIDER_LABELS[idn.provider]}</span>
+                <span className={styles.prefLabel}>{providerLabel(idn.provider)}</span>
                 <span className={styles.prefHint}>
                   {idn.display_name || idn.email || 'привязан'}
                 </span>
@@ -877,6 +883,7 @@ export default function SettingsPage() {
 
         <ProviderAuth
           mode="link"
+          providers={authProviders}
           hide={(identities ?? []).map((i) => i.provider)}
         />
       </section>
@@ -1053,10 +1060,10 @@ export default function SettingsPage() {
           if (toUnlink) void unlink(toUnlink.provider);
           setToUnlink(null);
         }}
-        title={toUnlink ? `Отвязать ${PROVIDER_LABELS[toUnlink.provider]}?` : ''}
+        title={toUnlink ? `Отвязать ${providerLabel(toUnlink.provider)}?` : ''}
         body={
           toUnlink
-            ? `Войти через ${PROVIDER_LABELS[toUnlink.provider]} больше не получится${
+            ? `Войти через ${providerLabel(toUnlink.provider)} больше не получится${
                 toUnlink.email || toUnlink.display_name
                   ? ` — аккаунт ${toUnlink.display_name || toUnlink.email} будет отвязан`
                   : ''

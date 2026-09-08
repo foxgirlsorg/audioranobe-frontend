@@ -1,77 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { TelegramIcon } from '@/components/SocialLinks/brands';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
-import { useConfig } from '@/lib/config';
-import type { AuthProvider } from '@/lib/types';
+import { useEnsureConfig } from '@/lib/config';
+import type { ProviderInfo } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import styles from './ProviderAuth.module.css';
 
-const LABELS: Record<AuthProvider, string> = {
-  google: 'Google',
-  discord: 'Discord',
-  telegram: 'Telegram',
-};
-
 export const OAUTH_MODE_KEY = 'auralib.oauth.mode';
 
-function GoogleMark() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M23.5 12.27c0-.79-.07-1.54-.2-2.27H12v4.51h6.47a5.5 5.5 0 0 1-2.4 3.62v3h3.87c2.26-2.09 3.56-5.17 3.56-8.86Z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 24c3.24 0 5.95-1.08 7.94-2.91l-3.87-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.28v3.09A12 12 0 0 0 12 24Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.27 14.29a7.2 7.2 0 0 1 0-4.58V6.62H1.28a12 12 0 0 0 0 10.76l3.99-3.09Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.28 6.62l3.99 3.09C6.22 6.86 8.87 4.75 12 4.75Z"
-      />
-    </svg>
-  );
+/**
+ * The configured providers. Reading this triggers the one-time /config load, so
+ * the provider list is only fetched when this row actually renders (i.e. when
+ * the login/signup modal opens). Pass active=false to skip the fetch — used
+ * when the caller already has the provider list (e.g. settings, from /me).
+ */
+export function useAuthProviders(active: boolean = true): ProviderInfo[] {
+  return useEnsureConfig(active)?.auth_providers ?? [];
 }
 
-function DiscordMark() {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="#5865F2">
-      <path d="M20.32 4.37A19.8 19.8 0 0 0 15.43 3a13.8 13.8 0 0 0-.63 1.28 18.3 18.3 0 0 0-5.6 0A13.9 13.9 0 0 0 8.57 3 19.7 19.7 0 0 0 3.68 4.38C.57 9 .1 13.52.33 17.96a19.9 19.9 0 0 0 6.07 3.08c.49-.67.93-1.38 1.3-2.13a13 13 0 0 1-2.04-.98c.17-.13.34-.26.5-.4a14.2 14.2 0 0 0 12.1 0c.16.14.33.27.5.4-.65.39-1.34.72-2.05.99.38.74.81 1.45 1.3 2.12a19.8 19.8 0 0 0 6.08-3.08c.28-5.15-.47-9.62-3.77-13.59ZM8.02 15.25c-1.19 0-2.17-1.1-2.17-2.44 0-1.35.95-2.45 2.17-2.45s2.19 1.1 2.17 2.45c0 1.34-.96 2.44-2.17 2.44Zm7.96 0c-1.19 0-2.17-1.1-2.17-2.44 0-1.35.95-2.45 2.17-2.45s2.19 1.1 2.17 2.45c0 1.34-.95 2.44-2.17 2.44Z" />
-    </svg>
-  );
+function ProviderIcon({ svg }: { svg: string }) {
+  return <span className={styles.icon} aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
-function Mark({ provider }: { provider: AuthProvider }) {
-  if (provider === 'google') return <GoogleMark />;
-  if (provider === 'discord') return <DiscordMark />;
-  return (
-    <span style={{ color: '#2AABEE', display: 'inline-flex' }}>
-      <TelegramIcon size={16} />
-    </span>
-  );
-}
-
-export function useAuthProviders(): AuthProvider[] {
-  // Backed by the shared ConfigProvider — no per-caller /config fetch.
-  return useConfig()?.auth_providers ?? [];
-}
-
-export function ProviderSection({ mode }: { mode: 'login' | 'link' }) {
-  const providers = useAuthProviders();
-  if (providers.length === 0) return null;
+export function ProviderSection({ mode, providers }: { mode: 'login' | 'link'; providers?: ProviderInfo[] }) {
+  const fetched = useAuthProviders(providers === undefined);
+  const resolved = providers ?? fetched;
+  if (resolved.length === 0) return null;
   return (
     <div className={styles.section}>
       <div className={styles.divider}>
         <span>{'или'}</span>
       </div>
-      <ProviderAuth mode={mode} />
+      <ProviderAuth mode={mode} providers={resolved} />
     </div>
   );
 }
@@ -79,24 +41,26 @@ export function ProviderSection({ mode }: { mode: 'login' | 'link' }) {
 export default function ProviderAuth({
   mode,
   hide = [],
+  providers: providersProp,
 }: {
   mode: 'login' | 'link';
-  hide?: AuthProvider[];
+  hide?: string[];
+  providers?: ProviderInfo[];
 }) {
-  const providers = useAuthProviders().filter((p) => !hide.includes(p));
+  // When the caller supplies the list (settings, from /me) don't fetch /config.
+  const fetched = useAuthProviders(providersProp === undefined);
+  const providers = (providersProp ?? fetched).filter((p) => !hide.includes(p.id));
   const { toast } = useToast();
 
-  const [busy, setBusy] = useState<AuthProvider | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
 
   // Every provider — Telegram included — is a redirect-based OAuth/OIDC flow:
   // fetch the authorize URL, remember the mode, and hand the browser over. The
   // provider returns to /auth/callback/{provider}, which finishes the exchange.
-  async function startOAuth(provider: AuthProvider) {
-    setBusy(provider);
+  async function startOAuth(id: string) {
+    setBusy(id);
     try {
-      const res = await api<{ url: string }>(
-        `/auth/oauth/${provider}/url?mode=${mode}`
-      );
+      const res = await api<{ url: string }>(`/auth/oauth/${id}/url?mode=${mode}`);
       sessionStorage.setItem(OAUTH_MODE_KEY, mode);
       window.location.href = res.url;
     } catch (e) {
@@ -111,15 +75,15 @@ export default function ProviderAuth({
     <div className={`${styles.grid} ${mode !== 'link' ? styles.auth : ''}`}>
       {providers.map((p) => (
         <button
-          key={p}
+          key={p.id}
           type="button"
           className={`${styles.btn} ${mode !== 'link' ? styles.auth : ''}`}
           disabled={busy !== null}
-          onClick={() => void startOAuth(p)}
-          aria-label={mode === 'link' ? `Привязать ${LABELS[p]}` : `Войти через ${LABELS[p]}`}
+          onClick={() => void startOAuth(p.id)}
+          aria-label={mode === 'link' ? `Привязать ${p.name}` : `Войти через ${p.name}`}
         >
-          {busy === p ? <Spinner size={14} inline /> : <Mark provider={p} />}
-          {mode === 'link' && <span aria-hidden="true">Привязать {LABELS[p]}</span>}
+          {busy === p.id ? <Spinner size={14} inline /> : <ProviderIcon svg={p.icon_svg} />}
+          {mode === 'link' && <span aria-hidden="true">Привязать {p.name}</span>}
         </button>
       ))}
     </div>
