@@ -771,10 +771,10 @@ export interface StorageSettings {
   driver: '' | 'local' | 's3';
   effective_driver: 'local' | 's3';
   env_driver: string;
-  r2_account_id: string;
-  r2_bucket: string;
-  r2_access_key_id: string;
-  r2_public_url: string;
+  s3_account_id: string;
+  s3_bucket: string;
+  s3_access_key_id: string;
+  s3_public_url: string;
   s3_endpoint: string;
   s3_region: string;
   has_secret: boolean;

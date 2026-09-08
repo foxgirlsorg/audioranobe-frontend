@@ -55,14 +55,14 @@ function StorageContent() {
     try {
       const body: Record<string, string> = {
         driver: cfg.driver,
-        r2_account_id: cfg.r2_account_id,
-        r2_bucket: cfg.r2_bucket,
-        r2_access_key_id: cfg.r2_access_key_id,
-        r2_public_url: cfg.r2_public_url,
+        s3_account_id: cfg.s3_account_id,
+        s3_bucket: cfg.s3_bucket,
+        s3_access_key_id: cfg.s3_access_key_id,
+        s3_public_url: cfg.s3_public_url,
         s3_endpoint: cfg.s3_endpoint,
         s3_region: cfg.s3_region,
       };
-      if (secret) body.r2_secret_access_key = secret;
+      if (secret) body.s3_secret_access_key = secret;
       const next = await api<StorageSettings>('/admin/storage/settings', { method: 'PUT', body });
       setCfg(next);
       setSecret('');
@@ -103,7 +103,7 @@ function StorageContent() {
         </label>
 
         {isS3 ? (
-          <div className={styles.r2}>
+          <div className={styles.s3}>
             <label className={styles.field}>
               <span className={styles.label}>{'Endpoint'}</span>
               <input
@@ -115,11 +115,11 @@ function StorageContent() {
             </label>
             <label className={styles.field}>
               <span className={styles.label}>{'Bucket'}</span>
-              <input className="input" value={cfg.r2_bucket} onChange={(e) => set({ r2_bucket: e.target.value })} />
+              <input className="input" value={cfg.s3_bucket} onChange={(e) => set({ s3_bucket: e.target.value })} />
             </label>
             <label className={styles.field}>
               <span className={styles.label}>{'Access Key ID'}</span>
-              <input className="input" value={cfg.r2_access_key_id} onChange={(e) => set({ r2_access_key_id: e.target.value })} />
+              <input className="input" value={cfg.s3_access_key_id} onChange={(e) => set({ s3_access_key_id: e.target.value })} />
             </label>
             <label className={styles.field}>
               <span className={styles.label}>{'Secret Access Key'}</span>
@@ -138,14 +138,14 @@ function StorageContent() {
             </label>
             <label className={styles.field}>
               <span className={styles.label}>{'Account ID (только Cloudflare R2)'}</span>
-              <input className="input" value={cfg.r2_account_id} onChange={(e) => set({ r2_account_id: e.target.value })} />
+              <input className="input" value={cfg.s3_account_id} onChange={(e) => set({ s3_account_id: e.target.value })} />
             </label>
             <label className={styles.field}>
               <span className={styles.label}>{'Публичный URL (для аудио)'}</span>
               <input
                 className="input"
-                value={cfg.r2_public_url}
-                onChange={(e) => set({ r2_public_url: e.target.value })}
+                value={cfg.s3_public_url}
+                onChange={(e) => set({ s3_public_url: e.target.value })}
                 placeholder="https://media.example.com"
               />
             </label>
