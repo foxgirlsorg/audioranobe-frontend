@@ -543,7 +543,8 @@
 }
 
 .heroBanners > .narrationBanner,
-.heroBanners > .claimBanner {
+.heroBanners > .claimBanner,
+.heroBanners > .infoBanner {
   margin-bottom: 0;
 }
 
@@ -1574,6 +1575,13 @@ a.factV:hover {
 .claimBannerBtn:hover {
   background: color-mix(in srgb, var(--accent) 20%, var(--surface));
   border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+}
+
+/* Staff info notice: same shell as the claim banner, tinted so it reads as a
+   notice rather than a call to action. */
+.infoBanner {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
 }
 
 @media (max-width: 560px) {

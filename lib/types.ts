@@ -385,6 +385,13 @@ export interface NarratorFull extends NarratorCard {
   comments?: Paginated<Comment>;
 }
 
+export interface TitleInfoBanner {
+  enabled: boolean;
+  title: string;
+  text: string;
+  url: string;
+}
+
 export interface TitleFull extends TitleCard {
   alt_names: string[];
   description: string;
@@ -410,6 +417,12 @@ export interface TitleFull extends TitleCard {
   narration_pending?: boolean;
   /** True for an imported (AI-narrated) title — enables mod re-narrate controls. */
   is_imported?: boolean;
+  /**
+   * Staff-authored notice shown above the title. Null when there is nothing to
+   * show; users with titles.info_banner also get it back while disabled, so the
+   * edit form can prefill a banner that is currently switched off.
+   */
+  info_banner: TitleInfoBanner | null;
   /** Viewer opted into a notification for every new comment on this title. */
   comment_subscribed: boolean;
   /** First page of comments, embedded to save a separate request on load. */

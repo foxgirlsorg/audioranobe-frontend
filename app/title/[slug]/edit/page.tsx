@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Info } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
@@ -16,6 +16,7 @@ import {
   type NarrationStatus,
   type ReleaseStatus,
   type TitleFull,
+  type TitleInfoBanner,
 } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -47,6 +48,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const routeSlug = decodeURIComponent(params.slug);
   const { user, loading: authLoading, isMod, can } = useAuth();
   const isAdmin = can('titles.edit');
+  const canInfoBanner = can('titles.info_banner');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -67,6 +69,12 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const [isNsfw, setIsNsfw] = useState(false);
   const [nsfwLocked, setNsfwLocked] = useState(false);
   const [confirmNsfw, setConfirmNsfw] = useState(false);
+  const [infoBanner, setInfoBanner] = useState<TitleInfoBanner>({
+    enabled: false,
+    title: '',
+    text: '',
+    url: '',
+  });
   const [commentSub, setCommentSub] = useState(false);
   const [commentSubBusy, setCommentSubBusy] = useState(false);
   const formInit = useRef(false);
@@ -128,6 +136,9 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     setAiLocked(title.is_ai);
     setIsNsfw(title.is_nsfw);
     setNsfwLocked(title.is_nsfw);
+    setInfoBanner(
+      title.info_banner ?? { enabled: false, title: '', text: '', url: '' }
+    );
     setCommentSub(title.comment_subscribed);
     setNarrators(
       (title.narrators ?? []).map((n) => ({
@@ -243,6 +254,9 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       };
       if (isNsfw !== title.is_nsfw) body.is_nsfw = isNsfw;
       if (isAi !== title.is_ai) body.is_ai = isAi;
+      // Only sent by editors who hold the permission — the API rejects it
+      // outright from anyone else.
+      if (canInfoBanner) body.info_banner = infoBanner;
 
       const res = await api<{ applied: boolean }>(`/panel/titles/${title.id}`, {
         method: 'PATCH',
@@ -492,6 +506,90 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             }
           />
         </div>
+
+        {canInfoBanner ? (
+          <div className={styles.field}>
+            <Toggle
+              checked={infoBanner.enabled}
+              onChange={(enabled) => setInfoBanner((b) => ({ ...b, enabled }))}
+              label="Инфо-баннер"
+              hint="Заметка над тайтлом — её видят все посетители страницы."
+            />
+            {infoBanner.enabled ? (
+              <div className={styles.infoBannerFields}>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="t-ib-title">
+                    Заголовок <span className={styles.optional}>необязательно</span>
+                  </label>
+                  <input
+                    id="t-ib-title"
+                    className="input"
+                    type="text"
+                    value={infoBanner.title}
+                    maxLength={120}
+                    onChange={(e) =>
+                      setInfoBanner((b) => ({ ...b, title: e.target.value }))
+                    }
+                    placeholder="Переозвучка в работе"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="t-ib-text">
+                    Описание <span className={styles.optional}>необязательно</span>
+                  </label>
+                  <textarea
+                    id="t-ib-text"
+                    className="input"
+                    rows={3}
+                    value={infoBanner.text}
+                    maxLength={500}
+                    onChange={(e) =>
+                      setInfoBanner((b) => ({ ...b, text: e.target.value }))
+                    }
+                    placeholder="Что важно знать читателям об этом тайтле?"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="t-ib-url">
+                    Ссылка кнопки «Открыть»{' '}
+                    <span className={styles.optional}>необязательно</span>
+                  </label>
+                  <input
+                    id="t-ib-url"
+                    className="input"
+                    type="url"
+                    value={infoBanner.url}
+                    maxLength={2000}
+                    onChange={(e) =>
+                      setInfoBanner((b) => ({ ...b, url: e.target.value }))
+                    }
+                    placeholder="https://example.com/post"
+                  />
+                  <p className={styles.formNote}>
+                    Без ссылки баннер показывается без кнопки.
+                  </p>
+                </div>
+
+                <div className={styles.infoBannerPreview}>
+                  <span className={styles.label}>Как это выглядит</span>
+                  <div className={styles.previewBanner}>
+                    <Info size={17} aria-hidden="true" className={styles.previewIcon} />
+                    <div className={styles.previewBody}>
+                      {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
+                      {infoBanner.text ? <span>{infoBanner.text}</span> : null}
+                      {!infoBanner.title && !infoBanner.text ? (
+                        <span>Заполните заголовок или описание…</span>
+                      ) : null}
+                    </div>
+                    {infoBanner.url ? (
+                      <span className={styles.previewBtn}>Открыть</span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className={styles.formFoot}>
           <button type="submit" className="btn btn-primary" disabled={saving}>

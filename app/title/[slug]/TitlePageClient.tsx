@@ -641,8 +641,33 @@ export default function TitlePageClient({
     </div>
   );
 
+  const infoBanner = title.info_banner;
+  const showInfoBanner =
+    !!infoBanner?.enabled &&
+    (infoBanner.title !== '' || infoBanner.text !== '' || infoBanner.url !== '');
+
   const banners = (
     <>
+      {showInfoBanner && infoBanner ? (
+        <div className={`${styles.claimBanner} ${styles.infoBanner}`} role="status">
+          <Info size={17} aria-hidden="true" className={styles.claimBannerIcon} />
+          <div className={styles.claimBannerBody}>
+            {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
+            {infoBanner.text ? <span>{infoBanner.text}</span> : null}
+          </div>
+          {infoBanner.url ? (
+            <a
+              href={infoBanner.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className={styles.claimBannerBtn}
+            >
+              Открыть
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+
       {title.narration_pending ? (
         <div className={styles.narrationBanner}>
           <Headphones size={17} aria-hidden="true" />
@@ -999,7 +1024,7 @@ export default function TitlePageClient({
           </div>
         </div>
 
-        {title.narration_pending || title.is_ai ? (
+        {showInfoBanner || title.narration_pending || title.is_ai ? (
           <div className={styles.heroBanners}>{banners}</div>
         ) : null}
 

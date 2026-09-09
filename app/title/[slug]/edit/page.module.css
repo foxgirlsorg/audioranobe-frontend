@@ -213,3 +213,88 @@
 .hiddenPanel {
   display: none !important;
 }
+
+/* ---------- info banner ---------- */
+
+/* Indented under its toggle so the fields read as belonging to it. */
+.infoBannerFields {
+  margin-top: 0.9rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border);
+}
+
+.infoBannerFields > .field:last-child {
+  margin-bottom: 0;
+}
+
+.infoBannerFields textarea.input {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.infoBannerPreview {
+  margin-top: 1.05rem;
+}
+
+/* Mirrors .infoBanner on the title page so what mods see here is what
+   readers get. */
+.previewBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.previewIcon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.previewBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.previewBody strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.previewBody span {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.previewBtn {
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .previewBanner {
+    flex-wrap: wrap;
+  }
+
+  .previewBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}
