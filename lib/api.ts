@@ -5,15 +5,13 @@ export const API_URL: string =
 export class ApiError extends Error {
   status: number;
   code?: string;
-  word?: string;
   field?: string;
 
-  constructor(status: number, message: string, extra?: { code?: string; word?: string; field?: string }) {
+  constructor(status: number, message: string, extra?: { code?: string; field?: string }) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = extra?.code;
-    this.word = extra?.word;
     this.field = extra?.field;
   }
 }
@@ -138,7 +136,6 @@ export async function api<T = any>(path: string, opts: ApiOptions = {}): Promise
         : `Request failed (${res.status})`;
     throw new ApiError(res.status, message, {
       code: data && typeof data.code === 'string' ? data.code : undefined,
-      word: data && typeof data.word === 'string' ? data.word : undefined,
       field: data && typeof data.field === 'string' ? data.field : undefined,
     });
   }
