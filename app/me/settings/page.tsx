@@ -837,35 +837,37 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.prefList}>
-          <div className={styles.prefRow}>
+          <div className={`${styles.prefRow} ${styles.emailRow}`}>
             <div className={styles.prefText}>
               <span className={styles.prefLabel}>{'Почта'}</span>
               <span className={styles.prefHint}>
                 {user.email ?? 'не указана'}
                 {user.email && !user.email_verified ? ' — не подтверждена' : ''}
               </span>
+            </div>
+            <div className={styles.emailActions}>
               {emailVerificationOn && user.email && !user.email_verified ? (
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className={styles.resendBtn}
                   disabled={resending}
                   onClick={resendVerification}
                 >
                   {resending ? 'Отправляем…' : 'Отправить письмо повторно'}
                 </button>
               ) : null}
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setNewEmail(user.email ?? '');
+                  setEmailPw('');
+                  setEmailOpen(true);
+                }}
+              >
+                {user.email ? 'Изменить' : 'Добавить'}
+              </button>
             </div>
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => {
-                setNewEmail(user.email ?? '');
-                setEmailPw('');
-                setEmailOpen(true);
-              }}
-            >
-              {user.email ? 'Изменить' : 'Добавить'}
-            </button>
           </div>
 
           {(identities ?? []).map((idn) => (

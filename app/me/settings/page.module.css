@@ -262,6 +262,38 @@
   background: var(--accent);
 }
 
+.emailActions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.resendBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.resendBtn:hover:not(:disabled) {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.resendBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* ---------- danger zone ---------- */
 
 .dangerPanel {
@@ -321,6 +353,15 @@
   .switch {
     min-width: 44px;
     min-height: 25px;
+  }
+
+  .emailRow {
+    flex-wrap: wrap;
+  }
+
+  .emailActions {
+    justify-content: flex-start;
+    width: 100%;
   }
 }
 
