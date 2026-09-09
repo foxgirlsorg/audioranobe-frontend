@@ -200,6 +200,7 @@ export interface Me extends Viewer {
   // Included on GET /me so the settings page needs no separate /config call.
   email_verification?: boolean;
   auth_providers?: ProviderInfo[];
+  totp_enabled: boolean;
 }
 
 export type DmPrivacy = 'all' | 'friends';

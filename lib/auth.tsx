@@ -17,7 +17,7 @@ interface AuthContextValue {
   // where they're needed (the settings page).
   user: Viewer | null;
   loading: boolean;
-  login(login: string, password: string, captchaToken?: string): Promise<void>;
+  login(login: string, password: string, captchaToken?: string, totpCode?: string): Promise<void>;
   register(
     username: string,
     email: string,
@@ -88,11 +88,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     }
   }, []);
 
-  const login = useCallback(async (login: string, password: string, captchaToken = '') => {
+  const login = useCallback(async (login: string, password: string, captchaToken = '', totpCode = '') => {
     // The server sets the auth cookie on this response; we just take the user.
     const res = await api<{ token: string; user: Me }>('/auth/login', {
       method: 'POST',
-      body: { login, password, ...(captchaToken ? { captcha_token: captchaToken } : {}) },
+      body: {
+        login,
+        password,
+        ...(captchaToken ? { captcha_token: captchaToken } : {}),
+        ...(totpCode ? { totp_code: totpCode } : {}),
+      },
     });
     setUser(res.user);
   }, []);

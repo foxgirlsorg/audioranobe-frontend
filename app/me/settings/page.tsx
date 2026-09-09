@@ -176,6 +176,13 @@ export default function SettingsPage() {
   const [sensitiveGenres, setSensitiveGenres] = useState<Genre[]>([]);
   const [contentBusy, setContentBusy] = useState<'nsfw' | number | null>(null);
 
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [totpSetup, setTotpSetup] = useState<{ secret: string; otpauth_url: string } | null>(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [totpBusy, setTotpBusy] = useState(false);
+  const [totpDisableOpen, setTotpDisableOpen] = useState(false);
+  const [totpDisablePw, setTotpDisablePw] = useState('');
+
   const [delOpen, setDelOpen] = useState(false);
   const [delPw, setDelPw] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -202,6 +209,7 @@ export default function SettingsPage() {
           setPrefs(me.notification_prefs);
           setContent(me.content_prefs);
           setIdentities(me.identities ?? []);
+          setTotpEnabled(!!me.totp_enabled);
           setEmailVerificationOn(!!me.email_verification);
           setAuthProviders(me.auth_providers ?? []);
         })
@@ -429,6 +437,51 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setUnlinking(null);
+    }
+  }
+
+  async function startTotpSetup() {
+    if (totpBusy) return;
+    setTotpBusy(true);
+    try {
+      const res = await api<{ secret: string; otpauth_url: string }>('/me/totp/setup', { method: 'POST' });
+      setTotpSetup(res);
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setTotpBusy(false);
+    }
+  }
+
+  async function confirmTotp() {
+    if (totpBusy || !totpCode.trim()) return;
+    setTotpBusy(true);
+    try {
+      const me = await api<Me>('/me/totp/confirm', { method: 'POST', body: { code: totpCode.trim() } });
+      setTotpEnabled(me.totp_enabled);
+      setTotpSetup(null);
+      setTotpCode('');
+      toast('Двухфакторная аутентификация включена', 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setTotpBusy(false);
+    }
+  }
+
+  async function disableTotp() {
+    if (totpBusy) return;
+    setTotpBusy(true);
+    try {
+      const me = await api<Me>('/me/totp/disable', { method: 'POST', body: { password: totpDisablePw } });
+      setTotpEnabled(me.totp_enabled);
+      setTotpDisableOpen(false);
+      setTotpDisablePw('');
+      toast('Двухфакторная аутентификация отключена', 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setTotpBusy(false);
     }
   }
 
@@ -900,6 +953,69 @@ export default function SettingsPage() {
         />
       </section>
 
+      <section className={`glass-panel ${styles.panel}`}>
+        <div className={styles.panelHead}>
+          <ShieldCheck size={16} className={styles.panelIcon} />
+          <div>
+            <h2 className={styles.panelTitle}>{'Двухфакторная аутентификация'}</h2>
+            <p className={styles.panelHint}>
+              {totpEnabled
+                ? 'Включена — при входе понадобится код из приложения-аутентификатора.'
+                : 'Необязательно. Приложение вроде Google Authenticator или Aegis добавит код при входе.'}
+            </p>
+          </div>
+        </div>
+
+        {totpEnabled ? (
+          <div className={styles.panelActions}>
+            <button type="button" className="btn btn-ghost" onClick={() => setTotpDisableOpen(true)}>
+              {'Отключить'}
+            </button>
+          </div>
+        ) : totpSetup ? (
+          <div className={styles.editForm}>
+            <p className={styles.fieldHint}>
+              {'Отсканируйте секрет в приложении-аутентификаторе (или введите вручную), затем подтвердите кодом:'}
+            </p>
+            <code className={styles.totpSecret}>{totpSetup.secret}</code>
+            <label className={styles.label} htmlFor="settings-totp-code">
+              {'Код из приложения'}
+            </label>
+            <input
+              id="settings-totp-code"
+              className="input"
+              inputMode="numeric"
+              maxLength={6}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value)}
+              placeholder={'000000'}
+              autoComplete="one-time-code"
+            />
+            <div className={styles.panelActions}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setTotpSetup(null);
+                  setTotpCode('');
+                }}
+              >
+                {'Отмена'}
+              </button>
+              <button type="button" className="btn btn-primary" disabled={totpBusy} onClick={confirmTotp}>
+                {totpBusy ? 'Проверяем…' : 'Подтвердить'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.panelActions}>
+            <button type="button" className="btn btn-ghost" disabled={totpBusy} onClick={startTotpSetup}>
+              {totpBusy ? 'Готовим…' : 'Включить'}
+            </button>
+          </div>
+        )}
+      </section>
+
       <Modal
         open={emailOpen}
         onClose={() => setEmailOpen(false)}
@@ -1083,6 +1199,35 @@ export default function SettingsPage() {
             : ''
         }
         danger
+      />
+
+      <ConfirmDialog
+        open={totpDisableOpen}
+        onClose={() => {
+          setTotpDisableOpen(false);
+          setTotpDisablePw('');
+        }}
+        onConfirm={disableTotp}
+        title={'Отключить двухфакторную аутентификацию?'}
+        danger
+        body={
+          <div className={styles.deleteBody}>
+            <p>{'При входе больше не будет запрашиваться код из приложения.'}</p>
+            <label className={styles.label} htmlFor="settings-totp-disable-pw">
+              {'Подтвердите действие паролем'}
+            </label>
+            <input
+              id="settings-totp-disable-pw"
+              className="input"
+              type="password"
+              maxLength={LIMITS.password}
+              value={totpDisablePw}
+              onChange={(e) => setTotpDisablePw(e.target.value)}
+              autoComplete="current-password"
+              placeholder={'Ваш пароль'}
+            />
+          </div>
+        }
       />
 
       <ConfirmDialog
