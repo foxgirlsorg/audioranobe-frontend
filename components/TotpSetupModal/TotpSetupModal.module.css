@@ -1,0 +1,76 @@
+.hint {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.qr {
+  display: block;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 0.3rem;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 10px;
+}
+
+.secretRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.secret {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  word-break: break-all;
+  user-select: all;
+  text-align: center;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  padding: 0.6rem;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.codesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 480px) {
+  .codesGrid {
+    grid-template-columns: 1fr;
+  }
+}

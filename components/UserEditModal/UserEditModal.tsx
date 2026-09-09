@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, KeyRound, Trash2 } from 'lucide-react';
+import { ImagePlus, KeyRound, ShieldOff, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -30,6 +30,7 @@ export function UserEditModal({
   const { can } = useAuth();
   // Email/password/badges/verification stay '*'-only, matching the backend.
   const isAdmin = can('*');
+  const canManageCredentials = can('users.credentials');
   const { toast } = useToast();
 
   const [target, setTarget] = useState<Me | null>(null);
@@ -137,6 +138,19 @@ export function UserEditModal({
           ? `Ссылка для сброса отправлена на ${target.email}`
           : 'Почта не настроена на сервере — ссылка записана в лог'
       );
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+    setBusy(false);
+  };
+
+  const removeTotp = async () => {
+    if (!target) return;
+    setBusy(true);
+    try {
+      const updated = await api<Me>(`/mod/users/${target.id}/totp`, { method: 'DELETE' });
+      applyUpdate(updated, true);
+      toast('Двухфакторная аутентификация отключена');
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -266,6 +280,13 @@ export function UserEditModal({
             <KeyRound size={14} />
             {'Отправить ссылку для сброса'}
           </button>
+
+          {canManageCredentials && target.totp_enabled ? (
+            <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void removeTotp()}>
+              <ShieldOff size={14} />
+              {'Отключить двухфакторную аутентификацию'}
+            </button>
+          ) : null}
 
           {isAdmin ? (
             <div className={styles.fieldLabel}>

@@ -35,6 +35,7 @@ import Spinner from '@/components/Spinner/Spinner';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import Modal from '@/components/Modal/Modal';
+import TotpSetupModal from '@/components/TotpSetupModal/TotpSetupModal';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import styles from './page.module.css';
 
@@ -177,8 +178,7 @@ export default function SettingsPage() {
   const [contentBusy, setContentBusy] = useState<'nsfw' | number | null>(null);
 
   const [totpEnabled, setTotpEnabled] = useState(false);
-  const [totpSetup, setTotpSetup] = useState<{ secret: string; otpauth_url: string } | null>(null);
-  const [totpCode, setTotpCode] = useState('');
+  const [totpModalOpen, setTotpModalOpen] = useState(false);
   const [totpBusy, setTotpBusy] = useState(false);
   const [totpDisableOpen, setTotpDisableOpen] = useState(false);
   const [totpDisablePw, setTotpDisablePw] = useState('');
@@ -437,35 +437,6 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setUnlinking(null);
-    }
-  }
-
-  async function startTotpSetup() {
-    if (totpBusy) return;
-    setTotpBusy(true);
-    try {
-      const res = await api<{ secret: string; otpauth_url: string }>('/me/totp/setup', { method: 'POST' });
-      setTotpSetup(res);
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    } finally {
-      setTotpBusy(false);
-    }
-  }
-
-  async function confirmTotp() {
-    if (totpBusy || !totpCode.trim()) return;
-    setTotpBusy(true);
-    try {
-      const me = await api<Me>('/me/totp/confirm', { method: 'POST', body: { code: totpCode.trim() } });
-      setTotpEnabled(me.totp_enabled);
-      setTotpSetup(null);
-      setTotpCode('');
-      toast('Двухфакторная аутентификация включена', 'ok');
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    } finally {
-      setTotpBusy(false);
     }
   }
 
@@ -966,55 +937,24 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {totpEnabled ? (
-          <div className={styles.panelActions}>
+        <div className={styles.panelActions}>
+          {totpEnabled ? (
             <button type="button" className="btn btn-ghost" onClick={() => setTotpDisableOpen(true)}>
               {'Отключить'}
             </button>
-          </div>
-        ) : totpSetup ? (
-          <div className={styles.editForm}>
-            <p className={styles.fieldHint}>
-              {'Отсканируйте секрет в приложении-аутентификаторе (или введите вручную), затем подтвердите кодом:'}
-            </p>
-            <code className={styles.totpSecret}>{totpSetup.secret}</code>
-            <label className={styles.label} htmlFor="settings-totp-code">
-              {'Код из приложения'}
-            </label>
-            <input
-              id="settings-totp-code"
-              className="input"
-              inputMode="numeric"
-              maxLength={6}
-              value={totpCode}
-              onChange={(e) => setTotpCode(e.target.value)}
-              placeholder={'000000'}
-              autoComplete="one-time-code"
-            />
-            <div className={styles.panelActions}>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => {
-                  setTotpSetup(null);
-                  setTotpCode('');
-                }}
-              >
-                {'Отмена'}
-              </button>
-              <button type="button" className="btn btn-primary" disabled={totpBusy} onClick={confirmTotp}>
-                {totpBusy ? 'Проверяем…' : 'Подтвердить'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className={styles.panelActions}>
-            <button type="button" className="btn btn-ghost" disabled={totpBusy} onClick={startTotpSetup}>
-              {totpBusy ? 'Готовим…' : 'Включить'}
+          ) : (
+            <button type="button" className="btn btn-ghost" onClick={() => setTotpModalOpen(true)}>
+              {'Включить'}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </section>
+
+      <TotpSetupModal
+        open={totpModalOpen}
+        onClose={() => setTotpModalOpen(false)}
+        onEnabled={() => setTotpEnabled(true)}
+      />
 
       <Modal
         open={emailOpen}

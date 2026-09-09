@@ -121,14 +121,16 @@ export default function LoginPage() {
                 id="totp"
                 className="input"
                 type="text"
-                inputMode="numeric"
                 autoComplete="one-time-code"
-                maxLength={6}
+                maxLength={9}
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value)}
                 placeholder={'000000'}
                 autoFocus
               />
+              <p className={styles.fieldHint}>
+                {'Нет доступа к приложению? Введите один из запасных кодов вместо этого.'}
+              </p>
             </div>
           ) : (
             <>
