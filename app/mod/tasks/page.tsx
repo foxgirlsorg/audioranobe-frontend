@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ListChecks, Loader2, RotateCcw } from 'lucide-react';
+import { ListChecks, Loader2, RotateCcw, Undo2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { timeAgo } from '@/lib/format';
 import { errMsg, useToast } from '@/lib/toast';
 import type { JobStatus, NarrationJob, NarrationJobList } from '@/lib/types';
 import { ModShell, ErrorPanel } from '../modnav';
@@ -32,6 +34,8 @@ export default function TasksPage() {
 
 function TasksInner() {
   const { toast } = useToast();
+  // Releasing a live claim is a node-operator action, not general job triage.
+  const canRequeue = useAuth().can('nodes.manage');
   const [status, setStatus] = useState<'' | JobStatus>('error');
   const [page, setPage] = useState(1);
   const [data, setData] = useState<NarrationJobList | null>(null);
@@ -55,14 +59,14 @@ function TasksInner() {
 
   useEffect(() => load(), [load]);
 
-  const retry = async (job: NarrationJob) => {
+  const run = async (job: NarrationJob, action: 'retry' | 'requeue') => {
     const key = `${job.kind}-${job.id}`;
     if (retrying) return;
     setRetrying(key);
     try {
-      const url = job.kind === 'convert' ? `/mod/convert-jobs/${job.id}/retry` : `/mod/narration-jobs/${job.id}/retry`;
-      await api(url, { method: 'POST' });
-      toast('Задача перезапущена', 'ok');
+      const base = job.kind === 'convert' ? '/mod/convert-jobs' : '/mod/narration-jobs';
+      await api(`${base}/${job.id}/${action}`, { method: 'POST' });
+      toast(action === 'requeue' ? 'Задача возвращена в очередь' : 'Задача перезапущена', 'ok');
       setNonce((n) => n + 1);
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -115,6 +119,9 @@ function TasksInner() {
                     {job.name ? ` · ${job.name}` : ''}
                   </span>
                   {job.error ? <span className={styles.jobError} title={job.error}>{job.error}</span> : null}
+                  {job.status === 'processing' && job.claimed_at ? (
+                    <span className={styles.jobSince}>{`в работе ${timeAgo(job.claimed_at)}`}</span>
+                  ) : null}
                 </div>
                 <div className={styles.rowSide}>
                   {job.attempts > 0 ? <span className={styles.attempts}>попыток: {job.attempts}</span> : null}
@@ -123,11 +130,23 @@ function TasksInner() {
                     <button
                       type="button"
                       className="btn btn-ghost"
-                      onClick={() => retry(job)}
+                      onClick={() => run(job, 'retry')}
                       disabled={retrying === `${job.kind}-${job.id}`}
                     >
                       {retrying === `${job.kind}-${job.id}` ? <Loader2 size={14} className={styles.spin} /> : <RotateCcw size={14} />}
                       Перезапустить
+                    </button>
+                  ) : null}
+                  {job.status === 'processing' && canRequeue ? (
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => run(job, 'requeue')}
+                      disabled={retrying === `${job.kind}-${job.id}`}
+                      title="Снять задачу с ноды и вернуть её в очередь"
+                    >
+                      {retrying === `${job.kind}-${job.id}` ? <Loader2 size={14} className={styles.spin} /> : <Undo2 size={14} />}
+                      Вернуть в очередь
                     </button>
                   ) : null}
                 </div>

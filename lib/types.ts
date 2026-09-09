@@ -687,6 +687,8 @@ export interface NarrationJob {
   error: string;
   chapter_id: number | null;
   created_at: string;
+  /** When a node picked the job up; null while it is still queued. */
+  claimed_at: string | null;
   finished_at: string | null;
 }
 

@@ -56,6 +56,13 @@
   color: var(--accent);
 }
 
+/* How long a job has been claimed by a node — the cue for deciding whether a
+   "processing" job is genuinely stuck and worth sending back to the queue. */
+.jobSince {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .jobError {
   font-size: 12px;
   color: var(--accent);
