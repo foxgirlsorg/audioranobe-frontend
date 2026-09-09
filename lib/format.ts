@@ -14,14 +14,20 @@ export function formatDuration(totalSeconds: number): string {
   return `${m}:${two(sec)}`;
 }
 
-export function formatDate(iso: string): string {
-  const d = new Date(iso);
+/** Normalise a backend timestamp (Unix seconds or ISO string) into a Date. */
+function toDate(v: number | string): Date {
+  if (typeof v === 'number') return new Date(v * 1000);
+  return new Date(v);
+}
+
+export function formatDate(v: number | string): string {
+  const d = toDate(v);
   if (isNaN(d.getTime())) return '';
   return d.toLocaleDateString(locale(), { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export function formatDateTime(iso: string): string {
-  const d = new Date(iso);
+export function formatDateTime(v: number | string): string {
+  const d = toDate(v);
   if (isNaN(d.getTime())) return '';
   return d.toLocaleString(locale(), {
     year: 'numeric',
@@ -33,8 +39,8 @@ export function formatDateTime(iso: string): string {
   });
 }
 
-export function timeAgo(iso: string): string {
-  const d = new Date(iso);
+export function timeAgo(v: number | string): string {
+  const d = toDate(v);
   if (isNaN(d.getTime())) return '';
   const diff = Math.floor((Date.now() - d.getTime()) / 1000);
   const rtf = new Intl.RelativeTimeFormat(locale(), { numeric: 'auto', style: 'short' });
@@ -42,7 +48,7 @@ export function timeAgo(iso: string): string {
   if (diff < 3600) return rtf.format(-Math.max(1, Math.floor(diff / 60)), 'minute');
   if (diff < 86400) return rtf.format(-Math.floor(diff / 3600), 'hour');
   if (diff < 86400 * 30) return rtf.format(-Math.floor(diff / 86400), 'day');
-  return formatDate(iso);
+  return formatDate(v);
 }
 
 /**
@@ -50,8 +56,8 @@ export function timeAgo(iso: string): string {
  * today/yesterday → time, within a week → weekday + time, older → day+month,
  * a past year → day+month+year. VK-style.
  */
-export function lastSeen(iso: string): string {
-  const d = new Date(iso);
+export function lastSeen(v: number | string): string {
+  const d = toDate(v);
   if (isNaN(d.getTime())) return '';
   const now = new Date();
   const time = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -71,12 +77,12 @@ export function lastSeen(iso: string): string {
 }
 
 
-export function presenceLabel(status: 'online' | 'offline', lastSeenAt?: string | null): string {
+export function presenceLabel(status: 'online' | 'offline', lastSeenAt?: number | string | null): string {
   if (status === 'online') return 'в сети';
   return lastSeenAt ? `был(а) в сети ${lastSeen(lastSeenAt)}` : 'не в сети';
 }
 
-export function presenceLabelCompact(status: 'online' | 'offline', lastSeenAt?: string | null): string {
+export function presenceLabelCompact(status: 'online' | 'offline', lastSeenAt?: number | string | null): string {
   if (status === 'online') return 'в сети';
   return lastSeenAt ? `${lastSeen(lastSeenAt)}` : 'не в сети';
 }
