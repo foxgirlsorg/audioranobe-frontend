@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEnsureConfig } from '@/lib/config';
+import styles from './Captcha.module.css';
 
 interface WidgetApi {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string;
@@ -42,6 +43,7 @@ export default function Captcha({ onToken }: { onToken: (token: string) => void 
   const widgetId = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
   onTokenRef.current = onToken;
+  const [loaded, setLoaded] = useState(false);
 
   const c = config?.captcha;
   const active = !!c?.enabled && !!c.site_key && !!c.script_url && !!c.widget_var;
@@ -53,6 +55,7 @@ export default function Captcha({ onToken }: { onToken: (token: string) => void 
     if (!active || !ref.current) return;
     const el = ref.current;
     let cancelled = false;
+    setLoaded(false);
     loadScript(scriptUrl)
       .then(() => {
         if (cancelled) return;
@@ -65,6 +68,7 @@ export default function Captcha({ onToken }: { onToken: (token: string) => void 
           'expired-callback': () => onTokenRef.current(''),
           'error-callback': () => onTokenRef.current(''),
         });
+        setLoaded(true);
       })
       .catch(() => {});
     return () => {
@@ -81,5 +85,10 @@ export default function Captcha({ onToken }: { onToken: (token: string) => void 
   }, [active, siteKey, scriptUrl, widgetVar]);
 
   if (!active) return null;
-  return <div ref={ref} style={{ marginBottom: 14 }} />;
+  return (
+    <div className={styles.wrap}>
+      {!loaded ? <span className={styles.loadingText}>Загружаем проверку…</span> : null}
+      <div ref={ref} />
+    </div>
+  );
 }
