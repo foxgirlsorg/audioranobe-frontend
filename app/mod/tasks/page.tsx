@@ -24,7 +24,7 @@ const FILTERS: { key: '' | JobStatus; label: string }[] = [
 
 export default function TasksPage() {
   return (
-    <ModShell title="Задачи озвучки" accent="" perm="narration.jobs">
+    <ModShell title="Задачи" accent="" perm="narration.jobs">
       <TasksInner />
     </ModShell>
   );
@@ -37,7 +37,7 @@ function TasksInner() {
   const [data, setData] = useState<NarrationJobList | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [retrying, setRetrying] = useState<number | null>(null);
+  const [retrying, setRetrying] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
 
   const load = useCallback(() => {
@@ -56,10 +56,12 @@ function TasksInner() {
   useEffect(() => load(), [load]);
 
   const retry = async (job: NarrationJob) => {
+    const key = `${job.kind}-${job.id}`;
     if (retrying) return;
-    setRetrying(job.id);
+    setRetrying(key);
     try {
-      await api(`/mod/narration-jobs/${job.id}/retry`, { method: 'POST' });
+      const url = job.kind === 'convert' ? `/mod/convert-jobs/${job.id}/retry` : `/mod/narration-jobs/${job.id}/retry`;
+      await api(url, { method: 'POST' });
       toast('Задача перезапущена', 'ok');
       setNonce((n) => n + 1);
     } catch (e) {
@@ -95,17 +97,20 @@ function TasksInner() {
       ) : error ? (
         <ErrorPanel message={error} onRetry={() => setNonce((n) => n + 1)} />
       ) : !data || data.items.length === 0 ? (
-        <EmptyState icon={ListChecks} title="Задач нет" body="Здесь появятся задачи озвучки." />
+        <EmptyState icon={ListChecks} title="Задач нет" body="Здесь появятся задачи." />
       ) : (
         <>
           <div className={styles.list}>
             {data.items.map((job) => (
-              <div key={job.id} className={`glass-panel ${styles.row}`}>
+              <div key={`${job.kind}-${job.id}`} className={`glass-panel ${styles.row}`}>
                 <div className={styles.rowMain}>
                   <Link href={`/title/${job.title.slug}`} className={styles.jobTitle}>
                     {job.title.name}
                   </Link>
                   <span className={styles.jobMeta}>
+                    <span className={`${styles.kindChip}${job.kind === 'convert' ? ` ${styles.kindConvert}` : ''}`}>
+                      {job.kind === 'convert' ? 'Конвертация' : 'Озвучка'}
+                    </span>
                     Том {job.volume || '—'} · Глава {job.number}
                     {job.name ? ` · ${job.name}` : ''}
                   </span>
@@ -119,9 +124,9 @@ function TasksInner() {
                       type="button"
                       className="btn btn-ghost"
                       onClick={() => retry(job)}
-                      disabled={retrying === job.id}
+                      disabled={retrying === `${job.kind}-${job.id}`}
                     >
-                      {retrying === job.id ? <Loader2 size={14} className={styles.spin} /> : <RotateCcw size={14} />}
+                      {retrying === `${job.kind}-${job.id}` ? <Loader2 size={14} className={styles.spin} /> : <RotateCcw size={14} />}
                       Перезапустить
                     </button>
                   ) : null}

@@ -674,8 +674,9 @@ export interface OrderStatus {
   next_at: string | null;
 }
 
-/** A narration queue task (GET /mod/narration-jobs). */
+/** A narration/convert queue task (GET /mod/narration-jobs). */
 export interface NarrationJob {
+  kind: 'narration' | 'convert';
   id: number;
   title: { id: number; slug: string; name: string };
   volume: string;
