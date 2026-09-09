@@ -740,6 +740,115 @@ export default function SettingsPage() {
 
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
+          <ShieldCheck size={16} className={styles.panelIcon} />
+          <div>
+            <h2 className={styles.panelTitle}>{'Двухфакторная аутентификация'}</h2>
+            <p className={styles.panelHint}>
+              {totpEnabled
+                ? 'Включена — при входе понадобится код из приложения-аутентификатора.'
+                : 'Необязательно. Приложение вроде Google Authenticator или Aegis добавит код при входе.'}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.panelActions}>
+          {totpEnabled ? (
+            <button type="button" className="btn btn-ghost" onClick={() => setTotpDisableOpen(true)}>
+              {'Отключить'}
+            </button>
+          ) : (
+            <button type="button" className="btn btn-ghost" onClick={() => setTotpModalOpen(true)}>
+              {'Включить'}
+            </button>
+          )}
+        </div>
+      </section>
+
+      <TotpSetupModal
+        open={totpModalOpen}
+        onClose={() => setTotpModalOpen(false)}
+        onEnabled={() => setTotpEnabled(true)}
+      />
+
+      <section className={`glass-panel ${styles.panel}`}>
+        <div className={styles.panelHead}>
+          <LinkIcon size={16} className={styles.panelIcon} />
+          <div>
+            <h2 className={styles.panelTitle}>{'Способы входа'}</h2>
+            <p className={styles.panelHint}>
+              {hasPassword
+                ? 'Привяжите сервисы, чтобы входить в один клик.'
+                : 'У аккаунта пока нет пароля — вход возможен только через привязанные сервисы. Задайте пароль выше, чтобы отвязать последний из них.'}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.prefList}>
+          <div className={`${styles.prefRow} ${styles.emailRow}`}>
+            <div className={styles.prefText}>
+              <span className={styles.prefLabel}>{'Почта'}</span>
+              <span className={styles.prefHint}>
+                {user.email ?? 'не указана'}
+                {user.email && !user.email_verified ? ' — не подтверждена' : ''}
+              </span>
+            </div>
+            <div className={styles.emailActions}>
+              {emailVerificationOn && user.email && !user.email_verified ? (
+                <button
+                  type="button"
+                  className={styles.resendBtn}
+                  disabled={resending}
+                  onClick={resendVerification}
+                >
+                  {resending ? 'Отправляем…' : 'Отправить письмо повторно'}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setNewEmail(user.email ?? '');
+                  setEmailPw('');
+                  setEmailOpen(true);
+                }}
+              >
+                {user.email ? 'Изменить' : 'Добавить'}
+              </button>
+            </div>
+          </div>
+
+          {(identities ?? []).map((idn) => (
+            <div key={idn.provider} className={styles.prefRow}>
+              <div className={styles.prefText}>
+                <span className={styles.prefLabel}>{providerLabel(idn.provider)}</span>
+                <span className={styles.prefHint}>
+                  {idn.display_name || idn.email || 'привязан'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={unlinking !== null}
+                onClick={() => setToUnlink(idn)}
+              >
+                {unlinking === idn.provider ? 'Отвязываем…' : 'Отвязать'}
+              </button>
+            </div>
+          ))}
+          {identities !== null && identities.length === 0 ? (
+            <p className={styles.panelHint}>{'Пока ничего не привязано.'}</p>
+          ) : null}
+        </div>
+
+        <ProviderAuth
+          mode="link"
+          providers={authProviders}
+          hide={(identities ?? []).map((i) => i.provider)}
+        />
+      </section>
+
+      <section className={`glass-panel ${styles.panel}`}>
+        <div className={styles.panelHead}>
           <Bell size={16} className={styles.panelIcon} />
           <div>
             <h2 className={styles.panelTitle}>{'Уведомления'}</h2>
@@ -846,115 +955,6 @@ export default function SettingsPage() {
           </div>
         </section>
       ) : null}
-
-      <section className={`glass-panel ${styles.panel}`}>
-        <div className={styles.panelHead}>
-          <LinkIcon size={16} className={styles.panelIcon} />
-          <div>
-            <h2 className={styles.panelTitle}>{'Способы входа'}</h2>
-            <p className={styles.panelHint}>
-              {hasPassword
-                ? 'Привяжите сервисы, чтобы входить в один клик.'
-                : 'У аккаунта пока нет пароля — вход возможен только через привязанные сервисы. Задайте пароль выше, чтобы отвязать последний из них.'}
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.prefList}>
-          <div className={`${styles.prefRow} ${styles.emailRow}`}>
-            <div className={styles.prefText}>
-              <span className={styles.prefLabel}>{'Почта'}</span>
-              <span className={styles.prefHint}>
-                {user.email ?? 'не указана'}
-                {user.email && !user.email_verified ? ' — не подтверждена' : ''}
-              </span>
-            </div>
-            <div className={styles.emailActions}>
-              {emailVerificationOn && user.email && !user.email_verified ? (
-                <button
-                  type="button"
-                  className={styles.resendBtn}
-                  disabled={resending}
-                  onClick={resendVerification}
-                >
-                  {resending ? 'Отправляем…' : 'Отправить письмо повторно'}
-                </button>
-              ) : null}
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => {
-                  setNewEmail(user.email ?? '');
-                  setEmailPw('');
-                  setEmailOpen(true);
-                }}
-              >
-                {user.email ? 'Изменить' : 'Добавить'}
-              </button>
-            </div>
-          </div>
-
-          {(identities ?? []).map((idn) => (
-            <div key={idn.provider} className={styles.prefRow}>
-              <div className={styles.prefText}>
-                <span className={styles.prefLabel}>{providerLabel(idn.provider)}</span>
-                <span className={styles.prefHint}>
-                  {idn.display_name || idn.email || 'привязан'}
-                </span>
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                disabled={unlinking !== null}
-                onClick={() => setToUnlink(idn)}
-              >
-                {unlinking === idn.provider ? 'Отвязываем…' : 'Отвязать'}
-              </button>
-            </div>
-          ))}
-          {identities !== null && identities.length === 0 ? (
-            <p className={styles.panelHint}>{'Пока ничего не привязано.'}</p>
-          ) : null}
-        </div>
-
-        <ProviderAuth
-          mode="link"
-          providers={authProviders}
-          hide={(identities ?? []).map((i) => i.provider)}
-        />
-      </section>
-
-      <section className={`glass-panel ${styles.panel}`}>
-        <div className={styles.panelHead}>
-          <ShieldCheck size={16} className={styles.panelIcon} />
-          <div>
-            <h2 className={styles.panelTitle}>{'Двухфакторная аутентификация'}</h2>
-            <p className={styles.panelHint}>
-              {totpEnabled
-                ? 'Включена — при входе понадобится код из приложения-аутентификатора.'
-                : 'Необязательно. Приложение вроде Google Authenticator или Aegis добавит код при входе.'}
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.panelActions}>
-          {totpEnabled ? (
-            <button type="button" className="btn btn-ghost" onClick={() => setTotpDisableOpen(true)}>
-              {'Отключить'}
-            </button>
-          ) : (
-            <button type="button" className="btn btn-ghost" onClick={() => setTotpModalOpen(true)}>
-              {'Включить'}
-            </button>
-          )}
-        </div>
-      </section>
-
-      <TotpSetupModal
-        open={totpModalOpen}
-        onClose={() => setTotpModalOpen(false)}
-        onEnabled={() => setTotpEnabled(true)}
-      />
 
       <Modal
         open={emailOpen}
