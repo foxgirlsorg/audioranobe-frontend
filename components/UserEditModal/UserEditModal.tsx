@@ -30,7 +30,7 @@ export function UserEditModal({
   const { can } = useAuth();
   // Email/password/badges/verification stay '*'-only, matching the backend.
   const isAdmin = can('*');
-  const canManageCredentials = can('users.credentials');
+  const canResetTotp = can('users.totp_reset');
   const { toast } = useToast();
 
   const [target, setTarget] = useState<Me | null>(null);
@@ -281,7 +281,7 @@ export function UserEditModal({
             {'Отправить ссылку для сброса'}
           </button>
 
-          {canManageCredentials && target.totp_enabled ? (
+          {canResetTotp && target.totp_enabled ? (
             <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void removeTotp()}>
               <ShieldOff size={14} />
               {'Отключить двухфакторную аутентификацию'}
