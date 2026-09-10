@@ -39,11 +39,6 @@ interface PlayerContextValue {
   setFull(full: boolean): void;
 }
 
-// position/buffered live in their own context, updated ~4x/sec by the audio
-// element's timeupdate. Splitting them out keeps the main context's identity
-// stable during playback, so consumers that don't render the scrubber (most
-// of usePlayer()'s callers) don't re-render on every tick — only the
-// scrubber components that call usePlayerPosition() do.
 interface PlayerPositionValue {
   position: number;
   buffered: number;
@@ -56,9 +51,6 @@ const RATE_KEY = 'audioranobe_rate';
 const VOL_KEY = 'audioranobe_volume';
 const OPEN_KEY = 'audioranobe_player';
 
-// Loudness is perceived roughly logarithmically, so a linear slider value
-// sounds like it's already loud within the first quarter of its travel.
-// Raising it to a power before handing it to the audio element spreads that out.
 const toGain = (v: number): number => Math.pow(v, 2.5);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }): JSX.Element {
@@ -74,9 +66,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const [barHidden, setBarHidden] = useState(false);
   const [full, setFull] = useState(false);
 
-  // Progress only persists for signed-in users. The cookie is HttpOnly so JS
-  // can't sniff the session — mirror the auth user into a ref the memoised
-  // saveProgress can read.
   const { user } = useAuth();
   const authedRef = useRef(false);
   useEffect(() => {
@@ -93,11 +82,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const sleepUntilRef = useRef(0);
   const endedRef = useRef<() => void>(() => {});
   const loadSeqRef = useRef(0);
-  // True from the moment a new chapter's src is assigned until its
-  // loadedmetadata fires. Swapping audio.src on a playing element
-  // synchronously fires a 'pause' event with currentTime reset to 0 — this
-  // guard stops that spurious pause from saving position:0 over the
-  // incoming chapter's real (currentRef already points at it) progress.
   const switchingRef = useRef(false);
 
   const saveProgress = useCallback((keepalive = false, positionOverride?: number) => {
@@ -130,15 +114,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     }
   }, []);
 
-  // Autoplay-policy rejections (NotAllowedError) are routine — the browser
-  // blocking unprompted audio isn't a playback failure worth a toast. Any
-  // other rejection (unsupported format, decode error, aborted fetch) is.
   const reportPlayError = useCallback(
-    (e: unknown) => {
-      if (e instanceof DOMException && e.name === 'NotAllowedError') return;
-      toast('Не удалось воспроизвести главу', 'error');
-    },
-    [toast]
+      (e: unknown) => {
+        if (e instanceof DOMException && e.name === 'NotAllowedError') return;
+        toast('Не удалось воспроизвести главу', 'error');
+      },
+      [toast]
   );
 
   const ensureAudio = useCallback((): HTMLAudioElement => {
@@ -194,60 +175,58 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [saveProgress, toast]);
 
   const playChapter = useCallback(
-    async (id: number, startAt?: number, autoplay = true) => {
-      const audio = ensureAudio();
-      if (currentRef.current && currentRef.current.id === id && audio.src) {
-        if (startAt != null) {
-          try {
-            audio.currentTime = Math.max(0, startAt);
-          } catch {
+      async (id: number, startAt?: number, autoplay = true) => {
+        const audio = ensureAudio();
+        if (currentRef.current && currentRef.current.id === id && audio.src) {
+          if (startAt != null) {
+            try {
+              audio.currentTime = Math.max(0, startAt);
+            } catch {
+            }
+            setPosition(Math.max(0, startAt));
           }
-          setPosition(Math.max(0, startAt));
+          if (autoplay) audio.play().catch(reportPlayError);
+          return;
         }
-        if (autoplay) audio.play().catch(reportPlayError);
-        return;
-      }
-      if (currentRef.current && currentRef.current.id !== id) saveProgress();
+        if (currentRef.current && currentRef.current.id !== id) saveProgress();
 
-      const seq = ++loadSeqRef.current;
-      const ch = await api<ChapterPlay>(`/chapters/${id}`);
-      if (seq !== loadSeqRef.current) return;
+        const seq = ++loadSeqRef.current;
+        const ch = await api<ChapterPlay>(`/chapters/${id}`);
+        if (seq !== loadSeqRef.current) return;
 
-      currentRef.current = ch;
-      setCurrent(ch);
-      setBuffered(0);
-      setDuration(ch.duration_seconds || 0);
+        currentRef.current = ch;
+        setCurrent(ch);
+        setBuffered(0);
+        setDuration(ch.duration_seconds || 0);
 
-      // A shared timestamped link lands on an exact second; otherwise resume a
-      // few seconds before the saved position to re-establish context.
-      const start = startAt != null ? Math.max(0, startAt) : Math.max(0, (ch.my_position ?? 0) - 10);
-      setPosition(start);
+        const start = startAt != null ? Math.max(0, startAt) : Math.max(0, (ch.my_position ?? 0) - 10);
+        setPosition(start);
 
-      switchingRef.current = true;
-      audio.src = ch.audio_url;
-      audio.playbackRate = rateRef.current;
-      audio.defaultPlaybackRate = rateRef.current;
-      audio.volume = toGain(volumeRef.current);
-      if (start > 0) {
-        const onMeta = () => {
-          audio.removeEventListener('loadedmetadata', onMeta);
-          if (loadSeqRef.current !== seq) return;
+        switchingRef.current = true;
+        audio.src = ch.audio_url;
+        audio.playbackRate = rateRef.current;
+        audio.defaultPlaybackRate = rateRef.current;
+        audio.volume = toGain(volumeRef.current);
+        if (start > 0) {
+          const onMeta = () => {
+            audio.removeEventListener('loadedmetadata', onMeta);
+            if (loadSeqRef.current !== seq) return;
+            try {
+              audio.currentTime = start;
+            } catch {
+            }
+          };
+          audio.addEventListener('loadedmetadata', onMeta);
+        }
+        if (autoplay) {
           try {
-            audio.currentTime = start;
-          } catch {
+            await audio.play();
+          } catch (e) {
+            reportPlayError(e);
           }
-        };
-        audio.addEventListener('loadedmetadata', onMeta);
-      }
-      if (autoplay) {
-        try {
-          await audio.play();
-        } catch (e) {
-          reportPlayError(e);
         }
-      }
-    },
-    [ensureAudio, saveProgress, reportPlayError]
+      },
+      [ensureAudio, saveProgress, reportPlayError]
   );
 
   const toggle = useCallback(() => {
@@ -261,32 +240,32 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [reportPlayError]);
 
   const seek = useCallback(
-    (s: number) => {
-      const audio = audioRef.current;
-      const cur = currentRef.current;
-      if (!audio || !cur) return;
-      const d =
-        Number.isFinite(audio.duration) && audio.duration > 0
-          ? audio.duration
-          : cur.duration_seconds || 0;
-      const clamped = d > 0 ? Math.min(Math.max(0, s), d) : Math.max(0, s);
-      try {
-        audio.currentTime = clamped;
-      } catch {
-      }
-      setPosition(clamped);
-      saveProgress(false, clamped);
-    },
-    [saveProgress]
+      (s: number) => {
+        const audio = audioRef.current;
+        const cur = currentRef.current;
+        if (!audio || !cur) return;
+        const d =
+            Number.isFinite(audio.duration) && audio.duration > 0
+                ? audio.duration
+                : cur.duration_seconds || 0;
+        const clamped = d > 0 ? Math.min(Math.max(0, s), d) : Math.max(0, s);
+        try {
+          audio.currentTime = clamped;
+        } catch {
+        }
+        setPosition(clamped);
+        saveProgress(false, clamped);
+      },
+      [saveProgress]
   );
 
   const skip = useCallback(
-    (delta: number) => {
-      const audio = audioRef.current;
-      if (!audio || !currentRef.current) return;
-      seek(audio.currentTime + delta);
-    },
-    [seek]
+      (delta: number) => {
+        const audio = audioRef.current;
+        if (!audio || !currentRef.current) return;
+        seek(audio.currentTime + delta);
+      },
+      [seek]
   );
 
   const next = useCallback(() => {
@@ -381,9 +360,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     if (!cur) return;
     const audio = audioRef.current;
     const endPos =
-      audio && Number.isFinite(audio.duration) && audio.duration > 0
-        ? audio.duration
-        : cur.duration_seconds || 0;
+        audio && Number.isFinite(audio.duration) && audio.duration > 0
+            ? audio.duration
+            : cur.duration_seconds || 0;
     saveProgress(false, endPos);
 
     if (sleepRef.current === 'chapter') {
@@ -476,11 +455,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (
-        t &&
-        (t.tagName === 'INPUT' ||
-          t.tagName === 'TEXTAREA' ||
-          t.tagName === 'SELECT' ||
-          t.isContentEditable)
+          t &&
+          (t.tagName === 'INPUT' ||
+              t.tagName === 'TEXTAREA' ||
+              t.tagName === 'SELECT' ||
+              t.isContentEditable)
       ) {
         return;
       }
@@ -500,18 +479,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     return () => window.removeEventListener('keydown', onKey);
   }, [toggle, skip]);
 
-  // Lock-screen / headphone / Bluetooth controls (Media Session API). The
-  // action handlers delegate to the same callbacks the on-screen controls use;
-  // metadata and position ride the state the player already tracks.
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
     const ms = navigator.mediaSession;
     ms.setActionHandler('play', () => toggle());
     ms.setActionHandler('pause', () => toggle());
-    ms.setActionHandler('previoustrack', () => prev());
-    ms.setActionHandler('nexttrack', current?.next_id ? () => next() : null);
-    ms.setActionHandler('seekbackward', (e) => skip(-(e.seekOffset || 10)));
-    ms.setActionHandler('seekforward', (e) => skip(e.seekOffset || 10));
+    ms.setActionHandler('previoustrack', () => skip(-10));
+    ms.setActionHandler('nexttrack', () => skip(10));
+    ms.setActionHandler('seekbackward', null);
+    ms.setActionHandler('seekforward', null);
     ms.setActionHandler('seekto', (e) => {
       if (e.seekTime != null) seek(e.seekTime);
     });
@@ -526,7 +502,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         }
       }
     };
-  }, [toggle, next, prev, skip, seek, current?.next_id]);
+  }, [toggle, skip, seek]);
 
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
@@ -568,63 +544,63 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [current, barHidden]);
 
   const value = useMemo<PlayerContextValue>(
-    () => ({
-      current,
-      playing,
-      duration,
-      rate,
-      volume,
-      sleepRemaining,
-      sleep,
-      playChapter,
-      toggle,
-      seek,
-      skip,
-      next,
-      prev,
-      setRate,
-      setVolume,
-      setSleep,
-      stop,
-      barHidden,
-      setBarHidden,
-      full,
-      setFull,
-    }),
-    [
-      current,
-      playing,
-      duration,
-      rate,
-      volume,
-      sleepRemaining,
-      sleep,
-      playChapter,
-      toggle,
-      seek,
-      skip,
-      next,
-      prev,
-      setRate,
-      setVolume,
-      setSleep,
-      stop,
-      barHidden,
-      full,
-    ]
+      () => ({
+        current,
+        playing,
+        duration,
+        rate,
+        volume,
+        sleepRemaining,
+        sleep,
+        playChapter,
+        toggle,
+        seek,
+        skip,
+        next,
+        prev,
+        setRate,
+        setVolume,
+        setSleep,
+        stop,
+        barHidden,
+        setBarHidden,
+        full,
+        setFull,
+      }),
+      [
+        current,
+        playing,
+        duration,
+        rate,
+        volume,
+        sleepRemaining,
+        sleep,
+        playChapter,
+        toggle,
+        seek,
+        skip,
+        next,
+        prev,
+        setRate,
+        setVolume,
+        setSleep,
+        stop,
+        barHidden,
+        full,
+      ]
   );
 
   const positionValue = useMemo<PlayerPositionValue>(
-    () => ({ position, buffered }),
-    [position, buffered]
+      () => ({ position, buffered }),
+      [position, buffered]
   );
 
   return (
-    <PlayerContext.Provider value={value}>
-      <PlayerPositionContext.Provider value={positionValue}>
-        {children}
-      </PlayerPositionContext.Provider>
-    </PlayerContext.Provider>
+      <PlayerContext.Provider value={value}>
+        <PlayerPositionContext.Provider value={positionValue}>
+          {children}
+        </PlayerPositionContext.Provider>
+      </PlayerContext.Provider>
   );
 }
 
@@ -634,7 +610,6 @@ export function usePlayer(): PlayerContextValue {
   return ctx;
 }
 
-/** Position/buffered, updated ~4x/sec during playback — see PlayerPositionContext above. */
 export function usePlayerPosition(): PlayerPositionValue {
   const ctx = useContext(PlayerPositionContext);
   if (!ctx) throw new Error('usePlayerPosition must be used inside <PlayerProvider>');
