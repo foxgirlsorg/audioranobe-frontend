@@ -5,11 +5,15 @@ export const revalidate = 3600;
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://audioranobe.com').replace(/\/$/, '');
 
+// The API sends timestamps as Unix seconds (backend tsUnix()); a string is
+// still accepted in case a list endpoint ever serializes one.
+type Stamp = number | string | null;
+
 interface Listed {
   id?: number;
   slug?: string;
-  updated_at?: string | null;
-  created_at?: string | null;
+  updated_at?: Stamp;
+  created_at?: Stamp;
 }
 
 async function listAll(path: string, extraParams = '', maxPages = 500): Promise<Listed[]> {
@@ -37,9 +41,9 @@ async function listAll(path: string, extraParams = '', maxPages = 500): Promise<
 }
 
 function lastmod(row: Listed): Date | undefined {
-  const iso = row.updated_at || row.created_at;
-  if (!iso) return undefined;
-  const d = new Date(iso.replace(' ', 'T'));
+  const v = row.updated_at || row.created_at;
+  if (!v) return undefined;
+  const d = typeof v === 'number' ? new Date(v * 1000) : new Date(v.replace(' ', 'T'));
   return isNaN(d.getTime()) ? undefined : d;
 }
 
