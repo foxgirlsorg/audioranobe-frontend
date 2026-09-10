@@ -177,6 +177,8 @@ export default function UserPicker({
                   <Loader2 size={14} className={styles.spin} />
                   Ищем…
                 </>
+              ) : results.length > 0 ? (
+                'Все совпадения — уже участники или вы'
               ) : (
                 'Никого не нашли'
               )}
