@@ -385,6 +385,31 @@ export interface NarratorFull extends NarratorCard {
   comments?: Paginated<Comment>;
 }
 
+/**
+ * An illustration on a title — bound to the whole title (chapter_id null) or to
+ * one chapter. Any aspect ratio; width/height are the stored image's pixels,
+ * so layouts can reserve the right box before it loads.
+ */
+export interface Illustration {
+  id: number;
+  title_id: number;
+  chapter_id: number | null;
+  chapter: {
+    id: number;
+    number: number;
+    number_end: number | null;
+    name: string;
+    volume_number: number;
+  } | null;
+  url: string;
+  thumb_url: string;
+  width: number;
+  height: number;
+  /** Optional heading; empty string when unset. */
+  caption: string;
+  position: number;
+}
+
 export interface TitleInfoBanner {
   enabled: boolean;
   title: string;
@@ -423,6 +448,11 @@ export interface TitleFull extends TitleCard {
    * edit form can prefill a banner that is currently switched off.
    */
   info_banner: TitleInfoBanner | null;
+  /**
+   * Gallery, in editor order. Empty for signed-out visitors on an 18+ or
+   * sensitive title; chapter-bound ones for hidden chapters only reach editors.
+   */
+  illustrations?: Illustration[];
   /** Viewer opted into a notification for every new comment on this title. */
   comment_subscribed: boolean;
   /** First page of comments, embedded to save a separate request on load. */
@@ -442,6 +472,8 @@ export interface ChapterPlay {
   prev_id: number | null;
   next_id: number | null;
   narrator: { id: number; slug: string; name: string } | null;
+  /** Bound to this chapter — the full-screen player shows these instead of the cover. */
+  illustrations?: Illustration[];
 }
 
 export interface Comment {

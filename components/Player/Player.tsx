@@ -22,6 +22,7 @@ import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import { useBackToClose } from '@/lib/useBackToClose';
 import { useToast, errMsg } from '@/lib/toast';
 import PlayPauseIcon from '@/components/PlayPauseIcon/PlayPauseIcon';
+import IllustrationCarousel from '@/components/Illustrations/IllustrationCarousel';
 import styles from './Player.module.css';
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
@@ -118,7 +119,9 @@ export default function Player() {
   useEffect(() => {
     if (!full) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setFull(false);
+      // An illustration opened in the image viewer sits on top of the stage;
+      // Escape belongs to the viewer then, not to the player underneath.
+      if (e.key === 'Escape' && !document.querySelector('.PhotoView-Portal')) setFull(false);
     };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
@@ -396,13 +399,18 @@ export default function Player() {
           >
             <Minimize2 />
           </button>
-          <Link href={`/title/${current.title.slug}`} className={styles.stageArt}>
-            {current.title.cover_url ? (
-              <img src={current.title.cover_url} alt="" />
-            ) : (
-              <Music size={64} aria-hidden="true" />
-            )}
-          </Link>
+          {current.illustrations && current.illustrations.length > 0 ? (
+            // The chapter's own illustrations take the cover's place.
+            <IllustrationCarousel items={current.illustrations} />
+          ) : (
+            <Link href={`/title/${current.title.slug}`} className={styles.stageArt}>
+              {current.title.cover_url ? (
+                <img src={current.title.cover_url} alt="" />
+              ) : (
+                <Music size={64} aria-hidden="true" />
+              )}
+            </Link>
+          )}
           <div className={styles.stageMeta}>
             <Link href={`/title/${current.title.slug}`} className={styles.stageTitle}>
               {current.title.name}

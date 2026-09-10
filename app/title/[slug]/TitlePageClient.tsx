@@ -38,6 +38,7 @@ import { chapterFilePrefix, chapterLabel, chapterNumberLabel, formatCount, forma
 import { usePageTitle } from '@/lib/usePageTitle';
 import Section from '@/components/Section/Section';
 import Tabs from '@/components/Tabs/Tabs';
+import IllustrationGallery from '@/components/Illustrations/IllustrationGallery';
 import ScrollRail from '@/components/ScrollRail/ScrollRail';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import RatingStars from '@/components/RatingStars/RatingStars';
@@ -881,6 +882,10 @@ export default function TitlePageClient({
       </div>
     );
 
+  const illustrations = title.illustrations ?? [];
+  const illustrationsContent =
+    illustrations.length > 0 ? <IllustrationGallery items={illustrations} /> : null;
+
   const commentsContent = (
     <CommentSection
       targetType="title"
@@ -909,6 +914,9 @@ export default function TitlePageClient({
     const mobileTabs = [
       { key: 'about', label: 'О тайтле' },
       { key: 'chapters', label: 'Главы', count: chaptersTotal || undefined },
+      ...(illustrations.length > 0
+        ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length }]
+        : []),
       { key: 'comments', label: 'Комментарии', count: commentsTotal || undefined },
       ...(title.similar.length > 0 ? [{ key: 'similar', label: 'Похожие' }] : []),
     ];
@@ -977,6 +985,10 @@ export default function TitlePageClient({
 
         {mobileTab === 'chapters' ? (
           <section className={styles.tabPanel}>{chaptersContent}</section>
+        ) : null}
+
+        {mobileTab === 'illustrations' && illustrationsContent ? (
+          <section className={styles.tabPanel}>{illustrationsContent}</section>
         ) : null}
 
         {mobileTab === 'comments' ? (
@@ -1097,6 +1109,9 @@ export default function TitlePageClient({
         <Tabs
           tabs={[
             { key: 'chapters', label: 'Тома и главы', count: chaptersTotal || undefined },
+            ...(illustrations.length > 0
+              ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length }]
+              : []),
             { key: 'comments', label: 'Комментарии', count: commentsTotal || undefined },
           ]}
           active={tab}
@@ -1108,6 +1123,8 @@ export default function TitlePageClient({
 
       {tab === 'chapters' ? (
         <section className={styles.tabPanel}>{chaptersContent}</section>
+      ) : tab === 'illustrations' && illustrationsContent ? (
+        <section className={styles.tabPanel}>{illustrationsContent}</section>
       ) : (
         <section className={styles.tabPanel}>{commentsContent}</section>
       )}

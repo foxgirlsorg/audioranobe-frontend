@@ -1,0 +1,155 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: min(92vw, 780px);
+}
+
+/* The stage box. Wider than the 2:3 cover it replaces, since illustrations
+   skew landscape more often than covers do; capped by viewport height so the
+   title and controls below always keep their room. */
+.viewport {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 500px);
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0c0c0e;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+  cursor: grab;
+}
+
+.viewport:active {
+  cursor: grabbing;
+}
+
+.track {
+  display: flex;
+  height: 100%;
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Blurred, cover-fit copy of the same image: fills whatever the contain-fit
+   foreground leaves empty with the illustration's own colours. Overscanned
+   well past the slide, because a blur fades to transparent over ~3× its
+   radius at the element's edge — with less, that fade shows as a dark band
+   along the frame. */
+.backdrop {
+  position: absolute;
+  top: -25%;
+  left: -25%;
+  width: 150%;
+  height: 150%;
+  max-width: none;
+  object-fit: cover;
+  filter: blur(36px) brightness(0.36) saturate(1.25);
+  pointer-events: none;
+}
+
+.img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+  user-select: none;
+}
+
+.caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2.25rem 1.1rem 0.85rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.wrap:hover .nav,
+.nav:focus-visible {
+  opacity: 1;
+}
+
+.nav:hover {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.prev {
+  left: 10px;
+}
+
+.next {
+  right: 10px;
+}
+
+/* Below the frame, not over it — the caption owns the bottom edge. */
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 22px;
+  height: 4px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.28);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dotOn {
+  background: #fff;
+}
+
+@media (hover: none) {
+  .nav {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Same rule as the cover it replaces: on a short viewport the art goes first. */
+@media (max-height: 560px) {
+  .wrap {
+    display: none;
+  }
+}

@@ -30,6 +30,16 @@ export function PhotoProvider({ children }: { children: React.ReactNode }) {
       onVisibleChange={(v) => {
         setVisible(v);
       }}
+      // Draws a PhotoView's `overlay` (illustration captions) as a bar along
+      // the bottom. Only views that pass an overlay get one, and it hides with
+      // the rest of the chrome when the viewer is tapped.
+      overlayRender={({ overlay, overlayVisible }) =>
+        overlay ? (
+          <div className={overlayVisible ? styles.caption : `${styles.caption} ${styles.captionHidden}`}>
+            {overlay}
+          </div>
+        ) : null
+      }
       toolbarRender={({ scale, onScale, rotate, onRotate, images, index }) => {
         const src = images[index]?.src;
         return (

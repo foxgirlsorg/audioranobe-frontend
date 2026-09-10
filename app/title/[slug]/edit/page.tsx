@@ -28,6 +28,7 @@ import DangerZone from '@/components/DangerZone/DangerZone';
 import Tabs from '@/components/Tabs/Tabs';
 import TitleContentManager from '@/components/TitleContentManager/TitleContentManager';
 import TitleArtwork from '@/components/TitleArtwork/TitleArtwork';
+import IllustrationManager from '@/components/Illustrations/IllustrationManager';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import Select from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
@@ -49,6 +50,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const { user, loading: authLoading, isMod, can } = useAuth();
   const isAdmin = can('titles.edit');
   const canInfoBanner = can('titles.info_banner');
+  // The page itself already requires title edit access; this is the extra grant.
+  const canIllustrations = can('illustrations.edit');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -325,6 +328,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
           tabs={[
             { key: 'info', label: 'Инфо' },
             { key: 'artwork', label: 'Оформление' },
+            ...(canIllustrations ? [{ key: 'illustrations', label: 'Иллюстрации' }] : []),
             { key: 'content', label: 'Тома и главы' },
           ]}
           active={tab}
@@ -335,6 +339,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       </div>
 
       {tab === 'artwork' ? <TitleArtwork title={title} onReload={reloadTitle} /> : null}
+
+      {tab === 'illustrations' && canIllustrations ? <IllustrationManager title={title} /> : null}
 
       {tab === 'content' ? (
         <TitleContentManager title={title} onReload={reloadTitle} />
