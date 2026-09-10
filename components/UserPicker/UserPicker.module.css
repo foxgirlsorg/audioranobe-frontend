@@ -1,0 +1,65 @@
+/* Layout comes from GenrePicker.module.css (shared by every picker); these
+   are only the account-specific bits. */
+
+.chip {
+  gap: 0.45rem;
+  padding-left: 0.25rem;
+}
+
+.chipName {
+  font-weight: 600;
+}
+
+.chipHandle {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.handle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+}
+
+.optionActive {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  font-size: 13px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+}
+
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

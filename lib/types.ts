@@ -631,10 +631,47 @@ export interface ModRequest {
   review_note: string;
   submitted_by: UserBrief | null;
   entity: Record<string, unknown> | null;
+  /**
+   * Both sides of a handover (action 'transfer'), as they stand now; null for
+   * every other action. `to` is null when the recipient no longer exists.
+   */
+  transfer?: ModRequestTransfer | null;
   created_at: string;
   reviewed_at: string | null;
   retry_count: number;
   can_retry: boolean;
+}
+
+/** A narrator is handed between users; a title between narrators. */
+export type ModRequestTransfer =
+  | { from: UserBrief[]; to: UserBrief | null }
+  | { from: NarratorRefBrief[]; to: NarratorRefBrief | null };
+
+export interface NarratorRefBrief {
+  id: number;
+  slug: string;
+  name: string;
+}
+
+/** GET /mod/queue — the tab counts ignore the page's filters. */
+export interface ModQueuePage extends Paginated<ModRequest> {
+  counts: {
+    all: number;
+    transfer: number;
+    narrator: number;
+    title: number;
+    chapter: number;
+    author: number;
+  };
+}
+
+/** GET /users/search — slim account row for pickers. */
+export interface UserSearchHit {
+  id: number;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  avatar_thumb_url: string | null;
 }
 
 export interface Job {

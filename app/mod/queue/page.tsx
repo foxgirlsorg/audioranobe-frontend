@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Inbox } from 'lucide-react';
+import { ArrowRight, Inbox } from 'lucide-react';
 import { api } from '@/lib/api';
 import { errMsg, useToast } from '@/lib/toast';
 import { timeAgo } from '@/lib/format';
-import type { ModRequest, Paginated } from '@/lib/types';
+import type { ModQueuePage, ModRequest, NarratorRefBrief, UserBrief } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
+import UserAvatar from '@/components/UserAvatar/UserAvatar';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Tabs from '@/components/Tabs/Tabs';
 import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
@@ -15,23 +16,38 @@ import { useInfiniteList } from '@/lib/useInfiniteList';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
-const TYPE_TABS = [
-  { key: 'all', label: 'Все' },
-  { key: 'narrator', label: 'Чтецы' },
-  { key: 'title', label: 'Тайтлы' },
-  { key: 'chapter', label: 'Главы' },
+type TabKey = 'all' | 'transfer' | 'narrator' | 'title' | 'chapter' | 'author';
+type Counts = ModQueuePage['counts'];
+
+// Handovers get their own tab; the per-type tabs hold content changes
+// (create/update/delete) only, so no request shows up under two of them.
+const TABS: { key: TabKey; label: string; params: { type?: string; kind?: string } }[] = [
+  { key: 'all', label: 'Все', params: {} },
+  { key: 'transfer', label: 'Передачи', params: { kind: 'transfer' } },
+  { key: 'narrator', label: 'Чтецы', params: { type: 'narrator', kind: 'content' } },
+  { key: 'title', label: 'Тайтлы', params: { type: 'title', kind: 'content' } },
+  { key: 'chapter', label: 'Главы', params: { type: 'chapter', kind: 'content' } },
+  { key: 'author', label: 'Авторы', params: { type: 'author', kind: 'content' } },
 ];
+const TAB_KEYS: string[] = TABS.map((t) => t.key);
+
+/** Which tab's count a request belongs to (besides "all"). */
+function tabOf(r: ModRequest): TabKey {
+  return r.action === 'transfer' ? 'transfer' : (r.entity_type as TabKey);
+}
 
 const ACTION_LABELS: Record<string, string> = {
   create: 'создание',
   update: 'изменение',
   delete: 'удаление',
+  transfer: 'передача',
 };
 
 const ENTITY_LABELS: Record<string, string> = {
   narrator: 'чтец',
   title: 'тайтл',
   chapter: 'глава',
+  author: 'автор',
 };
 
 function entityTypeLabel(entityType: string): string {
@@ -64,11 +80,70 @@ function entityLink(r: ModRequest): string | null {
   if (r.entity_type === 'chapter') {
     return r.entity_id != null ? `/chapter/${r.entity_id}` : null;
   }
+  if (r.entity_type === 'author') {
+    return r.entity_id != null ? `/author/${r.entity_id}` : null;
+  }
   const slug = r.entity && typeof r.entity.slug === 'string' ? r.entity.slug : '';
   if (!slug) return null;
   return r.entity_type === 'title'
     ? `/title/${encodeURIComponent(slug)}`
     : `/narrator/${encodeURIComponent(slug)}`;
+}
+
+function UserPill({ u }: { u: UserBrief }) {
+  return (
+    <Link href={`/user/${u.id}`} className={styles.pill}>
+      <UserAvatar user={u} size={22} />
+      <span className={styles.pillName}>{u.display_name || u.username}</span>
+      <span className={styles.pillHandle}>@{u.username}</span>
+    </Link>
+  );
+}
+
+function NarratorPill({ n }: { n: NarratorRefBrief }) {
+  return (
+    <Link href={`/narrator/${encodeURIComponent(n.slug)}`} className={`${styles.pill} ${styles.pillPlain}`}>
+      <span className={styles.pillName}>{n.name}</span>
+    </Link>
+  );
+}
+
+/**
+ * A handover, read as "from → to" with names instead of ids, plus what
+ * approving it will actually do (PanelController::applyTransfer).
+ */
+function TransferSides({ r }: { r: ModRequest }) {
+  const t = r.transfer;
+  if (!t) return null;
+  const narrator = r.entity_type === 'narrator';
+  const pill = (x: UserBrief | NarratorRefBrief) =>
+    'username' in x ? <UserPill key={`u${x.id}`} u={x} /> : <NarratorPill key={`n${x.id}`} n={x} />;
+  const from: (UserBrief | NarratorRefBrief)[] = t.from;
+
+  return (
+    <>
+      <div className={styles.transferSides}>
+        <div className={styles.side}>
+          <span className={styles.sideLabel}>{narrator ? 'Сейчас владеет' : 'Сейчас у чтецов'}</span>
+          <div className={styles.pills}>
+            {from.length > 0 ? from.map(pill) : <span className={styles.nobody}>никого</span>}
+          </div>
+        </div>
+        <ArrowRight size={18} className={styles.transferArrow} aria-hidden="true" />
+        <div className={styles.side}>
+          <span className={styles.sideLabel}>{narrator ? 'Получит' : 'Перейдёт к чтецу'}</span>
+          <div className={styles.pills}>
+            {t.to ? pill(t.to) : <span className={styles.gone}>получатель больше не существует</span>}
+          </div>
+        </div>
+      </div>
+      <p className={styles.transferNote}>
+        {narrator
+          ? 'После одобрения получатель станет единственным владельцем — все нынешние участники потеряют доступ к чтецу.'
+          : 'После одобрения тайтл уйдёт от всех нынешних чтецов, а их отметки в главах будут сняты.'}
+      </p>
+    </>
+  );
 }
 
 function RequestCard({ r, onDone }: { r: ModRequest; onDone: (id: number) => void }) {
@@ -144,7 +219,9 @@ function RequestCard({ r, onDone }: { r: ModRequest; onDone: (id: number) => voi
         </span>
       </header>
 
-      {r.action === 'delete' ? (
+      {r.action === 'transfer' && r.transfer ? (
+        <TransferSides r={r} />
+      ) : r.action === 'delete' ? (
         <p className={styles.deleteWarn}>
           {`Одобрение навсегда удалит этот объект (${entityTypeLabel(r.entity_type)}) и всё, что с ним связано.`}
         </p>
@@ -227,31 +304,42 @@ function RequestCard({ r, onDone }: { r: ModRequest; onDone: (id: number) => voi
 
 function QueueContent() {
   const [init, setInit] = useState(false);
-  const [type, setType] = useState('all');
+  const [tab, setTab] = useState<TabKey>('all');
+  const [counts, setCounts] = useState<Counts | null>(null);
 
   useEffect(() => {
     const urlType = new URLSearchParams(window.location.search).get('type');
-    if (urlType === 'narrator' || urlType === 'title' || urlType === 'chapter') setType(urlType);
+    if (urlType && TAB_KEYS.includes(urlType)) setTab(urlType as TabKey);
     setInit(true);
   }, []);
 
   const fetchPage = useCallback(
-    (page: number) =>
-      api<Paginated<ModRequest>>('/mod/queue', {
-        params: { type: type === 'all' ? undefined : type, page },
-      }),
-    [type]
+    (page: number) => {
+      const params = TABS.find((t) => t.key === tab)?.params ?? {};
+      return api<ModQueuePage>('/mod/queue', { params: { ...params, page } }).then((d) => {
+        if (d.counts) setCounts(d.counts);
+        return d;
+      });
+    },
+    [tab]
   );
   const list = useInfiniteList<ModRequest>(fetchPage);
-  const removeRequest = (id: number) => list.remove((r) => r.id === id);
+  const removeRequest = (id: number) => {
+    const done = list.items?.find((r) => r.id === id);
+    list.remove((r) => r.id === id);
+    if (done) {
+      const key = tabOf(done);
+      setCounts((c) => (c ? { ...c, all: c.all - 1, [key]: Math.max(0, c[key] - 1) } : c));
+    }
+  };
 
   return (
     <div>
       <Tabs
         variant="underline"
-        tabs={TYPE_TABS}
-        active={type}
-        onChange={setType}
+        tabs={TABS.map((t) => ({ key: t.key, label: t.label, count: counts?.[t.key] || undefined }))}
+        active={tab}
+        onChange={(k) => setTab(k as TabKey)}
       />
       {list.error ? (
         <ErrorPanel message={list.error} onRetry={list.reload} />

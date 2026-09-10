@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
-import type { NarratorFull, NarratorStats, UserBrief } from '@/lib/types';
+import type { NarratorFull, NarratorStats, UserBrief, UserSearchHit } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
@@ -18,6 +18,8 @@ import DangerZone from '@/components/DangerZone/DangerZone';
 import NarratorPosts from '@/components/NarratorPosts/NarratorPosts';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import Toggle from '@/components/Toggle/Toggle';
+import UserPicker from '@/components/UserPicker/UserPicker';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import styles from './page.module.css';
 
 // Lazily loaded: react-easy-crop only needs to load once the user actually
@@ -34,7 +36,7 @@ const ROLE_LABELS: Record<'owner' | 'editor', string> = {
 export default function NarratorEditPage({ params }: { params: { slug: string } }) {
   const routeSlug = decodeURIComponent(params.slug);
   const searchParams = useSearchParams();
-  const { user, loading: authLoading, isMod } = useAuth();
+  const { user, loading: authLoading, isMod, can } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -67,8 +69,16 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
   const [stats, setStats] = useState<NarratorStats | null>(null);
   const [statsError, setStatsError] = useState('');
 
-  const [transferUsername, setTransferUsername] = useState('');
+  const [transferTo, setTransferTo] = useState<UserSearchHit | null>(null);
+  const [confirmTransfer, setConfirmTransfer] = useState(false);
   const [transferring, setTransferring] = useState(false);
+  // Mirrors PanelController::skipsModeration for narrators: staff and anyone
+  // who skips moderation hand over immediately; everyone else files a request.
+  const transferIsInstant =
+    isMod ||
+    !!user?.skip_moderation ||
+    can('bypass.moderation') ||
+    can('bypass.moderation.narrator');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -196,20 +206,22 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
   }
 
   async function handleTransfer() {
-    if (!narrator) return;
-    const uname = transferUsername.trim();
-    if (!uname) {
-      toast('Введите имя пользователя', 'error');
-      return;
-    }
+    if (!narrator || !transferTo) return;
     setTransferring(true);
     try {
-      await api(`/panel/narrators/${narrator.id}/transfer`, {
+      const res = await api<{ applied: boolean }>(`/panel/narrators/${narrator.id}/transfer`, {
         method: 'POST',
-        body: { username: uname },
+        body: { user_id: transferTo.id },
       });
+      if (res.applied) {
+        toast(`Права на чтеца переданы @${transferTo.username}`);
+        // The previous owner has no edit access any more (staff keep theirs,
+        // but the public page is the useful place to land either way).
+        router.push(`/narrator/${narrator.slug}`);
+        return;
+      }
       toast('Запрос на передачу отправлен на модерацию');
-      setTransferUsername('');
+      setTransferTo(null);
     } catch (err) {
       toast(errMsg(err), 'error');
     } finally {
@@ -529,27 +541,53 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
 
       {tab === 'transfer' && isOwner && (
         <div className={`glass-panel ${styles.formPanel}`}>
-          <p className={styles.transferHint}>
-            Введите имя пользователя, которому вы хотите передать права владельца. Запрос будет
-            отправлен на модерацию.
+          <p className={styles.transferHint} id="transfer-label">
+            Найдите пользователя, которому хотите передать права владельца чтеца.{' '}
+            {transferIsInstant
+              ? 'Передача произойдёт сразу, без модерации.'
+              : 'Запрос уйдёт на модерацию; до одобрения чтец остаётся за вами.'}
           </p>
           <div className={styles.transferRow}>
-            <input
-              className={`input ${styles.transferInput}`}
-              type="text"
-              placeholder="Имя пользователя"
-              value={transferUsername}
-              onChange={(e) => setTransferUsername(e.target.value)}
-            />
+            <div className={styles.transferInput}>
+              <UserPicker
+                value={transferTo}
+                onChange={setTransferTo}
+                excludeIds={[
+                  ...(user ? [user.id] : []),
+                  ...(members ?? []).map((m) => m.user.id),
+                ]}
+                disabled={transferring}
+                ariaLabelledBy="transfer-label"
+              />
+            </div>
             <button
               type="button"
               className="btn btn-primary"
-              disabled={transferring || !transferUsername.trim()}
-              onClick={handleTransfer}
+              disabled={transferring || !transferTo}
+              onClick={() => setConfirmTransfer(true)}
             >
-              {transferring ? 'Отправляем…' : 'Передать права'}
+              {transferring ? 'Передаём…' : 'Передать права'}
             </button>
           </div>
+          <ConfirmDialog
+            open={confirmTransfer}
+            onClose={() => setConfirmTransfer(false)}
+            onConfirm={() => void handleTransfer()}
+            title="Передать права на чтеца?"
+            body={
+              transferTo ? (
+                <>
+                  {`«${narrator.name}» перейдёт к @${transferTo.username}. `}
+                  {isMod
+                    ? 'Передача произойдёт сразу; нынешние участники чтеца потеряют к нему доступ.'
+                    : transferIsInstant
+                      ? 'Это произойдёт сразу, и вы потеряете доступ к редактированию чтеца.'
+                      : 'Заявка уйдёт на модерацию; после одобрения вы потеряете доступ к редактированию чтеца.'}
+                </>
+              ) : null
+            }
+            danger
+          />
         </div>
       )}
 
