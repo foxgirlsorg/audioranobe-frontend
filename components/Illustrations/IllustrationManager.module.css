@@ -10,66 +10,171 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-muted);
+  white-space: nowrap;
+  margin-left: 3px
 }
 
-/* ---------- upload zone ---------- */
+/* ---------- upload card ---------- */
 
-.drop {
+.upload {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.1rem 1.3rem;
+}
+
+/* ---------- binding controls ---------- */
+
+.bindControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.bindRow {
+  display: flex;
   flex-wrap: wrap;
-  gap: 1rem 1.5rem;
-  padding: 1.2rem 1.4rem;
-  border-style: dashed;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ---------- segmented toggle (matches Tabs.module.css .segmented) ---------- */
+
+.segmented {
+  display: inline-flex;
+  width: fit-content;
+  gap: 0;
+  padding: 3px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  height: 41px;
+  box-sizing: border-box;
+}
+
+.segTab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.segTab:hover {
+  color: var(--text-secondary);
+}
+
+.segActive,
+.segActive:hover {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(222, 97, 97, 0.28), rgba(222, 97, 97, 0.14));
+  border-color: rgba(222, 97, 97, 0.4);
+}
+
+/* ---------- chapter selects ---------- */
+
+.chapterSelects {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.chapterSelects > *:first-child {
+  flex: 0 0 115px;
+  width: 115px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chapterSelects > *:last-child {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+/* ---------- drop zone ---------- */
+
+.dropTarget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 2.1rem 1.5rem;
+  border: 1.5px dashed var(--border);
+  border-radius: calc(var(--radius-sm) + 4px);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.dropTarget:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 4%, rgba(255, 255, 255, 0.02));
+}
+
+.dropTarget:active {
+  transform: scale(0.995);
+}
+
+.dropTarget:focus-visible {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .dropOver {
+  border-style: solid;
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  background: color-mix(in srgb, var(--accent) 10%, rgba(255, 255, 255, 0.02));
+  transform: scale(1.005);
 }
 
-.dropMain {
+.dropIconWrap {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  min-width: 0;
-  flex: 1 1 320px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
 }
 
 .dropIcon {
-  flex-shrink: 0;
   color: var(--accent);
+}
+
+.dropText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .dropTitle {
   margin: 0;
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--text);
 }
 
 .dropHint {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 12.5px;
-  line-height: 1.45;
   color: var(--text-muted);
 }
 
-.dropActions {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.target {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 220px;
-}
+/* ---------- empty state ---------- */
 
 .empty {
   margin: 0.5rem 0 0;
@@ -93,8 +198,6 @@
   padding: 0.75rem;
 }
 
-/* Fixed-height band with the image contain-fit inside, so cards in a row line
-   up whatever the illustration's shape — the preview never crops. */
 .preview {
   position: relative;
   height: 170px;
@@ -137,14 +240,49 @@
   color: #fff;
 }
 
+/* ---------- card binding ---------- */
+
+.cardBind {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.card .segmented {
+  width: 100%;
+  height: 32px;
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.card .segTab {
+  flex: 1;
+  padding: 0 10px;
+  font-size: 11.5px;
+  border-radius: 7px;
+}
+
+/* The two Selects inside a card — pin the trigger button to the same 32px as
+   .iconBtn so the control row stays level. */
+.cardSelect :global(button) {
+  height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
 .captionInput {
-  font-size: 13px;
+  font-size: 12.5px;
+  padding: 7px 10px;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .cardFoot {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto;
 }
 
 .moveBtns {
@@ -192,13 +330,7 @@
 }
 
 @media (max-width: 560px) {
-  .dropActions,
-  .target {
-    width: 100%;
-  }
-
-  .dropActions :global(.btn) {
-    width: 100%;
-    justify-content: center;
+  .chapterSelects {
+    flex-wrap: wrap;
   }
 }

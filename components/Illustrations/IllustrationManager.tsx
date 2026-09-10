@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { chapterLabel } from '@/lib/format';
+import { chapterNumberLabel } from '@/lib/format';
 import { resizeToWebp } from '@/lib/image';
 import { useToast, errMsg } from '@/lib/toast';
 import type { Illustration, TitleFull } from '@/lib/types';
@@ -11,46 +11,53 @@ import Select, { type SelectOption } from '@/components/Select/Select';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import styles from './IllustrationManager.module.css';
 
-/** Same cap the server enforces (Img::MAX_ILLUSTRATION); any aspect ratio, never cropped. */
 const MAX_PX = 2048;
 const MAX_CAPTION = 200;
 const ACCEPT = 'image/jpeg,image/png,image/webp';
-const WHOLE_TITLE = 'title';
 
-/**
- * The edit page's "Иллюстрации" tab: upload (several at once, or drag and
- * drop), caption, bind to the title or one chapter, reorder, delete. Every
- * change saves immediately — there's no form-level Save here, same as the
- * artwork tab.
- */
 export default function IllustrationManager({ title }: { title: TitleFull }) {
   const { toast } = useToast();
   const [items, setItems] = useState<Illustration[]>(title.illustrations ?? []);
-  const [target, setTarget] = useState<string>(WHOLE_TITLE);
+
+  const [bindMode, setBindMode] = useState<'title' | 'chapter'>('title');
+  const [targetVol, setTargetVol] = useState<number | null>(null);
+  const [targetChap, setTargetChap] = useState<number | null>(null);
+
   const [uploading, setUploading] = useState<{ done: number; total: number } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Illustration | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setItems(title.illustrations ?? []);
-  }, [title.illustrations]);
+  useEffect(() => { setItems(title.illustrations ?? []); }, [title.illustrations]);
 
-  const chapterOptions = useMemo<SelectOption<string>[]>(
-    () => [
-      { value: WHOLE_TITLE, label: 'Весь тайтл' },
-      ...title.volumes.flatMap((v) =>
-        v.chapters
-          .filter((c) => !c.is_deleted)
-          .map((c) => ({
-            value: String(c.id),
-            label: `Том ${v.number} · ${chapterLabel(c.number, c.number_end, c.name)}`,
-          }))
-      ),
-    ],
-    [title.volumes]
+  const chapterOf = useMemo(() => {
+    const map = new Map<number, { id: number; number: number; number_end: number | null; name: string; volume: { id: number; number: number } }>();
+    for (const v of title.volumes) {
+      for (const c of v.chapters) {
+        if (!c.is_deleted) map.set(c.id, { ...c, volume: { id: v.id, number: v.number } });
+      }
+    }
+    return map;
+  }, [title.volumes]);
+
+  const targetChapterId = bindMode === 'chapter' ? targetChap : null;
+
+  useEffect(() => { setTargetChap(null); }, [targetVol]);
+
+  const volOptions: SelectOption<string>[] = useMemo(
+    () => title.volumes.map((v) => ({ value: String(v.id), label: `Том ${v.number}` })),
+    [title.volumes],
   );
+
+  const targetChapOptions: SelectOption<string>[] = useMemo(() => {
+    if (!targetVol) return [];
+    const vol = title.volumes.find((v) => v.id === targetVol);
+    if (!vol) return [];
+    return vol.chapters
+      .filter((c) => !c.is_deleted)
+      .map((c) => ({ value: String(c.id), label: chapterNumberLabel(c.number, c.number_end) }));
+  }, [title.volumes, targetVol]);
 
   async function upload(files: File[]) {
     const images = files.filter((f) => ACCEPT.split(',').includes(f.type));
@@ -59,14 +66,12 @@ export default function IllustrationManager({ title }: { title: TitleFull }) {
 
     setUploading({ done: 0, total: images.length });
     let ok = 0;
-    // One at a time: keeps upload order = gallery order, and a failure on one
-    // file doesn't lose the rest.
     for (const file of images) {
       try {
         const blob = await resizeToWebp(file, MAX_PX, MAX_PX);
         const fd = new FormData();
         fd.append('file', blob, file.name.replace(/\.[^.]+$/, '') + '.webp');
-        if (target !== WHOLE_TITLE) fd.append('chapter_id', target);
+        if (targetChapterId != null) fd.append('chapter_id', String(targetChapterId));
         const created = await api<Illustration>(`/panel/titles/${title.id}/illustrations`, { formData: fd });
         setItems((prev) => [...prev, created]);
         ok += 1;
@@ -128,71 +133,84 @@ export default function IllustrationManager({ title }: { title: TitleFull }) {
 
   return (
     <div className={styles.wrap}>
-      <section
-        className={`glass-panel ${styles.drop}${dragOver ? ` ${styles.dropOver}` : ''}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          if (!uploading) void upload([...e.dataTransfer.files]);
-        }}
-      >
-        <div className={styles.dropMain}>
-          <ImagePlus size={22} className={styles.dropIcon} aria-hidden="true" />
-          <div>
-            <p className={styles.dropTitle}>Перетащите изображения сюда</p>
-            <p className={styles.dropHint}>
-              JPEG, PNG или WebP · любые пропорции, без обрезки · до {MAX_PX}px по большей стороне
-              (крупнее — уменьшим автоматически)
-            </p>
-          </div>
-        </div>
-        <div className={styles.dropActions}>
-          <div className={styles.target}>
-            <span className={styles.label}>Привязать к</span>
-            <Select<string>
-              size="sm"
-              value={target}
-              options={chapterOptions}
-              onChange={setTarget}
-              ariaLabel="Куда добавить иллюстрации"
-            />
-          </div>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!!uploading}
-            onClick={() => fileInput.current?.click()}
-          >
-            {uploading ? (
-              <>
-                <Loader2 size={15} className={styles.spin} />
-                {`Загрузка ${uploading.done + 1} из ${uploading.total}…`}
-              </>
-            ) : (
-              <>
-                <ImagePlus size={15} />
-                Выбрать файлы
-              </>
+      <section className={`glass-panel ${styles.upload}`}>
+        <div className={styles.bindControls}>
+          <span className={styles.label}>Привязать к</span>
+          <div className={styles.bindRow}>
+            <div className={styles.segmented} role="group" aria-label="Привязать к">
+              <button
+                type="button"
+                className={`${styles.segTab}${bindMode === 'title' ? ` ${styles.segActive}` : ''}`}
+                aria-pressed={bindMode === 'title'}
+                onClick={() => { setBindMode('title'); setTargetVol(null); setTargetChap(null); }}
+              >
+                Тайтлу
+              </button>
+              <button
+                type="button"
+                className={`${styles.segTab}${bindMode === 'chapter' ? ` ${styles.segActive}` : ''}`}
+                aria-pressed={bindMode === 'chapter'}
+                onClick={() => setBindMode('chapter')}
+              >
+                Главе
+              </button>
+            </div>
+            {bindMode === 'chapter' && (
+              <div className={styles.chapterSelects}>
+                <Select
+                  value={targetVol != null ? String(targetVol) : ''}
+                  options={volOptions}
+                  onChange={(v) => setTargetVol(Number(v))}
+                  placeholder="Том"
+                  ariaLabel="Том"
+                />
+                <Select
+                  value={targetChap != null ? String(targetChap) : ''}
+                  options={targetChapOptions}
+                  onChange={(v) => setTargetChap(Number(v))}
+                  placeholder="Глава"
+                  disabled={!targetVol}
+                  ariaLabel="Глава"
+                />
+              </div>
             )}
-          </button>
-          <input
-            ref={fileInput}
-            type="file"
-            accept={ACCEPT}
-            multiple
-            hidden
-            onChange={(e) => {
-              const files = [...(e.target.files ?? [])];
-              e.target.value = '';
-              void upload(files);
-            }}
-          />
+          </div>
         </div>
+
+        <div
+          className={`${styles.dropTarget}${dragOver ? ` ${styles.dropOver}` : ''}`}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => { e.preventDefault(); setDragOver(false); if (!uploading) void upload([...e.dataTransfer.files]); }}
+          onClick={() => fileInput.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.current?.click(); } }}
+          aria-label="Загрузить иллюстрации"
+        >
+          <span className={styles.dropIconWrap}>
+            {uploading ? (
+              <Loader2 size={20} className={`${styles.dropIcon} ${styles.spin}`} aria-hidden="true" />
+            ) : (
+              <ImagePlus size={20} className={styles.dropIcon} aria-hidden="true" />
+            )}
+          </span>
+          <div className={styles.dropText}>
+            <p className={styles.dropTitle}>
+              {uploading ? `Загрузка ${uploading.done + 1} из ${uploading.total}` : 'Перетащите изображения сюда'}
+            </p>
+            <p className={styles.dropHint}>или кликните, чтобы выбрать</p>
+          </div>
+        </div>
+
+        <input
+          ref={fileInput}
+          type="file"
+          accept={ACCEPT}
+          multiple
+          hidden
+          onChange={(e) => { const files = [...(e.target.files ?? [])]; e.target.value = ''; void upload(files); }}
+        />
       </section>
 
       {items.length === 0 ? (
@@ -209,9 +227,10 @@ export default function IllustrationManager({ title }: { title: TitleFull }) {
               index={index}
               count={items.length}
               busy={busy === ill.id}
-              chapterOptions={chapterOptions}
+              chapterOf={chapterOf}
+              volOptions={volOptions}
               onCaption={(caption) => patch(ill, { caption })}
-              onChapter={(v) => void patch(ill, { chapter_id: v === WHOLE_TITLE ? null : Number(v) })}
+              onChapter={(v) => void patch(ill, { chapter_id: v })}
               onMove={(d) => void move(index, d)}
               onDelete={() => setConfirmDelete(ill)}
             />
@@ -236,7 +255,8 @@ function IllustrationCard({
   index,
   count,
   busy,
-  chapterOptions,
+  chapterOf,
+  volOptions,
   onCaption,
   onChapter,
   onMove,
@@ -246,23 +266,62 @@ function IllustrationCard({
   index: number;
   count: number;
   busy: boolean;
-  chapterOptions: SelectOption<string>[];
+  chapterOf: Map<number, { id: number; number: number; number_end: number | null; name: string; volume: { id: number; number: number } }>;
+  volOptions: SelectOption<string>[];
   onCaption: (caption: string) => Promise<boolean>;
-  onChapter: (value: string) => void;
+  onChapter: (chapterId: number | null) => void;
   onMove: (delta: -1 | 1) => void;
   onDelete: () => void;
 }) {
   const [caption, setCaption] = useState(ill.caption);
   useEffect(() => setCaption(ill.caption), [ill.caption]);
 
+  const [editVolId, setEditVolId] = useState<number | null>(() => {
+    const ch = ill.chapter_id != null ? chapterOf.get(ill.chapter_id) : null;
+    return ch ? ch.volume.id : null;
+  });
+  const [editChapId, setEditChapId] = useState<number | null>(ill.chapter_id);
+
+  useEffect(() => {
+    const ch = ill.chapter_id != null ? chapterOf.get(ill.chapter_id) : null;
+    setEditVolId(ch ? ch.volume.id : null);
+    setEditChapId(ill.chapter_id);
+  }, [ill.chapter_id, chapterOf]);
+
+  useEffect(() => { setEditChapId(null); }, [editVolId]);
+
+  const chapOptions: SelectOption<string>[] = useMemo(() => {
+    if (!editVolId) return [];
+    const chapters: { id: number; number: number; number_end: number | null; name: string }[] = [];
+    for (const [, ch] of chapterOf) {
+      if (ch.volume.id === editVolId) chapters.push(ch);
+    }
+    return chapters.map((c) => ({
+      value: String(c.id),
+      label: chapterNumberLabel(c.number, c.number_end),
+    }));
+  }, [editVolId, chapterOf]);
+
   const commit = async () => {
     const next = caption.trim();
-    if (next === ill.caption) {
-      setCaption(next);
-      return;
-    }
+    if (next === ill.caption) { setCaption(next); return; }
     if (!(await onCaption(next))) setCaption(ill.caption);
   };
+
+  const handleVolumeChange = (v: string) => {
+    const newVolId = v === '' ? null : Number(v);
+    setEditVolId(newVolId);
+    setEditChapId(null);
+    onChapter(null);
+  };
+
+  const handleChapterChange = (v: string) => {
+    const newChapId = v === '' ? null : Number(v);
+    setEditChapId(newChapId);
+    onChapter(newChapId);
+  };
+
+  const isChapter = editVolId != null;
 
   return (
     <article className={`glass-panel ${styles.card}`}>
@@ -276,6 +335,50 @@ function IllustrationCard({
         ) : null}
       </div>
 
+      <div className={styles.cardBind}>
+        <div className={styles.segmented} role="group" aria-label="Привязка">
+          <button
+            type="button"
+            className={`${styles.segTab}${!isChapter ? ` ${styles.segActive}` : ''}`}
+            aria-pressed={!isChapter}
+            onClick={() => { setEditVolId(null); setEditChapId(null); onChapter(null); }}
+          >
+            Тайтл
+          </button>
+          <button
+            type="button"
+            className={`${styles.segTab}${isChapter ? ` ${styles.segActive}` : ''}`}
+            aria-pressed={isChapter}
+            onClick={() => { if (!editVolId && volOptions.length > 0) setEditVolId(Number(volOptions[0].value)); }}
+          >
+            Глава
+          </button>
+        </div>
+        {isChapter && (
+          <div className={styles.chapterSelects}>
+            <Select
+              value={editVolId != null ? String(editVolId) : ''}
+              options={volOptions}
+              onChange={handleVolumeChange}
+              placeholder="Том"
+              ariaLabel="Том"
+              size="sm"
+              className={styles.cardSelect}
+            />
+            <Select
+              value={editChapId != null ? String(editChapId) : ''}
+              options={chapOptions}
+              onChange={handleChapterChange}
+              placeholder="Глава"
+              disabled={!editVolId}
+              ariaLabel="Глава"
+              size="sm"
+              className={styles.cardSelect}
+            />
+          </div>
+        )}
+      </div>
+
       <input
         className={`input ${styles.captionInput}`}
         type="text"
@@ -287,52 +390,23 @@ function IllustrationCard({
         onBlur={() => void commit()}
         onKeyDown={(e) => {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-          if (e.key === 'Escape') {
-            setCaption(ill.caption);
-            (e.target as HTMLInputElement).blur();
-          }
+          if (e.key === 'Escape') { setCaption(ill.caption); (e.target as HTMLInputElement).blur(); }
         }}
-      />
-
-      <Select<string>
-        size="sm"
-        block
-        value={ill.chapter_id == null ? WHOLE_TITLE : String(ill.chapter_id)}
-        options={chapterOptions}
-        onChange={onChapter}
-        ariaLabel="Привязка"
       />
 
       <div className={styles.cardFoot}>
         <div className={styles.moveBtns}>
-          <button
-            type="button"
-            className={styles.iconBtn}
-            onClick={() => onMove(-1)}
-            disabled={index === 0}
-            aria-label="Сдвинуть раньше"
-            title="Сдвинуть раньше"
-          >
+          <button type="button" className={styles.iconBtn} onClick={() => onMove(-1)} disabled={index === 0}
+            aria-label="Сдвинуть раньше" title="Сдвинуть раньше">
             <ArrowLeft size={15} />
           </button>
-          <button
-            type="button"
-            className={styles.iconBtn}
-            onClick={() => onMove(1)}
-            disabled={index === count - 1}
-            aria-label="Сдвинуть позже"
-            title="Сдвинуть позже"
-          >
+          <button type="button" className={styles.iconBtn} onClick={() => onMove(1)} disabled={index === count - 1}
+            aria-label="Сдвинуть позже" title="Сдвинуть позже">
             <ArrowRight size={15} />
           </button>
         </div>
-        <button
-          type="button"
-          className={`${styles.iconBtn} ${styles.danger}`}
-          onClick={onDelete}
-          aria-label="Удалить"
-          title="Удалить"
-        >
+        <button type="button" className={`${styles.iconBtn} ${styles.danger}`} onClick={onDelete}
+          aria-label="Удалить" title="Удалить">
           <Trash2 size={15} />
         </button>
       </div>
