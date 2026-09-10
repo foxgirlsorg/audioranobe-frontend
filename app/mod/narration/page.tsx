@@ -208,14 +208,14 @@ function NarrationSettingsInner() {
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="narr-token">
-            Токен источника
+            Cookie источника
           </label>
           <input
             id="narr-token"
             type="password"
             className="input"
             autoComplete="off"
-            placeholder={cfg.has_token ? '•••••••• (задан) — оставьте пустым, чтобы не менять' : 'Bearer-токен для закрытых глав'}
+            placeholder={cfg.has_token ? '•••••••• (задан) — оставьте пустым, чтобы не менять' : 'Значение cookie mangalib_session с ranobelib'}
             value={token}
             onChange={(e) => setToken(e.target.value)}
             disabled={clearToken}
