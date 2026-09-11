@@ -401,7 +401,10 @@ export default function Player() {
           </button>
           {current.illustrations && current.illustrations.length > 0 ? (
             // The chapter's own illustrations take the cover's place.
-            <IllustrationCarousel items={current.illustrations} />
+            <IllustrationCarousel
+              items={current.illustrations}
+              revealed={duration > 0 && position >= duration / 2}
+            />
           ) : (
             <Link href={`/title/${current.title.slug}`} className={styles.stageArt}>
               {current.title.cover_url ? (

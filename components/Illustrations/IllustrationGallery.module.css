@@ -63,6 +63,11 @@
   height: auto;
 }
 
+.frame img.blurred {
+  filter: blur(20px);
+  transform: scale(1.08);
+}
+
 .caption {
   font-size: 12.5px;
   line-height: 1.4;

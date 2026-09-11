@@ -201,6 +201,8 @@ export interface Me extends Viewer {
   email_verification?: boolean;
   auth_providers?: ProviderInfo[];
   totp_enabled: boolean;
+  /** Blur illustration thumbnails for chapters not yet listened past the midpoint. Off by default. */
+  blur_unlistened_illustrations: boolean;
 }
 
 export type DmPrivacy = 'all' | 'friends';
@@ -408,6 +410,8 @@ export interface Illustration {
   /** Optional heading; empty string when unset. */
   caption: string;
   position: number;
+  /** True when blur_unlistened_illustrations is on and the viewer hasn't reached this chapter's midpoint. Always false for title-wide illustrations and for editors/mods who can edit it. */
+  blurred: boolean;
 }
 
 export interface TitleInfoBanner {

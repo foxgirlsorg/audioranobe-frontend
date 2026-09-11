@@ -17,7 +17,14 @@ import styles from './IllustrationCarousel.module.css';
  * portraits and wide panoramas both fill the frame without cropping and
  * without dead black bars. Clicking opens the image viewer.
  */
-export default function IllustrationCarousel({ items }: { items: Illustration[] }) {
+export default function IllustrationCarousel({
+  items,
+  revealed = false,
+}: {
+  items: Illustration[];
+  /** Unblurs every illustration client-side once the listener crosses the chapter's midpoint, without waiting for a refetch. */
+  revealed?: boolean;
+}) {
   const many = items.length > 1;
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: many, duration: 25, watchDrag: many });
   const [selected, setSelected] = useState(0);
@@ -54,7 +61,7 @@ export default function IllustrationCarousel({ items }: { items: Illustration[] 
                 <img className={styles.backdrop} src={ill.thumb_url} alt="" aria-hidden="true" />
                 <PhotoView src={ill.url} overlay={viewerOverlay(ill, false)}>
                   <img
-                    className={styles.img}
+                    className={ill.blurred && !revealed ? `${styles.img} ${styles.blurred}` : styles.img}
                     src={ill.url}
                     alt={ill.caption}
                     draggable={false}

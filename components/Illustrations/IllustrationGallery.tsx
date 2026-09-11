@@ -52,6 +52,7 @@ export default function IllustrationGallery({ items }: { items: Illustration[] }
                           alt={ill.caption}
                           width={ill.width}
                           height={ill.height}
+                          className={ill.blurred ? styles.blurred : undefined}
                           style={{ aspectRatio: `${ill.width} / ${ill.height}` }}
                           loading="lazy"
                           decoding="async"

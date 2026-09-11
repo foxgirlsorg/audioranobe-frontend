@@ -164,6 +164,9 @@ export default function SettingsPage() {
   const [dmFriendsOnly, setDmFriendsOnly] = useState(false);
   const [dmBusy, setDmBusy] = useState(false);
 
+  const [blurUnlistened, setBlurUnlistened] = useState(false);
+  const [blurBusy, setBlurBusy] = useState(false);
+
   const hasPassword = user?.has_password ?? true;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
@@ -208,6 +211,7 @@ export default function SettingsPage() {
           setSocials(me.socials ?? []);
           setPrefs(me.notification_prefs);
           setContent(me.content_prefs);
+          setBlurUnlistened(me.blur_unlistened_illustrations);
           setIdentities(me.identities ?? []);
           setTotpEnabled(!!me.totp_enabled);
           setEmailVerificationOn(!!me.email_verification);
@@ -377,6 +381,22 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setDmBusy(false);
+    }
+  }
+
+  async function toggleBlurUnlistened() {
+    if (blurBusy) return;
+    const next = !blurUnlistened;
+    setBlurBusy(true);
+    setBlurUnlistened(next);
+    try {
+      await api<Me>('/me', { method: 'PATCH', body: { blur_unlistened_illustrations: next } });
+      toast('Настройки контента сохранены', 'ok');
+    } catch (e) {
+      setBlurUnlistened(!next);
+      toast(errMsg(e), 'error');
+    } finally {
+      setBlurBusy(false);
     }
   }
 
@@ -1037,6 +1057,26 @@ export default function SettingsPage() {
               }
               disabled={!content || contentBusy !== null}
               onClick={toggleNsfw}
+            >
+              <span className={styles.knob} />
+            </button>
+          </div>
+
+          <div className={styles.prefRow}>
+            <div className={styles.prefText}>
+              <span className={styles.prefLabel}>{'Скрывать иллюстрации непрослушанных глав'}</span>
+              <span className={styles.prefHint}>
+                {'Превью размывается, пока глава не прослушана хотя бы наполовину.'}
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={blurUnlistened}
+              aria-label={'Скрывать иллюстрации непрослушанных глав'}
+              className={blurUnlistened ? `${styles.switch} ${styles.switchOn}` : styles.switch}
+              disabled={blurBusy}
+              onClick={toggleBlurUnlistened}
             >
               <span className={styles.knob} />
             </button>
