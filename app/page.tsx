@@ -237,11 +237,11 @@ export default function HomePage() {
             собирайте свою библиотеку.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/auth/register" className="btn">
+            <Link href="/auth/register" className="btn" prefetch={false}>
               <UserPlus />
               Создать аккаунт
             </Link>
-            <Link href="/auth/login" className="btn btn-ghost">
+            <Link href="/auth/login" className="btn btn-ghost" prefetch={false}>
               <LogIn />
               Войти
             </Link>
@@ -336,9 +336,9 @@ export default function HomePage() {
         <TitleRail titles={data.new_titles} />
       </Section>
 
-      <BannerCarousel />
+      <BannerCarousel initialBanners={data.banners} />
 
-      <CatalogGrid />
+      <CatalogGrid initialItems={data.catalog.items} initialTotal={data.catalog.total} />
     </div>
   );
 }

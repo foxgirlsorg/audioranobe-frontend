@@ -365,7 +365,7 @@ export default function NavBar() {
 
 
         {userLinks.map((l) => (
-          <Link key={l.href} href={l.href} className={styles.menuItem}>
+          <Link key={l.href} href={l.href} className={styles.menuItem} prefetch={false}>
             <l.icon aria-hidden="true" />
             {l.label}
             {l.count > 0 ? (
@@ -381,6 +381,7 @@ export default function NavBar() {
                   href={l.href}
                   className={styles.menuItem}
                   onClick={closeUserMenu}
+                  prefetch={false}
               >
                 <l.icon aria-hidden="true" />
                 {l.label}
@@ -401,7 +402,7 @@ export default function NavBar() {
           <>
             <div className={styles.menuSep} />
             {myNarrators.map((n) => (
-              <Link key={n.id} href={`/narrator/${n.slug}`} className={styles.menuItem}>
+              <Link key={n.id} href={`/narrator/${n.slug}`} className={styles.menuItem} prefetch={false}>
                 {n.avatar_url ? (
                   <img src={n.avatar_url} alt="" className={styles.menuAvatar} />
                 ) : (
@@ -542,7 +543,7 @@ export default function NavBar() {
         }`}
       >
         <div className={styles.inner}>
-          <Link href="/" className={styles.logo} aria-label={'Главная AudioRanobe'}>
+          <Link href="/" className={styles.logo} aria-label={'Главная AudioRanobe'} prefetch={false}>
             AUDIO<span className={styles.logoAccent}>RANOBE</span>
           </Link>
 
@@ -554,6 +555,7 @@ export default function NavBar() {
                 className={`${styles.link} ${
                   pathname?.startsWith(l.href) ? styles.linkActive : ''
                 }`}
+                prefetch={false}
               >
                 {l.label}
               </Link>
@@ -713,6 +715,7 @@ export default function NavBar() {
                 className={styles.iconBtn}
                 title={'Регистрация'}
                 aria-label={'Регистрация'}
+                prefetch={false}
               >
                 <UserPlus />
               </Link>

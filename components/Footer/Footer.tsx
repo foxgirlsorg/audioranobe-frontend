@@ -52,7 +52,7 @@ export default function Footer() {
           <nav className={styles.col} aria-label={'Документы'}>
             <span className={styles.colTitle}>{'Документы'}</span>
             {LEGAL.map((l) => (
-              <Link key={l.href} href={l.href} className={styles.link}>
+              <Link key={l.href} href={l.href} className={styles.link} prefetch={false}>
                 {l.label}
               </Link>
             ))}

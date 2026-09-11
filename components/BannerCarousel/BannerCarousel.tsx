@@ -10,14 +10,15 @@ import styles from './BannerCarousel.module.css';
 
 const INTERVAL_MS = 10000;
 
-export default function BannerCarousel() {
-  const [banners, setBanners] = useState<Banner[]>([]);
+export default function BannerCarousel({ initialBanners }: { initialBanners?: Banner[] } = {}) {
+  const [banners, setBanners] = useState<Banner[]>(initialBanners ?? []);
   const [selected, setSelected] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 25 }, [
     Autoplay({ delay: INTERVAL_MS, stopOnInteraction: false, stopOnMouseEnter: true }),
   ]);
 
   useEffect(() => {
+    if (initialBanners !== undefined) return;
     let alive = true;
     api<{ items: Banner[] }>('/banners')
       .then((d) => {
@@ -28,6 +29,7 @@ export default function BannerCarousel() {
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

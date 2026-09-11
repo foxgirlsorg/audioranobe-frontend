@@ -733,6 +733,8 @@ export interface HomeData {
   announcements: Announcement[];
   continue: ContinueItem[];
   new_titles: TitleCard[];
+  banners: Banner[];
+  catalog: { items: TitleCard[]; total: number };
 }
 
 /** A title not in the catalog yet — AI narration can be requested. */

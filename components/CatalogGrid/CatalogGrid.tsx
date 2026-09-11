@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
@@ -36,17 +36,31 @@ const SORTS: { key: SortKey; param: string; label: string; icon: typeof Clock }[
 
 const paramFor = (key: SortKey) => SORTS.find((s) => s.key === key)!.param;
 
-export default function CatalogGrid() {
-  const [items, setItems] = useState<TitleCard[] | null>(null);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+export default function CatalogGrid({
+  initialItems,
+  initialTotal,
+}: { initialItems?: TitleCard[]; initialTotal?: number } = {}) {
+  const [items, setItems] = useState<TitleCard[] | null>(initialItems ?? null);
+  const [total, setTotal] = useState(initialTotal ?? 0);
+  const [loading, setLoading] = useState(!initialItems);
   const [error, setError] = useState('');
   const [sort, setSort] = useState<SortKey>('updated');
   const [asc, setAsc] = useState(false);
   const [finishedOnly, setFinishedOnly] = useState(false);
   const [nonce, setNonce] = useState(0);
+  // The default sort/asc/finishedOnly on mount matches what /home already
+  // fetched — skip re-fetching that same page once.
+  const skipNextFetch = useRef(initialItems !== undefined);
 
   useEffect(() => {
+    if (skipNextFetch.current) {
+      skipNextFetch.current = false;
+      // Undo on cleanup so React StrictMode's dev-only double-invoke (mount,
+      // cleanup, mount) doesn't consume this skip on the throwaway mount.
+      return () => {
+        skipNextFetch.current = true;
+      };
+    }
     let alive = true;
     setLoading(true);
     setError('');

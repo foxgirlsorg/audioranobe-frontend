@@ -101,7 +101,11 @@ export default function NarratorPageClient({
   useEffect(() => {
     if (skipInitialFetch.current) {
       skipInitialFetch.current = false;
-      return;
+      // Undo on cleanup so React StrictMode's dev-only double-invoke (mount,
+      // cleanup, mount) doesn't consume this skip on the throwaway mount.
+      return () => {
+        skipInitialFetch.current = true;
+      };
     }
     let alive = true;
     setLoading(true);
