@@ -186,7 +186,7 @@ export default function TitlePageClient({
   const [missing, setMissing] = useState(false);
   const [openVols, setOpenVols] = useState<Record<number, boolean>>({});
   const [descOpen, setDescOpen] = useState(false);
-  const [tab, setTab] = useState('comments');
+  const [tab, setTab] = useState('info');
   const [mobileTab, setMobileTab] = useState('about');
   const isMobile = useIsMobile();
   const [ratingOpen, setRatingOpen] = useState(false);
@@ -900,6 +900,70 @@ export default function TitlePageClient({
     />
   );
 
+  const infoContent = (
+    <div className={`${styles.subrow} ${!user ? styles.subrowCompact : ''}`}>
+      <div className={`glass-panel ${styles.factsCard} ${styles.factsCardCol}`}>
+        <span className={styles.sideEyebrow}>
+          <Info size={12} />
+          {'Информация'}
+        </span>
+        <div className={styles.factsCardBody}>
+          {title.author && (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Автор'}</span>
+              <Link
+                href={`/author/${title.author.id}`}
+                className={styles.factV}
+                title={`Ещё от ${title.author.name}`}
+              >
+                {title.author.name}
+              </Link>
+            </div>
+          )}
+          <div className={styles.factRow2}>
+            <span className={styles.factK}>{'Тайтл'}</span>
+            <span className={styles.factV}>
+              {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
+            </span>
+          </div>
+          {title.narrators.length > 0 ? (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Озвучка'}</span>
+              <span className={styles.factV}>
+                {narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}
+              </span>
+            </div>
+          ) : null}
+          {title.year != null ? (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Год'}</span>
+              <span className={styles.factV}>{title.year}</span>
+            </div>
+          ) : null}
+          {runtime > 0 ? (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Длительность'}</span>
+              <span className={styles.factV}>{formatDuration(runtime)}</span>
+            </div>
+          ) : null}
+          {chaptersTotal > 0 ? (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Глав'}</span>
+              <span className={styles.factV}>{chaptersTotal}</span>
+            </div>
+          ) : null}
+          <div className={styles.factRow2}>
+            <span className={styles.factK}>{'Просмотров'}</span>
+            <span className={styles.factV}>{formatCount(title.views_count)}</span>
+          </div>
+          {narratorsBlock}
+        </div>
+      </div>
+      {user ? libraryWidget : null}
+      {ratingCard}
+    </div>
+  );
+
   const similarSection =
     title.similar.length > 0 ? (
       <Section eyebrow={'В том же духе'} title={'Похожие'} accent={'тайтлы'}>
@@ -1043,68 +1107,6 @@ export default function TitlePageClient({
         {showInfoBanner || title.narration_pending || title.is_ai ? (
           <div className={styles.heroBanners}>{banners}</div>
         ) : null}
-
-        <div className={`${styles.subrow} ${!user ? styles.subrowCompact : ''}`}>
-          <div className={`glass-panel ${styles.factsCard} ${styles.factsCardCol}`}>
-            <span className={styles.sideEyebrow}>
-              <Info size={12} />
-              {'Информация'}
-            </span>
-            <div className={styles.factsCardBody}>
-              {title.author && (
-                <div className={styles.factRow2}>
-                  <span className={styles.factK}>{'Автор'}</span>
-                  <Link
-                    href={`/author/${title.author.id}`}
-                    className={styles.factV}
-                    title={`Ещё от ${title.author.name}`}
-                  >
-                    {title.author.name}
-                  </Link>
-                </div>
-              )}
-              <div className={styles.factRow2}>
-                <span className={styles.factK}>{'Тайтл'}</span>
-                <span className={styles.factV}>
-                  {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
-                </span>
-              </div>
-              {title.narrators.length > 0 ? (
-                <div className={styles.factRow2}>
-                  <span className={styles.factK}>{'Озвучка'}</span>
-                  <span className={styles.factV}>
-                    {narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}
-                  </span>
-                </div>
-              ) : null}
-              {title.year != null ? (
-                <div className={styles.factRow2}>
-                  <span className={styles.factK}>{'Год'}</span>
-                  <span className={styles.factV}>{title.year}</span>
-                </div>
-              ) : null}
-              {runtime > 0 ? (
-                <div className={styles.factRow2}>
-                  <span className={styles.factK}>{'Длительность'}</span>
-                  <span className={styles.factV}>{formatDuration(runtime)}</span>
-                </div>
-              ) : null}
-              {chaptersTotal > 0 ? (
-                <div className={styles.factRow2}>
-                  <span className={styles.factK}>{'Глав'}</span>
-                  <span className={styles.factV}>{chaptersTotal}</span>
-                </div>
-              ) : null}
-              <div className={styles.factRow2}>
-                <span className={styles.factK}>{'Просмотров'}</span>
-                <span className={styles.factV}>{formatCount(title.views_count)}</span>
-              </div>
-              {narratorsBlock}
-            </div>
-          </div>
-          {user ? libraryWidget : null}
-          {ratingCard}
-        </div>
       </header>
 
       {similarSection}
@@ -1112,6 +1114,7 @@ export default function TitlePageClient({
       <div className={styles.tabsRow}>
         <Tabs
           tabs={[
+            { key: 'info', label: 'Информация' },
             { key: 'chapters', label: 'Тома и главы', count: chaptersTotal || undefined },
             ...(illustrations.length > 0
               ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length }]
@@ -1129,8 +1132,10 @@ export default function TitlePageClient({
         <section className={styles.tabPanel}>{chaptersContent}</section>
       ) : tab === 'illustrations' && illustrationsContent ? (
         <section className={styles.tabPanel}>{illustrationsContent}</section>
-      ) : (
+      ) : tab === 'comments' ? (
         <section className={styles.tabPanel}>{commentsContent}</section>
+      ) : (
+        <section className={styles.tabPanel}>{infoContent}</section>
       )}
     </div>
   );
