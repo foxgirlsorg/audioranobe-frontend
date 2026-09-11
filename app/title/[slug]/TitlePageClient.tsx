@@ -906,11 +906,12 @@ export default function TitlePageClient({
   );
 
   const infoContent = (
+    <>
     <div className={`${styles.subrow} ${!user ? styles.subrowCompact : ''}`}>
       <div className={`glass-panel ${styles.factsCard} ${styles.factsCardCol}`}>
         <span className={styles.sideEyebrow}>
           <Info size={12} />
-          {'Информация'}
+          {'Детали'}
         </span>
         <div className={styles.factsCardBody}>
           {title.author && (
@@ -967,10 +968,7 @@ export default function TitlePageClient({
       {user ? libraryWidget : null}
       {ratingCard}
     </div>
-  );
-
-  const similarSection =
-    title.similar.length > 0 ? (
+    {title.similar.length > 0 ? (
       <Section eyebrow={'В том же духе'} title={'Похожие'} accent={'тайтлы'}>
         <ScrollRail step={1}>
           {title.similar.map((s) => (
@@ -980,7 +978,9 @@ export default function TitlePageClient({
           ))}
         </ScrollRail>
       </Section>
-    ) : null;
+    ) : null}
+    </>
+  );
 
   // ---------- app-style mobile layout ----------
   if (isMobile) {
@@ -1113,8 +1113,6 @@ export default function TitlePageClient({
           <div className={styles.heroBanners}>{banners}</div>
         ) : null}
       </header>
-
-      {similarSection}
 
       <div className={styles.tabsRow}>
         <Tabs
