@@ -220,7 +220,7 @@
 }
 
 .metaSub > .metaNoSep::before {
-  content: none;
+  visibility: hidden;
 }
 
 .metaSub > .metaHidden {
