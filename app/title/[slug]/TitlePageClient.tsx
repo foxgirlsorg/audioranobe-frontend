@@ -60,8 +60,13 @@ import styles from './page.module.css';
 
 const DESC_CLAMP_CHARS = 420;
 
+// Soft-deleted chapters are gone as far as counts and totals are concerned.
+function liveChapters(v: Volume): ChapterRow[] {
+  return v.chapters.filter((c) => !c.is_deleted);
+}
+
 function volumeDuration(v: Volume): number {
-  return v.chapters.reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
+  return liveChapters(v).reduce((sum, c) => sum + (c.duration_seconds || 0), 0);
 }
 
 const STATUS_TONE: Record<NarrationStatus, string> = {
@@ -260,7 +265,7 @@ export default function TitlePageClient({
     if (!title) return [] as ChapterRow[];
     const out: ChapterRow[] = [];
     for (const v of title.volumes) {
-      for (const c of v.chapters) {
+      for (const c of liveChapters(v)) {
         if (c.audio_status === 'ready' && c.mod_status === 'approved') out.push(c);
       }
     }
@@ -320,7 +325,7 @@ export default function TitlePageClient({
   function archiveItems(volumes: Volume[], foldered: boolean): ArchiveItem[] {
     const out: ArchiveItem[] = [];
     for (const v of volumes) {
-      for (const c of v.chapters) {
+      for (const c of liveChapters(v)) {
         if (c.audio_status !== 'ready') continue;
         const label = chapterLabel(c.number, c.number_end, c.name);
         out.push({
@@ -396,7 +401,7 @@ export default function TitlePageClient({
   // to the full cover when no thumb exists.
   const bg = title.bg_url ?? title.cover_thumb_url ?? title.cover_url;
   const descLong = title.description.length > DESC_CLAMP_CHARS;
-  const chaptersTotal = title.volumes.reduce((n, v) => n + v.chapters.length, 0);
+  const chaptersTotal = title.volumes.reduce((n, v) => n + liveChapters(v).length, 0);
   const commentsTotal = title.comments?.total ?? 0;
   const runtime = title.volumes.reduce((n, v) => n + volumeDuration(v), 0);
   const narrationStatus = sharedNarrationStatus(title.narrators);
@@ -737,7 +742,7 @@ export default function TitlePageClient({
                   <span className={styles.volMeta}>
                     <span className={styles.volMetaItem}>
                       <ListMusic size={12} />
-                      {`Глав: ${v.chapters.length}`}
+                      {`Глав: ${liveChapters(v).length}`}
                     </span>
                     {total > 0 ? (
                       <span className={styles.volMetaItem}>

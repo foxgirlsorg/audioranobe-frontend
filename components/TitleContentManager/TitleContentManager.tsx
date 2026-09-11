@@ -8,6 +8,7 @@ import {
   Layers,
   Pencil,
   Plus,
+  RefreshCw,
   RotateCcw,
   Trash2,
   Upload,
@@ -37,8 +38,11 @@ const JOBS_PER_PAGE = 30;
 const naturalCompare = (a: string, b: string) =>
   a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 
+// Soft-deleted chapters are gone as far as counts and numbering are concerned.
+const liveChapters = (v: Volume): ChapterRow[] => v.chapters.filter((c) => !c.is_deleted);
+
 const nextNumberIn = (v: Volume): number =>
-  Math.floor(Math.max(0, ...v.chapters.map((c) => c.number_end ?? c.number))) + 1;
+  Math.floor(Math.max(0, ...liveChapters(v).map((c) => c.number_end ?? c.number))) + 1;
 
 const formatNumber = (n: number): string => String(Math.round(n * 1000) / 1000);
 
@@ -870,7 +874,7 @@ export default function TitleContentManager({
                       ) : null}
                       <span className={styles.volumeNum}>{`Том ${v.number}`}</span>
                       {v.name ? <span className={styles.volumeName}>{v.name}</span> : null}
-                      <span className={styles.volumeCount}>{`Глав: ${v.chapters.length}`}</span>
+                      <span className={styles.volumeCount}>{`Глав: ${liveChapters(v).length}`}</span>
                     </div>
                     <button
                       type="button"
@@ -1165,9 +1169,17 @@ export default function TitleContentManager({
                             onClick={() => pickAudio(c.id)}
                             disabled={uploads[c.id] !== undefined}
                             title={c.audio_status === 'none' ? 'Загрузить аудио' : 'Заменить аудио'}
-                            aria-label={`Загрузить аудио для главы ${c.number}`}
+                            aria-label={
+                              c.audio_status === 'none'
+                                ? `Загрузить аудио для главы ${c.number}`
+                                : `Заменить аудио главы ${c.number}`
+                            }
                           >
-                            <Upload size={14} />
+                            {c.audio_status === 'none' ? (
+                              <Upload size={14} />
+                            ) : (
+                              <RefreshCw size={14} />
+                            )}
                           </button>
                           <button
                             type="button"
@@ -1253,8 +1265,8 @@ export default function TitleContentManager({
               <label className={styles.label} htmlFor="bulk-start">
                 Начать с главы{' '}
                 <span className={styles.optional}>
-                  {bulkTargetVolume && bulkTargetVolume.chapters.length > 0
-                    ? `сейчас ${bulkTargetVolume.chapters.length}`
+                  {bulkTargetVolume && liveChapters(bulkTargetVolume).length > 0
+                    ? `сейчас ${liveChapters(bulkTargetVolume).length}`
                     : 'том пуст'}
                 </span>
               </label>
