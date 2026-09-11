@@ -452,6 +452,8 @@ export interface TitleFull extends TitleCard {
    * edit form can prefill a banner that is currently switched off.
    */
   info_banner: TitleInfoBanner | null;
+  /** Word used instead of "Том" for this title's volumes (e.g. "Арка"). */
+  volume_label: string;
   /**
    * Gallery, in editor order. Empty for signed-out visitors on an 18+ or
    * sensitive title; chapter-bound ones for hidden chapters only reach editors.
@@ -472,7 +474,7 @@ export interface ChapterPlay {
   audio_url: string;
   my_position: number | null;
   volume: { id: number; number: number; name: string };
-  title: { id: number; slug: string; name: string; cover_url: string | null };
+  title: { id: number; slug: string; name: string; cover_url: string | null; volume_label: string };
   prev_id: number | null;
   next_id: number | null;
   narrator: { id: number; slug: string; name: string } | null;

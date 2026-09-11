@@ -872,7 +872,7 @@ export default function TitleContentManager({
                           title="Выбрать все главы тома"
                         />
                       ) : null}
-                      <span className={styles.volumeNum}>{`Том ${v.number}`}</span>
+                      <span className={styles.volumeNum}>{`${title.volume_label} ${v.number}`}</span>
                       {v.name ? <span className={styles.volumeName}>{v.name}</span> : null}
                       <span className={styles.volumeCount}>{`Глав: ${liveChapters(v).length}`}</span>
                     </div>
@@ -1255,7 +1255,7 @@ export default function TitleContentManager({
                 disabled={title.volumes.length === 0}
                 options={title.volumes.map((v) => ({
                   value: String(v.id),
-                  label: `Том ${v.number}${v.name ? ` — ${v.name}` : ''}`,
+                  label: `${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`,
                 }))}
                 onChange={setBulkVolume}
               />
@@ -1537,7 +1537,7 @@ export default function TitleContentManager({
               disabled={title.volumes.length === 0}
               options={title.volumes.map((v) => ({
                 value: String(v.id),
-                label: `Том ${v.number}${v.name ? ` — ${v.name}` : ''}`,
+                label: `${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`,
               }))}
               onChange={setBulkEditVolume}
             />

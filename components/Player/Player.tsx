@@ -160,7 +160,7 @@ export default function Player() {
   };
 
   const chapterLabel =
-    `Том ${current.volume.number} · Гл. ${chapterNumberLabel(current.number, current.number_end)}` +
+    `${current.title.volume_label} ${current.volume.number} · Гл. ${chapterNumberLabel(current.number, current.number_end)}` +
     (current.name ? ` — ${current.name}` : '');
 
   const toggleMute = () => {

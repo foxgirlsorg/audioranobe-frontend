@@ -153,8 +153,8 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
   const pct = dur > 0 ? Math.min(100, (livePos / dur) * 100) : 0;
   const chapterLabel = chapter.name || `Глава ${chapter.number}`;
   const volumeLabel = chapter.volume.name
-    ? `Том ${chapter.volume.number} — ${chapter.volume.name}`
-    : `Том ${chapter.volume.number}`;
+    ? `${chapter.title.volume_label} ${chapter.volume.number} — ${chapter.volume.name}`
+    : `${chapter.title.volume_label} ${chapter.volume.number}`;
 
   return (
     <div className={styles.page}>

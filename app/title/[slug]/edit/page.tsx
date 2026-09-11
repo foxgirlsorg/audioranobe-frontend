@@ -50,6 +50,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const { user, loading: authLoading, isMod, can } = useAuth();
   const isAdmin = can('titles.edit');
   const canInfoBanner = can('titles.info_banner');
+  const canVolumeLabel = can('titles.volume_label');
   // The page itself already requires title edit access; this is the extra grant.
   const canIllustrations = can('illustrations.edit');
   const { toast } = useToast();
@@ -78,6 +79,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     text: '',
     url: '',
   });
+  const [volumeLabel, setVolumeLabel] = useState('Том');
   const [commentSub, setCommentSub] = useState(false);
   const [commentSubBusy, setCommentSubBusy] = useState(false);
   const formInit = useRef(false);
@@ -142,6 +144,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     setInfoBanner(
       title.info_banner ?? { enabled: false, title: '', text: '', url: '' }
     );
+    setVolumeLabel(title.volume_label);
     setCommentSub(title.comment_subscribed);
     setNarrators(
       (title.narrators ?? []).map((n) => ({
@@ -260,6 +263,9 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       // Only sent by editors who hold the permission — the API rejects it
       // outright from anyone else.
       if (canInfoBanner) body.info_banner = infoBanner;
+      if (canVolumeLabel && volumeLabel.trim() !== title.volume_label) {
+        body.volume_label = volumeLabel.trim();
+      }
 
       const res = await api<{ applied: boolean }>(`/panel/titles/${title.id}`, {
         method: 'PATCH',
@@ -594,6 +600,26 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
                 </div>
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {canVolumeLabel ? (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="t-volume-label">
+              Название тома
+            </label>
+            <input
+              id="t-volume-label"
+              className="input"
+              type="text"
+              value={volumeLabel}
+              maxLength={40}
+              onChange={(e) => setVolumeLabel(e.target.value)}
+              placeholder="Том"
+            />
+            <p className={styles.formNote}>
+              Слово, которым заменяется «Том» при показе томов этого тайтла — например, «Арка».
+            </p>
           </div>
         ) : null}
 

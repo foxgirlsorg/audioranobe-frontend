@@ -12,8 +12,14 @@ import styles from './IllustrationGallery.module.css';
  * left to right. Title-wide art first, then one group per chapter. Clicking
  * opens the image viewer, which pages through the whole gallery in this order.
  */
-export default function IllustrationGallery({ items }: { items: Illustration[] }) {
-  const groups = groupIllustrations(items);
+export default function IllustrationGallery({
+  items,
+  volumeLabel = 'Том',
+}: {
+  items: Illustration[];
+  volumeLabel?: string;
+}) {
+  const groups = groupIllustrations(items, volumeLabel);
   const showHeadings = groups.some((g) => g.heading !== null);
 
   return (
@@ -41,7 +47,7 @@ export default function IllustrationGallery({ items }: { items: Illustration[] }
                       maxWidth: `calc(${ratio} * var(--row-h) * 1.75)`,
                     }}
                   >
-                    <PhotoView src={ill.url} overlay={viewerOverlay(ill, showHeadings)}>
+                    <PhotoView src={ill.url} overlay={viewerOverlay(ill, showHeadings, volumeLabel)}>
                       <button
                         type="button"
                         className={styles.frame}

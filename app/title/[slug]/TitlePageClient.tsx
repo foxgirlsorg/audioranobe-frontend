@@ -331,7 +331,7 @@ export default function TitlePageClient({
         out.push({
           id: c.id,
           name: `${chapterFilePrefix(c.number)}. ${label}.opus`,
-          folder: foldered ? `Том ${v.number}` : undefined,
+          folder: foldered ? `${title?.volume_label ?? 'Том'} ${v.number}` : undefined,
         });
       }
     }
@@ -736,7 +736,7 @@ export default function TitlePageClient({
                   aria-expanded={open}
                 >
                   <span className={styles.volTitle}>
-                    <span className={styles.volLabel}>{`Том ${v.number}`}</span>
+                    <span className={styles.volLabel}>{`${title.volume_label} ${v.number}`}</span>
                     {v.name ? <span className={styles.volName}>{v.name}</span> : null}
                   </span>
                   <span className={styles.volMeta}>
@@ -755,8 +755,8 @@ export default function TitlePageClient({
                 {user ? (
                   <ArchiveDownloadButton
                     items={archiveItems([v], false)}
-                    archiveName={`${title.name} — Том ${v.number}`}
-                    label={`Скачать том ${v.number} архивом`}
+                    archiveName={`${title.name} — ${title.volume_label} ${v.number}`}
+                    label={`Скачать ${title.volume_label.toLowerCase()} ${v.number} архивом`}
                     className={styles.volDownload}
                     iconOnly
                   />
@@ -893,7 +893,9 @@ export default function TitlePageClient({
 
   const illustrations = title.illustrations ?? [];
   const illustrationsContent =
-    illustrations.length > 0 ? <IllustrationGallery items={illustrations} /> : null;
+    illustrations.length > 0 ? (
+      <IllustrationGallery items={illustrations} volumeLabel={title.volume_label} />
+    ) : null;
 
   const commentsContent = (
     <CommentSection

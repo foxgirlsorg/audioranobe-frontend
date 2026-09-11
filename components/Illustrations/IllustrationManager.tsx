@@ -46,7 +46,7 @@ export default function IllustrationManager({ title }: { title: TitleFull }) {
   useEffect(() => { setTargetChap(null); }, [targetVol]);
 
   const volOptions: SelectOption<string>[] = useMemo(
-    () => title.volumes.map((v) => ({ value: String(v.id), label: `Том ${v.number}` })),
+    () => title.volumes.map((v) => ({ value: String(v.id), label: `${title.volume_label} ${v.number}` })),
     [title.volumes],
   );
 
@@ -161,8 +161,8 @@ export default function IllustrationManager({ title }: { title: TitleFull }) {
                   value={targetVol != null ? String(targetVol) : ''}
                   options={volOptions}
                   onChange={(v) => setTargetVol(Number(v))}
-                  placeholder="Том"
-                  ariaLabel="Том"
+                  placeholder={title.volume_label}
+                  ariaLabel={title.volume_label}
                 />
                 <Select
                   value={targetChap != null ? String(targetChap) : ''}
@@ -229,6 +229,7 @@ export default function IllustrationManager({ title }: { title: TitleFull }) {
               busy={busy === ill.id}
               chapterOf={chapterOf}
               volOptions={volOptions}
+              volumeLabel={title.volume_label}
               onCaption={(caption) => patch(ill, { caption })}
               onChapter={(v) => void patch(ill, { chapter_id: v })}
               onMove={(d) => void move(index, d)}
@@ -257,6 +258,7 @@ function IllustrationCard({
   busy,
   chapterOf,
   volOptions,
+  volumeLabel,
   onCaption,
   onChapter,
   onMove,
@@ -268,6 +270,7 @@ function IllustrationCard({
   busy: boolean;
   chapterOf: Map<number, { id: number; number: number; number_end: number | null; name: string; volume: { id: number; number: number } }>;
   volOptions: SelectOption<string>[];
+  volumeLabel: string;
   onCaption: (caption: string) => Promise<boolean>;
   onChapter: (chapterId: number | null) => void;
   onMove: (delta: -1 | 1) => void;
@@ -360,8 +363,8 @@ function IllustrationCard({
               value={editVolId != null ? String(editVolId) : ''}
               options={volOptions}
               onChange={handleVolumeChange}
-              placeholder="Том"
-              ariaLabel="Том"
+              placeholder={volumeLabel}
+              ariaLabel={volumeLabel}
               size="sm"
               className={styles.cardSelect}
             />
