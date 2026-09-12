@@ -10,19 +10,30 @@ import EmptyState from '@/components/EmptyState/EmptyState';
 import Pagination from '@/components/Pagination/Pagination';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
-import Select, { type SelectOption } from '@/components/Select/Select';
+import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
 type MatchMode = BannedWord['match_mode'];
 
-const MODE_LABELS: Record<MatchMode, string> = {
-  substring: 'Подстрока',
-  word: 'Целое слово',
-};
-
-const MODE_OPTIONS: SelectOption<MatchMode>[] = (
-  Object.keys(MODE_LABELS) as MatchMode[]
-).map((m) => ({ value: m, label: MODE_LABELS[m] }));
+function ModeToggle({
+  mode,
+  onChange,
+  disabled,
+  className,
+}: {
+  mode: MatchMode;
+  onChange: (mode: MatchMode) => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`${styles.modeToggle} ${className ?? ''}`}>
+      <span className={styles.modeLabel}>{'Слово'}</span>
+      <Toggle checked={mode === 'substring'} onChange={(c) => onChange(c ? 'substring' : 'word')} disabled={disabled} />
+      <span className={styles.modeLabel}>{'Подстрока'}</span>
+    </div>
+  );
+}
 
 function WordsContent() {
   const { toast } = useToast();
@@ -40,7 +51,6 @@ function WordsContent() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editWord, setEditWord] = useState('');
-  const [editMode, setEditMode] = useState<BannedWord['match_mode']>('substring');
 
   const [toDelete, setToDelete] = useState<BannedWord | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -89,25 +99,34 @@ function WordsContent() {
   const startEdit = (w: BannedWord) => {
     setEditingId(w.id);
     setEditWord(w.word);
-    setEditMode(w.match_mode);
   };
 
   const saveEdit = async (w: BannedWord) => {
     const word = editWord.trim();
-    if (!word) {
-      setEditingId(null);
-      return;
-    }
-    if (word === w.word && editMode === w.match_mode) {
+    if (!word || word === w.word) {
       setEditingId(null);
       return;
     }
     setBusyId(w.id);
     try {
-      await api(`/mod/words/${w.id}`, { method: 'PATCH', body: { word, match_mode: editMode } });
+      await api(`/mod/words/${w.id}`, { method: 'PATCH', body: { word } });
       toast('Слово обновлено');
       setEditingId(null);
       setReload((n) => n + 1);
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+    setBusyId(null);
+  };
+
+  const changeMode = async (w: BannedWord, mode: MatchMode) => {
+    if (mode === w.match_mode) return;
+    setBusyId(w.id);
+    try {
+      await api(`/mod/words/${w.id}`, { method: 'PATCH', body: { match_mode: mode } });
+      setData((prev) =>
+        prev ? { ...prev, items: prev.items.map((x) => (x.id === w.id ? { ...x, match_mode: mode } : x)) } : prev
+      );
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -154,13 +173,7 @@ function WordsContent() {
               if (e.key === 'Enter') void createWord();
             }}
           />
-          <Select<MatchMode>
-            className={styles.modeSelect}
-            value={newMode}
-            options={MODE_OPTIONS}
-            onChange={setNewMode}
-            ariaLabel="Режим совпадения"
-          />
+          <ModeToggle mode={newMode} onChange={setNewMode} className={styles.modeSelect} />
           <input
             className={`input ${styles.noteInput}`}
             type="text"
@@ -228,17 +241,7 @@ function WordsContent() {
                         )}
                       </td>
                       <td>
-                        {editing ? (
-                          <Select<MatchMode>
-                            size="sm"
-                            value={editMode}
-                            options={MODE_OPTIONS}
-                            onChange={setEditMode}
-                            ariaLabel="Режим совпадения"
-                          />
-                        ) : (
-                          <span className={styles.mode}>{MODE_LABELS[w.match_mode]}</span>
-                        )}
+                        <ModeToggle mode={w.match_mode} onChange={(m) => void changeMode(w, m)} disabled={busy} />
                       </td>
                       <td className={styles.note}>{w.note || '—'}</td>
                       <td className={styles.note}>{w.created_by ?? '—'}</td>

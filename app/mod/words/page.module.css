@@ -37,8 +37,19 @@
 }
 
 .modeSelect {
-  flex: 0 0 190px;
-  width: 190px;
+  flex: 0 0 auto;
+}
+
+.modeToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modeLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .noteInput {
@@ -116,10 +127,5 @@
 
   .wordInput {
     max-width: none;
-  }
-
-  .modeSelect {
-    flex-basis: auto;
-    width: auto;
   }
 }
