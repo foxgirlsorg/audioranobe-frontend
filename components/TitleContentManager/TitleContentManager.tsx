@@ -681,7 +681,7 @@ export default function TitleContentManager({
     <div className={styles.manager}>
       <section className={styles.section}>
         <div className={styles.sectionHead}>
-          <span className={styles.sectionLabel}>Тома и главы</span>
+          <span className={styles.sectionLabel}>Главы</span>
           {isMod && pendingTotal > 0 ? (
             <span className={styles.bulkReviewRow}>
               <span className={styles.pendingCount}>{`На проверке: ${pendingTotal}`}</span>

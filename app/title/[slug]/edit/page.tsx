@@ -335,7 +335,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             { key: 'info', label: 'Инфо' },
             { key: 'artwork', label: 'Оформление' },
             ...(canIllustrations ? [{ key: 'illustrations', label: 'Иллюстрации' }] : []),
-            { key: 'content', label: 'Тома и главы' },
+            { key: 'content', label: 'Главы' },
           ]}
           active={tab}
           onChange={setTab}

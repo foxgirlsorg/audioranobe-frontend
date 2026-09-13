@@ -1120,7 +1120,7 @@ export default function TitlePageClient({
         <Tabs
           tabs={[
             { key: 'info', label: 'Информация' },
-            { key: 'chapters', label: 'Тома и главы', count: chaptersTotal || undefined },
+            { key: 'chapters', label: 'Главы', count: chaptersTotal || undefined },
             ...(illustrations.length > 0
               ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length }]
               : []),
