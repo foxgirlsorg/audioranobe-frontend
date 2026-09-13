@@ -336,6 +336,11 @@
   color: #fff;
   font-weight: 600;
   font-size: 14.5px;
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .volumeCount {

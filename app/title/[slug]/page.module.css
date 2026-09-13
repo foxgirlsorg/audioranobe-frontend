@@ -776,6 +776,7 @@ a.factV:hover {
 .volName {
   font-size: 13.5px;
   color: var(--text-secondary);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
