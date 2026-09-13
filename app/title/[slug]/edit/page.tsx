@@ -9,10 +9,13 @@ import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
 import {
+  COUNTRY_LABELS,
+  COUNTRY_VALUES,
   NARRATION_STATUS_LABELS,
   RELEASE_STATUS_LABELS,
   STATUS_VALUES,
   type Author,
+  type Country,
   type NarrationStatus,
   type ReleaseStatus,
   type TitleFull,
@@ -43,6 +46,7 @@ interface Form {
   desc: string;
   year: string;
   status: ReleaseStatus;
+  country: Country;
 }
 
 export default function TitleEditPage({ params }: { params: { slug: string } }) {
@@ -91,6 +95,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     desc: '',
     year: '',
     status: 'ongoing',
+    country: 'china',
   });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -133,6 +138,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       desc: title.description,
       year: title.year != null ? String(title.year) : '',
       status: title.release_status,
+      country: title.country,
     });
     setAuthor(
       title.author ? { ...title.author, titles_count: 0 } : null
@@ -255,6 +261,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         description: form.desc,
         year,
         release_status: form.status,
+        country: form.country,
         genre_ids: genreIds,
         narration_statuses: narrationStatuses,
       };
@@ -438,6 +445,19 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
               onChange={(status) => setForm((f) => ({ ...f, status }))}
             />
           </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="t-country">
+            Страна
+          </label>
+          <Select<Country>
+            id="t-country"
+            block
+            value={form.country}
+            options={COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] }))}
+            onChange={(country) => setForm((f) => ({ ...f, country }))}
+          />
         </div>
 
         <div className={styles.field}>

@@ -44,6 +44,7 @@ export const API_DOCS_GROUPS: Group[] = [
             name: 'release_status',
             desc: 'ongoing | completed | abandoned | frozen.',
           },
+          { name: 'country', desc: 'china | korea | japan | other.' },
           { name: 'min_rating', desc: 'Минимальная средняя оценка.' },
           {
             name: 'sort',

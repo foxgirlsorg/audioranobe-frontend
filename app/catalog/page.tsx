@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import {
+  COUNTRY_LABELS,
+  COUNTRY_VALUES,
   RELEASE_STATUS_LABELS,
   STATUS_VALUES,
   type Genre,
@@ -59,6 +61,7 @@ function CatalogInner() {
   const yearFrom = searchParams.get('year_from') ?? '';
   const yearTo = searchParams.get('year_to') ?? '';
   const status = searchParams.get('release_status') ?? '';
+  const country = searchParams.get('country') ?? '';
   const finished = searchParams.get('finished') === '1';
   const showAi = searchParams.get('hide_ai') !== '1';
   const minRating = searchParams.get('min_rating') ?? '';
@@ -143,6 +146,7 @@ function CatalogInner() {
         year_from: yearFrom,
         year_to: yearTo,
         release_status: status,
+        country,
         finished: finished ? '1' : '',
         hide_ai: showAi ? '' : '1',
         min_rating: minRating,
@@ -173,6 +177,7 @@ function CatalogInner() {
       yearFrom ||
       yearTo ||
       status ||
+      country ||
       finished ||
       !showAi ||
       minRating ||
@@ -295,6 +300,23 @@ function CatalogInner() {
                   ...STATUS_VALUES.map((s) => ({ value: s, label: RELEASE_STATUS_LABELS[s] })),
                 ]}
                 onChange={(v) => setParams({ release_status: v || null })}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.fLabel} htmlFor="catalog-country">
+                Страна
+              </label>
+              <Select
+                id="catalog-country"
+                block
+                value={country}
+                placeholder="Любая страна"
+                options={[
+                  { value: '', label: 'Любая страна' },
+                  ...COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] })),
+                ]}
+                onChange={(v) => setParams({ country: v || null })}
               />
             </div>
 

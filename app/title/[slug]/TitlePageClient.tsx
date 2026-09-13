@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { api, API_URL, ApiError } from '@/lib/api';
 import {
+  COUNTRY_LABELS,
   NARRATION_STATUS_LABELS,
   RELEASE_STATUS_LABELS,
   type ChapterRow,
@@ -948,6 +949,10 @@ export default function TitlePageClient({
               <span className={styles.factV}>{title.year}</span>
             </div>
           ) : null}
+          <div className={styles.factRow2}>
+            <span className={styles.factK}>{'Страна'}</span>
+            <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+          </div>
           {runtime > 0 ? (
             <div className={styles.factRow2}>
               <span className={styles.factK}>{'Длительность'}</span>

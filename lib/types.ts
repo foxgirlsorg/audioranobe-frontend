@@ -20,6 +20,17 @@ export const NARRATION_STATUS_LABELS: Record<NarrationStatus, string> = {
 };
 
 export const STATUS_VALUES: ReleaseStatus[] = ['ongoing', 'completed', 'abandoned', 'frozen'];
+
+export type Country = 'china' | 'korea' | 'japan' | 'other';
+
+export const COUNTRY_LABELS: Record<Country, string> = {
+  china: 'Китай',
+  korea: 'Корея',
+  japan: 'Япония',
+  other: 'Другое',
+};
+
+export const COUNTRY_VALUES: Country[] = ['china', 'korea', 'japan', 'other'];
 export type AudioStatus = 'none' | 'queued' | 'processing' | 'ready' | 'error' | 'moderation';
 export type LibraryStatus = 'planning' | 'in_progress' | 'completed' | 'dropped';
 
@@ -320,6 +331,7 @@ export interface TitleCard {
   cover_url: string | null;
   cover_thumb_url: string | null;
   release_status: ReleaseStatus;
+  country: Country;
   avg_rating: number | null;
   rating_count: number;
   listens: number;
