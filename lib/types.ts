@@ -366,6 +366,8 @@ export interface Volume {
   id: number;
   number: number;
   name: string;
+  cover_url: string | null;
+  cover_thumb_url: string | null;
   chapters: ChapterRow[];
 }
 
@@ -466,6 +468,8 @@ export interface TitleFull extends TitleCard {
   info_banner: TitleInfoBanner | null;
   /** Word used instead of "Том" for this title's volumes (e.g. "Арка"). */
   volume_label: string;
+  /** Plural of volume_label, e.g. "Тома" or "Арки". */
+  volume_label_plural: string;
   /**
    * Gallery, in editor order. Empty for signed-out visitors on an 18+ or
    * sensitive title; chapter-bound ones for hidden chapters only reach editors.
@@ -485,7 +489,7 @@ export interface ChapterPlay {
   duration_seconds: number;
   audio_url: string;
   my_position: number | null;
-  volume: { id: number; number: number; name: string };
+  volume: { id: number; number: number; name: string; cover_url: string | null; cover_thumb_url: string | null };
   title: { id: number; slug: string; name: string; cover_url: string | null; volume_label: string };
   prev_id: number | null;
   next_id: number | null;

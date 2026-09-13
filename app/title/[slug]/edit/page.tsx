@@ -84,6 +84,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     url: '',
   });
   const [volumeLabel, setVolumeLabel] = useState('Том');
+  const [volumeLabelPlural, setVolumeLabelPlural] = useState('Тома');
   const [commentSub, setCommentSub] = useState(false);
   const [commentSubBusy, setCommentSubBusy] = useState(false);
   const formInit = useRef(false);
@@ -151,6 +152,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       title.info_banner ?? { enabled: false, title: '', text: '', url: '' }
     );
     setVolumeLabel(title.volume_label);
+    setVolumeLabelPlural(title.volume_label_plural);
     setCommentSub(title.comment_subscribed);
     setNarrators(
       (title.narrators ?? []).map((n) => ({
@@ -272,6 +274,9 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       if (canInfoBanner) body.info_banner = infoBanner;
       if (canVolumeLabel && volumeLabel.trim() !== title.volume_label) {
         body.volume_label = volumeLabel.trim();
+      }
+      if (canVolumeLabel && volumeLabelPlural.trim() !== title.volume_label_plural) {
+        body.volume_label_plural = volumeLabelPlural.trim();
       }
 
       const res = await api<{ applied: boolean }>(`/panel/titles/${title.id}`, {
@@ -624,22 +629,41 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         ) : null}
 
         {canVolumeLabel ? (
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="t-volume-label">
-              Название тома
-            </label>
-            <input
-              id="t-volume-label"
-              className="input"
-              type="text"
-              value={volumeLabel}
-              maxLength={40}
-              onChange={(e) => setVolumeLabel(e.target.value)}
-              placeholder="Том"
-            />
-            <p className={styles.formNote}>
-              Слово, которым заменяется «Том» при показе томов этого тайтла — например, «Арка».
-            </p>
+          <div className={styles.formRow}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="t-volume-label">
+                Название тома
+              </label>
+              <input
+                id="t-volume-label"
+                className="input"
+                type="text"
+                value={volumeLabel}
+                maxLength={40}
+                onChange={(e) => setVolumeLabel(e.target.value)}
+                placeholder="Том"
+              />
+              <p className={styles.formNote}>
+                Слово, которым заменяется «Том» — например, «Арка».
+              </p>
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="t-volume-label-plural">
+                Во множественном числе
+              </label>
+              <input
+                id="t-volume-label-plural"
+                className="input"
+                type="text"
+                value={volumeLabelPlural}
+                maxLength={40}
+                onChange={(e) => setVolumeLabelPlural(e.target.value)}
+                placeholder="Тома"
+              />
+              <p className={styles.formNote}>
+                Например, «Арки» — используется в заголовках списков томов.
+              </p>
+            </div>
           </div>
         ) : null}
 

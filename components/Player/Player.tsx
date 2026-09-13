@@ -147,6 +147,8 @@ export default function Player() {
   if (!current) return null;
   if (!activeMounted) return null;
 
+  const coverUrl = current.volume.cover_url ?? current.title.cover_url;
+
   const shown = scrub !== null ? scrub : position;
   const max = duration > 0 ? duration : Math.max(shown, 1);
   const playedPct = Math.min(100, (shown / max) * 100);
@@ -407,8 +409,8 @@ export default function Player() {
             />
           ) : (
             <Link href={`/title/${current.title.slug}`} className={styles.stageArt}>
-              {current.title.cover_url ? (
-                <img src={current.title.cover_url} alt="" />
+              {coverUrl ? (
+                <img src={coverUrl} alt="" />
               ) : (
                 <Music size={64} aria-hidden="true" />
               )}
@@ -475,8 +477,8 @@ export default function Player() {
               className={styles.cover}
               title={current.title.name}
             >
-              {current.title.cover_url ? (
-                <img src={current.title.cover_url} alt="" />
+              {coverUrl ? (
+                <img src={coverUrl} alt="" />
               ) : (
                 <Music aria-hidden="true" />
               )}

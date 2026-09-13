@@ -452,11 +452,24 @@ export default function TitlePageClient({
           />
         </div>
       ) : title.cover_url ? (
-        <PhotoView src={title.cover_url}>
-          <button type="button" className={styles.coverBtn} aria-label="Увеличить обложку">
-            <img src={title.cover_url} alt={`Обложка «${title.name}»`} className={styles.cover} />
-          </button>
-        </PhotoView>
+        <>
+          <PhotoView src={title.cover_url}>
+            <button type="button" className={styles.coverBtn} aria-label="Увеличить обложку">
+              <img src={title.cover_url} alt={`Обложка «${title.name}»`} className={styles.cover} />
+            </button>
+          </PhotoView>
+          {title.volumes
+            .filter((v) => v.cover_url && v.cover_url !== title.cover_url)
+            .map((v) => (
+              <PhotoView
+                key={v.id}
+                src={v.cover_url as string}
+                overlay={<strong>{v.name || `${title.volume_label} ${v.number}`}</strong>}
+              >
+                <span hidden />
+              </PhotoView>
+            ))}
+        </>
       ) : (
         <div className={styles.coverFallback}>
           <Headphones size={44} />
@@ -893,10 +906,22 @@ export default function TitlePageClient({
     );
 
   const illustrations = title.illustrations ?? [];
-  const illustrationsContent =
-    illustrations.length > 0 ? (
-      <IllustrationGallery items={illustrations} volumeLabel={title.volume_label} />
-    ) : null;
+  const volumeCovers = title.volumes
+    .filter((v) => v.cover_url)
+    .map((v) => ({
+      id: v.id,
+      url: v.cover_url as string,
+      label: v.name || `${title.volume_label} ${v.number}`,
+    }));
+  const hasIllustrationsTab = illustrations.length > 0 || volumeCovers.length > 0;
+  const illustrationsContent = hasIllustrationsTab ? (
+    <IllustrationGallery
+      items={illustrations}
+      volumeLabel={title.volume_label}
+      volumeCovers={volumeCovers}
+      volumeCoversHeading={title.volume_label_plural}
+    />
+  ) : null;
 
   const commentsContent = (
     <CommentSection
@@ -994,8 +1019,8 @@ export default function TitlePageClient({
     const mobileTabs = [
       { key: 'about', label: 'О тайтле' },
       { key: 'chapters', label: 'Главы', count: chaptersTotal || undefined },
-      ...(illustrations.length > 0
-        ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length }]
+      ...(hasIllustrationsTab
+        ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length + volumeCovers.length }]
         : []),
       { key: 'comments', label: 'Комментарии', count: commentsTotal || undefined },
       ...(title.similar.length > 0 ? [{ key: 'similar', label: 'Похожие' }] : []),
@@ -1126,8 +1151,8 @@ export default function TitlePageClient({
           tabs={[
             { key: 'info', label: 'Информация' },
             { key: 'chapters', label: 'Главы', count: chaptersTotal || undefined },
-            ...(illustrations.length > 0
-              ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length }]
+            ...(hasIllustrationsTab
+              ? [{ key: 'illustrations', label: 'Иллюстрации', count: illustrations.length + volumeCovers.length }]
               : []),
             { key: 'comments', label: 'Комментарии', count: commentsTotal || undefined },
           ]}

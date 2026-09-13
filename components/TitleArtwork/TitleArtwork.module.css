@@ -91,6 +91,76 @@
   justify-content: center;
 }
 
+.volumesCard {
+  grid-column: 1 / -1;
+}
+
+.volumesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 1rem;
+}
+
+.volumeItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.volumeItem .stage {
+  flex: none;
+  min-height: 0;
+  position: relative;
+  width: 100%;
+}
+
+.volumeItem .coverPreview {
+  height: auto;
+  width: 100%;
+}
+
+.volumeLabelInput {
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  padding: 6px 8px;
+  height: 30px;
+  box-sizing: border-box;
+}
+
+.actionSm {
+  width: 100%;
+  justify-content: center;
+  padding: 0.35rem 0.6rem;
+  font-size: 12px;
+}
+
+.removeBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  cursor: pointer;
+}
+
+.removeBtn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.removeBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 @media (max-width: 760px) {
   .wrap {
     grid-template-columns: 1fr;

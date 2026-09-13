@@ -131,8 +131,26 @@ export default function IllustrationManager({ title }: { title: TitleFull }) {
     }
   }
 
+  const volumeCovers = title.volumes.filter((v) => v.cover_url);
+
   return (
     <div className={styles.wrap}>
+      {volumeCovers.length > 0 ? (
+        <div>
+          <span className={styles.label}>{title.volume_label_plural}</span>
+          <div className={styles.grid}>
+            {volumeCovers.map((v) => (
+              <div key={v.id} className={`glass-panel ${styles.card}`}>
+                <div className={styles.preview}>
+                  <img src={v.cover_url as string} alt="" loading="lazy" />
+                </div>
+                <span className={styles.volCoverLabel}>{v.name || `${title.volume_label} ${v.number}`}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <section className={`glass-panel ${styles.upload}`}>
         <div className={styles.bindControls}>
           <span className={styles.label}>Привязать к</span>

@@ -514,7 +514,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       title: chapterLabel(current.number, current.number_end, current.name),
       artist: current.title.name,
       album: current.narrator?.name || undefined,
-      artwork: current.title.cover_url ? [{ src: current.title.cover_url, sizes: '512x512' }] : [],
+      artwork: (() => {
+        const url = current.volume.cover_url ?? current.title.cover_url;
+        return url ? [{ src: url, sizes: '512x512' }] : [];
+      })(),
     });
   }, [current]);
 

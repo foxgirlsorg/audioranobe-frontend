@@ -15,9 +15,13 @@ import styles from './IllustrationGallery.module.css';
 export default function IllustrationGallery({
   items,
   volumeLabel = 'Том',
+  volumeCovers = [],
+  volumeCoversHeading = 'Тома',
 }: {
   items: Illustration[];
   volumeLabel?: string;
+  volumeCovers?: { id: number; url: string; label: string }[];
+  volumeCoversHeading?: string;
 }) {
   const groups = groupIllustrations(items, volumeLabel);
   const showHeadings = groups.some((g) => g.heading !== null);
@@ -27,6 +31,41 @@ export default function IllustrationGallery({
     // every other zoomable image on the page.
     <PhotoProvider>
       <div className={styles.gallery}>
+        {volumeCovers.length > 0 ? (
+          <section className={styles.group}>
+            <h3 className={styles.heading}>{volumeCoversHeading}</h3>
+            <div className={styles.rows}>
+              {volumeCovers.map((v) => (
+                <figure
+                  key={v.id}
+                  className={styles.tile}
+                  style={{
+                    flexGrow: 2 / 3,
+                    flexBasis: `calc(${2 / 3} * var(--row-h))`,
+                    maxWidth: `calc(${2 / 3} * var(--row-h) * 1.75)`,
+                  }}
+                >
+                  <PhotoView src={v.url}>
+                    <button
+                      type="button"
+                      className={styles.frame}
+                      aria-label={`Открыть: ${v.label}`}
+                    >
+                      <img
+                        src={v.url}
+                        alt={v.label}
+                        style={{ aspectRatio: '2 / 3' }}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </button>
+                  </PhotoView>
+                  <figcaption className={styles.caption}>{v.label}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        ) : null}
         {groups.map((g) => (
           <section key={g.key} className={styles.group}>
             {showHeadings ? (
