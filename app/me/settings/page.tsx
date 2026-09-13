@@ -167,6 +167,9 @@ export default function SettingsPage() {
   const [blurUnlistened, setBlurUnlistened] = useState(false);
   const [blurBusy, setBlurBusy] = useState(false);
 
+  const [autoAddLibrary, setAutoAddLibrary] = useState(false);
+  const [autoAddBusy, setAutoAddBusy] = useState(false);
+
   const hasPassword = user?.has_password ?? true;
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [unlinking, setUnlinking] = useState<AuthProvider | null>(null);
@@ -212,6 +215,7 @@ export default function SettingsPage() {
           setPrefs(me.notification_prefs);
           setContent(me.content_prefs);
           setBlurUnlistened(me.blur_unlistened_illustrations);
+          setAutoAddLibrary(me.auto_add_to_library);
           setIdentities(me.identities ?? []);
           setTotpEnabled(!!me.totp_enabled);
           setEmailVerificationOn(!!me.email_verification);
@@ -397,6 +401,22 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setBlurBusy(false);
+    }
+  }
+
+  async function toggleAutoAddLibrary() {
+    if (autoAddBusy) return;
+    const next = !autoAddLibrary;
+    setAutoAddBusy(true);
+    setAutoAddLibrary(next);
+    try {
+      await api<Me>('/me', { method: 'PATCH', body: { auto_add_to_library: next } });
+      toast('Настройки контента сохранены', 'ok');
+    } catch (e) {
+      setAutoAddLibrary(!next);
+      toast(errMsg(e), 'error');
+    } finally {
+      setAutoAddBusy(false);
     }
   }
 
@@ -1077,6 +1097,26 @@ export default function SettingsPage() {
               className={blurUnlistened ? `${styles.switch} ${styles.switchOn}` : styles.switch}
               disabled={blurBusy}
               onClick={toggleBlurUnlistened}
+            >
+              <span className={styles.knob} />
+            </button>
+          </div>
+
+          <div className={styles.prefRow}>
+            <div className={styles.prefText}>
+              <span className={styles.prefLabel}>{'Автоматически добавлять в библиотеку'}</span>
+              <span className={styles.prefHint}>
+                {'Книга попадёт в вашу библиотеку со статусом «Слушаю» после того, как вы дослушаете главу до конца. По умолчанию выключено.'}
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={autoAddLibrary}
+              aria-label={'Автоматически добавлять в библиотеку'}
+              className={autoAddLibrary ? `${styles.switch} ${styles.switchOn}` : styles.switch}
+              disabled={autoAddBusy}
+              onClick={toggleAutoAddLibrary}
             >
               <span className={styles.knob} />
             </button>

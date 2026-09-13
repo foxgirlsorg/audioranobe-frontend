@@ -214,6 +214,8 @@ export interface Me extends Viewer {
   totp_enabled: boolean;
   /** Blur illustration thumbnails for chapters not yet listened past the midpoint. Off by default. */
   blur_unlistened_illustrations: boolean;
+  /** Auto-add a title to the library once the user finishes a chapter. Off by default. */
+  auto_add_to_library: boolean;
 }
 
 export type DmPrivacy = 'all' | 'friends';
