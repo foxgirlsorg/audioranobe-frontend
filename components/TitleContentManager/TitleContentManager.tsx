@@ -222,8 +222,8 @@ export default function TitleContentManager({
   async function addVolume(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const n = Number(volNumber);
-    if (!Number.isInteger(n) || n < 0) {
-      toast('Номер тома должен быть целым числом', 'error');
+    if (!Number.isFinite(n) || n < 0) {
+      toast('Номер тома должен быть числом не меньше 0', 'error');
       return;
     }
     setSavingVolume(true);
@@ -250,8 +250,8 @@ export default function TitleContentManager({
   async function saveVolume(e: React.FormEvent<HTMLFormElement>, volumeId: number) {
     e.preventDefault();
     const n = Number(editVolNumber);
-    if (!Number.isInteger(n) || n < 0) {
-      toast('Номер тома должен быть целым числом', 'error');
+    if (!Number.isFinite(n) || n < 0) {
+      toast('Номер тома должен быть числом не меньше 0', 'error');
       return;
     }
     setSavingVolume(true);
@@ -1039,6 +1039,7 @@ export default function TitleContentManager({
                 id="v-number"
                 className="input"
                 type="number"
+                min={0}
                 value={volNumber}
                 onChange={(e) => setVolNumber(e.target.value)}
               />
@@ -1085,6 +1086,7 @@ export default function TitleContentManager({
                     <input
                       className={`input ${styles.numInput}`}
                       type="number"
+                      min={0}
                       value={editVolNumber}
                       onChange={(e) => setEditVolNumber(e.target.value)}
                       aria-label="Номер тома"
