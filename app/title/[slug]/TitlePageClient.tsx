@@ -61,8 +61,13 @@ import styles from './page.module.css';
 
 const DESC_CLAMP_CHARS = 420;
 
+// A chapter as shown for the selected version: `defaulted` marks a slot the alt
+// version doesn't supply, played from the main version instead.
+type VersionChapter = ChapterRow & { defaulted?: boolean };
+type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[] };
+
 // Soft-deleted chapters are gone as far as counts and totals are concerned.
-function liveChapters(v: Volume): ChapterRow[] {
+function liveChapters(v: Pick<Volume, 'chapters'>): ChapterRow[] {
   return v.chapters.filter((c) => !c.is_deleted);
 }
 
@@ -202,6 +207,43 @@ export default function TitlePageClient({
   const canEdit = title?.can_edit ?? false;
   const [reNarrating, setReNarrating] = useState<number | null>(null);
   const skipInitialFetch = useRef(initialTitle !== null);
+
+  // Chosen narration version (0 = main). Seeded from the saved selection, then
+  // the chapter list overlays that version's chapters, falling back to the main
+  // version per missing slot.
+  const [selectedVersion, setSelectedVersion] = useState(0);
+  useEffect(() => {
+    setSelectedVersion(title?.selected_version_id ?? 0);
+  }, [title?.id, title?.selected_version_id]);
+
+  const displayVolumes = useMemo<VersionVolume[]>(() => {
+    if (!title) return [];
+    if (selectedVersion === 0) return title.volumes;
+    const alt = title.alt_chapters?.[String(selectedVersion)] ?? [];
+    const altByKey = new Map<string, ChapterRow>();
+    for (const c of alt) altByKey.set(`${c.volume_id}:${c.number}`, c);
+    return title.volumes.map((v) => ({
+      ...v,
+      chapters: v.chapters.map((c) => {
+        const a = altByKey.get(`${v.id}:${c.number}`);
+        if (a && a.audio_status === 'ready') {
+          // Keep the shared name/number from main; play the alt's audio.
+          return { ...a, name: c.name, number: c.number, number_end: c.number_end };
+        }
+        return { ...c, defaulted: true };
+      }),
+    }));
+  }, [title, selectedVersion]);
+
+  async function changeVersion(vid: number) {
+    setSelectedVersion(vid);
+    if (!user || !title) return;
+    try {
+      await api(`/titles/${title.id}/version`, { method: 'PUT', body: { version_id: vid } });
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -736,7 +778,32 @@ export default function TitlePageClient({
       />
     ) : (
       <div className={styles.volumes}>
-        {title.volumes.map((v) => {
+        {title.versions.length > 0 ? (
+          <div className={styles.versionTabs} role="tablist" aria-label="Версия озвучки">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedVersion === 0}
+              className={selectedVersion === 0 ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
+              onClick={() => void changeVersion(0)}
+            >
+              {title.version_name}
+            </button>
+            {title.versions.map((ver) => (
+              <button
+                key={ver.id}
+                type="button"
+                role="tab"
+                aria-selected={selectedVersion === ver.id}
+                className={selectedVersion === ver.id ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
+                onClick={() => void changeVersion(ver.id)}
+              >
+                {ver.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {displayVolumes.map((v) => {
           const open = !!openVols[v.id];
           const total = volumeDuration(v);
           return (
@@ -841,6 +908,11 @@ export default function TitlePageClient({
                               {chapterLabel(ch.number, ch.number_end, ch.name)}
                             </Link>
                             <span className={styles.rowRight}>
+                              {ch.defaulted && selectedVersion !== 0 ? (
+                                <span className={styles.defaultedPill} title="В выбранной версии этой главы нет — играет из основной">
+                                  из основной
+                                </span>
+                              ) : null}
                               {(ch.narrators ?? []).length > 0 ? (
                                 <span className={styles.chNarrators} title={'Чтецы главы'}>
                                   <Mic size={11} />

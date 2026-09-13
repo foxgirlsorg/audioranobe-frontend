@@ -19,7 +19,7 @@ import { uploadInChunks } from '@/lib/upload';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import { formatDuration, formatDateTime, timeAgo, chapterLabel, chapterNumberLabel } from '@/lib/format';
-import type { ChapterRow, JobsPage, TitleFull, Volume } from '@/lib/types';
+import type { ChapterRow, JobsPage, TitleFull, TitleVersion, Volume } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import Pagination from '@/components/Pagination/Pagination';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -86,6 +86,15 @@ export default function TitleContentManager({
   const { toast } = useToast();
   const { user, isMod, can } = useAuth();
   const isAdmin = can('chapters.edit');
+  const canManageVersions = can('versions.manage');
+
+  // 0 = main version; an alt version id otherwise. All chapter management on this
+  // page operates on the active version.
+  const [currentVersion, setCurrentVersion] = useState(0);
+  const [versionForm, setVersionForm] = useState<'add' | 'rename' | 'main' | null>(null);
+  const [versionName, setVersionName] = useState('');
+  const [versionBusy, setVersionBusy] = useState(false);
+  const [versionToDelete, setVersionToDelete] = useState<TitleVersion | null>(null);
 
   const [showAddVolume, setShowAddVolume] = useState(false);
   const [volNumber, setVolNumber] = useState('');
@@ -135,6 +144,9 @@ export default function TitleContentManager({
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const uploadChapterRef = useRef<number | null>(null);
   const [uploads, setUploads] = useState<Record<number, number>>({});
+  const altInputRef = useRef<HTMLInputElement | null>(null);
+  const altSlotTarget = useRef<{ volumeId: number; number: number; narratorIds: number[] } | null>(null);
+  const [altUploads, setAltUploads] = useState<Record<string, number>>({});
   const bulkInputRef = useRef<HTMLInputElement | null>(null);
   const [bulkVolume, setBulkVolume] = useState('');
   const [bulkStart, setBulkStart] = useState('');
@@ -324,6 +336,7 @@ export default function TitleContentManager({
             name: chName.trim(),
             narrator_ids: chNarratorIds,
             upload_id: uploadId,
+            version_id: currentVersion,
           },
         }
       );
@@ -432,12 +445,51 @@ export default function TitleContentManager({
 
   const pendingIn = (v: Volume) =>
     v.chapters.filter((c) => c.mod_status === 'pending' && !c.is_deleted).length;
-  const pendingTotal = title.volumes.reduce((n, v) => n + pendingIn(v), 0);
+
+  // The active version's chapters laid over the shared volume structure. The
+  // main version reads straight from title.volumes; an alt version groups its
+  // own chapters into the same volumes (missing slots simply show no chapter —
+  // they fall back to the main version on the title page).
+  const isAlt = currentVersion !== 0;
+
+  // Both tabs render the main volume/chapter skeleton. On an alt tab each slot
+  // is overlaid with its uploaded alt chapter (if any); empty slots become grey
+  // placeholders with an upload button, and new volumes/chapters can't be made.
+  const displayVolumes = title.volumes;
+
+  const altByKey = useMemo(() => {
+    const m = new Map<string, ChapterRow>();
+    if (isAlt) {
+      for (const c of title.alt_chapters?.[String(currentVersion)] ?? []) {
+        if (!c.is_deleted) m.set(`${c.volume_id}:${c.number}`, c);
+      }
+    }
+    return m;
+  }, [title, currentVersion, isAlt]);
+
+  const altSlot = (volumeId: number, number: number): ChapterRow | null =>
+    altByKey.get(`${volumeId}:${number}`) ?? null;
+
+  const pendingTotal = isAlt ? 0 : title.volumes.reduce((n, v) => n + pendingIn(v), 0);
 
   const allChapters = useMemo(
-    () => title.volumes.flatMap((v) => v.chapters),
-    [title]
+    () =>
+      isAlt
+        ? title.alt_chapters?.[String(currentVersion)] ?? []
+        : title.volumes.flatMap((v) => v.chapters),
+    [title, currentVersion, isAlt]
   );
+
+  // A deleted version drops back to the main tab; switching versions clears any
+  // cross-version selection.
+  useEffect(() => {
+    if (currentVersion !== 0 && !title.versions.some((v) => v.id === currentVersion)) {
+      setCurrentVersion(0);
+    }
+  }, [title.versions, currentVersion]);
+  useEffect(() => {
+    setSelected([]);
+  }, [currentVersion]);
 
   useEffect(() => {
     setSelected((prev) => {
@@ -445,6 +497,55 @@ export default function TitleContentManager({
       return live.length === prev.length ? prev : live;
     });
   }, [allChapters]);
+
+  function openVersionForm(kind: 'add' | 'rename' | 'main') {
+    setVersionForm(kind);
+    if (kind === 'main') setVersionName(title.version_name);
+    else if (kind === 'rename') {
+      setVersionName(title.versions.find((v) => v.id === currentVersion)?.name ?? '');
+    } else setVersionName('');
+  }
+
+  async function submitVersionForm(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const name = versionName.trim();
+    if (!name) {
+      toast('Укажите название версии', 'error');
+      return;
+    }
+    setVersionBusy(true);
+    try {
+      if (versionForm === 'add') {
+        await api(`/panel/titles/${titleId}/versions`, { body: { name } });
+        toast('Версия добавлена');
+      } else if (versionForm === 'main') {
+        await api(`/panel/titles/${titleId}/version-name`, { method: 'PUT', body: { name } });
+        toast('Название версии обновлено');
+      } else {
+        await api(`/panel/versions/${currentVersion}`, { method: 'PATCH', body: { name } });
+        toast('Версия переименована');
+      }
+      setVersionForm(null);
+      setVersionName('');
+      await onReload();
+    } catch (err) {
+      toast(errMsg(err), 'error');
+    } finally {
+      setVersionBusy(false);
+    }
+  }
+
+  async function deleteVersion(v: TitleVersion) {
+    try {
+      await api(`/panel/versions/${v.id}`, { method: 'DELETE' });
+      toast('Версия удалена');
+      setVersionToDelete(null);
+      setCurrentVersion(0);
+      await onReload();
+    } catch (err) {
+      toast(errMsg(err), 'error');
+    }
+  }
 
   const toggleSelected = (id: number) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -600,6 +701,50 @@ export default function TitleContentManager({
       );
   }
 
+  function pickAltSlot(volumeId: number, number: number, narratorIds: number[]) {
+    altSlotTarget.current = { volumeId, number, narratorIds };
+    altInputRef.current?.click();
+  }
+
+  function onAltSlotPicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0] ?? null;
+    e.target.value = '';
+    const t = altSlotTarget.current;
+    altSlotTarget.current = null;
+    if (!f || !t) return;
+    const bad = validAudio(f);
+    if (bad) {
+      toast(bad, 'error');
+      return;
+    }
+    const key = `${t.volumeId}:${t.number}`;
+    setAltUploads((u) => ({ ...u, [key]: 0 }));
+    uploadInChunks(f, (frac) => setAltUploads((u) => ({ ...u, [key]: frac })))
+      .then((uploadId) =>
+        api(`/panel/titles/${titleId}/chapters`, {
+          body: {
+            volume_id: t.volumeId,
+            number: t.number,
+            narrator_ids: t.narratorIds,
+            upload_id: uploadId,
+            version_id: currentVersion,
+          },
+        })
+      )
+      .then(async () => {
+        toast('Озвучка загружена — в очереди на конвертацию');
+        await Promise.all([onReload(), loadJobs()]);
+      })
+      .catch((err) => toast(errMsg(err), 'error'))
+      .finally(() =>
+        setAltUploads((u) => {
+          const rest = { ...u };
+          delete rest[key];
+          return rest;
+        })
+      );
+  }
+
   function onBulkPicked(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = '';
@@ -614,7 +759,7 @@ export default function TitleContentManager({
     setBulkFiles([...files].sort((a, b) => naturalCompare(a.name, b.name)));
   }
 
-  const bulkTargetVolume = title.volumes.find((v) => String(v.id) === bulkVolume) ?? null;
+  const bulkTargetVolume = displayVolumes.find((v) => String(v.id) === bulkVolume) ?? null;
 
   const bulkFirstNumber = useMemo(() => {
     const typed = bulkStart.trim();
@@ -663,6 +808,7 @@ export default function TitleContentManager({
           use_file_names: bulkUseFileNames,
           narrator_ids: bulkNarratorIds,
           upload_ids: uploadIds,
+          version_id: currentVersion,
         },
       });
     })()
@@ -677,9 +823,111 @@ export default function TitleContentManager({
       .finally(() => setBulkProgress(null));
   }
 
+  const activeAltVersion = title.versions.find((v) => v.id === currentVersion) ?? null;
+
   return (
     <div className={styles.manager}>
       <section className={styles.section}>
+        {canManageVersions ? (
+          <div className={styles.versionTabs}>
+            <button
+              type="button"
+              className={currentVersion === 0 ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
+              onClick={() => setCurrentVersion(0)}
+            >
+              {title.version_name}
+            </button>
+            {title.versions.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                className={currentVersion === v.id ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
+                onClick={() => setCurrentVersion(v.id)}
+              >
+                {v.name}
+              </button>
+            ))}
+            {canManageVersions ? (
+              <span className={styles.versionActions}>
+                {currentVersion === 0 ? (
+                  <button
+                    type="button"
+                    className={styles.iconBtn}
+                    onClick={() => openVersionForm('main')}
+                    title="Переименовать основную версию"
+                    aria-label="Переименовать основную версию"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className={styles.iconBtn}
+                      onClick={() => openVersionForm('rename')}
+                      title="Переименовать версию"
+                      aria-label="Переименовать версию"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.iconBtnDanger}
+                      onClick={() => activeAltVersion && setVersionToDelete(activeAltVersion)}
+                      title="Удалить версию"
+                      aria-label="Удалить версию"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  className={styles.iconBtn}
+                  onClick={() => openVersionForm('add')}
+                  title="Добавить версию"
+                  aria-label="Добавить версию"
+                >
+                  <Plus size={14} />
+                </button>
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {versionForm ? (
+          <form className={`glass-panel ${styles.inlinePanel}`} onSubmit={submitVersionForm} noValidate>
+            <div className={styles.growField}>
+              <label className={styles.label} htmlFor="version-name">
+                {versionForm === 'add' ? 'Название новой версии' : 'Название версии'}
+              </label>
+              <input
+                id="version-name"
+                className="input"
+                type="text"
+                value={versionName}
+                maxLength={100}
+                onChange={(e) => setVersionName(e.target.value)}
+                placeholder="Напр. «Мужской голос»"
+                autoFocus
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={versionBusy}>
+              {versionBusy ? 'Сохраняем…' : 'Сохранить'}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => setVersionForm(null)}>
+              Отмена
+            </button>
+          </form>
+        ) : null}
+
+        {currentVersion !== 0 ? (
+          <p className={styles.bulkHint}>
+            Альтернативная версия: загружайте аудио для тех же глав, что и в основной. Главы без
+            своего аудио будут проигрываться из основной версии.
+          </p>
+        ) : null}
+
         <div className={styles.sectionHead}>
           <span className={styles.sectionLabel}>Главы</span>
           {isMod && pendingTotal > 0 ? (
@@ -703,16 +951,18 @@ export default function TitleContentManager({
               </button>
             </span>
           ) : null}
-          <button type="button" className="btn btn-primary" onClick={openAddVolume}>
-            <Plus size={15} />
-            Добавить том
-          </button>
+          {!isAlt ? (
+            <button type="button" className="btn btn-primary" onClick={openAddVolume}>
+              <Plus size={15} />
+              Добавить том
+            </button>
+          ) : null}
         </div>
 
         {selected.length > 0 ? (
           <div className={`glass-panel ${styles.selectionBar}`}>
             <span className={styles.selectionCount}>{`Выбрано глав: ${selected.length}`}</span>
-            {isMod ? (
+            {isMod && !isAlt ? (
               <>
                 <button
                   type="button"
@@ -746,7 +996,7 @@ export default function TitleContentManager({
               }}
             >
               <Layers size={15} />
-              Том / чтецы
+              {isAlt ? 'Чтецы' : 'Том / чтецы'}
             </button>
             <button
               type="button"
@@ -816,14 +1066,14 @@ export default function TitleContentManager({
           </form>
         ) : null}
 
-        {title.volumes.length === 0 ? (
+        {displayVolumes.length === 0 ? (
           <EmptyState
             icon={Layers}
             title="Томов пока нет"
             body="Сначала добавьте том — главы живут внутри томов."
           />
         ) : (
-          title.volumes.map((v) => (
+          displayVolumes.map((v) => (
             <div key={v.id} className={`glass-panel ${styles.volume}`}>
               <div className={styles.volumeHead}>
                 {editingVolume === v.id ? (
@@ -862,7 +1112,7 @@ export default function TitleContentManager({
                 ) : (
                   <>
                     <div className={styles.volumeTitle}>
-                      {visibleChapters(v).length > 0 ? (
+                      {!isAlt && visibleChapters(v).length > 0 ? (
                         <input
                           type="checkbox"
                           className={styles.selectBox}
@@ -874,7 +1124,11 @@ export default function TitleContentManager({
                       ) : null}
                       <span className={styles.volumeNum}>{`${title.volume_label} ${v.number}`}</span>
                       {v.name ? <span className={styles.volumeName}>{v.name}</span> : null}
-                      <span className={styles.volumeCount}>{`Глав: ${liveChapters(v).length}`}</span>
+                      <span className={styles.volumeCount}>
+                        {isAlt
+                          ? `Озвучено: ${liveChapters(v).filter((c) => altSlot(v.id, c.number)).length} из ${liveChapters(v).length}`
+                          : `Глав: ${liveChapters(v).length}`}
+                      </span>
                     </div>
                     <button
                       type="button"
@@ -888,7 +1142,7 @@ export default function TitleContentManager({
                       }
                     />
                     <div className={styles.volumeActions}>
-                      {isMod && pendingIn(v) > 0 ? (
+                      {!isAlt && isMod && pendingIn(v) > 0 ? (
                         <>
                           <span className={styles.pendingCount}>
                             {`На проверке: ${pendingIn(v)}`}
@@ -913,33 +1167,37 @@ export default function TitleContentManager({
                           </button>
                         </>
                       ) : null}
-                      <button
-                        type="button"
-                        className={styles.iconBtn}
-                        onClick={() => openAddChapter(v)}
-                        title="Добавить главу"
-                        aria-label={`Добавить главу в том ${v.number}`}
-                      >
-                        <Plus size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.iconBtn}
-                        onClick={() => startEditVolume(v)}
-                        title="Переименовать том"
-                        aria-label={`Переименовать том ${v.number}`}
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.iconBtnDanger}
-                        onClick={() => setVolumeToDelete(v)}
-                        title="Удалить том"
-                        aria-label={`Удалить том ${v.number}`}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {!isAlt ? (
+                        <>
+                          <button
+                            type="button"
+                            className={styles.iconBtn}
+                            onClick={() => openAddChapter(v)}
+                            title="Добавить главу"
+                            aria-label={`Добавить главу в том ${v.number}`}
+                          >
+                            <Plus size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.iconBtn}
+                            onClick={() => startEditVolume(v)}
+                            title="Переименовать том"
+                            aria-label={`Переименовать том ${v.number}`}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.iconBtnDanger}
+                            onClick={() => setVolumeToDelete(v)}
+                            title="Удалить том"
+                            aria-label={`Удалить том ${v.number}`}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      ) : null}
                       <span
                         className={
                           openVolumes.has(v.id)
@@ -1041,7 +1299,112 @@ export default function TitleContentManager({
                 </form>
               ) : null}
 
-              {!openVolumes.has(v.id) ? null : visibleChapters(v).length === 0 ? (
+              {!openVolumes.has(v.id) ? null : isAlt ? (
+                liveChapters(v).length === 0 ? (
+                  <p className={styles.noChapters}>В основной версии нет глав.</p>
+                ) : (
+                  liveChapters(v).map((mainCh) => {
+                    const alt = altSlot(v.id, mainCh.number);
+                    const slotKey = `${v.id}:${mainCh.number}`;
+                    if (alt) {
+                      return (
+                        <div key={slotKey} className={styles.chapterRow}>
+                          <input
+                            type="checkbox"
+                            className={styles.selectBox}
+                            checked={selected.includes(alt.id)}
+                            onChange={() => toggleSelected(alt.id)}
+                            aria-label={`Выбрать главу ${mainCh.number}`}
+                          />
+                          <span className={styles.chNum}>{chapterNumberLabel(mainCh.number, mainCh.number_end)}</span>
+                          <span className={styles.chName}>{chapterLabel(mainCh.number, mainCh.number_end, mainCh.name)}</span>
+                          {alt.duration_seconds > 0 ? (
+                            <span className={styles.chDuration}>{formatDuration(alt.duration_seconds)}</span>
+                          ) : null}
+                          <span className={styles.chBadges}>
+                            <StatusBadge status={alt.audio_status} />
+                            {alt.mod_status !== 'approved' ? <StatusBadge status={alt.mod_status} /> : null}
+                          </span>
+                          <span className={styles.chActions}>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => pickAudio(alt.id)}
+                              disabled={uploads[alt.id] !== undefined}
+                              title="Заменить аудио"
+                              aria-label={`Заменить аудио главы ${mainCh.number}`}
+                            >
+                              <RefreshCw size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtnDanger}
+                              onClick={() => setChapterToDelete(alt)}
+                              title="Удалить озвучку этой главы"
+                              aria-label={`Удалить озвучку главы ${mainCh.number}`}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                            {isAdmin ? (
+                              <button
+                                type="button"
+                                className={styles.iconBtnDanger}
+                                onClick={() => setChapterToPurge(alt)}
+                                title="Удалить навсегда — вместе с аудио"
+                                aria-label={`Удалить навсегда озвучку главы ${mainCh.number}`}
+                              >
+                                <Flame size={14} />
+                              </button>
+                            ) : null}
+                          </span>
+                          {uploads[alt.id] !== undefined ? (
+                            <span className={styles.progressWrap}>
+                              <span className={styles.progress}>
+                                <span
+                                  className={styles.progressFill}
+                                  style={{ width: `${Math.round(uploads[alt.id] * 100)}%` }}
+                                />
+                              </span>
+                              <span className={styles.progressPct}>{Math.round(uploads[alt.id] * 100)}%</span>
+                            </span>
+                          ) : null}
+                        </div>
+                      );
+                    }
+                    const busy = altUploads[slotKey] !== undefined;
+                    return (
+                      <div key={slotKey} className={`${styles.chapterRow} ${styles.altPlaceholder}`}>
+                        <span className={styles.chNum}>{chapterNumberLabel(mainCh.number, mainCh.number_end)}</span>
+                        <span className={styles.chName}>{chapterLabel(mainCh.number, mainCh.number_end, mainCh.name)}</span>
+                        <span className={styles.altMissing}>нет озвучки — играет из основной</span>
+                        <span className={styles.chActions}>
+                          <button
+                            type="button"
+                            className={`btn ${styles.altUploadBtn}`}
+                            disabled={busy}
+                            onClick={() =>
+                              pickAltSlot(v.id, mainCh.number, (mainCh.narrators ?? []).map((n) => n.id))
+                            }
+                          >
+                            <Upload size={14} />
+                            {busy ? `${Math.round((altUploads[slotKey] ?? 0) * 100)}%` : 'Загрузить'}
+                          </button>
+                        </span>
+                        {busy ? (
+                          <span className={styles.progressWrap}>
+                            <span className={styles.progress}>
+                              <span
+                                className={styles.progressFill}
+                                style={{ width: `${Math.round((altUploads[slotKey] ?? 0) * 100)}%` }}
+                              />
+                            </span>
+                          </span>
+                        ) : null}
+                      </div>
+                    );
+                  })
+                )
+              ) : visibleChapters(v).length === 0 ? (
                 <p className={styles.noChapters}>В этом томе пока нет глав.</p>
               ) : (
                 visibleChapters(v).map((c) => (
@@ -1451,6 +1814,30 @@ export default function TitleContentManager({
         aria-hidden="true"
         tabIndex={-1}
       />
+      <input
+        ref={altInputRef}
+        type="file"
+        accept={AUDIO_ACCEPT}
+        className={styles.hiddenInput}
+        onChange={onAltSlotPicked}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+
+      <ConfirmDialog
+        open={versionToDelete !== null}
+        onClose={() => setVersionToDelete(null)}
+        onConfirm={() => {
+          if (versionToDelete) void deleteVersion(versionToDelete);
+        }}
+        title="Удалить версию"
+        body={
+          versionToDelete
+            ? `Удалить версию «${versionToDelete.name}» вместе со всеми загруженными в неё главами? Слушатели, выбравшие её, вернутся к основной версии.`
+            : ''
+        }
+        danger
+      />
 
       <ConfirmDialog
         open={volumeToDelete !== null}
@@ -1525,23 +1912,25 @@ export default function TitleContentManager({
           <p className={styles.reviewBody}>
             {`Изменения применятся к выбранным главам (${selected.length}) одним запросом.`}
           </p>
-          <div className={styles.bulkField}>
-            <label className={styles.label} htmlFor="be-volume">
-              Переместить в том
-            </label>
-            <Select
-              id="be-volume"
-              block
-              value={bulkEditVolume}
-              placeholder="— не менять —"
-              disabled={title.volumes.length === 0}
-              options={title.volumes.map((v) => ({
-                value: String(v.id),
-                label: `${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`,
-              }))}
-              onChange={setBulkEditVolume}
-            />
-          </div>
+          {!isAlt ? (
+            <div className={styles.bulkField}>
+              <label className={styles.label} htmlFor="be-volume">
+                Переместить в том
+              </label>
+              <Select
+                id="be-volume"
+                block
+                value={bulkEditVolume}
+                placeholder="— не менять —"
+                disabled={title.volumes.length === 0}
+                options={title.volumes.map((v) => ({
+                  value: String(v.id),
+                  label: `${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`,
+                }))}
+                onChange={setBulkEditVolume}
+              />
+            </div>
+          ) : null}
           {title.narrators.length > 0 ? (
             <div className={styles.bulkField}>
               <Toggle

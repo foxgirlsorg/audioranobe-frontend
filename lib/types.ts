@@ -371,6 +371,13 @@ export interface Volume {
   chapters: ChapterRow[];
 }
 
+/** An alternative narration version. Main version is id 0 (name in TitleFull.version_name). */
+export interface TitleVersion {
+  id: number;
+  name: string;
+  sort: number;
+}
+
 export interface NarratorCard {
   id: number;
   slug: string;
@@ -479,6 +486,14 @@ export interface TitleFull extends TitleCard {
   comment_subscribed: boolean;
   /** First page of comments, embedded to save a separate request on load. */
   comments?: Paginated<Comment>;
+  /** Display name of the main narration version (version 0). */
+  version_name: string;
+  /** Alternative narration versions, ordered. Empty when there are none. */
+  versions: TitleVersion[];
+  /** Viewer's chosen version for this title; 0 = main. */
+  selected_version_id: number;
+  /** Alt-version chapters keyed by version id — overlaid on the main skeleton. */
+  alt_chapters: Record<string, ChapterRow[]>;
 }
 
 export interface ChapterPlay {
