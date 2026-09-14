@@ -1139,6 +1139,16 @@ export default function TitlePageClient({
                     <span>{narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}</span>
                   </div>
                 ) : null}
+                {title.year != null ? (
+                  <div className={styles.mFact}>
+                    <b>Год</b>
+                    <span>{title.year}</span>
+                  </div>
+                ) : null}
+                <div className={styles.mFact}>
+                  <b>Страна</b>
+                  <span>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+                </div>
                 {runtime > 0 ? (
                   <div className={styles.mFact}>
                     <b>Длительность</b>
