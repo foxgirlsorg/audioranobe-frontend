@@ -444,7 +444,15 @@ export default function TitlePageClient({
   // to the full cover when no thumb exists.
   const bg = title.bg_url ?? title.cover_thumb_url ?? title.cover_url;
   const descLong = title.description.length > DESC_CLAMP_CHARS;
-  const chaptersTotal = title.volumes.reduce((n, v) => n + liveChapters(v).length, 0);
+  const chaptersTotal = title.volumes.reduce(
+    (n, v) =>
+      n +
+      liveChapters(v).reduce(
+        (m, c) => m + (c.number_end != null ? Math.round(c.number_end - c.number) + 1 : 1),
+        0
+      ),
+    0
+  );
   const commentsTotal = title.comments?.total ?? 0;
   const runtime = title.volumes.reduce((n, v) => n + volumeDuration(v), 0);
   const narrationStatus = sharedNarrationStatus(title.narrators);
