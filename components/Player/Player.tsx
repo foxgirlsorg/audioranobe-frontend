@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { usePlayer, usePlayerPosition } from '@/lib/player';
+import { isStandalone } from '@/lib/pwa';
 import { chapterNumberLabel, formatDuration } from '@/lib/format';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import { useBackToClose } from '@/lib/useBackToClose';
@@ -82,7 +83,11 @@ export default function Player() {
   // mounted a beat past that (activeMounted) lets the slide-out play, and
   // retaining the last track (lastCurrentRef) keeps the markup renderable
   // during that exit even after the context's current has gone null.
-  const active = !!liveCurrent && (!barHidden || full);
+  // In the installed PWA the dock renders its own mini-player, so the global
+  // docked bar never shows — only its full-screen view opens (setFull).
+  const [standalone, setStandalone] = useState(false);
+  useEffect(() => setStandalone(isStandalone()), []);
+  const active = !!liveCurrent && (full || (!barHidden && !standalone));
   const activeMounted = useAnimatedPresence(active, 360);
   const lastCurrentRef = useRef(liveCurrent);
   if (liveCurrent) lastCurrentRef.current = liveCurrent;

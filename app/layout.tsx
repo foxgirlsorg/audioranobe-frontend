@@ -16,6 +16,7 @@ import { PlayerProvider } from '@/lib/player';
 import { ModSidebarProvider } from '@/lib/modSidebar';
 import NavBar from '@/components/NavBar/NavBar';
 import PwaInit from '@/components/PwaInit/PwaInit';
+import Dock from '@/components/Dock/Dock';
 import BannedBanner from '@/components/BannedBanner/BannedBanner';
 import ModAlert from '@/components/ModAlert/ModAlert';
 import RecapAlert from '@/components/RecapAlert/RecapAlert';
@@ -96,6 +97,7 @@ function AppProviders({ children }: { children: React.ReactNode }) {
                   </SkeletonTheme>
                   <Footer />
                   <Player />
+                  <Dock />
                 </ModSidebarProvider>
               </PlayerProvider>
             </ToastProvider>

@@ -38,8 +38,35 @@
 }
 
 .sidebarHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 16px 18px;
   border-bottom: 1px solid var(--border);
+}
+
+.sidebarBack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -4px 0 -4px -6px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.sidebarBack:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.sidebarBack svg {
+  width: 20px;
+  height: 20px;
 }
 
 .sidebarTitle {

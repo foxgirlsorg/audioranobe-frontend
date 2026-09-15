@@ -186,6 +186,17 @@ export default function NavBar() {
   }, [pathname, closeUserMenu, setModSidebarOpen]);
 
   useEffect(() => {
+    const openMenu = () => {
+      if (userMenuCloseTimerRef.current) window.clearTimeout(userMenuCloseTimerRef.current);
+      setUserMenuClosing(false);
+      setUserMenuOpen(true);
+      ensureNarrators();
+    };
+    window.addEventListener('pwa-open-menu', openMenu);
+    return () => window.removeEventListener('pwa-open-menu', openMenu);
+  }, [ensureNarrators]);
+
+  useEffect(() => {
     const query = q.trim();
     if (query.length < 2) {
       setSug(null);

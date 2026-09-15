@@ -25,6 +25,7 @@ import { useAuth } from '@/lib/auth';
 import { usePlayer } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { isStandalone } from '@/lib/pwa';
 import { initialsOf } from '@/lib/format';
 import { LIMITS } from '@/lib/limits';
 import { useAway, scalePoll } from '@/lib/presence';
@@ -155,6 +156,8 @@ export default function ChatPage() {
 function ChatInner() {
   const { user, isMod, loading: authLoading } = useAuth();
   const { setBarHidden } = usePlayer();
+  const [pwa, setPwa] = useState(false);
+  useEffect(() => setPwa(isStandalone()), []);
   const away = useAway();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -698,6 +701,16 @@ function ChatInner() {
     <div className={`${styles.page} ${selectedId !== null ? styles.threadOpen : ''}`}>
       <aside className={styles.sidebar}>
         <header className={styles.sidebarHead}>
+          {pwa ? (
+            <button
+              type="button"
+              className={styles.sidebarBack}
+              onClick={() => router.push('/')}
+              aria-label="Назад"
+            >
+              <ArrowLeft />
+            </button>
+          ) : null}
           <h1 className={styles.sidebarTitle}>Сообщения</h1>
         </header>
         <div className={styles.convList}>

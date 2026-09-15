@@ -19,6 +19,7 @@ export default function PwaInit() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+    document.body.classList.toggle('pwa', isStandalone());
   }, []);
 
   useEffect(() => {

@@ -677,3 +677,36 @@ button.pill:active {
     margin-bottom: 1rem;
   }
 }
+
+/* Installed PWA (standalone): the bottom dock replaces the top navbar. */
+body.pwa {
+  /* No top navbar, so nothing reserves space for it — drops the top margin on
+     pages, the account drawer, and the fullscreen chat alike. */
+  --nav-total: 0px;
+  --nav-height: 0px;
+}
+
+body.pwa .site-header,
+body.pwa footer {
+  display: none;
+}
+
+body.pwa main.container {
+  padding-top: 1rem;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+body.pwa.pwa-player main.container {
+  padding-bottom: calc(134px + env(safe-area-inset-bottom));
+}
+
+/* The fullscreen chat runs its own layout and hides the dock — it must keep
+   its edge-to-edge padding, not the dock clearance above. */
+body.pwa.dm-fullscreen main.container {
+  padding: 0;
+}
+
+/* Threads / the messages section own the bottom — hide the dock there. */
+body.dm-fullscreen .app-dock {
+  display: none;
+}
