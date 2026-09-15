@@ -12,6 +12,7 @@ import {
   History,
   Library,
   LibraryBig,
+  Download,
   LogOut,
   Menu,
   MessageCircle,
@@ -35,6 +36,7 @@ import { useMyNarrators } from '@/lib/narrators';
 import { useModSidebar } from '@/lib/modSidebar';
 import { errMsg, useToast } from '@/lib/toast';
 import { useRequestNarration } from '@/lib/requestNarration';
+import { useInstall, promptInstall } from '@/lib/pwa';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import type { SearchSuggest } from '@/lib/types';
 import NotificationBell from '@/components/NotificationBell/NotificationBell';
@@ -340,6 +342,21 @@ export default function NavBar() {
     router.push('/');
   };
 
+  const { canInstall, standalone, ios } = useInstall();
+  const showInstall = !standalone && (canInstall || ios);
+
+  const doInstall = async () => {
+    if (canInstall) {
+      const r = await promptInstall();
+      if (r === 'accepted') closeUserMenu();
+      return;
+    }
+    if (ios) {
+      closeUserMenu();
+      toast('Нажмите «Поделиться» в Safari и выберите «На экран „Домой“», чтобы установить приложение');
+    }
+  };
+
   const avatar = () =>
     user?.avatar_url || user?.avatar_thumb_url ? (
       <img className={styles.avatarImg} src={user.avatar_thumb_url ?? user.avatar_url ?? ''} alt={user.username} />
@@ -415,6 +432,15 @@ export default function NavBar() {
             ))}
 
           </>
+        ) : null}
+        {showInstall ? (
+          <div className={styles.menuMobileOnly}>
+            <div className={styles.menuSep} />
+            <button type="button" className={styles.menuItem} onClick={doInstall}>
+              <Download aria-hidden="true" />
+              {'Установить приложение'}
+            </button>
+          </div>
         ) : null}
         <div className={styles.menuSep} />
         <button type="button" className={styles.menuItem} onClick={doLogout}>

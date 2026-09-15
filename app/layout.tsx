@@ -15,6 +15,7 @@ import { ToastProvider } from '@/lib/toast';
 import { PlayerProvider } from '@/lib/player';
 import { ModSidebarProvider } from '@/lib/modSidebar';
 import NavBar from '@/components/NavBar/NavBar';
+import PwaInit from '@/components/PwaInit/PwaInit';
 import BannedBanner from '@/components/BannedBanner/BannedBanner';
 import ModAlert from '@/components/ModAlert/ModAlert';
 import RecapAlert from '@/components/RecapAlert/RecapAlert';
@@ -31,7 +32,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
-  icons: { icon: '/favicon.svg' },
+  manifest: '/manifest.webmanifest',
+  icons: { icon: '/favicon.svg', apple: '/apple-touch-icon.png' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'AudioRanobe' },
   alternates: {
     canonical: '/',
     languages: { 'ru-RU': '/', 'x-default': '/' },
@@ -61,6 +64,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: '#0f0f14',
 };
 
 function AppProviders({ children }: { children: React.ReactNode }) {
@@ -76,6 +80,7 @@ function AppProviders({ children }: { children: React.ReactNode }) {
                     {'Перейти к содержимому'}
                   </a>
                   <div className="noise" aria-hidden="true" />
+                  <PwaInit />
                   <DragScroll />
                   <NavBar />
                   <BannedBanner />

@@ -30,7 +30,8 @@ import type {
 } from '@/lib/types';
 import ProviderAuth from '@/components/ProviderAuth/ProviderAuth';
 import { useAuth } from '@/lib/auth';
-import { enablePush, pushPermission, type PushState } from '@/lib/push';
+import { enablePush, disablePush, pushSubscribed, pushPermission, type PushState } from '@/lib/push';
+import { useInstall, promptInstall } from '@/lib/pwa';
 import { useToast, errMsg } from '@/lib/toast';
 import Spinner from '@/components/Spinner/Spinner';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
@@ -160,9 +161,23 @@ export default function SettingsPage() {
   const [prefBusy, setPrefBusy] = useState<keyof NotificationPrefs | null>(null);
 
   const [notifPerm, setNotifPerm] = useState<PushState>('default');
+  const [notifSubscribed, setNotifSubscribed] = useState(false);
   const [notifBusy, setNotifBusy] = useState(false);
+  const { canInstall, standalone, ios } = useInstall();
+  const showInstall = !standalone && (canInstall || ios);
+
+  async function installApp() {
+    if (canInstall) {
+      await promptInstall();
+      return;
+    }
+    if (ios) {
+      toast('Нажмите «Поделиться» в Safari и выберите «На экран „Домой“», чтобы установить приложение');
+    }
+  }
   useEffect(() => {
     setNotifPerm(pushPermission());
+    pushSubscribed().then(setNotifSubscribed).catch(() => {});
   }, []);
 
   async function enableBrowserNotifications() {
@@ -171,6 +186,7 @@ export default function SettingsPage() {
     try {
       const res = await enablePush();
       setNotifPerm(res);
+      setNotifSubscribed(res === 'granted');
       toast(
         res === 'granted'
           ? 'Уведомления в браузере включены'
@@ -179,6 +195,20 @@ export default function SettingsPage() {
             : 'Разрешение на уведомления не выдано',
         res === 'granted' ? 'ok' : 'error'
       );
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setNotifBusy(false);
+    }
+  }
+
+  async function disableBrowserNotifications() {
+    if (notifBusy) return;
+    setNotifBusy(true);
+    try {
+      await disablePush();
+      setNotifSubscribed(false);
+      toast('Уведомления в браузере отключены', 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
     } finally {
@@ -921,30 +951,47 @@ export default function SettingsPage() {
           <div>
             <h2 className={styles.panelTitle}>{'Уведомления в браузере'}</h2>
             <p className={styles.panelHint}>
-              {notifPerm === 'granted'
-                ? 'Уведомления в браузере включены.'
+              {notifSubscribed
+                ? 'Уведомления в браузере включены на этом устройстве.'
                 : notifPerm === 'denied'
                   ? 'Уведомления заблокированы. Разрешите их в настройках браузера для этого сайта.'
                   : notifPerm === 'unsupported'
                     ? 'Ваш браузер не поддерживает уведомления.'
                     : 'Разрешите браузеру показывать уведомления на этом устройстве.'}
             </p>
+            {!standalone ? (
+              <p className={styles.panelHint}>
+                {'На iPhone и iPad уведомления работают только если добавить сайт на экран «Домой» как приложение.'}
+              </p>
+            ) : null}
           </div>
         </div>
 
         <div className={styles.panelActions}>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={enableBrowserNotifications}
-            disabled={notifBusy || notifPerm === 'granted' || notifPerm === 'denied' || notifPerm === 'unsupported'}
-          >
-            {notifBusy
-              ? 'Включаем…'
-              : notifPerm === 'granted'
-                ? 'Включено'
-                : 'Включить уведомления'}
-          </button>
+          {notifSubscribed ? (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={disableBrowserNotifications}
+              disabled={notifBusy}
+            >
+              {notifBusy ? 'Отключаем…' : 'Отключить уведомления'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={enableBrowserNotifications}
+              disabled={notifBusy || notifPerm === 'denied' || notifPerm === 'unsupported'}
+            >
+              {notifBusy ? 'Включаем…' : 'Включить уведомления'}
+            </button>
+          )}
+          {showInstall ? (
+            <button type="button" className="btn btn-ghost" onClick={installApp}>
+              {'Установить приложение'}
+            </button>
+          ) : null}
         </div>
       </section>
 

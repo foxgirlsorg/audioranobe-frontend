@@ -1,0 +1,16 @@
+{
+  "name": "AudioRanobe",
+  "short_name": "AudioRanobe",
+  "description": "Сообщество аудиокниг — слушайте, отслеживайте и находите озвученные тайтлы.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "lang": "ru",
+  "background_color": "#0f0f14",
+  "theme_color": "#0f0f14",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
