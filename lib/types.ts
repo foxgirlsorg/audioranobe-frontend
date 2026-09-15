@@ -1013,6 +1013,7 @@ export interface DashboardStats {
   jobs_error: number;
   review_queue: number;
   comments_unchecked: number;
+  push_subscribers: number;
 }
 
 /** GET /mod/review-queue item — a title that bypassed the normal pending

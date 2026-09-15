@@ -30,6 +30,7 @@ import type {
 } from '@/lib/types';
 import ProviderAuth from '@/components/ProviderAuth/ProviderAuth';
 import { useAuth } from '@/lib/auth';
+import { enablePush, pushPermission, type PushState } from '@/lib/push';
 import { useToast, errMsg } from '@/lib/toast';
 import Spinner from '@/components/Spinner/Spinner';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
@@ -157,6 +158,33 @@ export default function SettingsPage() {
 
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [prefBusy, setPrefBusy] = useState<keyof NotificationPrefs | null>(null);
+
+  const [notifPerm, setNotifPerm] = useState<PushState>('default');
+  const [notifBusy, setNotifBusy] = useState(false);
+  useEffect(() => {
+    setNotifPerm(pushPermission());
+  }, []);
+
+  async function enableBrowserNotifications() {
+    if (notifBusy) return;
+    setNotifBusy(true);
+    try {
+      const res = await enablePush();
+      setNotifPerm(res);
+      toast(
+        res === 'granted'
+          ? 'Уведомления в браузере включены'
+          : res === 'denied'
+            ? 'Уведомления заблокированы — включите их в настройках браузера для этого сайта'
+            : 'Разрешение на уведомления не выдано',
+        res === 'granted' ? 'ok' : 'error'
+      );
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setNotifBusy(false);
+    }
+  }
 
   const [commentTitles, setCommentTitles] = useState<CommentSubTitle[] | null>(null);
   const [subBusy, setSubBusy] = useState<number | null>(null);
@@ -885,6 +913,39 @@ export default function SettingsPage() {
           providers={authProviders}
           hide={(identities ?? []).map((i) => i.provider)}
         />
+      </section>
+
+      <section className={`glass-panel ${styles.panel}`}>
+        <div className={styles.panelHead}>
+          <Bell size={16} className={styles.panelIcon} />
+          <div>
+            <h2 className={styles.panelTitle}>{'Уведомления в браузере'}</h2>
+            <p className={styles.panelHint}>
+              {notifPerm === 'granted'
+                ? 'Уведомления в браузере включены.'
+                : notifPerm === 'denied'
+                  ? 'Уведомления заблокированы. Разрешите их в настройках браузера для этого сайта.'
+                  : notifPerm === 'unsupported'
+                    ? 'Ваш браузер не поддерживает уведомления.'
+                    : 'Разрешите браузеру показывать уведомления на этом устройстве.'}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.panelActions}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={enableBrowserNotifications}
+            disabled={notifBusy || notifPerm === 'granted' || notifPerm === 'denied' || notifPerm === 'unsupported'}
+          >
+            {notifBusy
+              ? 'Включаем…'
+              : notifPerm === 'granted'
+                ? 'Включено'
+                : 'Включить уведомления'}
+          </button>
+        </div>
       </section>
 
       <section className={`glass-panel ${styles.panel}`}>

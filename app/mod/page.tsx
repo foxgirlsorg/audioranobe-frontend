@@ -23,6 +23,7 @@ const TILES: {
   { key: 'mods_online', label: 'Модераторов онлайн' },
   { key: 'users', label: 'Пользователи', href: '/mod/users' },
   { key: 'new_users_7d', label: 'Новые за 7 дней', href: '/mod/users' },
+  { key: 'push_subscribers', label: 'Подписчиков на push' },
   { key: 'titles_total', label: 'Тайтлы', href: '/catalog' },
   { key: 'chapters_total', label: 'Главы' },
   { key: 'narrators_total', label: 'Чтецы' },
