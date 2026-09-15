@@ -690,7 +690,8 @@
 
 /* Hidden above the mobile break point; the media query below turns it on. */
 .mobileSearchBtn,
-.modMenuBtn {
+.modMenuBtn,
+.guestBurgerBtn {
   display: none;
 }
 
@@ -721,12 +722,17 @@
   }
 
   .mobileSearchBtn,
-  .modMenuBtn {
+  .modMenuBtn,
+  .guestBurgerBtn {
     display: inline-flex;
     min-width: 44px;
     min-height: 44px;
     align-items: center;
     justify-content: center;
+  }
+
+  .guestDesktopBtn {
+    display: none;
   }
 
 }

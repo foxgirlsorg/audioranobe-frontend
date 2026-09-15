@@ -16,6 +16,7 @@ import {
   Menu,
   MessageCircle,
   Mic,
+  LogIn,
   Newspaper,
   PenLine,
   Plus,
@@ -423,6 +424,36 @@ export default function NavBar() {
       </>
     );
 
+  const renderGuestMenuContent = () => (
+    <>
+      {NAV_LINKS.map((l) => (
+        <Link
+          key={l.href}
+          href={l.href}
+          className={styles.menuItem}
+          onClick={closeUserMenu}
+          prefetch={false}
+        >
+          <l.icon aria-hidden="true" />
+          {l.label}
+        </Link>
+      ))}
+      <button type="button" className={styles.menuItem} onClick={goRandom}>
+        <Dices aria-hidden="true" />
+        {'Случайный тайтл'}
+      </button>
+      <div className={styles.menuSep} />
+      <Link href="/auth/login" className={styles.menuItem} onClick={closeUserMenu} prefetch={false}>
+        <LogIn aria-hidden="true" />
+        {'Войти'}
+      </Link>
+      <Link href="/auth/register" className={styles.menuItem} onClick={closeUserMenu} prefetch={false}>
+        <UserPlus aria-hidden="true" />
+        {'Регистрация'}
+      </Link>
+    </>
+  );
+
   const userLinks = user
     ? [
         { href: `/user/${user.id}`, label: 'Профиль', icon: User, count: 0 },
@@ -710,15 +741,65 @@ export default function NavBar() {
                   : null}
               </>
             ) : (
-              <Link
-                href="/auth/register"
-                className={styles.iconBtn}
-                title={'Регистрация'}
-                aria-label={'Регистрация'}
-                prefetch={false}
-              >
-                <UserPlus />
-              </Link>
+              <>
+                <Link
+                  href="/auth/login"
+                  className={`${styles.iconBtn} ${styles.guestDesktopBtn}`}
+                  title={'Войти'}
+                  aria-label={'Войти'}
+                  prefetch={false}
+                >
+                  <LogIn />
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className={`${styles.iconBtn} ${styles.guestDesktopBtn}`}
+                  title={'Регистрация'}
+                  aria-label={'Регистрация'}
+                  prefetch={false}
+                >
+                  <UserPlus />
+                </Link>
+                <button
+                  type="button"
+                  className={`${styles.iconBtn} ${styles.guestBurgerBtn}`}
+                  onClick={() => {
+                    if (userMenuOpen) {
+                      closeUserMenu();
+                    } else {
+                      if (userMenuCloseTimerRef.current) window.clearTimeout(userMenuCloseTimerRef.current);
+                      setUserMenuClosing(false);
+                      setUserMenuOpen(true);
+                    }
+                  }}
+                  aria-label={userMenuOpen ? 'Закрыть меню' : 'Меню'}
+                  aria-expanded={userMenuOpen}
+                >
+                  {userMenuOpen ? <X /> : <Menu />}
+                </button>
+                {isMobile && mounted
+                  ? createPortal(
+                      <>
+                        <div
+                          className={`${styles.userMenuBackdrop} ${
+                            userMenuOpen ? styles.userMenuBackdropOpen : ''
+                          }`}
+                          onClick={closeUserMenu}
+                          aria-hidden="true"
+                        />
+                        <div
+                          className={`${styles.userMenuMobile} ${
+                            userMenuOpen ? styles.userMenuMobileOpen : ''
+                          }`}
+                          ref={mobileMenuRef}
+                        >
+                          {renderGuestMenuContent()}
+                        </div>
+                      </>,
+                      document.body
+                    )
+                  : null}
+              </>
             )}
           </div>
         </div>
