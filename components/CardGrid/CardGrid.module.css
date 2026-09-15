@@ -51,16 +51,9 @@
 
 @media (max-width: 768px) {
   .grid.gridEdge {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 150px));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: normal;
     row-gap: 1.1rem;
     column-gap: 0.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .grid.gridEdge {
-    grid-template-columns: repeat(auto-fit, minmax(110px, 130px));
-    row-gap: 1rem;
-    column-gap: 0.7rem;
   }
 }
