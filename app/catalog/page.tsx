@@ -1,27 +1,34 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
   ArrowUpNarrowWide,
+  Mic,
   RotateCcw,
   SearchX,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import {
   COUNTRY_LABELS,
   COUNTRY_VALUES,
   RELEASE_STATUS_LABELS,
   STATUS_VALUES,
   type Genre,
+  type Me,
+  type NarratorCard,
   type Paginated,
   type RequestableTitle,
   type TitleCard,
+  type UserSearchHit,
 } from '@/lib/types';
 import { errMsg } from '@/lib/toast';
-import { formatCount } from '@/lib/format';
+import { formatCount, initialsOf } from '@/lib/format';
 import CardGrid from '@/components/CardGrid/CardGrid';
 import RequestableTitles from '@/components/RequestableTitles/RequestableTitles';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
@@ -31,9 +38,11 @@ import EmptyState from '@/components/EmptyState/EmptyState';
 import GenrePicker from '@/components/GenrePicker/GenrePicker';
 import Select, { type SelectOption } from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
+import Tabs from '@/components/Tabs/Tabs';
 import styles from './page.module.css';
 
 type CatalogData = Paginated<TitleCard> & { external?: RequestableTitle[] };
+type SearchTab = 'titles' | 'narrators' | 'users';
 
 const SORT_OPTIONS: SelectOption[] = [
   { value: 'popular', label: 'По прослушиваниям' },
@@ -44,15 +53,23 @@ const SORT_OPTIONS: SelectOption[] = [
   { value: 'chapters', label: 'По числу глав' },
 ];
 
-const RATING_OPTIONS: SelectOption[] = [
-  { value: '', label: 'Любой рейтинг' },
-  ...[9, 8, 7, 6, 5].map((n) => ({ value: String(n), label: `${n}+` })),
-];
+const SEARCH_PLACEHOLDER: Record<SearchTab, string> = {
+  titles: 'Название тайтла …',
+  narrators: 'Имя чтеца …',
+  users: 'Имя пользователя …',
+};
 
 function CatalogInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sp = searchParams.toString();
+  const { user } = useAuth();
+
+  const tab = ((): SearchTab => {
+    const t = searchParams.get('tab');
+    if (t === 'users') return user ? 'users' : 'titles';
+    return t === 'narrators' ? t : 'titles';
+  })();
 
   const q = searchParams.get('q') ?? '';
   const genre = searchParams.get('genre') ?? '';
@@ -62,9 +79,8 @@ function CatalogInner() {
   const yearTo = searchParams.get('year_to') ?? '';
   const status = searchParams.get('release_status') ?? '';
   const country = searchParams.get('country') ?? '';
-  const finished = searchParams.get('finished') === '1';
   const showAi = searchParams.get('hide_ai') !== '1';
-  const minRating = searchParams.get('min_rating') ?? '';
+  const nsfwParam = searchParams.get('nsfw');
   const sort = searchParams.get('sort') ?? 'popular';
   const order = searchParams.get('order') === 'asc' ? 'asc' : 'desc';
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
@@ -73,12 +89,17 @@ function CatalogInner() {
   const [authorInput, setAuthorInput] = useState(author);
   const [yearFromInput, setYearFromInput] = useState(yearFrom);
   const [yearToInput, setYearToInput] = useState(yearTo);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [userHideNsfw, setUserHideNsfw] = useState(true);
+  const show18 = nsfwParam === null ? !userHideNsfw : nsfwParam === '1';
 
   const [genres, setGenres] = useState<Genre[]>([]);
   const selectedGenreIds = genres
     .filter((g) => genreSlugs.includes(g.slug))
     .map((g) => g.id);
   const [data, setData] = useState<CatalogData | null>(null);
+  const [narrators, setNarrators] = useState<Paginated<NarratorCard> | null>(null);
+  const [users, setUsers] = useState<UserSearchHit[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
@@ -127,62 +148,73 @@ function CatalogInner() {
       .then((d) => {
         if (alive) setGenres(d.items ?? []);
       })
-      .catch(() => {
-      });
+      .catch(() => {});
     return () => {
       alive = false;
     };
   }, []);
 
+  // The 18+ switch defaults to the viewer's own content setting; the slim
+  // X-Me viewer omits content_prefs, so fetch the full profile once.
+  useEffect(() => {
+    if (!user) {
+      setUserHideNsfw(true);
+      return;
+    }
+    let alive = true;
+    api<Me>('/me')
+      .then((me) => {
+        if (alive) setUserHideNsfw(me.content_prefs?.hide_nsfw ?? true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
   useEffect(() => {
     let alive = true;
     setLoading(true);
     setError(null);
-    api<CatalogData>('/titles', {
-      params: {
-        q,
-        genre,
-        author,
-        year_from: yearFrom,
-        year_to: yearTo,
-        release_status: status,
-        country,
-        finished: finished ? '1' : '',
-        hide_ai: showAi ? '' : '1',
-        min_rating: minRating,
-        sort,
-        order,
-        page,
-      },
-    })
-      .then((d) => {
-        if (alive) setData(d);
-      })
-      .catch((e) => {
-        if (alive) setError(errMsg(e));
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
+
+    const done = <T,>(set: (v: T) => void) => (v: T) => {
+      if (alive) set(v);
+    };
+    const fail = (e: unknown) => {
+      if (alive) setError(errMsg(e));
+    };
+    const settle = () => {
+      if (alive) setLoading(false);
+    };
+
+    if (tab === 'narrators') {
+      api<Paginated<NarratorCard>>('/narrators', { params: { q, page } })
+        .then(done(setNarrators)).catch(fail).finally(settle);
+    } else if (tab === 'users') {
+      api<{ items: UserSearchHit[] }>('/users/search', { params: { q } })
+        .then((r) => done(setUsers)(r.items ?? [])).catch(fail).finally(settle);
+    } else {
+      api<CatalogData>('/titles', {
+        params: {
+          q, genre, author, year_from: yearFrom, year_to: yearTo,
+          release_status: status, country,
+          hide_ai: showAi ? '' : '1', nsfw: nsfwParam ?? '', sort, order, page,
+        },
+      }).then(done(setData)).catch(fail).finally(settle);
+    }
     return () => {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sp, nonce]);
+  }, [sp, nonce, tab]);
+
+  const activeFilterCount = [
+    genre, author, yearFrom, yearTo, status, country,
+    showAi ? '' : '1', nsfwParam ?? '',
+  ].filter(Boolean).length;
 
   const hasFilters = Boolean(
-    q ||
-      genre ||
-      author ||
-      yearFrom ||
-      yearTo ||
-      status ||
-      country ||
-      finished ||
-      !showAi ||
-      minRating ||
-      sort !== 'popular' ||
-      order !== 'desc'
+    q || activeFilterCount > 0 || sort !== 'popular' || order !== 'desc'
   );
 
   const resetFilters = () => {
@@ -191,13 +223,100 @@ function CatalogInner() {
     setYearFromInput('');
     setYearToInput('');
     pushedRef.current = '';
-    router.replace('/catalog', { scroll: false });
+    router.replace(tab === 'titles' ? '/catalog' : `/catalog?tab=${tab}`, { scroll: false });
   };
 
   const onPage = (p: number) => {
     setParams({ page: p <= 1 ? null : String(p) }, false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const filterFields = (
+    <>
+      <div className={styles.field}>
+        <span className={styles.fLabel}>Теги</span>
+        <GenrePicker
+          genres={genres}
+          allowCreate={false}
+          placeholder="Найти тег…"
+          value={selectedGenreIds}
+          onChange={(ids) => {
+            const slugs = ids
+              .map((id) => genres.find((g) => g.id === id)?.slug)
+              .filter((s): s is string => !!s);
+            setParams({ genre: slugs.length > 0 ? slugs.join(',') : null });
+          }}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.fLabel} htmlFor="catalog-author">Автор</label>
+        <input
+          id="catalog-author"
+          type="text"
+          className="input"
+          placeholder="Например: Duichidak"
+          value={authorInput}
+          onChange={(e) => setAuthorInput(e.target.value)}
+        />
+      </div>
+
+      <div className={styles.field}>
+        <span className={styles.fLabel}>Год</span>
+        <div className={styles.yearRow}>
+          <input type="number" className="input" placeholder="От" min={0} max={2100}
+            value={yearFromInput} onChange={(e) => setYearFromInput(e.target.value)} aria-label="Год от" />
+          <input type="number" className="input" placeholder="До" min={0} max={2100}
+            value={yearToInput} onChange={(e) => setYearToInput(e.target.value)} aria-label="Год до" />
+        </div>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.fLabel} htmlFor="catalog-status">Статус</label>
+        <Select id="catalog-status" block value={status} placeholder="Любой статус"
+          options={[{ value: '', label: 'Любой статус' }, ...STATUS_VALUES.map((s) => ({ value: s, label: RELEASE_STATUS_LABELS[s] }))]}
+          onChange={(v) => setParams({ release_status: v || null })} />
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.fLabel} htmlFor="catalog-country">Страна</label>
+        <Select id="catalog-country" block value={country} placeholder="Любая страна"
+          options={[{ value: '', label: 'Любая страна' }, ...COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] }))]}
+          onChange={(v) => setParams({ country: v || null })} />
+      </div>
+
+      <div className={styles.field}>
+        <Toggle checked={showAi} onChange={(on) => setParams({ hide_ai: on ? null : '1' })}
+          label="Показывать ИИ-озвучку" hint="тайтлы, озвученные синтезированным голосом" />
+      </div>
+
+      <div className={styles.field}>
+        <Toggle
+          checked={show18}
+          onChange={(on) => setParams({ nsfw: on === !userHideNsfw ? null : on ? '1' : '0' })}
+          label="Показывать 18+"
+          hint="по умолчанию — как в настройках вашего профиля"
+        />
+      </div>
+    </>
+  );
+
+  const sortControl = (
+    <div className={styles.sortRow}>
+      <Select id="catalog-sort" block value={sort} options={SORT_OPTIONS}
+        onChange={(v) => setParams({ sort: v === 'popular' ? null : v })} />
+      <button
+        type="button"
+        className={styles.invertBtn}
+        onClick={() => setParams({ order: order === 'asc' ? null : 'asc' })}
+        aria-pressed={order === 'asc'}
+        title={order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'}
+        aria-label={order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'}
+      >
+        <ArrowUpNarrowWide size={15} className={order === 'asc' ? undefined : styles.invertBtnFlipped} />
+      </button>
+    </div>
+  );
 
   return (
     <div>
@@ -208,254 +327,164 @@ function CatalogInner() {
         </h1>
       </header>
 
+      <div className={styles.searchBar}>
+        <input
+          id="catalog-q"
+          type="search"
+          className="input"
+          placeholder={SEARCH_PLACEHOLDER[tab]}
+          value={qInput}
+          onChange={(e) => setQInput(e.target.value)}
+        />
+      </div>
+
+      <Tabs
+        variant="underline"
+        scrollable
+        active={tab}
+        onChange={(k) => setParams({ tab: k === 'titles' ? null : k })}
+        tabs={[
+          { key: 'titles', label: 'Тайтлы' },
+          { key: 'narrators', label: 'Чтецы' },
+          ...(user ? [{ key: 'users', label: 'Люди' }] : []),
+        ]}
+      />
+
       <div className={styles.layout}>
-        <aside className={styles.side}>
-          <div className={`glass-panel ${styles.filterCard}`}>
-            <div className={styles.filterHead}>
-              <SlidersHorizontal size={14} />
-              Фильтры
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.fLabel} htmlFor="catalog-q">
-                Поиск
-              </label>
-              <input
-                id="catalog-q"
-                type="search"
-                className="input"
-                placeholder="Название тайтла …"
-                value={qInput}
-                onChange={(e) => setQInput(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <span className={styles.fLabel}>Теги</span>
-              <GenrePicker
-                genres={genres}
-                allowCreate={false}
-                placeholder="Найти тег…"
-                value={selectedGenreIds}
-                onChange={(ids) => {
-                  const slugs = ids
-                    .map((id) => genres.find((g) => g.id === id)?.slug)
-                    .filter((s): s is string => !!s);
-                  setParams({ genre: slugs.length > 0 ? slugs.join(',') : null });
-                }}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.fLabel} htmlFor="catalog-author">
-                Автор
-              </label>
-              <input
-                id="catalog-author"
-                type="text"
-                className="input"
-                placeholder="Например: Duichidak"
-                value={authorInput}
-                onChange={(e) => setAuthorInput(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <span className={styles.fLabel}>Год</span>
-              <div className={styles.yearRow}>
-                <input
-                  type="number"
-                  className="input"
-                  placeholder="От"
-                  min={0}
-                  max={2100}
-                  value={yearFromInput}
-                  onChange={(e) => setYearFromInput(e.target.value)}
-                  aria-label="Год от"
-                />
-                <input
-                  type="number"
-                  className="input"
-                  placeholder="До"
-                  min={0}
-                  max={2100}
-                  value={yearToInput}
-                  onChange={(e) => setYearToInput(e.target.value)}
-                  aria-label="Год до"
-                />
-              </div>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.fLabel} htmlFor="catalog-status">
-                Статус
-              </label>
-              <Select
-                id="catalog-status"
-                block
-                value={status}
-                placeholder="Любой статус"
-                options={[
-                  { value: '', label: 'Любой статус' },
-                  ...STATUS_VALUES.map((s) => ({ value: s, label: RELEASE_STATUS_LABELS[s] })),
-                ]}
-                onChange={(v) => setParams({ release_status: v || null })}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.fLabel} htmlFor="catalog-country">
-                Страна
-              </label>
-              <Select
-                id="catalog-country"
-                block
-                value={country}
-                placeholder="Любая страна"
-                options={[
-                  { value: '', label: 'Любая страна' },
-                  ...COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] })),
-                ]}
-                onChange={(v) => setParams({ country: v || null })}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <Toggle
-                checked={showAi}
-                onChange={(on) => setParams({ hide_ai: on ? null : '1' })}
-                label="Показывать ИИ-озвучку"
-                hint="тайтлы, озвученные синтезированным голосом"
-              />
-            </div>
-
-            <div className={styles.field}>
-              <Toggle
-                checked={finished}
-                onChange={(on) => setParams({ finished: on ? '1' : null })}
-                label="Только завершённые"
-                hint="тайтл завершён и хотя бы один чтец завершил озвучку"
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.fLabel} htmlFor="catalog-rating">
-                Мин. рейтинг
-              </label>
-              <Select
-                id="catalog-rating"
-                block
-                value={minRating}
-                placeholder="Любой рейтинг"
-                options={RATING_OPTIONS}
-                onChange={(v) => setParams({ min_rating: v || null })}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.fLabel} htmlFor="catalog-sort">
-                Сортировка
-              </label>
-              <div className={styles.sortRow}>
-                <Select
-                  id="catalog-sort"
-                  block
-                  value={sort}
-                  options={SORT_OPTIONS}
-                  onChange={(v) => setParams({ sort: v === 'popular' ? null : v })}
-                />
+        <div className={styles.main}>
+          {tab === 'titles' ? (
+            <div className={styles.controls}>
+              <span className={styles.controlsCount}>
+                {data ? `Тайтлов: ${formatCount(data.total)}` : ''}
+                {loading && data ? <Spinner size={14} inline /> : null}
+              </span>
+              <div className={styles.controlsBtns}>
                 <button
                   type="button"
-                  className={styles.invertBtn}
-                  onClick={() => setParams({ order: order === 'asc' ? null : 'asc' })}
-                  aria-pressed={order === 'asc'}
-                  title={
-                    order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'
-                  }
-                  aria-label={
-                    order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'
-                  }
+                  className={activeFilterCount > 0 ? `${styles.filterBtn} ${styles.filterBtnActive}` : styles.filterBtn}
+                  onClick={() => setSheetOpen(true)}
                 >
-                  <ArrowUpNarrowWide
-                    size={15}
-                    className={order === 'asc' ? undefined : styles.invertBtnFlipped}
-                  />
+                  <SlidersHorizontal size={15} />
+                  Фильтры
+                  {activeFilterCount > 0 ? <span className={styles.filterDot}>{activeFilterCount}</span> : null}
                 </button>
+                {sortControl}
               </div>
             </div>
-
-            {hasFilters ? (
-              <button type="button" className="btn btn-ghost" onClick={resetFilters}>
-                <RotateCcw />
-                Сбросить фильтры
-              </button>
-            ) : null}
-          </div>
-        </aside>
-
-        <div className={styles.main}>
-          <div className={styles.resultsBar}>
-            {data ? (
-              <span>{`Тайтлов: ${formatCount(data.total)}`}</span>
-            ) : null}
-            {loading && data ? <Spinner size={14} inline /> : null}
-          </div>
-
-          {loading && !data ? (
-            <div className={styles.center}>
-              <Spinner size={34} />
+          ) : (
+            <div className={styles.resultsBar}>
+              {tab === 'narrators' && narrators ? <span>{`Чтецов: ${formatCount(narrators.total)}`}</span> : null}
+              {tab === 'users' && users ? <span>{`Найдено: ${formatCount(users.length)}`}</span> : null}
+              {loading && (narrators || users) ? <Spinner size={14} inline /> : null}
             </div>
+          )}
+
+          {loading && !data && !narrators && !users ? (
+            <div className={styles.center}><Spinner size={34} /></div>
           ) : error ? (
             <div className={styles.center}>
-              <EmptyState icon={AlertTriangle} title="Не удалось загрузить тайтлы" body={error} />
+              <EmptyState icon={AlertTriangle} title="Не удалось загрузить" body={error} />
               <button type="button" className="btn" onClick={() => setNonce((n) => n + 1)}>
                 Попробовать ещё раз
               </button>
             </div>
-          ) : !data || data.items.length === 0 ? (
-            <EmptyState
-              icon={SearchX}
-              title="Тайтлы не найдены"
-              body="Попробуйте смягчить или сбросить фильтры."
-            />
-          ) : (
-            <>
-              <div className={loading ? `${styles.gridWrap} ${styles.gridLoading}` : styles.gridWrap}>
-                <CardGrid>
-                  {data.items.map((t) => (
-                    <TitleCardC key={t.id} title={t} />
+          ) : tab === 'titles' ? (
+            !data || data.items.length === 0 ? (
+              <EmptyState icon={SearchX} title="Тайтлы не найдены" body="Попробуйте смягчить или сбросить фильтры." />
+            ) : (
+              <>
+                <div className={loading ? `${styles.gridWrap} ${styles.gridLoading}` : styles.gridWrap}>
+                  <CardGrid>
+                    {data.items.map((t) => <TitleCardC key={t.id} title={t} />)}
+                  </CardGrid>
+                </div>
+                <div className={styles.pagerWrap}>
+                  <Pagination page={data.page} total={data.total} perPage={data.per_page} onPage={onPage} />
+                </div>
+              </>
+            )
+          ) : tab === 'narrators' ? (
+            !narrators || narrators.items.length === 0 ? (
+              <EmptyState icon={SearchX} title="Чтецы не найдены" body="Попробуйте другой запрос." />
+            ) : (
+              <>
+                <div className={loading ? `${styles.peopleGrid} ${styles.gridLoading}` : styles.peopleGrid}>
+                  {narrators.items.map((n) => (
+                    <Link key={n.id} href={`/narrator/${n.slug}`} className={styles.personCard}>
+                      <span className={styles.personAvatar}>
+                        {n.avatar_thumb_url || n.avatar_url
+                          ? <img src={n.avatar_thumb_url ?? n.avatar_url ?? ''} alt="" />
+                          : <Mic size={22} aria-hidden="true" />}
+                      </span>
+                      <span className={styles.personName}>{n.name}</span>
+                      <span className={styles.personMeta}>{`${formatCount(n.titles_count)} тайтлов`}</span>
+                    </Link>
                   ))}
-                </CardGrid>
+                </div>
+                <div className={styles.pagerWrap}>
+                  <Pagination page={narrators.page} total={narrators.total} perPage={narrators.per_page} onPage={onPage} />
+                </div>
+              </>
+            )
+          ) : (
+            !users || users.length === 0 ? (
+              <EmptyState icon={SearchX} title="Пользователи не найдены" body={q ? 'Попробуйте другой запрос.' : 'Начните вводить имя пользователя.'} />
+            ) : (
+              <div className={styles.userList}>
+                {users.map((u) => (
+                  <Link key={u.id} href={`/user/${u.id}`} className={styles.userRow}>
+                    <span className={styles.userAvatar}>
+                      {u.avatar_thumb_url || u.avatar_url
+                        ? <img src={u.avatar_thumb_url ?? u.avatar_url ?? ''} alt="" />
+                        : initialsOf(u.display_name || u.username)}
+                    </span>
+                    <span className={styles.userMeta}>
+                      <span className={styles.userName}>{u.display_name || u.username}</span>
+                      <span className={styles.userHandle}>@{u.username}</span>
+                    </span>
+                  </Link>
+                ))}
               </div>
-              <div className={styles.pagerWrap}>
-                <Pagination
-                  page={data.page}
-                  total={data.total}
-                  perPage={data.per_page}
-                  onPage={onPage}
-                />
-              </div>
-            </>
+            )
           )}
 
-          {data?.external && data.external.length > 0 ? (
+          {tab === 'titles' && data?.external && data.external.length > 0 ? (
             <RequestableTitles items={data.external} />
           ) : null}
         </div>
       </div>
+
+      {sheetOpen ? (
+        <div className={styles.sheetBackdrop} onClick={() => setSheetOpen(false)}>
+          <div className={styles.sheet} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Фильтры">
+            <div className={styles.sheetHead}>
+              <span className={styles.sheetTitle}>Фильтры</span>
+              <button type="button" className={styles.sheetClose} onClick={() => setSheetOpen(false)} aria-label="Закрыть">
+                <X size={18} />
+              </button>
+            </div>
+            <div className={styles.sheetBody}>
+              {filterFields}
+              {hasFilters ? (
+                <button type="button" className="btn btn-ghost" onClick={resetFilters}>
+                  <RotateCcw />
+                  Сбросить фильтры
+                </button>
+              ) : null}
+            </div>
+            <button type="button" className={`btn btn-primary ${styles.sheetApply}`} onClick={() => setSheetOpen(false)}>
+              {data ? `Показать ${formatCount(data.total)}` : 'Показать'}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export default function CatalogPage() {
   return (
-    <Suspense
-      fallback={
-        <div className={styles.center}>
-          <Spinner size={34} />
-        </div>
-      }
-    >
+    <Suspense fallback={<div className={styles.center}><Spinner size={34} /></div>}>
       <CatalogInner />
     </Suspense>
   );
