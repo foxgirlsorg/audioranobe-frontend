@@ -27,6 +27,9 @@ export default function Footer() {
 
   return (
     <footer className={styles.footer}>
+      <div className={`container ${styles.foxgirlWrap}`} aria-hidden="true">
+        <img src="/foxgirl_user.svg" alt="" className={styles.foxgirl} />
+      </div>
       <div className={`container ${styles.inner}`}>
         <div className={styles.brand}>
           <Link href="/" className={styles.logo}>

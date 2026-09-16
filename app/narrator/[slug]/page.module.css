@@ -460,10 +460,6 @@
 }
 
 @media (max-width: 480px) {
-  .banner {
-    height: 130px;
-  }
-
   .dockNameH1 {
     font-size: 1.15rem;
   }
