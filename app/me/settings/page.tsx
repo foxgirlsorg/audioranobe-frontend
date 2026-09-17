@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -30,6 +30,7 @@ import type {
 } from '@/lib/types';
 import ProviderAuth from '@/components/ProviderAuth/ProviderAuth';
 import { useAuth } from '@/lib/auth';
+import { SettingsScopeContext } from '@/lib/settingsScope';
 import { enablePush, disablePush, pushSubscribed, pushPermission, type PushState } from '@/lib/push';
 import { useInstall, promptInstall } from '@/lib/pwa';
 import { useToast, errMsg } from '@/lib/toast';
@@ -121,7 +122,32 @@ function splitHeading(s: string): [string, string] {
 }
 
 export default function SettingsPage() {
-  const { user, loading: authLoading, refresh, logout } = useAuth();
+  const auth = useAuth();
+  // When rendered inside the mod edit modal (users.full_edit), a scope points
+  // this whole page at another user: every /me/* call carries ?as=<id> and the
+  // "subject" is that target instead of the signed-in moderator.
+  const scope = useContext(SettingsScopeContext);
+  const scoped = scope !== null;
+  const asParam = scoped ? { as: scope.userId } : undefined;
+  const [scopedUser, setScopedUser] = useState<Me | null>(null);
+
+  const user = scoped ? scopedUser : auth.user;
+  const authLoading = scoped ? scopedUser === null : auth.loading;
+  const logout = auth.logout;
+  const refresh = useCallback(async () => {
+    if (scoped) {
+      const me = await api<Me>('/me', { params: { as: scope.userId } });
+      setScopedUser(me);
+      scope.onSaved?.(me);
+    } else {
+      await auth.refresh();
+    }
+  }, [scoped, scope, auth]);
+
+  useEffect(() => {
+    if (scoped) void refresh().catch(() => {});
+  }, [scoped, scope?.userId]);
+
   const router = useRouter();
   const { toast } = useToast();
 
@@ -266,7 +292,7 @@ export default function SettingsPage() {
       setDmFriendsOnly(user.dm_privacy === 'friends');
       // bio / socials / prefs / identities are Me-only (not in the slim X-Me
       // viewer the context carries), so fetch the full profile once here.
-      api<Me>('/me')
+      api<Me>('/me', { params: asParam })
         .then((me) => {
           setBio(me.bio);
           setSocials(me.socials ?? []);
@@ -284,7 +310,7 @@ export default function SettingsPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || scoped) return;
     let alive = true;
     api<{ items: CommentSubTitle[] }>('/me/comment-subscriptions')
       .then((r) => {
@@ -345,6 +371,7 @@ export default function SettingsPage() {
     try {
       await api<Me>('/me', {
         method: 'PATCH',
+        params: asParam,
         body: {
           username: name,
           display_name: displayName.trim(),
@@ -367,7 +394,7 @@ export default function SettingsPage() {
     try {
       const fd = new FormData();
       fd.append('file', blob, `${kind}.webp`);
-      await api<Me>(kind === 'avatar' ? '/me/avatar' : '/me/cover', { formData: fd });
+      await api<Me>(kind === 'avatar' ? '/me/avatar' : '/me/cover', { formData: fd, params: asParam });
       await refresh();
       toast(kind === 'avatar' ? 'Аватар обновлён' : 'Обложка обновлена', 'ok');
     } catch (e) {
@@ -379,7 +406,7 @@ export default function SettingsPage() {
 
   async function changePassword() {
     if (savingPw) return;
-    if (hasPassword && !oldPw) {
+    if (!scoped && hasPassword && !oldPw) {
       toast('Введите текущий пароль', 'error');
       return;
     }
@@ -395,6 +422,7 @@ export default function SettingsPage() {
     try {
       await api('/me/password', {
         method: 'POST',
+        params: asParam,
         body: { old_password: oldPw, new_password: newPw },
       });
       setOldPw('');
@@ -417,6 +445,7 @@ export default function SettingsPage() {
     try {
       const me = await api<Me>('/me/notification-prefs', {
         method: 'PATCH',
+        params: asParam,
         body: { [key]: next },
       });
       setPrefs(me.notification_prefs);
@@ -435,7 +464,7 @@ export default function SettingsPage() {
     setDmBusy(true);
     setDmFriendsOnly(next);
     try {
-      await api<Me>('/me', { method: 'PATCH', body: { dm_privacy: next ? 'friends' : 'all' } });
+      await api<Me>('/me', { method: 'PATCH', params: asParam, body: { dm_privacy: next ? 'friends' : 'all' } });
       await refresh();
       toast('Настройки личных сообщений сохранены', 'ok');
     } catch (e) {
@@ -452,7 +481,7 @@ export default function SettingsPage() {
     setBlurBusy(true);
     setBlurUnlistened(next);
     try {
-      await api<Me>('/me', { method: 'PATCH', body: { blur_unlistened_illustrations: next } });
+      await api<Me>('/me', { method: 'PATCH', params: asParam, body: { blur_unlistened_illustrations: next } });
       toast('Настройки контента сохранены', 'ok');
     } catch (e) {
       setBlurUnlistened(!next);
@@ -468,7 +497,7 @@ export default function SettingsPage() {
     setAutoAddBusy(true);
     setAutoAddLibrary(next);
     try {
-      await api<Me>('/me', { method: 'PATCH', body: { auto_add_to_library: next } });
+      await api<Me>('/me', { method: 'PATCH', params: asParam, body: { auto_add_to_library: next } });
       toast('Настройки контента сохранены', 'ok');
     } catch (e) {
       setAutoAddLibrary(!next);
@@ -508,7 +537,8 @@ export default function SettingsPage() {
     try {
       await api<Me>('/me/email', {
         method: 'POST',
-        body: hasPassword ? { email, password: emailPw } : { email },
+        params: asParam,
+        body: hasPassword && !scoped ? { email, password: emailPw } : { email },
       });
       await refresh();
       setEmailOpen(false);
@@ -527,6 +557,7 @@ export default function SettingsPage() {
     try {
       const res = await api<{ identities: Identity[] }>(`/me/identities/${provider}`, {
         method: 'DELETE',
+        params: asParam,
       });
       setIdentities(res.identities);
       await refresh();
@@ -542,7 +573,7 @@ export default function SettingsPage() {
     if (totpBusy) return;
     setTotpBusy(true);
     try {
-      const me = await api<Me>('/me/totp/disable', { method: 'POST', body: { password: totpDisablePw } });
+      const me = await api<Me>('/me/totp/disable', { method: 'POST', params: asParam, body: { password: totpDisablePw } });
       setTotpEnabled(me.totp_enabled);
       setTotpDisableOpen(false);
       setTotpDisablePw('');
@@ -562,6 +593,7 @@ export default function SettingsPage() {
     try {
       const me = await api<Me>('/me/content-prefs', {
         method: 'PATCH',
+        params: asParam,
         body: { hide_nsfw: next.hide_nsfw, hidden_genres: next.hidden_genres },
       });
       setContent(me.content_prefs);
@@ -612,10 +644,12 @@ export default function SettingsPage() {
 
   return (
     <div className={styles.page}>
-      <Link href={`/user/${encodeURIComponent(user.username)}`} className="back-link">
-        <ArrowLeft size={14} />
-        {'В профиль'}
-      </Link>
+      {scoped ? null : (
+        <Link href={`/user/${encodeURIComponent(user.username)}`} className="back-link">
+          <ArrowLeft size={14} />
+          {'В профиль'}
+        </Link>
+      )}
 
       <header className={styles.header}>
         <span className="eyebrow">{'Аккаунт'}</span>
@@ -778,7 +812,7 @@ export default function SettingsPage() {
         </div>
 
         <div className={styles.pwGrid}>
-          {hasPassword ? (
+          {!scoped && hasPassword ? (
             <div className={`${styles.field} ${styles.fieldFull}`}>
               <label className={styles.label} htmlFor="settings-oldpw">
                 {'Текущий пароль'}
@@ -854,6 +888,8 @@ export default function SettingsPage() {
             <button type="button" className="btn btn-ghost" onClick={() => setTotpDisableOpen(true)}>
               {'Отключить'}
             </button>
+          ) : scoped ? (
+            <p className={styles.panelHint}>{'Включить может только сам пользователь.'}</p>
           ) : (
             <button type="button" className="btn btn-ghost" onClick={() => setTotpModalOpen(true)}>
               {'Включить'}
@@ -891,7 +927,7 @@ export default function SettingsPage() {
               </span>
             </div>
             <div className={styles.emailActions}>
-              {emailVerificationOn && user.email && !user.email_verified ? (
+              {!scoped && emailVerificationOn && user.email && !user.email_verified ? (
                 <button
                   type="button"
                   className={styles.resendBtn}
@@ -938,13 +974,16 @@ export default function SettingsPage() {
           ) : null}
         </div>
 
-        <ProviderAuth
-          mode="link"
-          providers={authProviders}
-          hide={(identities ?? []).map((i) => i.provider)}
-        />
+        {scoped ? null : (
+          <ProviderAuth
+            mode="link"
+            providers={authProviders}
+            hide={(identities ?? []).map((i) => i.provider)}
+          />
+        )}
       </section>
 
+      {scoped ? null : (
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
           <Bell size={16} className={styles.panelIcon} />
@@ -994,6 +1033,7 @@ export default function SettingsPage() {
           ) : null}
         </div>
       </section>
+      )}
 
       <section className={`glass-panel ${styles.panel}`}>
         <div className={styles.panelHead}>
@@ -1122,7 +1162,7 @@ export default function SettingsPage() {
             onChange={(e) => setNewEmail(e.target.value)}
             autoComplete="email"
           />
-          {hasPassword ? (
+          {!scoped && hasPassword ? (
             <>
               <label className={styles.label} htmlFor="settings-emailpw">
                 {'Текущий пароль'}
@@ -1257,6 +1297,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      {scoped ? null : (
       <section className={`glass-panel ${styles.panel} ${styles.dangerPanel}`}>
         <div className={styles.panelHead}>
           <ShieldAlert size={16} className={`${styles.panelIcon} ${styles.dangerIcon}`} />
@@ -1287,6 +1328,7 @@ export default function SettingsPage() {
           )}
         </div>
       </section>
+      )}
 
       <ImageCropper
         open={cropTarget === 'avatar'}
@@ -1341,19 +1383,23 @@ export default function SettingsPage() {
         body={
           <div className={styles.deleteBody}>
             <p>{'При входе больше не будет запрашиваться код из приложения.'}</p>
-            <label className={styles.label} htmlFor="settings-totp-disable-pw">
-              {'Подтвердите действие паролем'}
-            </label>
-            <input
-              id="settings-totp-disable-pw"
-              className="input"
-              type="password"
-              maxLength={LIMITS.password}
-              value={totpDisablePw}
-              onChange={(e) => setTotpDisablePw(e.target.value)}
-              autoComplete="current-password"
-              placeholder={'Ваш пароль'}
-            />
+            {scoped ? null : (
+              <>
+                <label className={styles.label} htmlFor="settings-totp-disable-pw">
+                  {'Подтвердите действие паролем'}
+                </label>
+                <input
+                  id="settings-totp-disable-pw"
+                  className="input"
+                  type="password"
+                  maxLength={LIMITS.password}
+                  value={totpDisablePw}
+                  onChange={(e) => setTotpDisablePw(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder={'Ваш пароль'}
+                />
+              </>
+            )}
           </div>
         }
       />

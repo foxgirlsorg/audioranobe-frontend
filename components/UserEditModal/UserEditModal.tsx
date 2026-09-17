@@ -8,6 +8,8 @@ import { errMsg, useToast } from '@/lib/toast';
 import { resizeToWebp } from '@/lib/image';
 import type { Badge, Me } from '@/lib/types';
 import Modal from '@/components/Modal/Modal';
+import SettingsPage from '@/app/me/settings/page';
+import { SettingsScopeContext } from '@/lib/settingsScope';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
 import Toggle from '@/components/Toggle/Toggle';
 import BadgePicker from '@/components/BadgePicker/BadgePicker';
@@ -30,6 +32,7 @@ export function UserEditModal({
   const { can } = useAuth();
   // Email/password/badges/verification stay '*'-only, matching the backend.
   const isAdmin = can('*');
+  const canFullEdit = can('users.full_edit');
   const canResetTotp = can('users.totp_reset');
   const { toast } = useToast();
 
@@ -207,6 +210,18 @@ export function UserEditModal({
     }
     setImageBusy(null);
   };
+
+  if (canFullEdit) {
+    return (
+      <Modal open={userId !== null} onClose={onClose} title={'Настройки пользователя'}>
+        {userId === null ? null : (
+          <SettingsScopeContext.Provider value={{ userId, onSaved }}>
+            <SettingsPage key={userId} />
+          </SettingsScopeContext.Provider>
+        )}
+      </Modal>
+    );
+  }
 
   return (
     <Modal open={userId !== null} onClose={onClose} title={'Редактировать пользователя'}>
