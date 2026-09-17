@@ -945,6 +945,7 @@ export interface UserProfile {
     dropped: number;
     comments: number;
     favorites: number;
+    seconds_listened: number;
   };
   friendship: Friendship;
   can_message: boolean;

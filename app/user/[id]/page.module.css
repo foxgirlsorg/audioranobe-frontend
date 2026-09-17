@@ -300,7 +300,6 @@
 /* ---------- about (bio + links) ---------- */
 
 .aboutCard {
-  margin-top: 1.25rem;
   padding: 1.3rem 1.6rem;
   display: flex;
   flex-direction: column;
@@ -331,6 +330,78 @@
    and pre-line would add a second blank line after every block. */
 .bio {
   color: var(--text-secondary);
+}
+
+/* ---------- profile stats bar ---------- */
+
+.profileStats {
+  margin-top: 1rem;
+  padding: 0;
+  display: flex;
+}
+
+.profileStat {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.3rem;
+  border-left: 1px solid var(--border);
+}
+
+.profileStat:first-child {
+  border-left: none;
+}
+
+.profileStatIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.profileStatBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.profileStatValue {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.profileStatLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .profileStats {
+    flex-direction: column;
+  }
+
+  .profileStat {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    padding: 0.85rem 1rem;
+  }
+
+  .profileStat:first-child {
+    border-top: none;
+  }
 }
 
 /* ---------- stats chips ---------- */

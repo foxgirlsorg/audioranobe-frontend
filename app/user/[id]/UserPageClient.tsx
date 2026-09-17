@@ -10,6 +10,7 @@ import {
   UserX,
   ArrowBigUp,
   Heart,
+  Headphones,
   Users,
   UserPlus,
   UserMinus,
@@ -33,7 +34,7 @@ import {
   type UserComment,
   type UserProfile,
 } from '@/lib/types';
-import { formatDate, initialsOf, timeAgo } from '@/lib/format';
+import { formatCount, formatDate, initialsOf, ruPlural, timeAgo } from '@/lib/format';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import PresenceLabel from '@/components/PresenceLabel/PresenceLabel';
 import { useAuth } from '@/lib/auth';
@@ -249,10 +250,10 @@ export default function UserPageClient({
 
   const tabParam = searchParams.get('tab');
   const statusParam = searchParams.get('status');
-  const initialTab = (tabParam === 'comments' || tabParam === 'collections' || tabParam === 'favorites' || tabParam === 'friends') ? tabParam : 'library';
+  const initialTab = (tabParam === 'library' || tabParam === 'comments' || tabParam === 'collections' || tabParam === 'favorites' || tabParam === 'friends') ? tabParam : 'info';
   const initialStatus = statusParam && LIBRARY_STATUSES.some(s => s.key === statusParam) ? statusParam : 'all';
 
-  const [tab, setTab] = useState<'library' | 'comments' | 'collections' | 'favorites' | 'friends'>(initialTab);
+  const [tab, setTab] = useState<'info' | 'library' | 'comments' | 'collections' | 'favorites' | 'friends'>(initialTab);
   const [libStatus, setLibStatus] = useState(initialStatus);
 
   const username = profile?.user.username ?? '';
@@ -580,30 +581,10 @@ export default function UserPageClient({
         </div>
       ) : null}
 
-      {user.bio || (user.socials && user.socials.length > 0) ? (
-        <div className={`glass-panel ${styles.aboutCard}`}>
-          <div className={styles.aboutTop}>
-            <span className="eyebrow">{user.bio ? 'О себе' : 'Ссылки'}</span>
-            <div className={user.bio ? styles.linksHideMobile : undefined}>
-              <SocialLinks urls={user.socials} />
-            </div>
-          </div>
-          {user.bio ? (
-            <div className={styles.bio}>
-              <Collapsible maxHeight={300}>
-                <Markdown source={user.bio} media="image" />
-              </Collapsible>
-              <div className={styles.linksShowMobile}>
-                <SocialLinks urls={user.socials} />
-              </div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
       <div className={styles.tabsWrap}>
         <Tabs
           tabs={[
+            { key: 'info', label: 'Информация' },
             { key: 'library', label: 'Библиотека' },
             { key: 'favorites', label: 'Избранное', count: stats.favorites },
             { key: 'comments', label: 'Комментарии', count: stats.comments },
@@ -620,6 +601,60 @@ export default function UserPageClient({
           scrollable
         />
       </div>
+
+      {tab === 'info' ? (
+        <div className={styles.tabBody}>
+          {user.bio || (user.socials && user.socials.length > 0) ? (
+            <div className={`glass-panel ${styles.aboutCard}`}>
+              <div className={styles.aboutTop}>
+                <span className="eyebrow">{user.bio ? 'О себе' : 'Ссылки'}</span>
+                <div className={user.bio ? styles.linksHideMobile : undefined}>
+                  <SocialLinks urls={user.socials} />
+                </div>
+              </div>
+              {user.bio ? (
+                <div className={styles.bio}>
+                  <Collapsible maxHeight={300}>
+                    <Markdown source={user.bio} media="image" />
+                  </Collapsible>
+                  <div className={styles.linksShowMobile}>
+                    <SocialLinks urls={user.socials} />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <EmptyState
+              icon={BookOpen}
+              title="Пока ничего нет"
+              body="Пользователь не заполнил информацию о себе."
+            />
+          )}
+          <div className={`glass-panel ${styles.profileStats}`}>
+            <div className={styles.profileStat}>
+              <span className={styles.profileStatIcon}><Headphones size={20} /></span>
+              <span className={styles.profileStatBody}>
+                <span className={styles.profileStatValue}>{Number(((stats.seconds_listened ?? 0) / 3600).toFixed(2))}</span>
+                <span className={styles.profileStatLabel}>часов прослушано</span>
+              </span>
+            </div>
+            <div className={styles.profileStat}>
+              <span className={styles.profileStatIcon}><Library size={20} /></span>
+              <span className={styles.profileStatBody}>
+                <span className={styles.profileStatValue}>{formatCount(libraryTotal)}</span>
+                <span className={styles.profileStatLabel}>{ruPlural(libraryTotal, ['книга', 'книги', 'книг'])} в библиотеке</span>
+              </span>
+            </div>
+            <div className={styles.profileStat}>
+              <span className={styles.profileStatIcon}><MessageSquare size={20} /></span>
+              <span className={styles.profileStatBody}>
+                <span className={styles.profileStatValue}>{formatCount(stats.comments)}</span>
+                <span className={styles.profileStatLabel}>{ruPlural(stats.comments, ['комментарий', 'комментария', 'комментариев'])}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {tab === 'library' ? (
         <div className={styles.tabBody}>
