@@ -657,6 +657,8 @@ export interface AuditEntry {
   entity_type: string;
   entity_id: number | null;
   details: Record<string, unknown>;
+  target: UserBrief | null;
+  source: { label: string; href: string } | null;
   created_at: string;
 }
 
