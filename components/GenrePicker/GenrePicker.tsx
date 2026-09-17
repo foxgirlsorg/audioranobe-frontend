@@ -46,7 +46,7 @@ export default function GenrePicker({
   useEffect(() => {
     if (genresProp) return;
     let alive = true;
-    api<Paginated<Genre>>('/genres', { params: { per_page: 100 } })
+    api<Paginated<Genre>>('/genres', { params: { per_page: 2000 } })
       .then((d) => {
         if (alive) setOwnGenres(Array.isArray(d.items) ? d.items : []);
       })

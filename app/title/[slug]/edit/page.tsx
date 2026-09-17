@@ -185,16 +185,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   useEffect(() => {
     if (!title || genresReady) return;
     setGenresReady(true);
-    api<{ items: { id: number; slug: string }[] }>('/genres', { params: { per_page: 500 } })
-      .then((d) => {
-        const bySlug = new Map((d.items ?? []).map((g) => [g.slug, g.id]));
-        setGenreIds(
-          (title.genres ?? [])
-            .map((g) => bySlug.get(g.slug))
-            .filter((id): id is number => typeof id === 'number')
-        );
-      })
-      .catch(() => {});
+    setGenreIds((title.genres ?? []).map((g) => g.id));
   }, [title, genresReady]);
 
   const losingAccess =
