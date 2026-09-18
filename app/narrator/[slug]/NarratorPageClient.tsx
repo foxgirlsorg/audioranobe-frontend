@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Mic2, MicOff, Pencil } from 'lucide-react';
+import { BookOpen, Headphones, Library, Mic2, MicOff, Pencil, Users } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import type { NarratorFull } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
-import { formatCount, formatDate } from '@/lib/format';
+import { formatCount, formatDate, ruPlural } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { SUPPORT_URL } from '@/lib/support';
 import Skeleton from 'react-loading-skeleton';
@@ -25,6 +25,7 @@ import Markdown from '@/components/Markdown/Markdown';
 import Collapsible from '@/components/Collapsible/Collapsible';
 import AiBadge from '@/components/AiBadge/AiBadge';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
+import Tabs from '@/components/Tabs/Tabs';
 import styles from './page.module.css';
 import sectionStyles from "@/components/Section/Section.module.css";
 import CatalogGridSkeleton from "@/components/CatalogGrid/CatalogGridSkeleton";
@@ -96,6 +97,7 @@ export default function NarratorPageClient({
   const [loading, setLoading] = useState(initialNarrator === null);
   const [error, setError] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(initialNarrator?.can_edit ?? false);
+  const [tab, setTab] = useState<'info' | 'titles' | 'comments'>('info');
   const skipInitialFetch = useRef(initialNarrator !== null);
 
   useEffect(() => {
@@ -213,8 +215,6 @@ export default function NarratorPageClient({
             <div className={styles.meta}>
               <span className={styles.metaSub}>
                 <span className={styles.metaNarrator}>Чтец</span>
-                <span className={styles.metaItem}>{`Тайтлов: ${n.titles_count}`}</span>
-                <span className={styles.metaItem}>{`Подписчиков: ${formatCount(n.subscribers_count)}`}</span>
                 <span className={styles.metaJoined}>{`на сайте с ${formatDate(n.created_at)}`}</span>
               </span>
             </div>
@@ -252,29 +252,85 @@ export default function NarratorPageClient({
         </div>
       ) : null}
 
-      {n.bio || (n.socials && n.socials.length > 0) ? (
-        <div className={`glass-panel ${styles.aboutCard}`}>
-          <div className={styles.aboutTop}>
-            <span className="eyebrow">{n.bio ? 'О себе' : 'Ссылки'}</span>
-            <div className={n.bio ? styles.linksHideMobile : undefined}>
-              <SocialLinks urls={n.socials} />
-            </div>
-          </div>
-          {n.bio ? (
-            <div className={styles.bio}>
-              <Collapsible maxHeight={300}>
-                <Markdown source={n.bio} media="image" />
-              </Collapsible>
-              <div className={styles.linksShowMobile}>
-                <SocialLinks urls={n.socials} />
+      <Tabs
+        tabs={[
+          { key: 'info', label: 'Информация' },
+          { key: 'titles', label: 'Тайтлы', count: n.titles_count },
+          { key: 'comments', label: 'Комментарии' },
+        ]}
+        active={tab}
+        onChange={(k) => setTab(k as typeof tab)}
+        variant="underline"
+        className={styles.tabBar}
+      />
+
+      {tab === 'info' ? (
+        <>
+          {n.bio || (n.socials && n.socials.length > 0) ? (
+            <div className={`glass-panel ${styles.aboutCard}`}>
+              <div className={styles.aboutTop}>
+                <span className="eyebrow">{n.bio ? 'О себе' : 'Ссылки'}</span>
+                <div className={n.bio ? styles.linksHideMobile : undefined}>
+                  <SocialLinks urls={n.socials} />
+                </div>
               </div>
+              {n.bio ? (
+                <div className={styles.bio}>
+                  <Collapsible maxHeight={300}>
+                    <Markdown source={n.bio} media="image" />
+                  </Collapsible>
+                  <div className={styles.linksShowMobile}>
+                    <SocialLinks urls={n.socials} />
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
-        </div>
+
+          <div className={`glass-panel ${styles.profileStats}`}>
+            <div className={styles.profileStat}>
+              <span className={styles.profileStatIcon}><Library size={20} /></span>
+              <span className={styles.profileStatBody}>
+                <span className={styles.profileStatValue}>{formatCount(n.titles_count)}</span>
+                <span className={styles.profileStatLabel}>{ruPlural(n.titles_count, ['тайтл', 'тайтла', 'тайтлов'])}</span>
+              </span>
+            </div>
+            <div className={styles.profileStat}>
+              <span className={styles.profileStatIcon}><Headphones size={20} /></span>
+              <span className={styles.profileStatBody}>
+                <span className={styles.profileStatValue}>{Number(((n.seconds_narrated ?? 0) / 3600).toFixed(2))}</span>
+                <span className={styles.profileStatLabel}>часов озвучено</span>
+              </span>
+            </div>
+            <div className={styles.profileStat}>
+              <span className={styles.profileStatIcon}><Users size={20} /></span>
+              <span className={styles.profileStatBody}>
+                <span className={styles.profileStatValue}>{formatCount(n.subscribers_count)}</span>
+                <span className={styles.profileStatLabel}>{ruPlural(n.subscribers_count, ['подписчик', 'подписчика', 'подписчиков'])}</span>
+              </span>
+            </div>
+          </div>
+
+          {isMod && n.admin_contact ? (
+            <div className={`glass-panel ${styles.contactPanel}`}>
+              <span className="eyebrow">Контакт для администрации</span>
+              <p className={styles.contactText}>{n.admin_contact}</p>
+              <p className={styles.contactNote}>
+                Виден только модераторам и администраторам.
+              </p>
+            </div>
+          ) : null}
+
+          {isMod || n.is_verified ? (
+            <Section eyebrow="Блог" title="Публичные" accent="записи">
+              <NarratorPosts narratorId={n.id} canEdit={n.can_edit} />
+            </Section>
+          ) : null}
+        </>
       ) : null}
 
-      <Section eyebrow="Каталог" title="Озвученные" accent="тайтлы">
-        {n.titles.length > 0 ? (
+      {tab === 'titles' ? (
+        n.titles.length > 0 ? (
           <CardGrid edgeToEdge>
             {n.titles.map((tc) => (
               <TitleCardC key={tc.id} title={tc} />
@@ -286,28 +342,12 @@ export default function NarratorPageClient({
             title="Пока нет тайтлов"
             body="Этот чтец пока не опубликовал ни одной аудиокниги."
           />
-        )}
-      </Section>
-
-      {isMod && n.admin_contact ? (
-        <div className={`glass-panel ${styles.contactPanel}`}>
-          <span className="eyebrow">Контакт для администрации</span>
-          <p className={styles.contactText}>{n.admin_contact}</p>
-          <p className={styles.contactNote}>
-            Виден только модераторам и администраторам.
-          </p>
-        </div>
+        )
       ) : null}
 
-      {isMod || n.is_verified ? (
-        <Section eyebrow="Блог" title="Публичные" accent="записи">
-          <NarratorPosts narratorId={n.id} canEdit={n.can_edit} />
-        </Section>
-      ) : null}
-
-      <div className={styles.comments}>
+      {tab === 'comments' ? (
         <CommentSection targetType="narrator" targetId={n.id} initialComments={n.comments} />
-      </div>
+      ) : null}
     </div>
   );
 }

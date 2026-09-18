@@ -404,6 +404,11 @@
   }
 }
 
+.heatmapCard {
+  margin-top: 1rem;
+  padding: 1.3rem 1.6rem;
+}
+
 /* ---------- stats chips ---------- */
 
 .statsRow {

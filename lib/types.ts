@@ -401,6 +401,7 @@ export interface NarratorFull extends NarratorCard {
   created_at: string;
   titles: TitleCard[];
   subscribers_count: number;
+  seconds_narrated: number;
   my_subscription: boolean;
   is_self: boolean;
   admin_contact: string | null;
@@ -947,8 +948,21 @@ export interface UserProfile {
     favorites: number;
     seconds_listened: number;
   };
+  score_stats: ScoreStats;
+  activity: ListeningHeatmapData;
   friendship: Friendship;
   can_message: boolean;
+}
+
+export interface ListeningHeatmapData {
+  year: number;
+  years: number[];
+  days: Record<string, number>;
+}
+
+export interface ScoreStats {
+  scores: { score: number; titles: number; hours: number }[];
+  countries: { country: string; count: number }[];
 }
 
 export interface NarratorStats {

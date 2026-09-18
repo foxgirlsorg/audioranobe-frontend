@@ -56,6 +56,8 @@ import Markdown from '@/components/Markdown/Markdown';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import Collapsible from '@/components/Collapsible/Collapsible';
 import UserEditModal from '@/components/UserEditModal/UserEditModal';
+import ListeningHeatmap from '@/components/ListeningHeatmap/ListeningHeatmap';
+import UserStatsCharts from '@/components/UserStatsCharts/UserStatsCharts';
 import { PhotoView } from 'react-photo-view';
 import styles from './page.module.css';
 import sectionStyles from "@/components/Section/Section.module.css";
@@ -653,6 +655,12 @@ export default function UserPageClient({
               </span>
             </div>
           </div>
+
+          <div className={`glass-panel ${styles.heatmapCard}`}>
+            <ListeningHeatmap userRef={userRef} initial={profile.activity} />
+          </div>
+
+          <UserStatsCharts scoreStats={profile.score_stats} libraryStats={stats} />
         </div>
       ) : null}
 

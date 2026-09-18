@@ -1,0 +1,59 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.toggleBtn {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.toggleBtn:hover {
+  color: var(--text-secondary);
+  border-color: var(--border-hover);
+}
+
+.toggleBtnActive {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.chart {
+  margin: 0 -8px;
+}
+
+.tooltip {
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--text-secondary);
+  font-size: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tooltip strong {
+  color: var(--text);
+}
