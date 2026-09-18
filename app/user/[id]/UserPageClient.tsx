@@ -625,13 +625,7 @@ export default function UserPageClient({
                 </div>
               ) : null}
             </div>
-          ) : (
-            <EmptyState
-              icon={BookOpen}
-              title="Пока ничего нет"
-              body="Пользователь не заполнил информацию о себе."
-            />
-          )}
+          ) : null}
           <div className={`glass-panel ${styles.profileStats}`}>
             <div className={styles.profileStat}>
               <span className={styles.profileStatIcon}><Headphones size={20} /></span>
