@@ -102,6 +102,22 @@
   color: var(--muted, #9aa);
 }
 
+.settingsRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.settingsRow .field {
+  min-width: 0;
+}
+
+.settingsRow input {
+  width: 90px;
+}
+
 .err {
   margin-top: 8px;
   font-size: 12px;

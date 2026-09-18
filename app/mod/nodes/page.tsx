@@ -50,6 +50,8 @@ function NodesContent() {
   const [creds, setCreds] = useState<NodeCredentials | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<WorkerNode | null>(null);
+  const [settingsDraft, setSettingsDraft] = useState<Record<number, { timeout: string; wpm: string }>>({});
+  const [savingId, setSavingId] = useState<number | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -103,6 +105,36 @@ function NodesContent() {
       toast(errMsg(e), 'error');
     }
     setBusyId(null);
+  };
+
+  const draftFor = (n: WorkerNode) =>
+    settingsDraft[n.id] ?? {
+      timeout: String(n.job_timeout_seconds_per_minute),
+      wpm: String(n.narration_words_per_minute),
+    };
+
+  const saveSettings = async (n: WorkerNode) => {
+    const draft = draftFor(n);
+    setSavingId(n.id);
+    try {
+      const res = await api<{ node: WorkerNode }>(`/mod/nodes/${n.id}`, {
+        method: 'PUT',
+        body: {
+          job_timeout_seconds_per_minute: Math.max(0, parseInt(draft.timeout, 10) || 0),
+          narration_words_per_minute: Math.max(0, parseInt(draft.wpm, 10) || 0),
+        },
+      });
+      setNodes((prev) => (prev ? prev.map((x) => (x.id === n.id ? res.node : x)) : prev));
+      setSettingsDraft((prev) => {
+        const next = { ...prev };
+        delete next[n.id];
+        return next;
+      });
+      toast('Настройки сохранены');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+    setSavingId(null);
   };
 
   const remove = async (n: WorkerNode) => {
@@ -228,6 +260,44 @@ function NodesContent() {
                   <span>{n.last_seen_at ? `последний сигнал: ${n.last_seen_at}` : 'сигналов не было'}</span>
                 </div>
                 {n.last_error ? <div className={styles.err}>{`последняя ошибка: ${n.last_error}`}</div> : null}
+                <div className={styles.settingsRow}>
+                  <div className={styles.field}>
+                    <label htmlFor={`node-timeout-${n.id}`}>{'Тайм-аут, сек/мин аудио (0 = выкл)'}</label>
+                    <input
+                      id={`node-timeout-${n.id}`}
+                      className="input"
+                      type="number"
+                      min={0}
+                      value={draftFor(n).timeout}
+                      onChange={(e) =>
+                        setSettingsDraft((prev) => ({ ...prev, [n.id]: { ...draftFor(n), timeout: e.target.value } }))
+                      }
+                    />
+                  </div>
+                  {n.type === 'narrator' ? (
+                    <div className={styles.field}>
+                      <label htmlFor={`node-wpm-${n.id}`}>{'Слов/мин (0 = выкл)'}</label>
+                      <input
+                        id={`node-wpm-${n.id}`}
+                        className="input"
+                        type="number"
+                        min={0}
+                        value={draftFor(n).wpm}
+                        onChange={(e) =>
+                          setSettingsDraft((prev) => ({ ...prev, [n.id]: { ...draftFor(n), wpm: e.target.value } }))
+                        }
+                      />
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    disabled={savingId === n.id}
+                    onClick={() => void saveSettings(n)}
+                  >
+                    {'Сохранить'}
+                  </button>
+                </div>
               </div>
             );
           })}

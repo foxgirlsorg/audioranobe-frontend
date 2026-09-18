@@ -555,6 +555,10 @@ export interface WorkerNode {
   online: boolean;
   state: NodeState;
   current_job: number | null;
+  /** Seconds allowed per minute of estimated audio before a job is requeued. 0 = disabled. */
+  job_timeout_seconds_per_minute: number;
+  /** narrator nodes only: reading speed used to estimate a narration job's length. 0 = disabled. */
+  narration_words_per_minute: number;
   version: string;
   jobs_done: number;
   last_error: string;
