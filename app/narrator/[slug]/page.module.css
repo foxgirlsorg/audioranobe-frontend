@@ -258,7 +258,7 @@
   padding: 1.4rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.5rem;
 }
 
 .aboutTop {
@@ -542,6 +542,7 @@
 /* Staff-only contact block */
 .contactPanel {
   padding: 1.2rem 1.4rem;
+  margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   border-color: rgba(222, 97, 97, 0.3);
 }
