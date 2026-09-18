@@ -275,7 +275,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.9rem;
-  flex-wrap: wrap;
   padding: 0.85rem 1.2rem;
   background: rgba(255, 255, 255, 0.02);
   transition: background 0.2s ease;
@@ -320,8 +319,8 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  flex-wrap: wrap;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .volumeNum {
@@ -330,6 +329,7 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent-hover);
+  flex-shrink: 0;
 }
 
 .volumeName {
@@ -337,7 +337,7 @@
   font-weight: 600;
   font-size: 14.5px;
   min-width: 0;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -346,11 +346,13 @@
 .volumeCount {
   font-size: 12px;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .volumeActions {
   display: flex;
   gap: 0.25rem;
+  flex-shrink: 0;
 }
 
 .volumeEditForm {
