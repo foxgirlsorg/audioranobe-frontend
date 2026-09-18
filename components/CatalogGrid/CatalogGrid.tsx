@@ -171,7 +171,6 @@ export default function CatalogGrid({
       </header>
 
       <div className={styles.countRow}>
-        {items ? <span>{`Тайтлов: ${formatCount(total)}`}</span> : null}
         {loading && items ? <Spinner size={14} inline /> : null}
       </div>
 
