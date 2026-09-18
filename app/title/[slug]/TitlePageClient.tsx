@@ -933,7 +933,7 @@ export default function TitlePageClient({
                               {ch.audio_status !== 'ready' && (canEdit || ch.audio_status !== 'none') ? (
                                 <StatusBadge status={ch.audio_status} />
                               ) : null}
-                              {isMod && title.is_imported ? (
+                              {isMod && title.is_imported && title.is_ai ? (
                                 <button
                                   type="button"
                                   className={styles.reNarrateBtn}
