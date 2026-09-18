@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
-  ArrowUpNarrowWide,
+  ArrowDownWideNarrow,
   Mic,
   RotateCcw,
   SearchX,
@@ -310,10 +310,10 @@ function CatalogInner() {
         className={styles.invertBtn}
         onClick={() => setParams({ order: order === 'asc' ? null : 'asc' })}
         aria-pressed={order === 'asc'}
-        title={order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'}
-        aria-label={order === 'asc' ? 'Сортировать по убыванию' : 'Сортировать по возрастанию'}
+        title={order === 'asc' ? 'По возрастанию' : 'По убыванию'}
+        aria-label={order === 'asc' ? 'По возрастанию' : 'По убыванию'}
       >
-        <ArrowUpNarrowWide size={15} className={order === 'asc' ? undefined : styles.invertBtnFlipped} />
+        <ArrowDownWideNarrow size={15} className={order === 'asc' ? styles.invertBtnFlipped : undefined} />
       </button>
     </div>
   );

@@ -237,7 +237,7 @@
 }
 
 .invertBtn svg {
-  transition: transform 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.5, 1);
 }
 
 .invertBtnFlipped {
