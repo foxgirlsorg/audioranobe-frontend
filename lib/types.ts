@@ -633,6 +633,9 @@ export interface NarratorPost {
   is_hidden: boolean;
   created_at: string;
   updated_at: string;
+  can_edit: boolean;
+  /** Only present on the list endpoint. */
+  comments_count?: number;
   /** First page of comments, embedded to save a separate request on load. */
   comments?: Paginated<Comment>;
 }

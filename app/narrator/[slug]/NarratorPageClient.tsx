@@ -15,7 +15,6 @@ import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import SocialLinks from '@/components/SocialLinks/SocialLinks';
 import SubscribeButton from '@/components/SubscribeButton/SubscribeButton';
 import ReportButton from '@/components/ReportButton/ReportButton';
-import Section from '@/components/Section/Section';
 import CardGrid from '@/components/CardGrid/CardGrid';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
 import CommentSection from '@/components/CommentSection/CommentSection';
@@ -321,11 +320,7 @@ export default function NarratorPageClient({
             </div>
           ) : null}
 
-          {isMod || n.is_verified ? (
-            <Section eyebrow="Блог" title="Публичные" accent="записи">
-              <NarratorPosts narratorId={n.id} canEdit={n.can_edit} />
-            </Section>
-          ) : null}
+          <NarratorPosts narratorId={n.id} canEdit={n.can_edit} />
         </>
       ) : null}
 
