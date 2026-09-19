@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Eye, EyeOff, RotateCcw, Trash2 } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, RotateCcw, Trash2, VolumeX } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -40,15 +40,17 @@ export default function DangerZone({
   const canRestore = trashView && can('trash.restore');
   const canPurge = trashView && can('trash.purge');
   const canHide = kind === 'title' && can('titles.hide');
+  const canWipeAudio = kind === 'title' && can('titles.wipe_audio');
   const { toast } = useToast();
   const router = useRouter();
 
-  const [confirm, setConfirm] = useState<'delete' | 'purge' | null>(null);
+  const [confirm, setConfirm] = useState<'delete' | 'purge' | 'wipe_audio' | null>(null);
   const [busy, setBusy] = useState(false);
+  const [wipePassword, setWipePassword] = useState('');
 
   const label = LABELS[kind];
   const canDelete = kind === 'title' || kind === 'narrator' ? true : isMod;
-  if (!canDelete && !canRestore && !canPurge && !canHide) return null;
+  if (!canDelete && !canRestore && !canPurge && !canHide && !canWipeAudio) return null;
 
   async function doToggleHide() {
     setBusy(true);
@@ -89,6 +91,28 @@ export default function DangerZone({
     try {
       await api(`/mod/trash/${kind}/${id}/restore`, { method: 'POST', body: {} });
       toast('Восстановлено');
+      await onChanged?.();
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function doWipeAudio() {
+    if (!wipePassword) {
+      toast('Введите пароль', 'error');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await api<{ wiped: number }>(`/mod/titles/${id}/audio`, {
+        method: 'DELETE',
+        body: { password: wipePassword },
+      });
+      toast(`Озвучка удалена (${res.wiped} гл.)`);
+      setConfirm(null);
+      setWipePassword('');
       await onChanged?.();
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -147,6 +171,19 @@ export default function DangerZone({
           </button>
         ) : null}
 
+        {!isDeleted && canWipeAudio ? (
+          <button
+            type="button"
+            className="btn btn-danger"
+            disabled={busy}
+            onClick={() => setConfirm('wipe_audio')}
+            title="Удалить только аудиофайлы глав, оставив тайтл и статистику пользователей"
+          >
+            <VolumeX size={15} />
+            Стереть озвучку
+          </button>
+        ) : null}
+
         {!isDeleted && canDelete ? (
           <button
             type="button"
@@ -179,6 +216,32 @@ export default function DangerZone({
         onConfirm={() => void doDelete()}
         title={`Удалить ${label}?`}
         body={`«${name}» будет удалён безвозвратно. Отменить это действие нельзя.`}
+        danger
+      />
+
+      <ConfirmDialog
+        open={confirm === 'wipe_audio'}
+        onClose={() => {
+          setConfirm(null);
+          setWipePassword('');
+        }}
+        onConfirm={() => void doWipeAudio()}
+        title="Стереть озвучку?"
+        body={
+          <>
+            <p>
+              {`Аудиофайлы всех глав «${name}» будут удалены с хранилища. Тайтл, главы, тексты и статистика пользователей останутся. Отменить нельзя — главы придётся переозвучивать заново.`}
+            </p>
+            <input
+              type="password"
+              autoComplete="current-password"
+              className={`input ${styles.passwordInput}`}
+              placeholder="Ваш пароль"
+              value={wipePassword}
+              onChange={(e) => setWipePassword(e.target.value)}
+            />
+          </>
+        }
         danger
       />
 
