@@ -26,6 +26,7 @@ import {
   HardDrive,
   LogIn,
   Heart,
+  Library,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -76,6 +77,7 @@ export const GROUPS: Group[] = [
   {
     label: 'Люди и контент',
     tabs: [
+      { href: '/mod/titles', label: 'Тайтлы', icon: Library, perm: 'titles.import' },
       { href: '/mod/users', label: 'Пользователи', icon: Users, perm: 'users.edit' },
       { href: '/mod/narrators', label: 'Чтецы', icon: Mic, perm: 'narrators.edit' },
       { href: '/mod/authors', label: 'Авторы', icon: Feather, perm: 'authors.edit' },
