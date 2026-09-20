@@ -213,7 +213,7 @@ export function UserEditModal({
 
   if (canFullEdit) {
     return (
-      <Modal open={userId !== null} onClose={onClose} title={'Настройки пользователя'}>
+      <Modal open={userId !== null} onClose={onClose} title={'Настройки пользователя'} size="wide">
         {userId === null ? null : (
           <SettingsScopeContext.Provider value={{ userId, onSaved }}>
             <SettingsPage key={userId} />
@@ -224,7 +224,7 @@ export function UserEditModal({
   }
 
   return (
-    <Modal open={userId !== null} onClose={onClose} title={'Редактировать пользователя'}>
+    <Modal open={userId !== null} onClose={onClose} title={'Редактировать пользователя'} size="wide">
       {loadError ? (
         <div className={styles.loadError}>{loadError}</div>
       ) : !target ? (
