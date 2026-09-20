@@ -945,6 +945,8 @@ a.factV:hover {
   font-size: 12px;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  min-width: 4.5em;
+  text-align: right;
 }
 
 .dlBtn {
