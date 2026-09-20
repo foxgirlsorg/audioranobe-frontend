@@ -10,6 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/me/',
         '/mod/',
+        '/chapter/',
         '/title/*/edit',
         '/narrator/*/edit',
         '/author/*/edit',
