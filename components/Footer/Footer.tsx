@@ -1,17 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Mail } from 'lucide-react';
 import { TelegramIcon } from '@/components/SocialLinks/brands';
 import { SUPPORT_EMAIL, SUPPORT_BOT, SUPPORT_CHANNEL } from '@/lib/support';
 import { APP_VERSION, APP_VERSION_NAME } from '@/lib/version';
+import { fetchDonateConfig, type DonateGoal } from '@/lib/donate';
+import GoalBar from '@/components/GoalBar/GoalBar';
 import styles from './Footer.module.css';
 
 const NAV = [
   { href: '/catalog', label: 'Каталог' },
   { href: '/collections', label: 'Коллекции' },
   { href: '/news', label: 'Новости' },
+  { href: '/donate', label: 'Поддержать' },
   { href: '/api-docs', label: 'API' },
 ];
 
@@ -24,6 +27,17 @@ const LEGAL = [
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const [goal, setGoal] = useState<DonateGoal | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchDonateConfig()
+      .then((d) => alive && d.goal.enabled && setGoal(d.goal))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <footer className={styles.footer}>
@@ -40,6 +54,11 @@ export default function Footer() {
               'Все материалы размещены пользователями предоставлены, исключительно для бесплатного ознакомления. Мы не владеем размещённым контентом и не несём за него ответственности.'
             }
           </p>
+          {goal ? (
+            <div className={styles.goal}>
+              <GoalBar goal={goal} compact />
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.cols}>

@@ -1,0 +1,176 @@
+.wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.5rem 0 4rem;
+}
+
+.title {
+  margin-top: 1rem;
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+.titleAccent {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.lead {
+  margin-top: 0.75rem;
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.goalPanel {
+  margin-top: 2rem;
+  padding: 1.25rem 1.4rem;
+}
+
+.instruction {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.instructionIcon {
+  flex: none;
+  color: var(--accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.25rem 1.4rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cardIcon {
+  color: var(--accent);
+}
+
+.cardName {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cardExt {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+.cardRegion {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-hover);
+}
+
+.cardHint {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.badgeNote {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.5rem;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.badgeNote svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.recent {
+  margin-top: 2.5rem;
+}
+
+.recentTitle {
+  margin-bottom: 0.9rem;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.recentList {
+  padding: 0.4rem 1.25rem;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.recentItem:first-child {
+  border-top: none;
+}
+
+.recentName {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recentService {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-hover);
+}
+
+.recentAmount {
+  flex: none;
+  min-width: 84px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}

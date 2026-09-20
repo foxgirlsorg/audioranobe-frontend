@@ -25,6 +25,7 @@ import {
   Server,
   HardDrive,
   LogIn,
+  Heart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -90,6 +91,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/broadcast', label: 'Рассылка', icon: Radio, anyPerm: NOTIFY_PERMS },
       { href: '/mod/announcements', label: 'Новости', icon: Megaphone, perm: 'announcements.manage' },
       { href: '/mod/banners', label: 'Баннеры', icon: GalleryHorizontal, perm: 'banners.manage' },
+      { href: '/mod/donations', label: 'Пожертвования', icon: Heart, perm: 'donations.manage' },
       { href: '/mod/audit', label: 'Аудит', icon: ScrollText, perm: 'audit.view' },
       { href: '/mod/recap', label: 'Итоги', icon: Sparkles, perm: 'recap.manage' },
       { href: '/mod/narration', label: 'Озвучка', icon: BookHeadphones, perm: 'narration.manage' },

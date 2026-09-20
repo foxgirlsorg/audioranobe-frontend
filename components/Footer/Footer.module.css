@@ -75,6 +75,11 @@
   color: var(--text-muted);
 }
 
+.goal {
+  margin-top: 1.1rem;
+  max-width: 320px;
+}
+
 /* ---------- columns ---------- */
 
 .cols {
