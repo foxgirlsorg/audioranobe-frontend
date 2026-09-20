@@ -394,7 +394,7 @@ function CatalogInner() {
             ) : (
               <>
                 <div className={loading ? `${styles.gridWrap} ${styles.gridLoading}` : styles.gridWrap}>
-                  <CardGrid>
+                  <CardGrid fill>
                     {data.items.map((t) => <TitleCardC key={t.id} title={t} />)}
                   </CardGrid>
                 </div>
