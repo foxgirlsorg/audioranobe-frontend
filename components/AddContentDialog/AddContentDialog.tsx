@@ -302,10 +302,6 @@ function NarratorForm({ onDone, onBack }: { onDone: () => void; onBack: () => vo
       setError('Укажите название');
       return;
     }
-    if (!bio.trim()) {
-      setError('Добавьте описание — оно видно слушателям');
-      return;
-    }
     const links = socials.map((s) => s.trim()).filter(Boolean);
     if (isSelf && !adminContact.trim()) {
       setError('Укажите контакт для администрации — он нужен для своего профиля');
@@ -369,7 +365,9 @@ function NarratorForm({ onDone, onBack }: { onDone: () => void; onBack: () => vo
       </div>
 
       <div className={styles.field}>
-        <span className={styles.label} id="add-narr-bio-label">{'Описание'}</span>
+        <span className={styles.label} id="add-narr-bio-label">
+          {'Описание'} <span className={styles.optional}>{'необязательно'}</span>
+        </span>
         <MarkdownEditor
           value={bio}
           onChange={setBio}
