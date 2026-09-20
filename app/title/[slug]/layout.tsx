@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import { plainSummary } from '@/lib/format';
 import { fetchMeta } from '@/lib/serverFetch';
-import { API_URL } from '@/lib/api';
+import { plainSummary } from '@/lib/format';
 import type { TitleFull } from '@/lib/types';
 
 export async function generateMetadata({
@@ -14,19 +13,22 @@ export async function generateMetadata({
     return { title: 'Тайтл не найден — AudioRanobe' };
   }
 
-  const pageTitle = `${title.name} — AudioRanobe`;
-  const description = plainSummary(title.description) || `Аудиокнига «${title.name}» на AudioRanobe.`;
+  const pageTitle = `${title.name} — аудиокнига | AudioRanobe`;
+  const narrators = title.narrators?.length
+    ? `, читают: ${title.narrators.map((n) => n.name).join(', ')}`
+    : '';
+  const summary = plainSummary(title.description);
+  const description = `Слушать аудиокнигу «${title.name}» онлайн бесплатно${narrators}.${
+    summary ? ` ${summary}` : ''
+  }`.slice(0, 300);
   const images = title.cover_url ? [title.cover_url] : undefined;
 
   return {
     title: pageTitle,
     description,
-    alternates: {
-      canonical: `/title/${encodeURIComponent(params.slug)}`,
-      types: { 'application/rss+xml': `${API_URL}/titles/${encodeURIComponent(params.slug)}/feed` },
-    },
+    alternates: { canonical: `/title/${params.slug}` },
     openGraph: { title: pageTitle, description, images, type: 'book' },
-    twitter: { card: 'summary_large_image', title: pageTitle, description, images },
+    twitter: { card: images ? 'summary_large_image' : 'summary', title: pageTitle, description, images },
   };
 }
 

@@ -19,6 +19,15 @@ async function fetchTitleForViewer(slug: string): Promise<TitleFull | null> {
   }
 }
 
+function isoDuration(seconds: number): string | null {
+  const s = Math.round(seconds);
+  if (s <= 0) return null;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `PT${h ? `${h}H` : ''}${m ? `${m}M` : ''}${sec ? `${sec}S` : ''}` || 'PT0S';
+}
+
 function titleJsonLd(title: TitleFull) {
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -26,6 +35,8 @@ function titleJsonLd(title: TitleFull) {
     name: title.name,
     url: `${SITE_URL}/title/${encodeURIComponent(title.slug)}`,
     inLanguage: 'ru',
+    bookFormat: 'https://schema.org/AudiobookFormat',
+    publisher: { '@type': 'Organization', name: 'AudioRanobe' },
   };
   const description = plainSummary(title.description);
   if (description) ld.description = description;
@@ -34,6 +45,12 @@ function titleJsonLd(title: TitleFull) {
   if (title.narrators?.length) {
     ld.readBy = title.narrators.map((n) => ({ '@type': 'Person', name: n.name }));
   }
+  const totalSeconds = (title.volumes ?? []).reduce(
+    (sum, v) => sum + (v.chapters ?? []).reduce((a, c) => a + (c.duration_seconds || 0), 0),
+    0,
+  );
+  const duration = isoDuration(totalSeconds);
+  if (duration) ld.duration = duration;
   if (title.avg_rating != null && title.rating_count > 0) {
     ld.aggregateRating = {
       '@type': 'AggregateRating',
