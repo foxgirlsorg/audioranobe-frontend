@@ -16,6 +16,9 @@ interface ServiceCfg {
   auto: boolean;
   blog?: string;
   has_token: boolean;
+  has_refresh?: boolean;
+  expires_at?: number;
+  has_device?: boolean;
 }
 interface Cfg {
   kofi: ServiceCfg;
@@ -43,7 +46,8 @@ function Content() {
   const { toast } = useToast();
   const [cfg, setCfg] = useState<Cfg | null>(null);
   const [kofiTok, setKofiTok] = useState('');
-  const [boostyTok, setBoostyTok] = useState('');
+  const [boostyAuth, setBoostyAuth] = useState('');
+  const [boostyDevice, setBoostyDevice] = useState('');
   const [saving, setSaving] = useState(false);
 
   const [rows, setRows] = useState<Row[]>([]);
@@ -87,7 +91,8 @@ function Content() {
             url: cfg.boosty.url,
             auto: cfg.boosty.auto,
             blog: cfg.boosty.blog ?? '',
-            ...(boostyTok ? { token: boostyTok } : {}),
+            ...(boostyAuth ? { auth: boostyAuth } : {}),
+            ...(boostyDevice ? { device_id: boostyDevice } : {}),
           },
           badge_min_cents: cfg.badge_min_cents,
           badge_slug: cfg.badge_slug,
@@ -96,7 +101,8 @@ function Content() {
       });
       setCfg(d);
       setKofiTok('');
-      setBoostyTok('');
+      setBoostyAuth('');
+      setBoostyDevice('');
       toast('Сохранено', 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -214,18 +220,33 @@ function Content() {
             />
           </label>
           <label className={styles.field}>
-            <span className={styles.label}>{'Bearer token (из сессии Boosty)'}</span>
+            <span className={styles.label}>{'Cookie «auth» (значение из DevTools)'}</span>
             <input
               className="input"
               type="password"
-              value={boostyTok}
-              onChange={(e) => setBoostyTok(e.target.value)}
-              placeholder={cfg.boosty.has_token ? 'сохранён — оставьте пустым' : ''}
+              value={boostyAuth}
+              onChange={(e) => setBoostyAuth(e.target.value)}
+              placeholder={cfg.boosty.has_token ? 'сохранена — оставьте пустым' : '{"accessToken":"…","refreshToken":"…","expiresAt":…}'}
+            />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>{'device_id (cookie _clientId, необязательно)'}</span>
+            <input
+              className="input"
+              value={boostyDevice}
+              onChange={(e) => setBoostyDevice(e.target.value)}
+              placeholder={cfg.boosty.has_device ? 'сохранён' : 'подставится автоматически'}
             />
           </label>
         </div>
         <p className={styles.hint}>
-          {'У Boosty нет официального API — автотрекинг работает через неофициальный запрос и может ломаться при смене токена. Ручное внесение ниже надёжнее.'}
+          {'Токен обновляется автоматически по refresh-токену из cookie. '}
+          {cfg.boosty.has_token
+            ? cfg.boosty.expires_at
+              ? `Текущий действует до ${new Date(cfg.boosty.expires_at * 1000).toLocaleString('ru-RU')}. `
+              : 'Токен сохранён. '
+            : 'Cookie не задана — автотрекинг выключен. '}
+          {'У Boosty нет официального API, запрос неофициальный и может ломаться; ручное внесение ниже надёжнее.'}
         </p>
       </div>
 
