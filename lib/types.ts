@@ -154,6 +154,7 @@ export interface AuthProviderConfig {
   icon_svg: string;
   client_id: string;
   has_secret: boolean;
+  user_agent: string;
   authorize_url: string;
   token_url: string;
   userinfo_url: string;

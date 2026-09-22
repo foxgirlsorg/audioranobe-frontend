@@ -47,6 +47,7 @@ function blank(type: AuthProviderType): AuthProviderConfig {
     icon_svg: '',
     client_id: '',
     has_secret: false,
+    user_agent: '',
     authorize_url: '',
     token_url: '',
     userinfo_url: '',
@@ -288,6 +289,7 @@ function AuthContent() {
       enabled: p.enabled,
       icon_svg: p.icon_svg,
       client_id: p.client_id,
+      user_agent: p.user_agent,
     };
     if (secrets[i]) out.client_secret = secrets[i];
     if (!p.builtin) {
@@ -475,6 +477,16 @@ function AuthContent() {
                       />
                     </label>
                   </div>
+
+                  <label className={styles.field}>
+                    <span className={styles.label}>{'User-Agent'}</span>
+                    <input
+                      className="input"
+                      value={p.user_agent}
+                      onChange={(e) => patch(i, { user_agent: e.target.value })}
+                      placeholder="AudioRanobe/1.0 (+https://audioranobe.com)"
+                    />
+                  </label>
 
                   {!p.builtin ? (
                     <>
