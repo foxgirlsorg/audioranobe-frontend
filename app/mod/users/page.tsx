@@ -18,7 +18,6 @@ import Modal from '@/components/Modal/Modal';
 import UserEditModal from '@/components/UserEditModal/UserEditModal';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import Select from '@/components/Select/Select';
-import Toggle from '@/components/Toggle/Toggle';
 import styles from './page.module.css';
 
 function UsersContent() {
@@ -26,7 +25,6 @@ function UsersContent() {
   const { toast } = useToast();
   const canRole = can('users.role');
   const canBan = can('users.ban');
-  const canSkip = can('users.grant_skip_moderation');
   const canDelete = can('users.delete');
   // Email verification and the ban-reason dialog stay '*'-only, as before.
   const isAdmin = can('*');
@@ -150,25 +148,6 @@ function UsersContent() {
     setBusyId(null);
   };
 
-  const toggleSkipModeration = async (u: Me) => {
-    setBusyId(u.id);
-    try {
-      const updated = await api<Me>(`/mod/users/${u.id}/skip-moderation`, {
-        method: 'PATCH',
-        body: { skip_moderation: !u.skip_moderation },
-      });
-      replaceRow(updated);
-      toast(
-        updated.skip_moderation
-          ? `${u.username} публикует без модерации`
-          : `${u.username} снова проходит модерацию`
-      );
-    } catch (e) {
-      toast(errMsg(e), 'error');
-    }
-    setBusyId(null);
-  };
-
   return (
     <div>
       <div className={styles.searchRow}>
@@ -204,7 +183,6 @@ function UsersContent() {
                   <th>{'Пользователь'}</th>
                   <th>{'Email'}</th>
                   <th>{'Роль'}</th>
-                  <th>{'Без мод.'}</th>
                   <th>{'Статус'}</th>
                   <th>{'Регистрация'}</th>
                   <th aria-label={'Действия'} />
@@ -266,13 +244,6 @@ function UsersContent() {
                             .map((r) => ({ value: r.slug, label: r.name }))}
                           onChange={(v) => changeRole(u, v)}
                           ariaLabel={`Роль пользователя ${u.username}`}
-                        />
-                      </td>
-                      <td>
-                        <Toggle
-                          checked={u.skip_moderation}
-                          disabled={!canSkip || busy || !outranks(u)}
-                          onChange={() => void toggleSkipModeration(u)}
                         />
                       </td>
                       <td>

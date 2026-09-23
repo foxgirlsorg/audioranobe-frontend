@@ -194,7 +194,6 @@ export interface Viewer {
   needs_setup: boolean;
   is_banned: boolean;
   ban_reason: string | null;
-  skip_moderation: boolean;
   accepted_cookies: boolean;
   email_verified: boolean;
   /** Who may DM the user: everyone, or accepted friends only (staff bypass). */
@@ -1042,7 +1041,7 @@ export interface DashboardStats {
 }
 
 /** GET /mod/review-queue item — a title that bypassed the normal pending
- * queue (skip_moderation user or ranobelib/panel import) and hasn't had a
+ * queue (bypass.moderation user or ranobelib/panel import) and hasn't had a
  * mod's eyes on it yet. */
 export interface ReviewQueueItem {
   id: number;
@@ -1050,7 +1049,6 @@ export interface ReviewQueueItem {
   name: string;
   is_imported: boolean;
   created_by: string | null;
-  created_by_skips_moderation: boolean;
   created_at: string;
 }
 

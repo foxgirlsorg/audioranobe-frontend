@@ -117,10 +117,8 @@ function ReviewQueueContent() {
                   <td className={styles.note}>
                     {item.is_imported ? (
                       <span className={styles.badgeImport}>{'импорт'}</span>
-                    ) : item.created_by_skips_moderation ? (
-                      <span className={styles.badgeSkip}>{'без модерации'}</span>
                     ) : (
-                      '—'
+                      <span className={styles.badgeSkip}>{'без модерации'}</span>
                     )}
                   </td>
                   <td className={styles.note}>{item.created_by ?? '—'}</td>

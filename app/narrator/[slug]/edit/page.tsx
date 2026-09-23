@@ -76,7 +76,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
   // who skips moderation hand over immediately; everyone else files a request.
   const transferIsInstant =
     isMod ||
-    !!user?.skip_moderation ||
     can('bypass.moderation') ||
     can('bypass.moderation.narrator');
 
