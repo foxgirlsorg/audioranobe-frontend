@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ImagePlus, Mic } from 'lucide-react';
 import { api } from '@/lib/api';
+import { ruPlural } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
@@ -526,7 +527,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
                         {t.name}
                       </Link>
                       <span className={styles.statsTitleMeta}>
-                        {t.listens.toLocaleString()} прослушиваний
+                        {t.listens.toLocaleString()} {ruPlural(t.listens, ['прослушивание', 'прослушивания', 'прослушиваний'])}
                         {t.avg_rating != null ? ` · ${t.avg_rating.toFixed(1)}★` : ''}
                       </span>
                     </li>

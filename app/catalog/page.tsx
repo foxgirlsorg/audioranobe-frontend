@@ -28,7 +28,7 @@ import {
   type UserSearchHit,
 } from '@/lib/types';
 import { errMsg } from '@/lib/toast';
-import { formatCount, initialsOf } from '@/lib/format';
+import { formatCount, initialsOf, ruPlural } from '@/lib/format';
 import CardGrid from '@/components/CardGrid/CardGrid';
 import RequestableTitles from '@/components/RequestableTitles/RequestableTitles';
 import TitleCardC from '@/components/TitleCardC/TitleCardC';
@@ -417,7 +417,7 @@ function CatalogInner() {
                           : <Mic size={22} aria-hidden="true" />}
                       </span>
                       <span className={styles.personName}>{n.name}</span>
-                      <span className={styles.personMeta}>{`${formatCount(n.titles_count)} тайтлов`}</span>
+                      <span className={styles.personMeta}>{`${formatCount(n.titles_count)} ${ruPlural(n.titles_count, ['тайтл', 'тайтла', 'тайтлов'])}`}</span>
                     </Link>
                   ))}
                 </div>

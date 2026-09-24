@@ -15,7 +15,7 @@ export async function generateMetadata({
 
   const pageTitle = `${title.name} — аудиокнига | AudioRanobe`;
   const narrators = title.narrators?.length
-    ? `, читают: ${title.narrators.map((n) => n.name).join(', ')}`
+    ? `, ${title.narrators.length > 1 ? 'читают' : 'читает'} ${title.narrators.map((n) => n.name).join(', ')}`
     : '';
   const summary = plainSummary(title.description);
   const description = `Слушать аудиокнигу «${title.name}» онлайн бесплатно${narrators}.${

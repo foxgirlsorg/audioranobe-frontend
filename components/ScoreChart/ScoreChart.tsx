@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+import { ruPlural } from '@/lib/format';
 import type { ScoreStats } from '@/lib/types';
 import styles from './ScoreChart.module.css';
 
@@ -10,7 +11,7 @@ type Metric = 'titles' | 'hours';
 function CustomTooltip({ active, payload, metric }: { active?: boolean; payload?: { payload: { score: number; titles: number; hours: number } }[]; metric: Metric }) {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload;
-  const value = metric === 'titles' ? `${row.titles} книг` : `${row.hours} ч`;
+  const value = metric === 'titles' ? `${row.titles} ${ruPlural(row.titles, ['книга', 'книги', 'книг'])}` : `${row.hours} ч`;
   return (
     <div className={styles.tooltip}>
       <strong>{row.score}</strong> — {value}
