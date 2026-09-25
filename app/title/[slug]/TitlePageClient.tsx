@@ -84,12 +84,10 @@ const STATUS_TONE: Record<NarrationStatus, string> = {
   abandoned: 'toneDropped',
 };
 
-function sharedNarrationStatus(
-  narrators: { narration_status: NarrationStatus }[]
-): NarrationStatus | null {
-  if (narrators.length === 0) return null;
-  const first = narrators[0].narration_status;
-  return narrators.every((n) => n.narration_status === first) ? first : null;
+const STATUS_ACTIVITY: NarrationStatus[] = ['ongoing', 'completed', 'frozen', 'abandoned'];
+
+function activeNarrationStatus(narrators: { narration_status: NarrationStatus }[]): NarrationStatus {
+  return STATUS_ACTIVITY.find((st) => narrators.some((n) => n.narration_status === st)) ?? 'ongoing';
 }
 
 /**
@@ -458,7 +456,7 @@ export default function TitlePageClient({
   );
   const commentsTotal = title.comments?.total ?? 0;
   const runtime = title.volumes.reduce((n, v) => n + volumeDuration(v), 0);
-  const narrationStatus = sharedNarrationStatus(title.narrators);
+  const narrationStatus = activeNarrationStatus(title.narrators);
 
   const restricted = title.is_restricted;
 
@@ -1052,7 +1050,7 @@ export default function TitlePageClient({
         <div className={styles.factRow2}>
           <span className={styles.factK}>{'Озвучка'}</span>
           <span className={styles.factV}>
-            {narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}
+            {NARRATION_STATUS_LABELS[narrationStatus]}
           </span>
         </div>
       ) : null}
@@ -1165,7 +1163,7 @@ export default function TitlePageClient({
                 {title.narrators.length > 0 ? (
                   <div className={styles.mFact}>
                     <b>Озвучка</b>
-                    <span>{narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}</span>
+                    <span>{NARRATION_STATUS_LABELS[narrationStatus]}</span>
                   </div>
                 ) : null}
                 {title.year != null ? (
