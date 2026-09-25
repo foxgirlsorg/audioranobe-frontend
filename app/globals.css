@@ -91,6 +91,21 @@ body.has-notice {
   --nav-total: calc(var(--nav-height) + var(--notice-height));
 }
 
+.app-chrome {
+  display: contents;
+}
+
+html.app-embed .app-chrome,
+html.app-embed .skip-link {
+  display: none;
+}
+
+html.app-embed,
+html.app-embed body {
+  --nav-height: 0px;
+  --nav-total: 0px;
+}
+
 body.drag-scrolling,
 body.drag-scrolling * {
   cursor: grabbing !important;
