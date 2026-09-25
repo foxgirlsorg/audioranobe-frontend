@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import {
   Calendar,
   ChevronDown,
+  ChevronRight,
   Clock,
   Disc3,
   Download,
@@ -56,6 +57,7 @@ import Markdown from '@/components/Markdown/Markdown';
 import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDownloadButton/ArchiveDownloadButton';
 import AiBadge from '@/components/AiBadge/AiBadge';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
+import Modal from '@/components/Modal/Modal';
 import { SUPPORT_URL } from '@/lib/support';
 import styles from './page.module.css';
 
@@ -201,6 +203,7 @@ export default function TitlePageClient({
   const [mobileTab, setMobileTab] = useState('about');
   const isMobile = useIsMobile();
   const [ratingOpen, setRatingOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [tagsClipped, setTagsClipped] = useState(false);
   const tagsRef = useRef<HTMLParagraphElement | null>(null);
@@ -572,36 +575,32 @@ export default function TitlePageClient({
     </>
   );
 
-  const narratorsBlock =
+  const narratorItems = title.narrators.map((n) => (
+    <Link
+      key={n.id}
+      href={`/narrator/${n.slug}`}
+      className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}${
+        n.is_verified ? ` ${styles.narrItemVerified}` : ''
+      }`}
+    >
+      {n.avatar_url ? (
+        <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
+      ) : (
+        <span className={styles.narrAvatarFallback}>{n.name.slice(0, 1).toUpperCase()}</span>
+      )}
+      <span className={styles.narrName}>{n.name}</span>
+      {n.is_verified ? <VerifiedBadge size={12} className={styles.narrVerified} /> : null}
+    </Link>
+  ));
+
+  const narratorsBlock = (wrap: boolean) =>
     title.narrators.length > 0 ? (
       <div className={styles.narrators}>
         <span className={styles.narrLabel}>
           <Mic size={11} />
           {title.narrators.length > 1 ? `Чтецы · ${title.narrators.length}` : 'Чтец'}
         </span>
-        <div className={styles.narrListH}>
-          {title.narrators.map((n) => (
-            <Link
-              key={n.id}
-              href={`/narrator/${n.slug}`}
-              className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}${
-                n.is_verified ? ` ${styles.narrItemVerified}` : ''
-              }`}
-            >
-              {n.avatar_url ? (
-                <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
-              ) : (
-                <span className={styles.narrAvatarFallback}>
-                  {n.name.slice(0, 1).toUpperCase()}
-                </span>
-              )}
-              <span className={styles.narrName}>{n.name}</span>
-              {n.is_verified ? (
-                <VerifiedBadge size={12} className={styles.narrVerified} />
-              ) : null}
-            </Link>
-          ))}
-        </div>
+        <div className={wrap ? styles.narrList : styles.narrListH}>{narratorItems}</div>
       </div>
     ) : null;
 
@@ -1013,6 +1012,69 @@ export default function TitlePageClient({
     />
   );
 
+  const factRows = (
+    <>
+      {title.author && (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Автор'}</span>
+          <Link
+            href={`/author/${title.author.id}`}
+            className={styles.factV}
+            title={`Ещё от ${title.author.name}`}
+          >
+            {title.author.name}
+          </Link>
+        </div>
+      )}
+      {runtime > 0 ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Длительность'}</span>
+          <span className={styles.factV}>{formatDuration(runtime)}</span>
+        </div>
+      ) : null}
+      {title.updated_at ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Обновлён'}</span>
+          <span className={styles.factV}>{formatDate(title.updated_at)}</span>
+        </div>
+      ) : null}
+      <div className={styles.factRow2}>
+        <span className={styles.factK}>{'Страна'}</span>
+        <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+      </div>
+      <div className={styles.factRow2}>
+        <span className={styles.factK}>{'Тайтл'}</span>
+        <span className={styles.factV}>
+          {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
+        </span>
+      </div>
+      {title.narrators.length > 0 ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Озвучка'}</span>
+          <span className={styles.factV}>
+            {narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}
+          </span>
+        </div>
+      ) : null}
+      <div className={styles.factRow2}>
+        <span className={styles.factK}>{'Просмотров'}</span>
+        <span className={styles.factV}>{formatCount(title.views_count)}</span>
+      </div>
+      {chaptersTotal > 0 ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Глав'}</span>
+          <span className={styles.factV}>{chaptersTotal}</span>
+        </div>
+      ) : null}
+      {title.translator ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Переводчик'}</span>
+          <span className={styles.factV}>{title.translator}</span>
+        </div>
+      ) : null}
+    </>
+  );
+
   const infoContent = (
     <>
     <div className={`${styles.subrow} ${!user ? styles.subrowCompact : ''}`}>
@@ -1022,67 +1084,20 @@ export default function TitlePageClient({
           {'Детали'}
         </span>
         <div className={styles.factsCardBody}>
-          {title.author && (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Автор'}</span>
-              <Link
-                href={`/author/${title.author.id}`}
-                className={styles.factV}
-                title={`Ещё от ${title.author.name}`}
-              >
-                {title.author.name}
-              </Link>
-            </div>
-          )}
-          {runtime > 0 ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Длительность'}</span>
-              <span className={styles.factV}>{formatDuration(runtime)}</span>
-            </div>
-          ) : null}
-          {title.updated_at ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Обновлён'}</span>
-              <span className={styles.factV}>{formatDate(title.updated_at)}</span>
-            </div>
-          ) : null}
-          <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Страна'}</span>
-            <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-          </div>
-          <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Тайтл'}</span>
-            <span className={styles.factV}>
-              {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
-            </span>
-          </div>
-          {title.narrators.length > 0 ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Озвучка'}</span>
-              <span className={styles.factV}>
-                {narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}
-              </span>
-            </div>
-          ) : null}
-          <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Просмотров'}</span>
-            <span className={styles.factV}>{formatCount(title.views_count)}</span>
-          </div>
-          {chaptersTotal > 0 ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Глав'}</span>
-              <span className={styles.factV}>{chaptersTotal}</span>
-            </div>
-          ) : null}
-          {title.translator ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Переводчик'}</span>
-              <span className={styles.factV}>{title.translator}</span>
-            </div>
-          ) : null}
-          {narratorsBlock}
+          <div className={styles.factsRows}>{factRows}</div>
+          <button type="button" className={styles.factsMore} onClick={() => setDetailsOpen(true)}>
+            {'Все детали'}
+            <ChevronRight size={12} />
+          </button>
+          {narratorsBlock(false)}
         </div>
       </div>
+      <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)} title={'Детали'}>
+        <div className={styles.factsModal}>
+          {factRows}
+          {narratorsBlock(true)}
+        </div>
+      </Modal>
       {user ? libraryWidget : null}
       {ratingCard}
     </div>

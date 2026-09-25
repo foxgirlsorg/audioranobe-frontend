@@ -445,11 +445,27 @@
   gap: 0.55rem;
 }
 
-/* Horizontal-scroll variant for mobile — everything still shows, just swipeable. */
+/* Single swipeable row; the list bleeds to the card edges so the fades sit on
+   the card border, not over the first/last pill at rest. */
 .narrListH {
+  --fade: 18px;
   display: flex;
-  flex-wrap: wrap;
   gap: 0.55rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: calc(-1 * var(--fade));
+  padding: 0 var(--fade) 2px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+}
+
+.narrListH::-webkit-scrollbar {
+  display: none;
+}
+
+.narrListH .narrItem {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .narrItem {
@@ -628,8 +644,54 @@
 .factsCardBody {
   display: flex;
   flex: 1;
+  min-height: 0;
   flex-direction: column;
   justify-content: center;
+  gap: 10px;
+}
+
+/* Column-wrap with a clipped overflow: rows that don't fit the fixed card
+   height wrap into an off-screen second column instead of showing cut in half. */
+.factsCard:has(.factsRows) {
+  height: 350px;
+}
+
+.factsRows {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-flow: column wrap;
+  align-content: flex-start;
+  column-gap: 40px;
+  row-gap: 10px;
+  overflow: hidden;
+}
+
+.factsRows > .factRow2 {
+  width: 100%;
+}
+
+.factsMore {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.factsMore:hover {
+  color: var(--accent-hover);
+}
+
+.factsModal {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
@@ -1267,24 +1329,6 @@ a.factV:hover {
 
   .actions .btn-primary {
     flex: 1;
-  }
-
-  .narrListH {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-    justify-content: flex-start;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
-    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent 100%);
-  }
-
-  .narrListH::-webkit-scrollbar {
-    display: none;
-  }
-
-  .narrListH .narrItem {
-    flex-shrink: 0;
   }
 
   .descWrap {
