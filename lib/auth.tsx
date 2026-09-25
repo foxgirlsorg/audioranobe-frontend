@@ -139,6 +139,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     api('/auth/logout', { method: 'POST' }).catch(() => {});
   }, []);
 
+  // Tie Umami sessions to the signed-in account. The tracker script loads
+  // asynchronously, so wait (briefly) for it to appear.
+  const userId = user?.id;
+  const username = user?.username;
+  useEffect(() => {
+    if (userId === undefined || username === undefined) return;
+    let tries = 0;
+    const t = window.setInterval(() => {
+      const identify = window.umami?.identify;
+      if (identify) identify(String(userId), { username });
+      if (identify || ++tries >= 20) window.clearInterval(t);
+    }, 500);
+    return () => window.clearInterval(t);
+  }, [userId, username]);
+
   const permissions = user?.permissions ?? [];
   const can = useCallback(
     (perm: string) => permissions.includes('*') || permissions.includes(perm),
