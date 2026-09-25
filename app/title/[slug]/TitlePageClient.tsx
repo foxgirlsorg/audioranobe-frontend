@@ -1073,6 +1073,15 @@ export default function TitlePageClient({
     </>
   );
 
+  const detailsModal = (
+    <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)} title={'Детали'}>
+      <div className={styles.factsModal}>
+        {factRows}
+        {narratorsBlock(true)}
+      </div>
+    </Modal>
+  );
+
   const infoContent = (
     <>
     <div className={`${styles.subrow} ${!user ? styles.subrowCompact : ''}`}>
@@ -1090,12 +1099,7 @@ export default function TitlePageClient({
           {narratorsBlock(false)}
         </div>
       </div>
-      <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)} title={'Детали'}>
-        <div className={styles.factsModal}>
-          {factRows}
-          {narratorsBlock(true)}
-        </div>
-      </Modal>
+      {detailsModal}
       {user ? libraryWidget : null}
       {ratingCard}
     </div>
@@ -1166,16 +1170,12 @@ export default function TitlePageClient({
                     <span>{NARRATION_STATUS_LABELS[narrationStatus]}</span>
                   </div>
                 ) : null}
-                {title.year != null ? (
+                {title.updated_at ? (
                   <div className={styles.mFact}>
-                    <b>Год</b>
-                    <span>{title.year}</span>
+                    <b>Обновлён</b>
+                    <span>{formatDate(title.updated_at)}</span>
                   </div>
                 ) : null}
-                <div className={styles.mFact}>
-                  <b>Страна</b>
-                  <span>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-                </div>
                 {runtime > 0 ? (
                   <div className={styles.mFact}>
                     <b>Длительность</b>
@@ -1183,11 +1183,20 @@ export default function TitlePageClient({
                   </div>
                 ) : null}
                 <div className={styles.mFact}>
+                  <b>Страна</b>
+                  <span>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+                </div>
+                <div className={styles.mFact}>
                   <b>Просмотров</b>
                   <span>{formatCount(title.views_count)}</span>
                 </div>
               </div>
+              <button type="button" className={styles.mFactsMore} onClick={() => setDetailsOpen(true)}>
+                {'Все детали'}
+                <ChevronRight size={13} />
+              </button>
             </div>
+            {detailsModal}
 
             {mNarratorsBlock}
             {descBlock}

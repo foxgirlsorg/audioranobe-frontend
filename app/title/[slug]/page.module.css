@@ -1153,6 +1153,7 @@ a.factV:hover {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  overflow: hidden;
 }
 
 .mFacts {
@@ -1191,6 +1192,28 @@ a.factV:hover {
 
 .mFact a:hover {
   color: var(--accent);
+}
+
+.mFactsMore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: calc(100% + 24px);
+  margin: 14px -12px -14px;
+  padding: 11px 0;
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.mFactsMore:active {
+  background: var(--accent-soft);
 }
 
 /* Narrator cards — avatar + stacked name/role in a bordered card, horizontally
