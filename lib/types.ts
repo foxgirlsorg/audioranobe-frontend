@@ -450,6 +450,7 @@ export interface TitleFull extends TitleCard {
   description: string;
   bg_url: string | null;
   views_count: number;
+  translator: string;
   mod_status: ModStatus;
   created_at: string;
   updated_at: string;

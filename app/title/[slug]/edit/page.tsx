@@ -47,6 +47,7 @@ interface Form {
   year: string;
   status: ReleaseStatus;
   country: Country;
+  translator: string;
 }
 
 export default function TitleEditPage({ params }: { params: { slug: string } }) {
@@ -97,6 +98,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     year: '',
     status: 'ongoing',
     country: 'china',
+    translator: '',
   });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -140,6 +142,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       year: title.year != null ? String(title.year) : '',
       status: title.release_status,
       country: title.country,
+      translator: title.translator ?? '',
     });
     setAuthor(
       title.author ? { ...title.author, titles_count: 0 } : null
@@ -255,6 +258,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         year,
         release_status: form.status,
         country: form.country,
+        translator: form.translator.trim(),
         genre_ids: genreIds,
         narration_statuses: narrationStatuses,
       };
@@ -443,17 +447,33 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
           </div>
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="t-country">
-            Страна
-          </label>
-          <Select<Country>
-            id="t-country"
-            block
-            value={form.country}
-            options={COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] }))}
-            onChange={(country) => setForm((f) => ({ ...f, country }))}
-          />
+        <div className={styles.formRow}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="t-country">
+              Страна
+            </label>
+            <Select<Country>
+              id="t-country"
+              block
+              value={form.country}
+              options={COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] }))}
+              onChange={(country) => setForm((f) => ({ ...f, country }))}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="t-translator">
+              Переводчик
+            </label>
+            <input
+              id="t-translator"
+              className="input"
+              type="text"
+              maxLength={200}
+              value={form.translator}
+              onChange={(e) => setForm((f) => ({ ...f, translator: e.target.value }))}
+              placeholder="Команда или имя переводчика"
+            />
+          </div>
         </div>
 
         <div className={styles.field}>

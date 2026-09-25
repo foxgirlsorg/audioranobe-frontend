@@ -35,7 +35,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
-import { chapterFilePrefix, chapterLabel, chapterNumberLabel, formatCount, formatDuration } from '@/lib/format';
+import { chapterFilePrefix, chapterLabel, chapterNumberLabel, formatCount, formatDate, formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Section from '@/components/Section/Section';
 import Tabs from '@/components/Tabs/Tabs';
@@ -1034,6 +1034,22 @@ export default function TitlePageClient({
               </Link>
             </div>
           )}
+          {runtime > 0 ? (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Длительность'}</span>
+              <span className={styles.factV}>{formatDuration(runtime)}</span>
+            </div>
+          ) : null}
+          {title.updated_at ? (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Обновлён'}</span>
+              <span className={styles.factV}>{formatDate(title.updated_at)}</span>
+            </div>
+          ) : null}
+          <div className={styles.factRow2}>
+            <span className={styles.factK}>{'Страна'}</span>
+            <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+          </div>
           <div className={styles.factRow2}>
             <span className={styles.factK}>{'Тайтл'}</span>
             <span className={styles.factV}>
@@ -1048,32 +1064,22 @@ export default function TitlePageClient({
               </span>
             </div>
           ) : null}
-          {title.year != null ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Год'}</span>
-              <span className={styles.factV}>{title.year}</span>
-            </div>
-          ) : null}
           <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Страна'}</span>
-            <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+            <span className={styles.factK}>{'Просмотров'}</span>
+            <span className={styles.factV}>{formatCount(title.views_count)}</span>
           </div>
-          {runtime > 0 ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Длительность'}</span>
-              <span className={styles.factV}>{formatDuration(runtime)}</span>
-            </div>
-          ) : null}
           {chaptersTotal > 0 ? (
             <div className={styles.factRow2}>
               <span className={styles.factK}>{'Глав'}</span>
               <span className={styles.factV}>{chaptersTotal}</span>
             </div>
           ) : null}
-          <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Просмотров'}</span>
-            <span className={styles.factV}>{formatCount(title.views_count)}</span>
-          </div>
+          {title.translator ? (
+            <div className={styles.factRow2}>
+              <span className={styles.factK}>{'Переводчик'}</span>
+              <span className={styles.factV}>{title.translator}</span>
+            </div>
+          ) : null}
           {narratorsBlock}
         </div>
       </div>
