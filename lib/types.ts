@@ -520,6 +520,8 @@ export interface ChapterPlay {
 export interface Comment {
   id: number;
   user: UserBrief & { role?: Role } | null;
+  /** Set when posted under a narrator persona; shown instead of the user. */
+  narrator?: { id: number; slug: string; name: string; avatar_url: string | null; is_verified: boolean } | null;
   target_type: CommentTargetType;
   target_id: number;
   parent_id: number | null;

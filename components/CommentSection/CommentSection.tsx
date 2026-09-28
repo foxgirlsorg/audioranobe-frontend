@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   ArrowBigDown,
   ArrowBigUp,
+  ChevronDown,
   CornerDownRight,
   LogIn,
   MessageSquare,
@@ -13,7 +14,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { Comment, CommentTargetType, Paginated } from '@/lib/types';
+import type { Badge, Comment, CommentTargetType, Paginated } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
 import Tabs from '@/components/Tabs/Tabs';
@@ -25,6 +26,9 @@ import EmptyState from '@/components/EmptyState/EmptyState';
 import Markdown from '@/components/Markdown/Markdown';
 import MarkdownEditor, { type MarkdownEditorHandle } from '@/components/MarkdownEditor/MarkdownEditor';
 import UserBadges from '@/components/UserBadges/UserBadges';
+import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
+import { useMyNarrators } from '@/lib/narrators';
+import { initialsOf } from '@/lib/format';
 import styles from './CommentSection.module.css';
 
 const PER_PAGE = 20;
@@ -209,6 +213,103 @@ function MentionDropdown({
   );
 }
 
+type Persona = {
+  id: number | null;
+  name: string;
+  avatar_url: string | null;
+  is_verified?: boolean;
+  badges?: Badge[];
+  is_banned?: boolean;
+};
+
+function PersonaLabel({ p }: { p: Persona }) {
+  return (
+      <span className={styles.personaLabel}>
+        <span className={styles.personaName}>{p.name}</span>
+        {p.is_verified ? <VerifiedBadge size={11} /> : null}
+        <UserBadges user={p} size={12} />
+      </span>
+  );
+}
+
+function PersonaAvatar({ p, size }: { p: Persona; size: number }) {
+  return (
+      <span className={styles.personaAvatar} style={{ width: size, height: size }}>
+        {p.avatar_url ? <img src={p.avatar_url} alt="" /> : initialsOf(p.name)}
+      </span>
+  );
+}
+
+function PersonaPicker({
+                         personas,
+                         value,
+                         onChange,
+                       }: {
+  personas: Persona[];
+  value: number | null;
+  onChange: (id: number | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+  const current = personas.find((p) => p.id === value) ?? personas[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, [open]);
+
+  return (
+      <div className={styles.persona} ref={ref}>
+        <button
+            type="button"
+            className={styles.personaBtn}
+            onClick={() => setOpen((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            title="От чьего имени комментировать"
+        >
+          <PersonaAvatar p={current} size={20} />
+          <span className={styles.personaStack}>
+            {personas.map((p) => (
+                <span key={p.id ?? 0} className={p.id === current.id ? undefined : styles.personaGhost} aria-hidden={p.id !== current.id}>
+                  <PersonaLabel p={p} />
+                </span>
+            ))}
+          </span>
+          <ChevronDown size={13} className={open ? styles.personaChevronOpen : undefined} />
+        </button>
+        {open ? (
+            <div className={`${styles.mentionDropdown} ${styles.personaMenu}`} role="listbox">
+              {personas.map((p) => (
+                  <button
+                      type="button"
+                      role="option"
+                      aria-selected={p.id === current.id}
+                      key={p.id ?? 0}
+                      className={`${styles.mentionItem} ${styles.personaItem} ${p.id === current.id ? styles.mentionItemActive : ''}`}
+                      onClick={() => {
+                        onChange(p.id);
+                        setOpen(false);
+                      }}
+                  >
+                    <PersonaAvatar p={p} size={22} />
+                    <PersonaLabel p={p} />
+                  </button>
+              ))}
+            </div>
+        ) : null}
+      </div>
+  );
+}
+
 function Composer({
                     initial = '',
                     placeholder,
@@ -217,7 +318,9 @@ function Composer({
                     onCancel,
                     autoFocus = false,
                     mentionUsers = [],
+                    persona,
                   }: {
+  persona?: React.ReactNode;
   initial?: string;
   placeholder?: string;
   submitLabel: string;
@@ -408,7 +511,9 @@ function Composer({
               </>
             }
             footer={
-              onCancel ? (
+              <>
+              {persona}
+              {onCancel ? (
                   <div className={styles.composerBtns}>
                     <button type="button" className={styles.composerCancel} onClick={onCancel}>
                       Отмена
@@ -431,7 +536,8 @@ function Composer({
                   >
                     {busy ? 'Отправка…' : submitLabel}
                   </button>
-              )
+              )}
+              </>
             }
         />
       </div>
@@ -461,7 +567,9 @@ function NestedComment({
                          onSubmitReply,
                          onSubmitEdit,
                          mentionUsers,
+                         persona,
                        }: {
+  persona?: React.ReactNode;
   comment: Comment;
   directChildren: Map<number, Comment[]>;
   descendantCount: Map<number, number>;
@@ -517,6 +625,7 @@ function NestedComment({
             onSubmitReply={onSubmitReply}
             onSubmitEdit={onSubmitEdit}
             mentionUsers={mentionUsers}
+            persona={persona}
         />
       </div>
   );
@@ -533,14 +642,31 @@ function NestedComment({
       >
         <div className={styles.commentMain}>
           <header className={styles.commentHead}>
-            <UserAvatar
-              user={comment.user}
-              size={avatarSize}
-              presence={comment.user?.presence ?? null}
-              lastSeenAt={comment.user?.last_seen_at}
-            />
+            {comment.narrator ? (
+                <Link href={`/narrator/${encodeURIComponent(comment.narrator.slug)}`} tabIndex={-1} aria-hidden>
+                  <PersonaAvatar p={comment.narrator} size={avatarSize} />
+                </Link>
+            ) : (
+                <UserAvatar
+                  user={comment.user}
+                  size={avatarSize}
+                  presence={comment.user?.presence ?? null}
+                  lastSeenAt={comment.user?.last_seen_at}
+                />
+            )}
             <div className={styles.commentHeadText}>
-              {comment.user ? (
+              {comment.narrator ? (
+                  <>
+                    <Link
+                        href={`/narrator/${encodeURIComponent(comment.narrator.slug)}`}
+                        className={styles.username}
+                    >
+                      {comment.narrator.name}
+                    </Link>
+                    {comment.narrator.is_verified ? <VerifiedBadge size={11} /> : null}
+                    <span className={styles.narratorTag}>чтец ·</span>
+                  </>
+              ) : comment.user ? (
                   <Link
                       href={`/user/${encodeURIComponent(comment.user.username)}`}
                       className={styles.username}
@@ -684,7 +810,9 @@ function NestedComment({
               <div className={styles.replyBox}>
                 <Composer
                     placeholder={
-                      comment.user
+                      comment.narrator
+                          ? `Ответ для ${comment.narrator.name}…`
+                          : comment.user
                           ? `Ответ для ${comment.user.display_name || comment.user.username}…`
                           : 'Напишите ответ…'
                     }
@@ -693,6 +821,7 @@ function NestedComment({
                     onSubmit={(b) => onSubmitReply(b, comment.id)}
                     onCancel={() => onReply(null)}
                     mentionUsers={mentionUsers}
+                    persona={persona}
                 />
               </div>
           ) : null}
@@ -810,6 +939,37 @@ export function CommentSection({
   const { user, isMod, can } = useAuth();
   const { toast } = useToast();
   const isAdmin = can('comments.moderate');
+
+  const { narrators, ensureLoaded } = useMyNarrators();
+  const canAnyNarrator = can('comments.as_narrator');
+  const canNarrator = canAnyNarrator || can('comments.as_verified_narrator');
+  const [personaId, setPersonaId] = useState<number | null>(null);
+  useEffect(() => {
+    if (canNarrator) ensureLoaded();
+  }, [canNarrator, ensureLoaded]);
+  const personas = useMemo<Persona[]>(() => {
+    if (!user || !canNarrator) return [];
+    const own = narrators.filter(
+        (n) =>
+            !n.is_deleted &&
+            (n as { mod_status?: string }).mod_status === 'approved' &&
+            (canAnyNarrator || n.is_verified),
+    );
+    if (own.length === 0) return [];
+    return [
+      {
+        id: null,
+        name: user.display_name || user.username,
+        avatar_url: user.avatar_thumb_url || user.avatar_url,
+        badges: user.badges,
+        is_banned: user.is_banned,
+      },
+      ...own.map((n) => ({ id: n.id, name: n.name, avatar_url: n.avatar_thumb_url || n.avatar_url, is_verified: n.is_verified })),
+    ];
+  }, [user, narrators, canNarrator, canAnyNarrator]);
+  const narratorId = personas.some((p) => p.id === personaId) ? personaId : null;
+  const personaPicker =
+      personas.length > 0 ? <PersonaPicker personas={personas} value={narratorId} onChange={setPersonaId} /> : null;
 
   const [items, setItems] = useState<Comment[]>(initialComments?.items ?? []);
   const [total, setTotal] = useState(initialComments?.total ?? 0);
@@ -1068,6 +1228,7 @@ export function CommentSection({
           target_id: targetId,
           body: b,
           ...(parentId != null ? { parent_id: parentId } : {}),
+          ...(narratorId != null ? { narrator_id: narratorId } : {}),
         },
       });
       if (parentId != null) {
@@ -1182,6 +1343,7 @@ export function CommentSection({
                   submitLabel="Опубликовать"
                   onSubmit={(b) => post(b, null)}
                   mentionUsers={mentionUsers}
+                  persona={personaPicker}
               />
             </div>
         ) : (
@@ -1245,6 +1407,7 @@ export function CommentSection({
                           onSubmitReply={(b, parentId) => post(b, parentId)}
                           onSubmitEdit={saveEdit}
                           mentionUsers={mentionUsers}
+                          persona={personaPicker}
                       />
                     </div>
                 ))}
