@@ -12,6 +12,8 @@ import Spinner from '@/components/Spinner/Spinner';
 import { OAUTH_MODE_KEY } from '@/components/ProviderAuth/ProviderAuth';
 import styles from './page.module.css';
 
+const APP_STATE = /^app~([A-Za-z]\w*(?:\.[A-Za-z]\w*)+)~/;
+
 export default function OAuthCallbackPage() {
   const params = useParams<{ provider: string }>();
   const search = useSearchParams();
@@ -19,6 +21,7 @@ export default function OAuthCallbackPage() {
   const { adoptSession, refresh } = useAuth();
 
   const [error, setError] = useState<string | null>(null);
+  const [appLink, setAppLink] = useState<string | null>(null);
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -29,6 +32,14 @@ export default function OAuthCallbackPage() {
     const code = search?.get('code') ?? '';
     const state = search?.get('state') ?? '';
     const denied = search?.get('error');
+
+    const pkg = APP_STATE.exec(state)?.[1];
+    if (pkg) {
+      const link = `intent://oauth/callback/${encodeURIComponent(provider)}?${search?.toString() ?? ''}#Intent;scheme=audioranobe;package=${pkg};end`;
+      setAppLink(link);
+      window.location.href = link;
+      return;
+    }
 
     if (denied) {
       setError('Вход отменён.');
@@ -67,6 +78,20 @@ export default function OAuthCallbackPage() {
       }
     })();
   }, [params, search, router, adoptSession, refresh]);
+
+  if (appLink) {
+    return (
+      <div className={styles.wrap}>
+        <div className={`glass-panel ${styles.panel}`}>
+          <h1 className={styles.title}>{'Вход почти завершён'}</h1>
+          <p className={styles.text}>{'Вернитесь в приложение, чтобы продолжить.'}</p>
+          <a href={appLink} className="btn btn-primary">
+            {'Открыть приложение'}
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
