@@ -111,6 +111,7 @@ export interface NotificationPrefs {
   entity_modified: boolean;
   entity_deleted: boolean;
   narration_ready: boolean;
+  dm: boolean;
 }
 
 export interface UserPublic {

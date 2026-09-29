@@ -15,6 +15,8 @@ self.addEventListener('push', (event) => {
       body: data.body || '',
       icon: data.icon || '/favicon.svg',
       badge: '/favicon.svg',
+      tag: data.tag || undefined,
+      renotify: !!data.tag,
       data: { url: data.url || '/' },
     })
   );

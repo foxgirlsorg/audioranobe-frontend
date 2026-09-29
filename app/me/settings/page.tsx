@@ -70,6 +70,11 @@ const PREF_DEFS: { key: keyof NotificationPrefs; label: string; hint: string }[]
     hint: 'Выходит новая глава тайтла из вашей библиотеки',
   },
   {
+    key: 'dm',
+    label: 'Личные сообщения',
+    hint: 'Push-уведомление о новом сообщении в чате',
+  },
+  {
     key: 'narration_ready',
     label: 'Озвучка готова',
     hint: 'Заказанная вами озвучка готова к прослушиванию',
