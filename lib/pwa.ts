@@ -99,3 +99,16 @@ export function useInstall(): {
 
   return { canInstall, standalone, ios };
 }
+
+/** True at phone width (the site's 768px breakpoint), kept in sync with resizes. */
+export function useIsMobile(): boolean {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const apply = () => setMobile(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+  return mobile;
+}

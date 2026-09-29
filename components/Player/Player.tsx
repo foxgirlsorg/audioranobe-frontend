@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ChevronDown,
   Maximize2,
   Minimize2,
   Moon,
@@ -17,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { usePlayer, usePlayerPosition } from '@/lib/player';
-import { isStandalone } from '@/lib/pwa';
+import { isStandalone, useIsMobile } from '@/lib/pwa';
 import { chapterNumberLabel, formatDuration } from '@/lib/format';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import { useBackToClose } from '@/lib/useBackToClose';
@@ -65,7 +66,7 @@ export default function Player() {
   const [menu, setMenu] = useState<'rate' | 'sleep' | null>(null);
   const [chapterOverflow, setChapterOverflow] = useState(false);
   const extrasRef = useRef<HTMLDivElement | null>(null);
-  const oneRowRef = useRef<HTMLDivElement | null>(null);
+  const fullSetRef = useRef<HTMLDivElement | null>(null);
   const lastVolumeRef = useRef(1);
   const stageChapterRef = useRef<HTMLSpanElement | null>(null);
   const stageChapterTrackRef = useRef<HTMLSpanElement | null>(null);
@@ -83,11 +84,13 @@ export default function Player() {
   // mounted a beat past that (activeMounted) lets the slide-out play, and
   // retaining the last track (lastCurrentRef) keeps the markup renderable
   // during that exit even after the context's current has gone null.
-  // In the installed PWA the dock renders its own mini-player, so the global
-  // docked bar never shows — only its full-screen view opens (setFull).
+  // On phones and in the installed PWA the dock renders its own floating
+  // mini-player, so the docked bar never shows — only its full-screen view
+  // opens (setFull).
   const [standalone, setStandalone] = useState(false);
   useEffect(() => setStandalone(isStandalone()), []);
-  const active = !!liveCurrent && (full || (!barHidden && !standalone));
+  const mobile = useIsMobile();
+  const active = !!liveCurrent && (full || (!barHidden && !standalone && !mobile));
   const activeMounted = useAnimatedPresence(active, 360);
   const lastCurrentRef = useRef(liveCurrent);
   if (liveCurrent) lastCurrentRef.current = liveCurrent;
@@ -114,7 +117,7 @@ export default function Player() {
     if (!menu) return;
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (extrasRef.current?.contains(t) || oneRowRef.current?.contains(t)) return;
+      if (extrasRef.current?.contains(t) || fullSetRef.current?.contains(t)) return;
       setMenu(null);
     };
     document.addEventListener('mousedown', onDown);
@@ -191,8 +194,8 @@ export default function Player() {
   };
 
   // Each control is defined once and dropped into both layouts below (the
-  // wide/wrapped set and the single-row set); CSS shows exactly one set at a
-  // time, so the duplicated JSX only ever renders one live instance.
+  // docked/desktop set and the phone full-screen set); CSS shows exactly one
+  // set at a time, so the duplicated JSX only ever renders one live instance.
   const prevBtn = (
     <button
       type="button"
@@ -388,6 +391,17 @@ export default function Player() {
     <div className={barCls}>
       {stageMounted ? (
         <div className={full ? styles.stage : `${styles.stage} ${styles.stageOut}`}>
+          {coverUrl ? <div className={styles.stageBg} style={{ backgroundImage: `url("${coverUrl}")` }} aria-hidden="true" /> : null}
+          <div className={styles.stageTop}>
+            <button type="button" className={styles.iconBtn} onClick={() => setFull(false)} title="Свернуть плеер" aria-label="Свернуть плеер">
+              <ChevronDown />
+            </button>
+            <span className={styles.stageTopSpacer} />
+            <button type="button" className={styles.iconBtn} onClick={() => void share()} title="Поделиться с этого места" aria-label="Поделиться с этого места">
+              <Share2 />
+            </button>
+            {closeBtn}
+          </div>
           <button
             type="button"
             className={styles.stageShare}
@@ -406,21 +420,23 @@ export default function Player() {
           >
             <Minimize2 />
           </button>
-          {current.illustrations && current.illustrations.length > 0 ? (
-            // The chapter's own illustrations take the cover's place.
-            <IllustrationCarousel
-              items={current.illustrations}
-              revealed={duration > 0 && position >= duration / 2}
-            />
-          ) : (
-            <Link href={`/title/${current.title.slug}`} className={styles.stageArt}>
-              {coverUrl ? (
-                <img src={coverUrl} alt="" />
-              ) : (
-                <Music size={64} aria-hidden="true" />
-              )}
-            </Link>
-          )}
+          <div className={styles.stageArtBox}>
+            {current.illustrations && current.illustrations.length > 0 ? (
+              // The chapter's own illustrations take the cover's place.
+              <IllustrationCarousel
+                items={current.illustrations}
+                revealed={duration > 0 && position >= duration / 2}
+              />
+            ) : (
+              <Link href={`/title/${current.title.slug}`} className={styles.stageArt}>
+                {coverUrl ? (
+                  <img src={coverUrl} alt="" />
+                ) : (
+                  <Music size={64} aria-hidden="true" />
+                )}
+              </Link>
+            )}
+          </div>
           <div className={styles.stageMeta}>
             <Link href={`/title/${current.title.slug}`} className={styles.stageTitle}>
               {current.title.name}
@@ -515,17 +531,21 @@ export default function Player() {
           </div>
         </div>
 
-        <div className={styles.oneRow} ref={oneRowRef}>
-          {speedControl}
-          {closeBtn}
-          {prevBtn}
-          {back10Btn}
-          {playPauseBtn}
-          {fwd10Btn}
-          {nextBtn}
-          {sleepControl}
-          {fullscreenBtn}
-        </div>
+        {full ? (
+          <div className={styles.fullSet} ref={fullSetRef}>
+            <div className={styles.fullControls}>
+              {prevBtn}
+              {back10Btn}
+              {playPauseBtn}
+              {fwd10Btn}
+              {nextBtn}
+            </div>
+            <div className={styles.fullExtras}>
+              {speedControl}
+              {sleepControl}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

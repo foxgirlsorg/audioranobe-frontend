@@ -155,6 +155,18 @@
   }
 }
 
+@media (max-width: 768px) {
+  .wrap {
+    width: min(100%, 720px, calc(100dvh - 400px));
+  }
+
+  .viewport {
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 18px;
+  }
+}
+
 /* Same rule as the cover it replaces: on a short viewport the art goes first. */
 @media (max-height: 560px) {
   .wrap {
