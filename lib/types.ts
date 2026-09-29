@@ -1042,6 +1042,7 @@ export interface DashboardStats {
   review_queue: number;
   comments_unchecked: number;
   push_subscribers: number;
+  app_users: number;
 }
 
 /** GET /mod/review-queue item — a title that bypassed the normal pending
