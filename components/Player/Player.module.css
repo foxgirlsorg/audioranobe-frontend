@@ -819,6 +819,11 @@
     justify-content: space-evenly;
   }
 
+  .fullExtras {
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
   .fullControls {
     justify-content: space-between;
     width: 100%;
