@@ -11,6 +11,7 @@ import {
   ImagePlus,
   Link2 as LinkIcon,
   KeyRound,
+  Laptop,
   MailWarning,
   MessageSquare,
   ShieldAlert,
@@ -27,7 +28,9 @@ import type {
   Me,
   NotificationPrefs,
   ProviderInfo,
+  SessionList,
 } from '@/lib/types';
+import { formatDateTime, timeAgo } from '@/lib/format';
 import ProviderAuth from '@/components/ProviderAuth/ProviderAuth';
 import { useAuth } from '@/lib/auth';
 import { SettingsScopeContext } from '@/lib/settingsScope';
@@ -277,6 +280,9 @@ export default function SettingsPage() {
   const [totpBusy, setTotpBusy] = useState(false);
   const [totpDisableOpen, setTotpDisableOpen] = useState(false);
   const [totpDisablePw, setTotpDisablePw] = useState('');
+
+  const [sessions, setSessions] = useState<SessionList | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
 
   const [delOpen, setDelOpen] = useState(false);
   const [delPw, setDelPw] = useState('');
@@ -571,6 +577,25 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setUnlinking(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    api<SessionList>('/me/sessions', { params: asParam }).then(setSessions).catch(() => setSessions(null));
+  }, [user?.id, scoped]);
+
+  async function revokeSession(id: string) {
+    if (revoking) return;
+    setRevoking(id);
+    try {
+      await api(`/me/sessions/${id}`, { method: 'DELETE', params: asParam });
+      setSessions((s) => (s ? { ...s, sessions: s.sessions.filter((x) => x.id !== id) } : s));
+      toast('Сессия завершена', 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setRevoking(null);
     }
   }
 
@@ -902,6 +927,47 @@ export default function SettingsPage() {
           )}
         </div>
       </section>
+
+      {!sessions ? null : (
+      <section className={`glass-panel ${styles.panel}`}>
+        <div className={styles.panelHead}>
+          <Laptop size={16} className={styles.panelIcon} />
+          <div>
+            <h2 className={styles.panelTitle}>{'Сессии'}</h2>
+            <p className={styles.panelHint}>
+              {sessions.can_revoke
+                ? 'Устройства, на которых выполнен вход. Незнакомую сессию завершите и смените пароль.'
+                : `Завершать другие сессии можно через сутки после входа на этом устройстве — ${formatDateTime(sessions.revoke_after)}.`}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.prefList}>
+          {sessions.sessions.map((s) => (
+            <div key={s.id} className={styles.prefRow}>
+              <div className={styles.prefText}>
+                <span className={styles.prefLabel}>{s.device}</span>
+                <span className={styles.prefHint}>
+                  {s.current ? 'Эта сессия' : `Активность ${timeAgo(s.last_seen_at)}`}
+                  {s.ip ? ` · ${s.ip}` : ''}
+                  {` · вход ${formatDateTime(s.created_at)}`}
+                </span>
+              </div>
+              {s.current || !sessions.can_revoke ? null : (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={revoking !== null}
+                  onClick={() => revokeSession(s.id)}
+                >
+                  {revoking === s.id ? 'Завершаем…' : 'Завершить'}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+      )}
 
       <TotpSetupModal
         open={totpModalOpen}

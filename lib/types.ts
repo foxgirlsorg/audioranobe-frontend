@@ -164,6 +164,21 @@ export interface AuthProviderConfig {
   map: Record<string, string>;
 }
 
+export interface UserSession {
+  id: string;
+  created_at: number;
+  device: string;
+  last_seen_at: number;
+  ip: string;
+  current: boolean;
+}
+
+export interface SessionList {
+  sessions: UserSession[];
+  can_revoke: boolean;
+  revoke_after: number;
+}
+
 export interface Identity {
   provider: AuthProvider;
   email: string | null;
