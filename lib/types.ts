@@ -942,6 +942,7 @@ export interface Banner {
   url: string;
   is_enabled?: boolean;
   is_public?: boolean;
+  placement?: 'both' | 'site' | 'app';
   sort_order?: number;
 }
 

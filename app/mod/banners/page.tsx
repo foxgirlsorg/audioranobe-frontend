@@ -7,11 +7,18 @@ import { errMsg, useToast } from '@/lib/toast';
 import type { Banner } from '@/lib/types';
 import { ModShell, ErrorPanel } from '../modnav';
 import Toggle from '@/components/Toggle/Toggle';
+import Select, { type SelectOption } from '@/components/Select/Select';
 import Spinner from '@/components/Spinner/Spinner';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { ImageCropper } from '@/components/ImageCropper/ImageCropper';
 import AddCard from '@/components/AddCard/AddCard';
 import styles from './page.module.css';
+
+const PLACEMENTS: SelectOption[] = [
+  { value: 'both', label: 'Сайт и приложение' },
+  { value: 'site', label: 'Только сайт' },
+  { value: 'app', label: 'Только приложение' },
+];
 
 const BANNER_WIDTH = 2048;
 const BANNER_HEIGHT = Math.round(BANNER_WIDTH / 3);
@@ -78,7 +85,7 @@ function BannersInner() {
     }
   };
 
-  const patch = async (b: Banner, body: Partial<Pick<Banner, 'url' | 'is_enabled' | 'is_public'>>) => {
+  const patch = async (b: Banner, body: Partial<Pick<Banner, 'url' | 'is_enabled' | 'is_public' | 'placement'>>) => {
     try {
       const next = await api<Banner>(`/mod/banners/${b.id}`, { method: 'PATCH', body });
       setItems((xs) => xs.map((x) => (x.id === b.id ? next : x)));
@@ -168,6 +175,13 @@ function BannersInner() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                 }}
+              />
+              <Select
+                size="sm"
+                value={b.placement ?? 'both'}
+                options={PLACEMENTS}
+                onChange={(v) => void patch(b, { placement: v as Banner['placement'] })}
+                ariaLabel="Где показывать"
               />
               <label className={styles.flag}>
                 <Toggle checked={b.is_public ?? false} onChange={(on) => void patch(b, { is_public: on })} />
