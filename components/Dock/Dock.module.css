@@ -6,6 +6,10 @@
   z-index: 60;
 }
 
+.floating {
+  padding-bottom: calc(4px + env(safe-area-inset-bottom));
+}
+
 .player {
   display: flex;
   align-items: center;

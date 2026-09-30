@@ -83,21 +83,25 @@ function AppProviders({ children }: { children: React.ReactNode }) {
                   <div className="noise" aria-hidden="true" />
                   <PwaInit />
                   <DragScroll />
-                  <NavBar />
-                  <BannedBanner />
-                  <div className="corner-alert-stack">
-                    <ModAlert />
-                    <RecapAlert />
+                  <div className="app-chrome">
+                    <NavBar />
+                    <BannedBanner />
+                    <div className="corner-alert-stack">
+                      <ModAlert />
+                      <RecapAlert />
+                    </div>
+                    <CookiesBanner />
                   </div>
-                  <CookiesBanner />
                   <SkeletonTheme baseColor="#232326" highlightColor="#302f34">
                     <PhotoProvider>
                       <main id="main-content" className="container">{children}</main>
                     </PhotoProvider>
                   </SkeletonTheme>
-                  <Footer />
-                  <Player />
-                  <Dock />
+                  <div className="app-chrome">
+                    <Footer />
+                    <Player />
+                    <Dock />
+                  </div>
                 </ModSidebarProvider>
               </PlayerProvider>
             </ToastProvider>
@@ -108,9 +112,16 @@ function AppProviders({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** The Android app opens pages in a WebView tagged with this UA marker and supplies its own chrome. */
+const APP_EMBED_SCRIPT =
+  "if(/AudioRanobeApp/.test(navigator.userAgent))document.documentElement.classList.add('app-embed')";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
+    <html lang="ru" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: APP_EMBED_SCRIPT }} />
+      </head>
       <body>
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ? (
           <UmamiProvider

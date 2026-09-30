@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import {
   Calendar,
   ChevronDown,
+  ChevronRight,
   Clock,
   Disc3,
   Download,
@@ -35,7 +36,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { usePlayer, usePlayerPosition } from '@/lib/player';
 import { useToast, errMsg } from '@/lib/toast';
-import { chapterFilePrefix, chapterLabel, chapterNumberLabel, formatCount, formatDuration } from '@/lib/format';
+import { chapterFilePrefix, chapterLabel, chapterNumberLabel, formatCount, formatDate, formatDuration } from '@/lib/format';
 import { usePageTitle } from '@/lib/usePageTitle';
 import Section from '@/components/Section/Section';
 import Tabs from '@/components/Tabs/Tabs';
@@ -56,6 +57,7 @@ import Markdown from '@/components/Markdown/Markdown';
 import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDownloadButton/ArchiveDownloadButton';
 import AiBadge from '@/components/AiBadge/AiBadge';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
+import Modal from '@/components/Modal/Modal';
 import { SUPPORT_URL } from '@/lib/support';
 import styles from './page.module.css';
 
@@ -82,12 +84,10 @@ const STATUS_TONE: Record<NarrationStatus, string> = {
   abandoned: 'toneDropped',
 };
 
-function sharedNarrationStatus(
-  narrators: { narration_status: NarrationStatus }[]
-): NarrationStatus | null {
-  if (narrators.length === 0) return null;
-  const first = narrators[0].narration_status;
-  return narrators.every((n) => n.narration_status === first) ? first : null;
+const STATUS_ACTIVITY: NarrationStatus[] = ['ongoing', 'completed', 'frozen', 'abandoned'];
+
+function activeNarrationStatus(narrators: { narration_status: NarrationStatus }[]): NarrationStatus {
+  return STATUS_ACTIVITY.find((st) => narrators.some((n) => n.narration_status === st)) ?? 'ongoing';
 }
 
 /**
@@ -201,6 +201,7 @@ export default function TitlePageClient({
   const [mobileTab, setMobileTab] = useState('about');
   const isMobile = useIsMobile();
   const [ratingOpen, setRatingOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [tagsClipped, setTagsClipped] = useState(false);
   const tagsRef = useRef<HTMLParagraphElement | null>(null);
@@ -455,7 +456,7 @@ export default function TitlePageClient({
   );
   const commentsTotal = title.comments?.total ?? 0;
   const runtime = title.volumes.reduce((n, v) => n + volumeDuration(v), 0);
-  const narrationStatus = sharedNarrationStatus(title.narrators);
+  const narrationStatus = activeNarrationStatus(title.narrators);
 
   const restricted = title.is_restricted;
 
@@ -572,36 +573,32 @@ export default function TitlePageClient({
     </>
   );
 
-  const narratorsBlock =
+  const narratorItems = title.narrators.map((n) => (
+    <Link
+      key={n.id}
+      href={`/narrator/${n.slug}`}
+      className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}${
+        n.is_verified ? ` ${styles.narrItemVerified}` : ''
+      }`}
+    >
+      {n.avatar_url ? (
+        <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
+      ) : (
+        <span className={styles.narrAvatarFallback}>{n.name.slice(0, 1).toUpperCase()}</span>
+      )}
+      <span className={styles.narrName}>{n.name}</span>
+      {n.is_verified ? <VerifiedBadge size={12} className={styles.narrVerified} /> : null}
+    </Link>
+  ));
+
+  const narratorsBlock = (wrap: boolean) =>
     title.narrators.length > 0 ? (
       <div className={styles.narrators}>
         <span className={styles.narrLabel}>
           <Mic size={11} />
           {title.narrators.length > 1 ? `Чтецы · ${title.narrators.length}` : 'Чтец'}
         </span>
-        <div className={styles.narrListH}>
-          {title.narrators.map((n) => (
-            <Link
-              key={n.id}
-              href={`/narrator/${n.slug}`}
-              className={`${styles.narrItem} ${styles[STATUS_TONE[n.narration_status]]}${
-                n.is_verified ? ` ${styles.narrItemVerified}` : ''
-              }`}
-            >
-              {n.avatar_url ? (
-                <img src={n.avatar_url} alt="" className={styles.narrAvatar} />
-              ) : (
-                <span className={styles.narrAvatarFallback}>
-                  {n.name.slice(0, 1).toUpperCase()}
-                </span>
-              )}
-              <span className={styles.narrName}>{n.name}</span>
-              {n.is_verified ? (
-                <VerifiedBadge size={12} className={styles.narrVerified} />
-              ) : null}
-            </Link>
-          ))}
-        </div>
+        <div className={wrap ? styles.narrList : styles.narrListH}>{narratorItems}</div>
       </div>
     ) : null;
 
@@ -1013,6 +1010,78 @@ export default function TitlePageClient({
     />
   );
 
+  const factRows = (
+    <>
+      {title.author && (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Автор'}</span>
+          <Link
+            href={`/author/${title.author.id}`}
+            className={styles.factV}
+            title={`Ещё от ${title.author.name}`}
+          >
+            {title.author.name}
+          </Link>
+        </div>
+      )}
+      {runtime > 0 ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Длительность'}</span>
+          <span className={styles.factV}>{formatDuration(runtime)}</span>
+        </div>
+      ) : null}
+      {title.updated_at ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Обновлён'}</span>
+          <span className={styles.factV}>{formatDate(title.updated_at)}</span>
+        </div>
+      ) : null}
+      <div className={styles.factRow2}>
+        <span className={styles.factK}>{'Страна'}</span>
+        <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+      </div>
+      <div className={styles.factRow2}>
+        <span className={styles.factK}>{'Тайтл'}</span>
+        <span className={styles.factV}>
+          {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
+        </span>
+      </div>
+      {title.narrators.length > 0 ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Озвучка'}</span>
+          <span className={styles.factV}>
+            {NARRATION_STATUS_LABELS[narrationStatus]}
+          </span>
+        </div>
+      ) : null}
+      <div className={styles.factRow2}>
+        <span className={styles.factK}>{'Просмотров'}</span>
+        <span className={styles.factV}>{formatCount(title.views_count)}</span>
+      </div>
+      {chaptersTotal > 0 ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Глав'}</span>
+          <span className={styles.factV}>{chaptersTotal}</span>
+        </div>
+      ) : null}
+      {title.translator ? (
+        <div className={styles.factRow2}>
+          <span className={styles.factK}>{'Переводчик'}</span>
+          <span className={styles.factV}>{title.translator}</span>
+        </div>
+      ) : null}
+    </>
+  );
+
+  const detailsModal = (
+    <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)} title={'Детали'}>
+      <div className={styles.factsModal}>
+        {factRows}
+        {narratorsBlock(true)}
+      </div>
+    </Modal>
+  );
+
   const infoContent = (
     <>
     <div className={`${styles.subrow} ${!user ? styles.subrowCompact : ''}`}>
@@ -1022,61 +1091,15 @@ export default function TitlePageClient({
           {'Детали'}
         </span>
         <div className={styles.factsCardBody}>
-          {title.author && (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Автор'}</span>
-              <Link
-                href={`/author/${title.author.id}`}
-                className={styles.factV}
-                title={`Ещё от ${title.author.name}`}
-              >
-                {title.author.name}
-              </Link>
-            </div>
-          )}
-          <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Тайтл'}</span>
-            <span className={styles.factV}>
-              {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
-            </span>
-          </div>
-          {title.narrators.length > 0 ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Озвучка'}</span>
-              <span className={styles.factV}>
-                {narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}
-              </span>
-            </div>
-          ) : null}
-          {title.year != null ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Год'}</span>
-              <span className={styles.factV}>{title.year}</span>
-            </div>
-          ) : null}
-          <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Страна'}</span>
-            <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-          </div>
-          {runtime > 0 ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Длительность'}</span>
-              <span className={styles.factV}>{formatDuration(runtime)}</span>
-            </div>
-          ) : null}
-          {chaptersTotal > 0 ? (
-            <div className={styles.factRow2}>
-              <span className={styles.factK}>{'Глав'}</span>
-              <span className={styles.factV}>{chaptersTotal}</span>
-            </div>
-          ) : null}
-          <div className={styles.factRow2}>
-            <span className={styles.factK}>{'Просмотров'}</span>
-            <span className={styles.factV}>{formatCount(title.views_count)}</span>
-          </div>
-          {narratorsBlock}
+          <div className={styles.factsRows}>{factRows}</div>
+          <button type="button" className={styles.factsMore} onClick={() => setDetailsOpen(true)}>
+            {'Все детали'}
+            <ChevronRight size={12} />
+          </button>
+          {narratorsBlock(false)}
         </div>
       </div>
+      {detailsModal}
       {user ? libraryWidget : null}
       {ratingCard}
     </div>
@@ -1144,19 +1167,15 @@ export default function TitlePageClient({
                 {title.narrators.length > 0 ? (
                   <div className={styles.mFact}>
                     <b>Озвучка</b>
-                    <span>{narrationStatus ? NARRATION_STATUS_LABELS[narrationStatus] : 'Разная'}</span>
+                    <span>{NARRATION_STATUS_LABELS[narrationStatus]}</span>
                   </div>
                 ) : null}
-                {title.year != null ? (
+                {title.updated_at ? (
                   <div className={styles.mFact}>
-                    <b>Год</b>
-                    <span>{title.year}</span>
+                    <b>Обновлён</b>
+                    <span>{formatDate(title.updated_at)}</span>
                   </div>
                 ) : null}
-                <div className={styles.mFact}>
-                  <b>Страна</b>
-                  <span>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-                </div>
                 {runtime > 0 ? (
                   <div className={styles.mFact}>
                     <b>Длительность</b>
@@ -1164,11 +1183,20 @@ export default function TitlePageClient({
                   </div>
                 ) : null}
                 <div className={styles.mFact}>
+                  <b>Страна</b>
+                  <span>{COUNTRY_LABELS[title.country] ?? title.country}</span>
+                </div>
+                <div className={styles.mFact}>
                   <b>Просмотров</b>
                   <span>{formatCount(title.views_count)}</span>
                 </div>
               </div>
+              <button type="button" className={styles.mFactsMore} onClick={() => setDetailsOpen(true)}>
+                {'Все детали'}
+                <ChevronRight size={13} />
+              </button>
             </div>
+            {detailsModal}
 
             {mNarratorsBlock}
             {descBlock}

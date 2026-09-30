@@ -9,7 +9,7 @@ import { useBadges } from '@/lib/badges';
 import { useAuth } from '@/lib/auth';
 import { chapterNumberLabel } from '@/lib/format';
 import PlayPauseIcon from '@/components/PlayPauseIcon/PlayPauseIcon';
-import { isStandalone } from '@/lib/pwa';
+import { isStandalone, useIsMobile } from '@/lib/pwa';
 import styles from './Dock.module.css';
 
 const TABS = [
@@ -28,14 +28,16 @@ export default function Dock() {
   const { user } = useAuth();
   const pathname = usePathname();
   const { messages: msgCount, notifications: notifCount } = useBadges();
-  const { current, playing, toggle, skip, setFull } = usePlayer();
+  const { current, playing, toggle, skip, setFull, barHidden } = usePlayer();
+  const mobile = useIsMobile();
 
   useEffect(() => {
     document.body.classList.toggle('pwa-player', on && !!current);
     return () => document.body.classList.remove('pwa-player');
   }, [on, current]);
 
-  if (!on) return null;
+  const floating = !on && mobile && !!current && !barHidden;
+  if (!on && !floating) return null;
 
   const activeIndex = TABS.findIndex((t) => t.match(pathname));
   const cover = current ? current.volume.cover_url ?? current.title.cover_url : null;
@@ -45,7 +47,7 @@ export default function Dock() {
   const badgeFor = (key: string) => (key === 'messages' ? msgCount : key === 'notifications' ? notifCount : 0);
 
   return (
-    <nav className={`app-dock ${styles.dock}`} aria-label="Навигация">
+    <nav className={`app-dock ${styles.dock} ${floating ? styles.floating : ''}`} aria-label={floating ? 'Плеер' : 'Навигация'}>
       {current ? (
         <div className={styles.player}>
           <button
@@ -76,48 +78,50 @@ export default function Dock() {
         </div>
       ) : null}
 
-      <div className={styles.tabs}>
-        {activeIndex >= 0 ? (
-          <span className={styles.indicator} style={{ transform: `translateX(${activeIndex * 100}%)` }}>
-            <span />
-          </span>
-        ) : null}
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          const active = t.match(pathname);
-          const count = badgeFor(t.key);
-          return (
-            <Link
-              key={t.key}
-              href={t.href}
-              className={active ? `${styles.tab} ${styles.tabOn}` : styles.tab}
-              aria-label={t.label}
-              aria-current={active ? 'page' : undefined}
-            >
-              {count > 0 ? <span className={styles.badge}>{count > 99 ? '99+' : count}</span> : null}
-              <Icon aria-hidden="true" />
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          className={styles.tab}
-          onClick={() => window.dispatchEvent(new Event('pwa-open-menu'))}
-          aria-label={user ? 'Профиль' : 'Меню'}
-        >
-          {user ? (
-            <span className={styles.pfp}>
-              {user.avatar_thumb_url || user.avatar_url ? (
-                <img src={user.avatar_thumb_url ?? user.avatar_url ?? ''} alt="" />
-              ) : (
-                (user.username?.charAt(0) || '?').toUpperCase()
-              )}
+      {floating ? null : (
+        <div className={styles.tabs}>
+          {activeIndex >= 0 ? (
+            <span className={styles.indicator} style={{ transform: `translateX(${activeIndex * 100}%)` }}>
+              <span />
             </span>
-          ) : (
-            <Menu aria-hidden="true" />
-          )}
-        </button>
-      </div>
+          ) : null}
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = t.match(pathname);
+            const count = badgeFor(t.key);
+            return (
+              <Link
+                key={t.key}
+                href={t.href}
+                className={active ? `${styles.tab} ${styles.tabOn}` : styles.tab}
+                aria-label={t.label}
+                aria-current={active ? 'page' : undefined}
+              >
+                {count > 0 ? <span className={styles.badge}>{count > 99 ? '99+' : count}</span> : null}
+                <Icon aria-hidden="true" />
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            className={styles.tab}
+            onClick={() => window.dispatchEvent(new Event('pwa-open-menu'))}
+            aria-label={user ? 'Профиль' : 'Меню'}
+          >
+            {user ? (
+              <span className={styles.pfp}>
+                {user.avatar_thumb_url || user.avatar_url ? (
+                  <img src={user.avatar_thumb_url ?? user.avatar_url ?? ''} alt="" />
+                ) : (
+                  (user.username?.charAt(0) || '?').toUpperCase()
+                )}
+              </span>
+            ) : (
+              <Menu aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      )}
     </nav>
   );
 }

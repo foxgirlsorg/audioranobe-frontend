@@ -301,6 +301,34 @@
   font-size: 13px;
 }
 
+/* Stand-in for the NavBar's mod burger inside the app's WebView, where the
+   site navbar is hidden (html.app-embed). */
+.embedBurger {
+  display: none;
+}
+
+:global(html.app-embed) .embedBurger {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 260;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: rgba(16, 16, 18, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text);
+  cursor: pointer;
+}
+
+:global(html.app-embed) .drawer {
+  padding-top: 4.25rem;
+}
+
 /* ---------- guard states ---------- */
 
 .loading {
@@ -390,5 +418,13 @@
   /* The in-flow sidebar is replaced by the drawer on mobile. */
   .sidebar {
     display: none;
+  }
+
+  :global(html.app-embed) .embedBurger {
+    display: inline-flex;
+  }
+
+  :global(html.app-embed) .contentCol {
+    padding-top: 4.25rem;
   }
 }

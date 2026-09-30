@@ -91,6 +91,21 @@ body.has-notice {
   --nav-total: calc(var(--nav-height) + var(--notice-height));
 }
 
+.app-chrome {
+  display: contents;
+}
+
+html.app-embed .app-chrome,
+html.app-embed .skip-link {
+  display: none;
+}
+
+html.app-embed,
+html.app-embed body {
+  --nav-height: 0px;
+  --nav-total: 0px;
+}
+
 body.drag-scrolling,
 body.drag-scrolling * {
   cursor: grabbing !important;
@@ -632,10 +647,10 @@ button.pill:active {
     gap: 1.25rem;
   }
 
-  /* The bar stacks onto two rows on a phone, so it needs more clearance than
-     --player-height describes. Same variable, so the footer rule picks it up. */
+  /* Clearance for the dock's floating mini-player. Same variable, so the
+     footer rule picks it up. */
   body.has-player {
-    --player-height: 148px;
+    --player-height: 72px;
   }
 
   .toast-stack {

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShieldOff, ChevronsLeft } from 'lucide-react';
+import { ShieldOff, ChevronsLeft, Menu, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useModSidebar } from '@/lib/modSidebar';
@@ -162,6 +162,15 @@ export function ModNav() {
       {mounted &&
         createPortal(
           <>
+            <button
+              type="button"
+              className={styles.embedBurger}
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? 'Закрыть меню модерации' : 'Меню модерации'}
+              aria-expanded={open}
+            >
+              {open ? <X size={20} /> : <Menu size={20} />}
+            </button>
             <div
               className={`${styles.drawerBackdrop} ${open ? styles.drawerBackdropOpen : ''}`}
               onClick={() => setOpen(false)}

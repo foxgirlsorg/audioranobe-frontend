@@ -111,6 +111,7 @@ export interface NotificationPrefs {
   entity_modified: boolean;
   entity_deleted: boolean;
   narration_ready: boolean;
+  dm: boolean;
 }
 
 export interface UserPublic {
@@ -161,6 +162,21 @@ export interface AuthProviderConfig {
   scope: string;
   trust_email: boolean;
   map: Record<string, string>;
+}
+
+export interface UserSession {
+  id: string;
+  created_at: number;
+  device: string;
+  last_seen_at: number;
+  ip: string;
+  current: boolean;
+}
+
+export interface SessionList {
+  sessions: UserSession[];
+  can_revoke: boolean;
+  revoke_after: number;
 }
 
 export interface Identity {
@@ -450,6 +466,7 @@ export interface TitleFull extends TitleCard {
   description: string;
   bg_url: string | null;
   views_count: number;
+  translator: string;
   mod_status: ModStatus;
   created_at: string;
   updated_at: string;
@@ -519,6 +536,8 @@ export interface ChapterPlay {
 export interface Comment {
   id: number;
   user: UserBrief & { role?: Role } | null;
+  /** Set when posted under a narrator persona; shown instead of the user. */
+  narrator?: { id: number; slug: string; name: string; avatar_url: string | null; is_verified: boolean } | null;
   target_type: CommentTargetType;
   target_id: number;
   parent_id: number | null;
@@ -1038,6 +1057,7 @@ export interface DashboardStats {
   review_queue: number;
   comments_unchecked: number;
   push_subscribers: number;
+  app_users: number;
 }
 
 /** GET /mod/review-queue item — a title that bypassed the normal pending
