@@ -349,6 +349,11 @@ export default function SettingsPage() {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    api<SessionList>('/me/sessions', { params: asParam }).then(setSessions).catch(() => setSessions(null));
+  }, [user?.id, scoped]);
+
   if (authLoading || !user) {
     return (
       <div className={styles.center}>
@@ -579,11 +584,6 @@ export default function SettingsPage() {
       setUnlinking(null);
     }
   }
-
-  useEffect(() => {
-    if (!user) return;
-    api<SessionList>('/me/sessions', { params: asParam }).then(setSessions).catch(() => setSessions(null));
-  }, [user?.id, scoped]);
 
   async function revokeSession(id: string) {
     if (revoking) return;
