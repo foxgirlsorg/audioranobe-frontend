@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Search, DownloadCloud, Loader2 } from 'lucide-react';
+import { Search, DownloadCloud, ImageIcon, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import type { TitleCard } from '@/lib/types';
 import { ModShell } from '../modnav';
@@ -20,7 +21,21 @@ interface ExternalItem {
 }
 
 function Content() {
+  const { can } = useAuth();
   const { toast } = useToast();
+  const [ogBusy, setOgBusy] = useState<number | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const rerender = async (id: number) => {
+    setOgBusy(id);
+    try {
+      const d = await api<{ og_image_url: string }>(`/mod/titles/${id}/og`, { method: 'POST', body: {} });
+      setPreview(d.og_image_url);
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+    setOgBusy(null);
+  };
   const [q, setQ] = useState('');
   const [items, setItems] = useState<TitleCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,22 +82,40 @@ function Content() {
       ) : (
         <div className={styles.list}>
           {items.map((t) => (
-            <Link key={t.id} href={`/title/${t.slug}`} className={styles.row}>
-              {t.cover_thumb_url ? (
-                <img src={t.cover_thumb_url} alt="" className={styles.cover} loading="lazy" />
-              ) : (
-                <span className={styles.cover} />
-              )}
-              <span className={styles.rowMain}>
-                <span className={styles.rowName}>{t.name}</span>
-                <span className={styles.rowMeta}>
-                  {[t.year, t.chapters_count ? `${t.chapters_count} гл.` : null].filter(Boolean).join(' · ')}
+            <div key={t.id} className={styles.row}>
+              <Link href={`/title/${t.slug}`} className={styles.rowLink}>
+                {t.cover_thumb_url ? (
+                  <img src={t.cover_thumb_url} alt="" className={styles.cover} loading="lazy" />
+                ) : (
+                  <span className={styles.cover} />
+                )}
+                <span className={styles.rowMain}>
+                  <span className={styles.rowName}>{t.name}</span>
+                  <span className={styles.rowMeta}>
+                    {[t.year, t.chapters_count ? `${t.chapters_count} гл.` : null].filter(Boolean).join(' · ')}
+                  </span>
                 </span>
-              </span>
-            </Link>
+              </Link>
+              {can('titles.edit') ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={ogBusy !== null}
+                  onClick={() => void rerender(t.id)}
+                  title={'Перерисовать баннер для соцсетей'}
+                >
+                  {ogBusy === t.id ? <Loader2 size={15} className={styles.spin} /> : <ImageIcon size={15} />}
+                  {'Баннер'}
+                </button>
+              ) : null}
+            </div>
           ))}
         </div>
       )}
+
+      <Modal open={preview !== null} onClose={() => setPreview(null)} title="Баннер для соцсетей" size="wide">
+        {preview ? <img src={preview} alt="" className={styles.ogPreview} /> : null}
+      </Modal>
 
       <ImportModal
         open={importOpen}

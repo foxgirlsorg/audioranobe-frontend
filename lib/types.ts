@@ -412,6 +412,8 @@ export interface NarratorFull extends NarratorCard {
   bio: string;
   socials: string[];
   cover_url: string | null;
+  /** Social-preview banner; page metadata only. */
+  og_image_url: string | null;
   cover_thumb_url: string | null;
   mod_status: ModStatus;
   created_at: string;
@@ -465,6 +467,8 @@ export interface TitleFull extends TitleCard {
   alt_names: string[];
   description: string;
   bg_url: string | null;
+  /** Social-preview banner; page metadata only. */
+  og_image_url: string | null;
   views_count: number;
   translator: string;
   mod_status: ModStatus;

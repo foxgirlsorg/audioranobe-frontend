@@ -21,7 +21,8 @@ export async function generateMetadata({
   const description = `Слушать аудиокнигу «${title.name}» онлайн бесплатно${narrators}.${
     summary ? ` ${summary}` : ''
   }`.slice(0, 300);
-  const images = title.cover_url ? [title.cover_url] : undefined;
+  const image = title.og_image_url ?? title.cover_url;
+  const images = image ? [image] : undefined;
 
   return {
     title: pageTitle,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, Mic, Pencil, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { Check, ImageIcon, Mic, Pencil, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
@@ -14,6 +14,7 @@ import Pagination from '@/components/Pagination/Pagination';
 import Tabs from '@/components/Tabs/Tabs';
 import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import Modal from '@/components/Modal/Modal';
 import { ModShell, ErrorPanel, splitHeading } from '@/app/mod/modnav';
 import styles from './page.module.css';
 
@@ -34,6 +35,18 @@ function NarratorsContent() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<ModNarrator | null>(null);
   const [toPurge, setToPurge] = useState<ModNarrator | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const rerender = async (n: ModNarrator) => {
+    setBusyId(n.id);
+    try {
+      const d = await api<{ og_image_url: string }>(`/mod/narrators/${n.id}/og`, { method: 'POST', body: {} });
+      setPreview(d.og_image_url);
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+    setBusyId(null);
+  };
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -248,6 +261,17 @@ function NarratorsContent() {
                                   {'Отклонить'}
                                 </button>
                               ) : null}
+                              {can('narrators.edit') ? (
+                                <button
+                                  type="button"
+                                  className={`btn btn-ghost ${styles.smallBtn}`}
+                                  disabled={busy}
+                                  onClick={() => void rerender(n)}
+                                  title={'Перерисовать баннер для соцсетей'}
+                                >
+                                  <ImageIcon size={14} />
+                                </button>
+                              ) : null}
                               <Link
                                 href={`/narrator/${encodeURIComponent(n.slug)}/edit`}
                                 className={`btn btn-ghost ${styles.smallBtn}`}
@@ -284,6 +308,10 @@ function NarratorsContent() {
           />
         </>
       )}
+
+      <Modal open={preview !== null} onClose={() => setPreview(null)} title="Баннер для соцсетей" size="wide">
+        {preview ? <img src={preview} alt="" className={styles.ogPreview} /> : null}
+      </Modal>
 
       <ConfirmDialog
         open={toDelete !== null}
