@@ -33,6 +33,10 @@ function urlB64ToBuffer(base64: string): ArrayBuffer {
   return buf;
 }
 
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
 export async function enablePush(): Promise<PushState> {
   if (!pushSupported()) return 'unsupported';
 
@@ -46,6 +50,12 @@ export async function enablePush(): Promise<PushState> {
   if (!key) throw new Error('Push-уведомления не настроены на сервере');
 
   let sub = await reg.pushManager.getSubscription();
+  // A subscription made under an older VAPID key is rejected by the push service on every send.
+  const subKey = sub?.options.applicationServerKey;
+  if (sub && subKey && !sameBytes(new Uint8Array(subKey), new Uint8Array(urlB64ToBuffer(key)))) {
+    await sub.unsubscribe();
+    sub = null;
+  }
   if (!sub) {
     // Chrome routes subscription through Google's push service; on networks that
     // can't reach it the call hangs forever, so cap it instead of spinning.
