@@ -284,7 +284,7 @@ export default function TitleContentManager({
   function openAddChapter(v: Volume) {
     setOpenVolumes((prev) => new Set(prev).add(v.id));
     setAddChapterVol(v.id);
-    setChNumber(String(nextNumberIn(v)));
+    setChNumber(String(nextNumberIn(standaloneHere(v) ? { ...v, chapters: ownAltChapters(v) } : v)));
     setChName('');
     setChFile(null);
     setChNarratorIds([]);
@@ -469,6 +469,31 @@ export default function TitleContentManager({
 
   const altSlot = (volumeId: number, number: number): ChapterRow | null =>
     altByKey.get(`${volumeId}:${number}`) ?? null;
+
+  // A standalone volume in an alt version has its own chapter split instead of
+  // mirroring the main slots.
+  const canStandalone = can('versions.standalone_volume');
+  const standaloneHere = (v: Volume) =>
+    isAlt &&
+    (title.versions.find((x) => x.id === currentVersion)?.standalone_volume_ids?.includes(v.id) ?? false);
+  const ownAltChapters = (v: Volume) =>
+    (title.alt_chapters?.[String(currentVersion)] ?? [])
+      .filter((c) => c.volume_id === v.id && !c.is_deleted)
+      .sort((a, b) => a.number - b.number);
+
+  async function toggleStandalone(v: Volume) {
+    const next = !standaloneHere(v);
+    try {
+      await api(`/panel/versions/${currentVersion}/volumes/${v.id}/standalone`, {
+        method: 'PUT',
+        body: { standalone: next },
+      });
+      toast(next ? 'Том стал отдельным — своя разбивка на главы' : 'Том снова повторяет главы основной версии');
+      await onReload();
+    } catch (err) {
+      toast(errMsg(err), 'error');
+    }
+  }
 
   const pendingTotal = isAlt ? 0 : title.volumes.reduce((n, v) => n + pendingIn(v), 0);
 
@@ -1127,9 +1152,11 @@ export default function TitleContentManager({
                       <span className={styles.volumeNum}>{`${title.volume_label} ${v.number}`}</span>
                       {v.name ? <span className={styles.volumeName}>{v.name}</span> : null}
                       <span className={styles.volumeCount}>
-                        {isAlt
-                          ? `Озвучено: ${liveChapters(v).filter((c) => altSlot(v.id, c.number)).length} из ${liveChapters(v).length}`
-                          : `Глав: ${liveChapters(v).length}`}
+                        {standaloneHere(v)
+                          ? `Глав: ${ownAltChapters(v).length} · отдельный том`
+                          : isAlt
+                            ? `Озвучено: ${liveChapters(v).filter((c) => altSlot(v.id, c.number)).length} из ${liveChapters(v).length}`
+                            : `Глав: ${liveChapters(v).length}`}
                       </span>
                     </div>
                     <button
@@ -1144,6 +1171,31 @@ export default function TitleContentManager({
                       }
                     />
                     <div className={styles.volumeActions}>
+                      {isAlt && canStandalone ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={() => toggleStandalone(v)}
+                          title={
+                            standaloneHere(v)
+                              ? 'Снова привязать главы тома к основной версии'
+                              : 'Своя разбивка на главы в этом томе, без привязки к основной версии'
+                          }
+                        >
+                          {standaloneHere(v) ? 'Привязать к основной' : 'Отдельный том'}
+                        </button>
+                      ) : null}
+                      {standaloneHere(v) ? (
+                        <button
+                          type="button"
+                          className={styles.iconBtn}
+                          onClick={() => openAddChapter(v)}
+                          title="Добавить главу"
+                          aria-label={`Добавить главу в том ${v.number}`}
+                        >
+                          <Plus size={15} />
+                        </button>
+                      ) : null}
                       {!isAlt && isMod && pendingIn(v) > 0 ? (
                         <>
                           <span className={styles.pendingCount}>
@@ -1301,7 +1353,64 @@ export default function TitleContentManager({
                 </form>
               ) : null}
 
-              {!openVolumes.has(v.id) ? null : isAlt ? (
+              {!openVolumes.has(v.id) ? null : standaloneHere(v) ? (
+                ownAltChapters(v).length === 0 ? (
+                  <p className={styles.noChapters}>В этом томе пока нет глав.</p>
+                ) : (
+                  ownAltChapters(v).map((c) => (
+                    <div key={c.id} className={styles.chapterRow}>
+                      <input
+                        type="checkbox"
+                        className={styles.selectBox}
+                        checked={selected.includes(c.id)}
+                        onChange={() => toggleSelected(c.id)}
+                        aria-label={`Выбрать главу ${c.number}`}
+                      />
+                      <span className={styles.chNum}>{chapterNumberLabel(c.number, c.number_end)}</span>
+                      <span className={styles.chName}>{chapterLabel(c.number, c.number_end, c.name)}</span>
+                      {c.duration_seconds > 0 ? (
+                        <span className={styles.chDuration}>{formatDuration(c.duration_seconds)}</span>
+                      ) : null}
+                      <span className={styles.chBadges}>
+                        <StatusBadge status={c.audio_status} />
+                        {c.mod_status !== 'approved' ? <StatusBadge status={c.mod_status} /> : null}
+                      </span>
+                      <span className={styles.chActions}>
+                        <button
+                          type="button"
+                          className={styles.iconBtn}
+                          onClick={() => pickAudio(c.id)}
+                          disabled={uploads[c.id] !== undefined}
+                          title="Заменить аудио"
+                          aria-label={`Заменить аудио главы ${c.number}`}
+                        >
+                          <RefreshCw size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.iconBtnDanger}
+                          onClick={() => setChapterToDelete(c)}
+                          title="Удалить главу"
+                          aria-label={`Удалить главу ${c.number}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </span>
+                      {uploads[c.id] !== undefined ? (
+                        <span className={styles.progressWrap}>
+                          <span className={styles.progress}>
+                            <span
+                              className={styles.progressFill}
+                              style={{ width: `${Math.round(uploads[c.id] * 100)}%` }}
+                            />
+                          </span>
+                          <span className={styles.progressPct}>{Math.round(uploads[c.id] * 100)}%</span>
+                        </span>
+                      ) : null}
+                    </div>
+                  ))
+                )
+              ) : isAlt ? (
                 liveChapters(v).length === 0 ? (
                   <p className={styles.noChapters}>В основной версии нет глав.</p>
                 ) : (

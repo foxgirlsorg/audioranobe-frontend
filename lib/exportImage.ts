@@ -126,6 +126,11 @@ export async function renderNodeToJpeg(node: HTMLElement, bg = '#151517'): Promi
 /** Render a node to a JPEG and trigger a download. */
 export async function downloadNodeJpg(node: HTMLElement, filename: string, bg = '#151517'): Promise<void> {
   const dataUrl = await renderNodeToJpeg(node, bg);
+  const app = (window as { AudioRanobeApp?: { saveImage(dataUrl: string, filename: string): void } }).AudioRanobeApp;
+  if (app) {
+    app.saveImage(dataUrl, filename);
+    return;
+  }
   const a = document.createElement('a');
   a.href = dataUrl;
   a.download = filename.endsWith('.jpg') ? filename : `${filename}.jpg`;

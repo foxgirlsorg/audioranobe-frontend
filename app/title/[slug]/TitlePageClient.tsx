@@ -219,21 +219,38 @@ export default function TitlePageClient({
 
   const displayVolumes = useMemo<VersionVolume[]>(() => {
     if (!title) return [];
-    if (selectedVersion === 0) return title.volumes;
+    // A version's standalone volumes list its own chapters; a volume with no
+    // main chapters is filled in from a standalone version (selected one first).
+    const standaloneIn = (ver: number, volumeId: number) =>
+      title.versions.find((x) => x.id === ver)?.standalone_volume_ids?.includes(volumeId) ?? false;
+    const ownChapters = (ver: number, volumeId: number) =>
+      (title.alt_chapters?.[String(ver)] ?? [])
+        .filter((c) => c.volume_id === volumeId)
+        .sort((a, b) => a.number - b.number);
+    const takeover = (volumeId: number, hasMain: boolean) => {
+      if (selectedVersion !== 0 && standaloneIn(selectedVersion, volumeId)) return selectedVersion;
+      if (hasMain) return 0;
+      return title.versions.find((x) => x.standalone_volume_ids?.includes(volumeId))?.id ?? 0;
+    };
     const alt = title.alt_chapters?.[String(selectedVersion)] ?? [];
     const altByKey = new Map<string, ChapterRow>();
     for (const c of alt) altByKey.set(`${c.volume_id}:${c.number}`, c);
-    return title.volumes.map((v) => ({
-      ...v,
-      chapters: v.chapters.map((c) => {
-        const a = altByKey.get(`${v.id}:${c.number}`);
-        if (a && a.audio_status === 'ready') {
-          // Keep the shared name/number from main; play the alt's audio.
-          return { ...a, name: c.name, number: c.number, number_end: c.number_end };
-        }
-        return { ...c, defaulted: true };
-      }),
-    }));
+    return title.volumes.map((v) => {
+      const own = takeover(v.id, v.chapters.length > 0);
+      if (own !== 0) return { ...v, chapters: ownChapters(own, v.id) };
+      if (selectedVersion === 0) return v;
+      return {
+        ...v,
+        chapters: v.chapters.map((c) => {
+          const a = altByKey.get(`${v.id}:${c.number}`);
+          if (a && a.audio_status === 'ready') {
+            // Keep the shared name/number from main; play the alt's audio.
+            return { ...a, name: c.name, number: c.number, number_end: c.number_end };
+          }
+          return { ...c, defaulted: true };
+        }),
+      };
+    });
   }, [title, selectedVersion]);
 
   async function changeVersion(vid: number) {

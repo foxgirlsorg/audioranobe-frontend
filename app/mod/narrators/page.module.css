@@ -161,3 +161,10 @@
     max-width: 18ch;
   }
 }
+
+.ogPreview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1200 / 630;
+  border-radius: 8px;
+}

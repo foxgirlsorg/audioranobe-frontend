@@ -15,7 +15,8 @@ export async function generateMetadata({
 
   const pageTitle = `${narrator.name} — AudioRanobe`;
   const description = plainSummary(narrator.bio) || `Профиль чтеца ${narrator.name} на AudioRanobe.`;
-  const images = narrator.avatar_url ? [narrator.avatar_url] : undefined;
+  const image = narrator.og_image_url ?? narrator.avatar_url;
+  const images = image ? [image] : undefined;
 
   return {
     title: pageTitle,

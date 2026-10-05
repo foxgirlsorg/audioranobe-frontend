@@ -394,6 +394,8 @@ export interface TitleVersion {
   id: number;
   name: string;
   sort: number;
+  /** Volumes this version narrates on its own — own chapter split, no main fallback. */
+  standalone_volume_ids: number[];
 }
 
 export interface NarratorCard {
@@ -412,6 +414,8 @@ export interface NarratorFull extends NarratorCard {
   bio: string;
   socials: string[];
   cover_url: string | null;
+  /** Social-preview banner; page metadata only. */
+  og_image_url: string | null;
   cover_thumb_url: string | null;
   mod_status: ModStatus;
   created_at: string;
@@ -465,6 +469,8 @@ export interface TitleFull extends TitleCard {
   alt_names: string[];
   description: string;
   bg_url: string | null;
+  /** Social-preview banner; page metadata only. */
+  og_image_url: string | null;
   views_count: number;
   translator: string;
   mod_status: ModStatus;
@@ -942,6 +948,7 @@ export interface Banner {
   url: string;
   is_enabled?: boolean;
   is_public?: boolean;
+  placement?: 'both' | 'site' | 'app';
   sort_order?: number;
 }
 
