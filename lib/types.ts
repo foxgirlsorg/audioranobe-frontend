@@ -394,6 +394,8 @@ export interface TitleVersion {
   id: number;
   name: string;
   sort: number;
+  /** Volumes this version narrates on its own — own chapter split, no main fallback. */
+  standalone_volume_ids: number[];
 }
 
 export interface NarratorCard {
