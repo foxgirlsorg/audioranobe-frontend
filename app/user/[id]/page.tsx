@@ -1,12 +1,12 @@
-import { cookies } from 'next/headers';
 import { API_URL } from '@/lib/api';
+import { viewerHeaders } from '@/lib/ssr';
 import type { UserProfile } from '@/lib/types';
 import UserPageClient from './UserPageClient';
 
 async function fetchProfileForViewer(ref: string): Promise<UserProfile | null> {
   try {
     const res = await fetch(`${API_URL}/users/${encodeURIComponent(ref)}`, {
-      headers: { cookie: cookies().toString() },
+      headers: viewerHeaders(),
       cache: 'no-store',
     });
     if (!res.ok) return null;

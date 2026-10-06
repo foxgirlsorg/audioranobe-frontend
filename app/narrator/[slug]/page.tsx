@@ -1,12 +1,12 @@
-import { cookies } from 'next/headers';
 import { API_URL } from '@/lib/api';
+import { viewerHeaders } from '@/lib/ssr';
 import type { NarratorFull } from '@/lib/types';
 import NarratorPageClient from './NarratorPageClient';
 
 async function fetchNarratorForViewer(slug: string): Promise<NarratorFull | null> {
   try {
     const res = await fetch(`${API_URL}/narrators/${encodeURIComponent(slug)}`, {
-      headers: { cookie: cookies().toString() },
+      headers: viewerHeaders(),
       cache: 'no-store',
     });
     if (!res.ok) return null;
