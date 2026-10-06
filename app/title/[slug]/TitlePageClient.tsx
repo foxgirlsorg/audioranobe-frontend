@@ -64,8 +64,9 @@ import styles from './page.module.css';
 const DESC_CLAMP_CHARS = 420;
 
 // A chapter as shown for the selected version: `defaulted` marks a slot the alt
-// version doesn't supply, played from the main version instead.
-type VersionChapter = ChapterRow & { defaulted?: boolean };
+// version doesn't supply, played from the main version instead; `fromVersion`
+// names another version whose standalone volume fills a volume this one lacks.
+type VersionChapter = ChapterRow & { defaulted?: boolean; fromVersion?: string };
 type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[] };
 
 // Soft-deleted chapters are gone as far as counts and totals are concerned.
@@ -237,7 +238,10 @@ export default function TitlePageClient({
     for (const c of alt) altByKey.set(`${c.volume_id}:${c.number}`, c);
     return title.volumes.map((v) => {
       const own = takeover(v.id, v.chapters.length > 0);
-      if (own !== 0) return { ...v, chapters: ownChapters(own, v.id) };
+      if (own !== 0) {
+        const fromVersion = own === selectedVersion ? undefined : title.versions.find((x) => x.id === own)?.name;
+        return { ...v, chapters: ownChapters(own, v.id).map((c) => ({ ...c, fromVersion })) };
+      }
       if (selectedVersion === 0) return v;
       return {
         ...v,
@@ -933,6 +937,11 @@ export default function TitlePageClient({
                               {ch.defaulted && selectedVersion !== 0 ? (
                                 <span className={styles.defaultedPill} title="В выбранной версии этой главы нет — играет из основной">
                                   из основной
+                                </span>
+                              ) : null}
+                              {ch.fromVersion ? (
+                                <span className={styles.defaultedPill} title={`В этой озвучке тома нет — играет из «${ch.fromVersion}»`}>
+                                  {`из «${ch.fromVersion}»`}
                                 </span>
                               ) : null}
                               {(ch.narrators ?? []).length > 0 ? (
