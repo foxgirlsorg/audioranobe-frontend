@@ -116,7 +116,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
 
   const reportPlayError = useCallback(
       (e: unknown) => {
-        if (e instanceof DOMException && e.name === 'NotAllowedError') return;
+        if (e instanceof DOMException && (e.name === 'NotAllowedError' || e.name === 'AbortError')) return;
         toast('Не удалось воспроизвести главу', 'error');
       },
       [toast]
