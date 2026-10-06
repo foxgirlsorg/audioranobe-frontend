@@ -9,9 +9,12 @@ import { LIMITS } from '@/lib/limits';
 import { useMyNarrators } from '@/lib/narrators';
 import { errMsg, useToast } from '@/lib/toast';
 import {
+  COUNTRY_LABELS,
+  COUNTRY_VALUES,
   RELEASE_STATUS_LABELS,
   STATUS_VALUES,
   type Author,
+  type Country,
   type NarratorFull,
   type Paginated,
   type ReleaseStatus,
@@ -113,6 +116,7 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
   const [description, setDescription] = useState('');
   const [year, setYear] = useState('');
   const [status, setStatus] = useState<ReleaseStatus>('ongoing');
+  const [country, setCountry] = useState<Country | ''>('');
   const [genreIds, setGenreIds] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -141,6 +145,10 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
       setError('Выберите хотя бы одного чтеца');
       return;
     }
+    if (!country) {
+      setError('Выберите страну');
+      return;
+    }
     setError('');
     setBusy(true);
     try {
@@ -154,6 +162,7 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
           description,
           year: year.trim() ? Number(year.trim()) : null,
           release_status: status,
+          country,
           genre_ids: genreIds,
         },
       });
@@ -260,6 +269,20 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
             onChange={setStatus}
           />
         </div>
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="add-title-country">
+          {'Страна'}
+        </label>
+        <Select<Country>
+          id="add-title-country"
+          block
+          value={country}
+          placeholder={'Выберите страну'}
+          options={COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] }))}
+          onChange={setCountry}
+        />
       </div>
 
       <div className={styles.field}>
