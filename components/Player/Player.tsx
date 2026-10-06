@@ -26,6 +26,7 @@ import { useToast, errMsg } from '@/lib/toast';
 import PlayPauseIcon from '@/components/PlayPauseIcon/PlayPauseIcon';
 import IllustrationCarousel from '@/components/Illustrations/IllustrationCarousel';
 import styles from './Player.module.css';
+import { lockScroll } from '@/lib/scrollLock';
 
 const RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 const SLEEP_OPTIONS: { label: string; value: number | 'chapter' | null }[] = [
@@ -132,11 +133,10 @@ export default function Player() {
       if (e.key === 'Escape' && !document.querySelector('.PhotoView-Portal')) setFull(false);
     };
     document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
+      unlock();
     };
   }, [full]);
 

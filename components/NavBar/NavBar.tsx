@@ -47,6 +47,7 @@ import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import UserBadges from '@/components/UserBadges/UserBadges';
 import UnverifiedEmailBanner from '@/components/UnverifiedEmailBanner/UnverifiedEmailBanner';
 import styles from './NavBar.module.css';
+import { lockScroll } from '@/lib/scrollLock';
 
 type SuggestKind = 'title' | 'narrator' | 'author' | 'collection';
 
@@ -244,10 +245,9 @@ export default function NavBar() {
 
   useEffect(() => {
     if (!mobileSearchOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     return () => {
-      document.body.style.overflow = prev;
+      unlock();
     };
   }, [mobileSearchOpen]);
 

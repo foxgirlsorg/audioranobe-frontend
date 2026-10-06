@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import styles from './Modal.module.css';
+import { lockScroll } from '@/lib/scrollLock';
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -37,11 +38,10 @@ export function Modal({
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
+      unlock();
     };
   }, [open, onClose]);
 
