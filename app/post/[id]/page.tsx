@@ -13,6 +13,9 @@ import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Markdown from '@/components/Markdown/Markdown';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
+import Poll from '@/components/Poll/Poll';
+import PollBuilder, { pollPayload, type PollDraft } from '@/components/PollBuilder/PollBuilder';
+import { useAuth } from '@/lib/auth';
 import CommentSection from '@/components/CommentSection/CommentSection';
 import styles from './page.module.css';
 
@@ -28,6 +31,8 @@ export default function PostPage({ params }: { params: { id: string } }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
+  const { can } = useAuth();
+  const [pollDraft, setPollDraft] = useState<PollDraft | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,6 +57,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
     if (!post) return;
     setTitle(post.title);
     setBody(post.body);
+    setPollDraft(null);
     setEditing(true);
   };
 
@@ -61,12 +67,23 @@ export default function PostPage({ params }: { params: { id: string } }) {
       toast('Укажите заголовок', 'error');
       return;
     }
+    let poll: ReturnType<typeof pollPayload> | null = null;
+    if (pollDraft) {
+      poll = pollPayload(pollDraft);
+      if (typeof poll === 'string') {
+        toast(poll, 'error');
+        return;
+      }
+    }
     setBusy(true);
     try {
       const updated = await api<NarratorPost>(`/posts/${postId}`, {
         method: 'PATCH',
         body: { title: title.trim(), body },
       });
+      if (poll) {
+        updated.poll = await api<NarratorPost['poll']>(`/posts/${postId}/poll`, { method: 'POST', body: poll });
+      }
       setPost(updated);
       setEditing(false);
       toast('Запись обновлена');
@@ -129,6 +146,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
                 media="both"
               />
             </div>
+            {can('polls.create') && !post.poll ? <PollBuilder value={pollDraft} onChange={setPollDraft} /> : null}
             <div className={styles.editorFoot}>
               <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
                 {'Отмена'}
@@ -168,6 +186,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
             <div className={styles.body}>
               <Markdown source={post.body} media="both" />
             </div>
+            {post.poll ? <Poll poll={post.poll} onChange={(poll) => setPost({ ...post, poll })} /> : null}
           </>
         )}
       </article>

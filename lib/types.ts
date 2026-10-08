@@ -641,6 +641,32 @@ export interface CollectionFull extends CollectionCard {
   items: { position: number; note: string; title: TitleCard }[];
 }
 
+export interface PollOption {
+  id: number;
+  text: string;
+  percent: number | null;
+}
+
+export interface Poll {
+  id: number;
+  title: string;
+  options: PollOption[];
+  total_votes: number | null;
+  my_vote: number | null;
+  closes_at: number | null;
+  closed_at: number | null;
+  is_closed: boolean;
+  can_vote: boolean;
+  can_retract: boolean;
+  can_manage: boolean;
+  can_view_voters: boolean;
+  can_edit: boolean;
+}
+
+export interface PollVoters {
+  options: { option_id: number; users: { id: number; username: string; display_name: string }[] }[];
+}
+
 export interface Announcement {
   id: number;
   slug: string;
@@ -650,6 +676,7 @@ export interface Announcement {
   is_published: boolean;
   is_hidden: boolean;
   created_at: string;
+  poll?: Poll | null;
   /** First page of comments, embedded to save a separate request on load. */
   comments?: Paginated<Comment>;
 }
@@ -663,6 +690,7 @@ export interface NarratorPost {
   created_at: string;
   updated_at: string;
   can_edit: boolean;
+  poll?: Poll | null;
   /** Only present on the list endpoint. */
   comments_count?: number;
   /** First page of comments, embedded to save a separate request on load. */
