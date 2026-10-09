@@ -1013,6 +1013,13 @@ export interface UserProfile {
   activity: ListeningHeatmapData;
   friendship: Friendship;
   can_message: boolean;
+  listening_now: ListeningNow | null;
+}
+
+export interface ListeningNow {
+  title: { id: number; slug: string; name: string; cover_thumb_url: string | null; volume_label: string };
+  volume: { number: number; name: string };
+  chapter: { id: number; name: string; number: number; number_end: number | null };
 }
 
 export interface ListeningHeatmapData {

@@ -34,7 +34,7 @@ import {
   type UserComment,
   type UserProfile,
 } from '@/lib/types';
-import { formatCount, formatDate, initialsOf, ruPlural, timeAgo } from '@/lib/format';
+import { chapterLabel, formatCount, formatDate, initialsOf, ruPlural, timeAgo } from '@/lib/format';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
 import PresenceLabel from '@/components/PresenceLabel/PresenceLabel';
 import { useAuth } from '@/lib/auth';
@@ -378,7 +378,7 @@ export default function UserPageClient({
     );
   }
 
-  const { user, stats, can_message } = profile;
+  const { user, stats, can_message, listening_now } = profile;
 
   const canEditLibrary =
     viewer != null && (viewer.id === user.id || can('users.edit'));
@@ -625,6 +625,28 @@ export default function UserPageClient({
                 </div>
               ) : null}
             </div>
+          ) : null}
+          {listening_now ? (
+            <Link href={`/title/${listening_now.title.slug}`} className={`glass-panel ${styles.listeningCard}`}>
+              {listening_now.title.cover_thumb_url ? (
+                <img src={listening_now.title.cover_thumb_url} alt="" className={styles.listeningCover} />
+              ) : (
+                <span className={styles.listeningCover} />
+              )}
+              <span className={styles.listeningBody}>
+                <span className={`eyebrow ${styles.listeningEyebrow}`}>
+                  <Headphones size={14} aria-hidden="true" />
+                  Слушает сейчас
+                </span>
+                <span className={styles.listeningTitle}>{listening_now.title.name}</span>
+                <span className={styles.listeningSub}>
+                  {`${listening_now.title.volume_label} ${listening_now.volume.number}`}
+                  {listening_now.volume.name ? ` — ${listening_now.volume.name}` : ''}
+                  {' · '}
+                  {chapterLabel(listening_now.chapter.number, listening_now.chapter.number_end, listening_now.chapter.name)}
+                </span>
+              </span>
+            </Link>
           ) : null}
           <div className={`glass-panel ${styles.profileStats}`}>
             <div className={styles.profileStat}>
