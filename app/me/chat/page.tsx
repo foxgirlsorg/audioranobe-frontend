@@ -60,6 +60,7 @@ function dayKey(iso: string | number): string {
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 function dayLabel(iso: string | number): string {
   const d = toDate(iso);
+  if (d.toDateString() === new Date().toDateString()) return 'Сегодня';
   const overYear = Date.now() - d.getTime() > YEAR_MS;
   return d.toLocaleDateString(undefined, overYear ? { day: 'numeric', month: 'long', year: 'numeric' } : { day: 'numeric', month: 'long' });
 }
