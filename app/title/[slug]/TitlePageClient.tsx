@@ -513,7 +513,7 @@ export default function TitlePageClient({
       {title.cover_url && restricted ? (
         <div className={styles.coverLocked}>
           <img
-            src={title.cover_url}
+            src={title.cover_thumb_url ?? title.cover_url}
             alt=""
             aria-hidden="true"
             className={`${styles.cover} ${styles.coverBlurred}`}
@@ -523,7 +523,7 @@ export default function TitlePageClient({
         <>
           <PhotoView src={title.cover_url}>
             <button type="button" className={styles.coverBtn} aria-label="Увеличить обложку">
-              <img src={title.cover_url} alt={`Обложка «${title.name}»`} className={styles.cover} />
+              <img src={title.cover_thumb_url ?? title.cover_url} alt={`Обложка «${title.name}»`} className={styles.cover} />
             </button>
           </PhotoView>
           {title.volumes
