@@ -37,9 +37,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 // Live request runner. One input per argument — the {…} path segments and each
-// query parameter. The URL is assembled from them and sent WITHOUT credentials,
-// so the response is always the anonymous view (account-specific fields like
-// my_rating or my_position come back empty regardless of who is signed in).
+// query parameter. The URL is assembled from them and sent without credentials.
 function TryIt({ path, params }: { path: string; params?: Param[] }) {
   const pathKeys = useMemo(
     () => [...path.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]),
@@ -262,9 +260,6 @@ export default function ApiDocsPage() {
                 {'Списки принимают page (с 1) и per_page (по умолчанию 24, максимум 100) и возвращают:'}
               </p>
               <JsonBlock code={PAGE_SHAPE} />
-              <p className={styles.note}>
-                {'Кнопка «Попробовать» отправляет запрос без авторизации, поэтому поля, зависящие от аккаунта (my_rating, my_position…), приходят пустыми.'}
-              </p>
             </div>
           </section>
 
