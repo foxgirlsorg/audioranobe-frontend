@@ -48,16 +48,19 @@ const LONG_PRESS_MS = 420;
 const MAX_LEN = 5000;
 const MAX_ROWS = 10;
 
-function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+// The API sends Unix seconds; `new Date(seconds)` would land in January 1970.
+const toDate = (v: string | number): Date => new Date(typeof v === 'number' ? v * 1000 : v);
+function fmtTime(iso: string | number): string {
+  return toDate(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
 }
-function dayKey(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+function dayKey(iso: string | number): string {
+  return toDate(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 // Pill label: only show the year once the day is more than a year old.
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
-function dayLabel(iso: string): string {
-  const d = new Date(iso);
+function dayLabel(iso: string | number): string {
+  const d = toDate(iso);
+  if (d.toDateString() === new Date().toDateString()) return 'Сегодня';
   const overYear = Date.now() - d.getTime() > YEAR_MS;
   return d.toLocaleDateString(undefined, overYear ? { day: 'numeric', month: 'long', year: 'numeric' } : { day: 'numeric', month: 'long' });
 }

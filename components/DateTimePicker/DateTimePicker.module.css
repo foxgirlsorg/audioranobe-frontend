@@ -1,0 +1,206 @@
+.root {
+  position: relative;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 42px;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted, #7b8087);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.field:hover,
+.field[aria-expanded='true'] {
+  border-color: rgba(222, 97, 97, 0.5);
+  background: rgba(222, 97, 97, 0.06);
+}
+
+.value {
+  color: #fff;
+}
+
+.placeholder {
+  color: var(--text-muted, #7b8087);
+}
+
+.clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted, #7b8087);
+  cursor: pointer;
+}
+
+.clear:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.popover {
+  position: fixed;
+  z-index: 3000;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(320px, calc(100vw - 2rem));
+  padding: 1rem;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+.monthRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.month {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.month::first-letter {
+  text-transform: uppercase;
+}
+
+.nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #a6acb2);
+  cursor: pointer;
+}
+
+.nav:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.weekdays,
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.weekdays span {
+  padding-bottom: 0.2rem;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--text-muted, #7b8087);
+}
+
+.day {
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text, #e8e8e8);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.day:not(:disabled):hover {
+  background: rgba(222, 97, 97, 0.14);
+}
+
+.day:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.outside {
+  color: var(--text-muted, #7b8087);
+}
+
+.today {
+  border-color: rgba(222, 97, 97, 0.45);
+}
+
+.selected,
+.selected:not(:disabled):hover {
+  background: var(--accent, #de6161);
+  color: #2b0f09;
+  font-weight: 700;
+}
+
+.timeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.timeLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted, #7b8087);
+}
+
+.time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted, #7b8087);
+}
+
+.timeInput {
+  width: 3rem;
+  padding: 0.4rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.timeInput:focus {
+  outline: none;
+  border-color: rgba(222, 97, 97, 0.6);
+}
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}

@@ -12,6 +12,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Markdown from '@/components/Markdown/Markdown';
+import Poll from '@/components/Poll/Poll';
 import CommentSection from '@/components/CommentSection/CommentSection';
 import styles from './page.module.css';
 
@@ -81,6 +82,7 @@ export default function NewsItemPage({ params }: { params: { slug: string } }) {
         <div className={styles.body}>
           <Markdown source={item.body} media="both" />
         </div>
+        {item.poll ? <Poll poll={item.poll} onChange={(poll) => setItem({ ...item, poll })} /> : null}
       </article>
 
       <div className={styles.comments}>

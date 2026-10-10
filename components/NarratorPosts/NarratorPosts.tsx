@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff, MessageSquare, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { errMsg, useToast } from '@/lib/toast';
 import { timeAgo } from '@/lib/format';
 import type { NarratorPost, Paginated } from '@/lib/types';
@@ -11,6 +12,7 @@ import Spinner from '@/components/Spinner/Spinner';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import PollBuilder, { pollPayload, type PollDraft } from '@/components/PollBuilder/PollBuilder';
 import Section from '@/components/Section/Section';
 import styles from './NarratorPosts.module.css';
 
@@ -22,6 +24,8 @@ interface Draft {
   title: string;
   body: string;
   busy: boolean;
+  poll: PollDraft | null;
+  hasPoll: boolean;
 }
 
 function excerpt(markdown: string): { text: string; truncated: boolean } {
@@ -43,6 +47,8 @@ export default function NarratorPosts({
   canEdit: boolean;
 }) {
   const { toast } = useToast();
+  const { can } = useAuth();
+  const canPoll = can('polls.create');
   const [posts, setPosts] = useState<NarratorPost[] | null>(null);
   const [error, setError] = useState('');
 
@@ -66,14 +72,14 @@ export default function NarratorPosts({
   }, [load]);
 
   const startNew = () => {
-    setDrafts((ds) => [...ds, { key: `new-${Date.now()}-${Math.random()}`, postId: null, title: '', body: '', busy: false }]);
+    setDrafts((ds) => [...ds, { key: `new-${Date.now()}-${Math.random()}`, postId: null, title: '', body: '', busy: false, poll: null, hasPoll: false }]);
   };
 
   const startEdit = (p: NarratorPost) => {
     setDrafts((ds) =>
       ds.some((d) => d.postId === p.id)
         ? ds
-        : [...ds, { key: `edit-${p.id}`, postId: p.id, title: p.title, body: p.body, busy: false }]
+        : [...ds, { key: `edit-${p.id}`, postId: p.id, title: p.title, body: p.body, busy: false, poll: null, hasPoll: !!p.poll }]
     );
   };
 
@@ -88,12 +94,21 @@ export default function NarratorPosts({
       toast('Укажите заголовок', 'error');
       return;
     }
+    let poll: ReturnType<typeof pollPayload> | null = null;
+    if (draft.poll) {
+      poll = pollPayload(draft.poll);
+      if (typeof poll === 'string') {
+        toast(poll, 'error');
+        return;
+      }
+    }
     updateDraft(draft.key, { busy: true });
     try {
       if (draft.postId === null) {
+        const base = { title: draft.title.trim(), body: draft.body };
         await api(`/narrators/${narratorId}/posts`, {
           method: 'POST',
-          body: { title: draft.title.trim(), body: draft.body },
+          body: poll ? { ...base, poll } : base,
         });
         toast('Запись опубликована — подписчики получили уведомление');
       } else {
@@ -101,6 +116,7 @@ export default function NarratorPosts({
           method: 'PATCH',
           body: { title: draft.title.trim(), body: draft.body },
         });
+        if (poll) await api(`/posts/${draft.postId}/poll`, { method: 'POST', body: poll });
         toast('Запись обновлена');
       }
       cancelDraft(draft.key);
@@ -159,6 +175,9 @@ export default function NarratorPosts({
           media="both"
         />
       </div>
+      {canPoll && !draft.hasPoll ? (
+        <PollBuilder value={draft.poll} onChange={(poll) => updateDraft(draft.key, { poll })} />
+      ) : null}
       <div className={styles.editorFoot}>
         <button type="button" className="btn btn-ghost" onClick={() => cancelDraft(draft.key)}>
           {'Отмена'}

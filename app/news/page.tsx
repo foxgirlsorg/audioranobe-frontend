@@ -24,6 +24,8 @@ import InfiniteScroll from '@/components/InfiniteScroll/InfiniteScroll';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Markdown from '@/components/Markdown/Markdown';
+import Poll from '@/components/Poll/Poll';
+import PollBuilder, { pollPayload, type PollDraft } from '@/components/PollBuilder/PollBuilder';
 import Modal from '@/components/Modal/Modal';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
@@ -46,11 +48,22 @@ function EditorModal({
   const [published, setPublished] = useState(initial ? initial.is_published : true);
   const [hidden, setHidden] = useState(initial ? initial.is_hidden : false);
   const [busy, setBusy] = useState(false);
+  const { can } = useAuth();
+  const [pollDraft, setPollDraft] = useState<PollDraft | null>(null);
+  const canPoll = can('polls.create') && !initial?.poll;
 
   const save = async () => {
     if (!title.trim()) {
       toast('Укажите название', 'error');
       return;
+    }
+    let poll: ReturnType<typeof pollPayload> | null = null;
+    if (pollDraft && canPoll) {
+      poll = pollPayload(pollDraft);
+      if (typeof poll === 'string') {
+        toast(poll, 'error');
+        return;
+      }
     }
     setBusy(true);
     try {
@@ -60,12 +73,22 @@ function EditorModal({
         is_published: published,
         is_hidden: hidden,
       };
-      const saved = initial
+      let saved = initial
         ? await api<Announcement>(`/mod/announcements/${initial.id}`, {
             method: 'PATCH',
             body: payload,
           })
-        : await api<Announcement>('/mod/announcements', { method: 'POST', body: payload });
+        : await api<Announcement>('/mod/announcements', {
+            method: 'POST',
+            body: poll ? { ...payload, poll } : payload,
+          });
+      if (initial && poll) {
+        const created = await api<Announcement['poll']>(`/announcements/${initial.id}/poll`, {
+          method: 'POST',
+          body: poll,
+        });
+        saved = { ...saved, poll: created };
+      }
       onSaved(saved, !initial);
       onClose();
     } catch (e) {
@@ -102,6 +125,7 @@ function EditorModal({
             media="both"
           />
         </div>
+        {canPoll ? <PollBuilder value={pollDraft} onChange={setPollDraft} /> : null}
         <Toggle checked={published} onChange={setPublished} label="Опубликовано" />
         <Toggle
           checked={hidden}
@@ -252,6 +276,9 @@ export default function NewsPage() {
                   <div className={styles.cardBody}>
                     <Markdown source={a.body} media="both" />
                   </div>
+                ) : null}
+                {a.poll ? (
+                  <Poll poll={a.poll} onChange={(poll) => list.patch((x) => x.id === a.id, (x) => ({ ...x, poll }))} />
                 ) : null}
                 {a.is_published ? (
                   <Link href={`/news/${a.slug}`} className={styles.cardMore}>
