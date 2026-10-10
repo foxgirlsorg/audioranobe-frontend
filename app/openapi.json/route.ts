@@ -1,4 +1,5 @@
 import { API_DOCS_GROUPS } from '@/lib/apiDocsGroups';
+import { RESPONSES, SCHEMAS } from '@/lib/apiSchemas';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://audioranobe.com/api';
 
@@ -7,6 +8,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://audioranobe.com/api
  * /dev (the human-readable page) — generated from the same data so the
  * two can never drift apart. Every one of them is a public, unauthenticated GET.
  */
+const ERROR_RESPONSE = {
+  description: 'Ошибка',
+  content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+};
+
 function buildSpec() {
   const paths: Record<string, unknown> = {};
 
@@ -36,7 +42,15 @@ function buildSpec() {
           ...(ep.note ? { description: ep.note } : {}),
           ...(parameters.length > 0 ? { parameters } : {}),
           responses: {
-            '200': { description: 'OK' },
+            '200':
+              ep.path === '/download/chapters/{id}'
+                ? { description: 'Аудиофайл', content: { 'audio/ogg': { schema: { type: 'string', format: 'binary' } } } }
+                : {
+                    description: 'OK',
+                    ...(RESPONSES[ep.path] ? { content: { 'application/json': { schema: RESPONSES[ep.path] } } } : {}),
+                  },
+            ...(pathParams.length > 0 ? { '404': ERROR_RESPONSE } : {}),
+            ...(ep.params?.length ? { '400': ERROR_RESPONSE } : {}),
           },
         },
       };
@@ -52,6 +66,7 @@ function buildSpec() {
     },
     servers: [{ url: API_BASE }],
     paths,
+    components: { schemas: SCHEMAS },
   };
 }
 
