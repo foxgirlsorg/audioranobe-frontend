@@ -1033,19 +1033,83 @@ export interface ScoreStats {
   countries: { country: string; count: number }[];
 }
 
+export interface StatsBreakdown {
+  lists: Record<LibraryStatus, number>;
+  /** New library entries (any list) in the last 30 days. */
+  lists_30d: number;
+  favorites_30d: number;
+  rating_distribution: Record<string, number>;
+}
+
+/** GET /panel/titles/{id}/stats — private per-title stats. */
+export interface TitleStats extends StatsBreakdown {
+  id: number;
+  slug: string;
+  name: string;
+  listens: number;
+  avg_rating: number | null;
+  rating_count: number;
+  favorites_count: number;
+  chapters_count: number;
+  views_count: number;
+  /** Distinct users with progress on any chapter. */
+  listeners: number;
+  comments_count: number;
+}
+
+/** One day of a stats window (title or narrator). */
+export interface StatsDay {
+  day: string;
+  listen_seconds: number;
+  listeners: number;
+  /** First-time viewers of the title page that day. */
+  views: number;
+  ratings: number;
+  favorites: number;
+  library_adds: number;
+  comments: number;
+  /** Narrator stats only: new subscribers that day. */
+  subscribers?: number;
+}
+
+export interface TitleStatsChapter {
+  id: number;
+  number: number;
+  number_end: number | null;
+  name: string;
+  volume_number: number;
+  duration_seconds: number;
+  listeners: number;
+  /** Listeners who reached 95% of the chapter. */
+  finished: number;
+}
+
+/** GET /panel/titles/{id}/stats?days= */
+export interface TitleStatsFull extends TitleStats {
+  days: number;
+  listen_seconds: number;
+  series: StatsDay[];
+  chapters: TitleStatsChapter[];
+}
+
 export interface NarratorStats {
   subscribers_count: number;
-  totals: { listens: number; favorites: number; ratings: number };
-  titles: {
-    id: number;
-    slug: string;
-    name: string;
+  subscribers_30d: number;
+  totals: StatsBreakdown & {
     listens: number;
+    favorites: number;
+    ratings: number;
+    views: number;
+    comments: number;
+    /** Distinct users with progress on any of the narrator's titles. */
+    listeners: number;
     avg_rating: number | null;
-    rating_count: number;
-    favorites_count: number;
-    chapters_count: number;
-  }[];
+    /** All-time listening seconds across the titles. */
+    listen_seconds: number;
+  };
+  titles: TitleStats[];
+  days: number;
+  series: StatsDay[];
 }
 
 export interface Author {

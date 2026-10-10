@@ -35,6 +35,7 @@ import IllustrationManager from '@/components/Illustrations/IllustrationManager'
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import Select from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
+import TitleStatsDashboard from '@/components/TitleStatsDashboard/TitleStatsDashboard';
 import styles from './page.module.css';
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -325,7 +326,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   }
 
   return (
-    <div className={styles.page}>
+    <div className={tab === 'stats' ? `${styles.page} ${styles.pageWide}` : styles.page}>
       <Link href={`/title/${routeSlug}`} className="back-link">
         <ArrowLeft size={14} />
         К тайтлу
@@ -343,6 +344,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             { key: 'artwork', label: 'Оформление' },
             ...(canIllustrations ? [{ key: 'illustrations', label: 'Иллюстрации' }] : []),
             { key: 'content', label: 'Главы' },
+            { key: 'stats', label: 'Статистика' },
           ]}
           active={tab}
           onChange={setTab}
@@ -358,6 +360,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       {tab === 'content' ? (
         <TitleContentManager title={title} onReload={reloadTitle} />
       ) : null}
+
+      {tab === 'stats' ? <TitleStatsDashboard titleId={title.id} /> : null}
 
       <form
         className={`glass-panel ${styles.formPanel} ${
