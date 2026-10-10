@@ -5,7 +5,6 @@ import { BookOpen, Braces, Check, ChevronRight, Copy, ExternalLink, FileJson, Se
 import JsonBlock from '@/components/JsonBlock/JsonBlock';
 import { useResolveAuth } from '@/lib/useResolveAuth';
 import { API_DOCS_GROUPS, type Param } from '@/lib/apiDocsGroups';
-import EmbedBuilder from './EmbedBuilder';
 import styles from './page.module.css';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
@@ -192,9 +191,8 @@ const BASICS: { title: string; text: string }[] = [
 export default function ApiDocsPage() {
   useResolveAuth();
   return (
-    <div className={styles.wrap}>
+    <>
       <header className={styles.hero}>
-        <span className="eyebrow">{'Для разработчиков'}</span>
         <h1 className={styles.title}>
           {'AudioRanobe'} <span className={styles.titleAccent}>{'API'}</span>
         </h1>
@@ -203,7 +201,7 @@ export default function ApiDocsPage() {
           {'Без ключей и регистрации — берите данные для своих приложений, ботов и плееров.'}
         </p>
         <div className={styles.heroActions}>
-          <a className={styles.btnPrimary} href="/api-docs/swagger" target="_blank" rel="noopener">
+          <a className={styles.btnPrimary} href="/dev/swagger" target="_blank" rel="noopener">
             <BookOpen size={14} />
             {'Swagger UI'}
             <ExternalLink size={12} />
@@ -218,8 +216,6 @@ export default function ApiDocsPage() {
           </a>
         </div>
       </header>
-
-      <EmbedBuilder />
 
       <div className={styles.layout}>
         <nav className={styles.side} aria-label={'Разделы'}>
@@ -299,6 +295,6 @@ export default function ApiDocsPage() {
           ))}
         </main>
       </div>
-    </div>
+    </>
   );
 }

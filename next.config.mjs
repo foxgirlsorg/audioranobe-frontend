@@ -10,6 +10,9 @@ const nextConfig = {
     },
   },
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  async redirects() {
+    return [{ source: '/api-docs/:path*', destination: '/dev/:path*', permanent: true }];
+  },
   async rewrites() {
     if (!process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID) return [];
     return [

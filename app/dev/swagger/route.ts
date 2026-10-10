@@ -23,7 +23,7 @@ const HTML = `<!doctype html>
 </style>
 </head>
 <body>
-<div class="bar"><a href="/api-docs">← AudioRanobe API</a><span>OpenAPI 3 · <a href="/openapi.json">openapi.json</a></span></div>
+<div class="bar"><a href="/dev">← AudioRanobe API</a><span>OpenAPI 3 · <a href="/openapi.json">openapi.json</a></span></div>
 <div id="ui"></div>
 <script src="${CDN}/swagger-ui-bundle.js"></script>
 <script>

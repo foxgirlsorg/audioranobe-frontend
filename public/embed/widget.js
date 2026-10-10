@@ -1,5 +1,6 @@
 /*
- * AudioRanobe embeddable volume player. Served by /embed (app/embed/route.ts).
+ * AudioRanobe embeddable widgets, served by /embed (app/embed/route.ts):
+ * ?type=narrator&id=…, ?type=collection&id=…, or the volume player below.
  * Lists every chapter of one volume but plays only those before the gate (the
  * LIMIT-th chapter, or the last one in a shorter volume). Reaching the gate
  * blurs the widget and sends the listener to the site; chapters past it link
@@ -23,6 +24,8 @@
     prev: '<path d="M19 20 9 12l10-8zM5 19V5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
     next: '<path d="m5 4 10 8-10 8zM19 5v14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
     vol: '<path d="M11 5 6 9H2v6h4l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',
+    check: '<path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    headphones: '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
     lock: '<rect x="4" y="11" width="16" height="10" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" stroke-width="2" fill="none"/>',
   };
 
@@ -40,6 +43,19 @@
     span.innerHTML =
       '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
     return span;
+  }
+
+  // A cover image, or a headphones placeholder of the same box when there is none.
+  function cover(url, cls, iconSize) {
+    if (!url) {
+      var ph = el('span', cls + ' ar-noimg');
+      ph.appendChild(icon('headphones', iconSize));
+      return ph;
+    }
+    var img = el('img', cls);
+    img.src = url;
+    img.alt = '';
+    return img;
   }
 
   function link(href, cls, text) {
@@ -134,10 +150,7 @@
     // ---- head
     var head = el('div', 'ar-head');
     var coverLink = link(titleUrl);
-    var cover = el('img', 'ar-cover');
-    cover.src = vol.cover_thumb_url || t.cover_thumb_url || t.cover_url || '';
-    cover.alt = '';
-    coverLink.appendChild(cover);
+    coverLink.appendChild(cover(vol.cover_thumb_url || t.cover_thumb_url || t.cover_url, 'ar-cover', 26));
     head.appendChild(coverLink);
 
     var meta = el('div', 'ar-meta');
@@ -219,12 +232,7 @@
     app.appendChild(list);
 
     // ---- foot
-    var foot = el('div', 'ar-foot');
-    var brand = link(titleUrl, 'ar-brand', 'AUDIO');
-    brand.appendChild(el('b', '', 'RANOBE'));
-    foot.appendChild(brand);
-    foot.appendChild(link(titleUrl, '', 'Слушать на сайте ↗'));
-    app.appendChild(foot);
+    app.appendChild(foot(titleUrl, 'Слушать на сайте ↗'));
 
     // ---- shown once playback runs out
     var outro = el('div', 'ar-outro');
@@ -322,18 +330,141 @@
     sync();
   }
 
-  if (!/^\d+$/.test(titleRef) || !volumeId) {
-    showState('Плеер не настроен.', SITE + '/api-docs#embed', 'Настроить');
+  function foot(href, label) {
+    var f = el('div', 'ar-foot');
+    var brand = link(href, 'ar-brand', 'AUDIO');
+    brand.appendChild(el('b', '', 'RANOBE'));
+    f.appendChild(brand);
+    f.appendChild(link(href, '', label));
+    return f;
+  }
+
+  function plural(n, forms) {
+    var m10 = n % 10;
+    var m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return forms[0];
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return forms[1];
+    return forms[2];
+  }
+
+  function hours(sec) {
+    if (!sec) return '0';
+    var h = sec / 3600;
+    return h < 1 ? '<1' : String(Math.round(h));
+  }
+
+  function renderNarrator(n) {
+    var url = SITE + '/narrator/' + n.slug;
+    app.textContent = '';
+    document.title = n.name + ' · AudioRanobe';
+
+    var card = el('div', 'ar-profile');
+    if (n.cover_url) {
+      var banner = el('img', 'ar-banner');
+      banner.src = n.cover_url;
+      banner.alt = '';
+      card.appendChild(banner);
+      card.appendChild(el('div', 'ar-banner-shade'));
+    }
+    var ava = link(url, 'ar-avatar');
+    if (n.avatar_thumb_url || n.avatar_url) {
+      var img = el('img');
+      img.src = n.avatar_thumb_url || n.avatar_url;
+      img.alt = '';
+      ava.appendChild(img);
+    } else {
+      ava.textContent = (n.name || '?').charAt(0).toUpperCase();
+    }
+    card.appendChild(ava);
+
+    var info = el('div', 'ar-meta');
+    var nameRow = el('div', 'ar-name-row');
+    nameRow.appendChild(link(url, 'ar-title', n.name));
+    if (n.is_verified) {
+      var mark = el('span', 'ar-verified');
+      mark.title = 'Личность подтверждена администрацией';
+      mark.appendChild(icon('check', 15));
+      nameRow.appendChild(mark);
+    }
+    if (n.is_ai) nameRow.appendChild(el('span', 'ar-badge', 'ИИ'));
+    info.appendChild(nameRow);
+
+    var stats = el('div', 'ar-stats');
+    [
+      [String(n.titles_count), 'тайтлы'],
+      [String(n.subscribers_count), 'подписчики'],
+      [hours(n.seconds_narrated), 'часов озвучки'],
+    ].forEach(function (st) {
+      var box = el('div', 'ar-stat');
+      box.appendChild(el('div', 'ar-stat-num', st[0]));
+      box.appendChild(el('div', 'ar-stat-label', st[1]));
+      stats.appendChild(box);
+    });
+    info.appendChild(stats);
+    card.appendChild(info);
+    app.appendChild(card);
+    app.appendChild(foot(url, 'Профиль на сайте ↗'));
+  }
+
+  function renderCollection(c) {
+    var url = SITE + '/collections/' + c.id;
+    app.textContent = '';
+    document.title = c.name + ' · AudioRanobe';
+
+    var head = el('div', 'ar-head ar-head-col');
+    var meta = el('div', 'ar-meta');
+    meta.appendChild(link(url, 'ar-title', c.name));
+    var subParts = [];
+    if (c.user) subParts.push(c.user.display_name || c.user.username);
+    subParts.push(c.items_count + ' ' + plural(c.items_count, ['тайтл', 'тайтла', 'тайтлов']));
+    if (c.likes_count) subParts.push('♥ ' + c.likes_count);
+    meta.appendChild(el('div', 'ar-sub', subParts.join(' · ')));
+    head.appendChild(meta);
+    app.appendChild(head);
+
+    var list = el('ul', 'ar-list');
+    var items = (c.items || []).filter(function (it) { return it.title; });
+    if (items.length === 0) list.appendChild(el('li', 'ar-state', 'Подборка пока пуста.'));
+    items.forEach(function (it) {
+      var t = it.title;
+      var li = el('li');
+      var row = link(SITE + '/title/' + t.slug, 'ar-row');
+      row.appendChild(cover(t.cover_thumb_url || t.cover_url, 'ar-thumb', 15));
+      var text = el('span', 'ar-row-text');
+      text.appendChild(el('span', 'ar-name', t.name));
+      if (t.author) text.appendChild(el('span', 'ar-row-sub', t.author.name));
+      row.appendChild(text);
+      li.appendChild(row);
+      list.appendChild(li);
+    });
+    app.appendChild(list);
+    app.appendChild(foot(url, 'Подборка на сайте ↗'));
+  }
+
+  function load(path, fn, what) {
+    fetch(API + path + '?embed=1', { credentials: 'omit' })
+      .then(function (r) {
+        if (!r.ok) throw r.status;
+        return r.json();
+      })
+      .then(fn)
+      .catch(function () {
+        showState('Не удалось загрузить ' + what + '.', SITE, 'AudioRanobe');
+      });
+  }
+
+  var type = params.get('type') || 'volume';
+  var id = params.get('id') || '';
+  if (type === 'narrator' || type === 'collection') {
+    if (!/^\d+$/.test(id)) return showState('Виджет не настроен.', SITE + '/dev/widgets', 'Настроить');
+    if (type === 'narrator') load('/narrators/' + id, renderNarrator, 'карточку чтеца');
+    else load('/collections/' + id, renderCollection, 'подборку');
     return;
   }
 
-  fetch(API + '/titles/' + titleRef + '?embed=1', { credentials: 'omit' })
-    .then(function (r) {
-      if (!r.ok) throw r.status;
-      return r.json();
-    })
-    .then(render)
-    .catch(function () {
-      showState('Не удалось загрузить плеер.', SITE, 'AudioRanobe');
-    });
+  if (!/^\d+$/.test(titleRef) || !volumeId) {
+    showState('Плеер не настроен.', SITE + '/dev/widgets', 'Настроить');
+    return;
+  }
+  load('/titles/' + titleRef, render, 'плеер');
 })();

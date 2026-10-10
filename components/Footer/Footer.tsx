@@ -15,7 +15,7 @@ const NAV = [
   { href: '/collections', label: 'Коллекции' },
   { href: '/news', label: 'Новости' },
   { href: '/donate', label: 'Поддержать' },
-  { href: '/api-docs', label: 'API' },
+  { href: '/dev', label: 'Для разработчиков' },
 ];
 
 const LEGAL = [

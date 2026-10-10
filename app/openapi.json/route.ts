@@ -4,7 +4,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://audioranobe.com/api
 
 /**
  * Minimal OpenAPI 3.0 description of exactly the endpoints listed on
- * /api-docs (the human-readable page) — generated from the same data so the
+ * /dev (the human-readable page) — generated from the same data so the
  * two can never drift apart. Every one of them is a public, unauthenticated GET.
  */
 function buildSpec() {
@@ -47,7 +47,7 @@ function buildSpec() {
     openapi: '3.0.3',
     info: {
       title: 'AudioRanobe API',
-      description: 'Публичное read-only API. Смотрите /api-docs для интерактивных примеров.',
+      description: 'Публичное read-only API. Смотрите /dev для интерактивных примеров.',
       version: '1.0.0',
     },
     servers: [{ url: API_BASE }],

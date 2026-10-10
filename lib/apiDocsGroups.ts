@@ -1,5 +1,5 @@
 /**
- * The public API surface documented at /api-docs — single source of truth
+ * The public API surface documented at /dev — single source of truth
  * shared with the generated OpenAPI spec (/openapi.json) so the two can never
  * drift apart. Every endpoint here is a public, unauthenticated GET.
  */

@@ -1,6 +1,6 @@
 /**
  * RFC 9727 API catalog — lets automated tooling discover the public API
- * documented at /api-docs without hand-configuration. One entry, matching the
+ * documented at /dev without hand-configuration. One entry, matching the
  * one public API this site exposes.
  */
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://audioranobe.com').replace(/\/$/, '');
@@ -12,7 +12,7 @@ export function GET() {
       {
         anchor: API_BASE,
         'service-desc': [{ href: `${SITE}/openapi.json`, type: 'application/json' }],
-        'service-doc': [{ href: `${SITE}/api-docs`, type: 'text/html' }],
+        'service-doc': [{ href: `${SITE}/dev`, type: 'text/html' }],
       },
     ],
   };

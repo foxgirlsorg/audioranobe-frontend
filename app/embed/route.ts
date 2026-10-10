@@ -1,7 +1,8 @@
 /**
- * Embeddable volume player: /embed?title={id}&volume={id}&version={id}&theme=light.
+ * Embeddable widgets: /embed?title={id}&volume={id}&version={id} (volume player),
+ * /embed?type=narrator&id={id}, /embed?type=collection&id={id}; all take &theme=light.
  * A standalone page (no site chrome) meant for third-party iframes; the UI
- * lives in public/embed/widget.{js,css}. Configured on /api-docs.
+ * lives in public/embed/widget.{js,css}. Configured on /dev/widgets.
  */
 const V = Date.now().toString(36);
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
