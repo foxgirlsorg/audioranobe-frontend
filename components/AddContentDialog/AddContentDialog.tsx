@@ -355,6 +355,7 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
 function NarratorForm({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { refresh: refreshMyNarrators } = useMyNarrators();
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -393,6 +394,7 @@ function NarratorForm({ onDone, onBack }: { onDone: () => void; onBack: () => vo
       toast(
         created.mod_status === 'approved' ? 'Чтец создан' : 'Чтец отправлен на модерацию'
       );
+      refreshMyNarrators();
       onDone();
       router.push(`/narrator/${created.slug}/edit`);
     } catch (err) {

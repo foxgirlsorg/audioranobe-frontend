@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
+import { useMyNarrators } from '@/lib/narrators';
 import type { NarratorFull, UserBrief, UserSearchHit } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
@@ -191,6 +192,8 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     }
   }
 
+  const { refresh: refreshMyNarrators } = useMyNarrators();
+
   async function handleTransfer() {
     if (!narrator || !transferTo) return;
     setTransferring(true);
@@ -200,6 +203,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         body: { user_id: transferTo.id },
       });
       if (res.applied) {
+        refreshMyNarrators();
         toast(`Права на чтеца переданы @${transferTo.username}`);
         // The previous owner has no edit access any more (staff keep theirs,
         // but the public page is the useful place to land either way).
@@ -543,7 +547,10 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
           name={narrator.name}
           isDeleted={narrator.is_deleted}
           redirectTo="/catalog"
-          onChanged={loadNarrator}
+          onChanged={() => {
+            refreshMyNarrators();
+            void loadNarrator();
+          }}
         />
       ) : null}
 

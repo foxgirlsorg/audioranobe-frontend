@@ -17,6 +17,8 @@ interface MyNarratorsValue {
   loaded: boolean;
   /** Fetch the list once, lazily — call it when something actually needs it. */
   ensureLoaded: () => void;
+  /** Refetch after membership changes (create, delete, transfer). */
+  refresh: () => void;
 }
 
 const Ctx = createContext<MyNarratorsValue | null>(null);
@@ -40,8 +42,8 @@ export function MyNarratorsProvider({ children }: { children: React.ReactNode })
     loadingRef.current = false;
   }, [user?.id]);
 
-  const ensureLoaded = useCallback(() => {
-    if (!user || loaded || loadingRef.current) return;
+  const load = useCallback(() => {
+    if (!user) return;
     loadingRef.current = true;
     api<NarratorCard[]>('/panel/narrators')
       .then((list) => {
@@ -52,9 +54,14 @@ export function MyNarratorsProvider({ children }: { children: React.ReactNode })
       .finally(() => {
         loadingRef.current = false;
       });
-  }, [user, loaded]);
+  }, [user]);
 
-  return <Ctx.Provider value={{ narrators, loaded, ensureLoaded }}>{children}</Ctx.Provider>;
+  const ensureLoaded = useCallback(() => {
+    if (loaded || loadingRef.current) return;
+    load();
+  }, [loaded, load]);
+
+  return <Ctx.Provider value={{ narrators, loaded, ensureLoaded, refresh: load }}>{children}</Ctx.Provider>;
 }
 
 export function useMyNarrators(): MyNarratorsValue {
