@@ -901,3 +901,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.actIcon {
+  padding: 0.5rem;
+  aspect-ratio: 1;
+}
+
+.blockedIcon {
+  color: var(--accent);
+}

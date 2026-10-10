@@ -1013,7 +1013,17 @@ export interface UserProfile {
   activity: ListeningHeatmapData;
   friendship: Friendship;
   can_message: boolean;
+  /** The viewer has blocked this user (no DMs either way). */
+  is_blocked: boolean;
+  /** The viewer may block this user (false for themselves and users with users.unblockable). */
+  can_block: boolean;
   listening_now: ListeningNow | null;
+}
+
+/** GET /me/blocks */
+export interface BlockedUser {
+  user: UserBrief;
+  blocked_at: number;
 }
 
 export interface ListeningNow {
