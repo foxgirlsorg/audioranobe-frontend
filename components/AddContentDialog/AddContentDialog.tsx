@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookPlus, Mic2, PenLine } from 'lucide-react';
+import { BookPlus, Mic2, PenLine, TriangleAlert } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
@@ -100,6 +100,73 @@ function BackRow({ onBack, busy, submitLabel }: { onBack: () => void; busy: bool
   );
 }
 
+type Duplicate = {
+  id: number;
+  slug: string;
+  name: string;
+  alt_names: string[];
+  cover_thumb_url: string | null;
+  mod_status: string;
+  narrators: string[];
+  exact: boolean;
+};
+
+/** Existing titles that look like the one being typed (GET /panel/titles/duplicates). */
+function useDuplicates(name: string): Duplicate[] {
+  const [items, setItems] = useState<Duplicate[]>([]);
+  useEffect(() => {
+    const q = name.trim();
+    if (q.length < 3) {
+      setItems([]);
+      return;
+    }
+    let live = true;
+    const t = setTimeout(() => {
+      api<Duplicate[]>('/panel/titles/duplicates', { params: { name: q } })
+        .then((r) => live && setItems(r))
+        .catch(() => live && setItems([]));
+    }, 400);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [name]);
+  return items;
+}
+
+function DuplicateWarning({ items }: { items: Duplicate[] }) {
+  if (items.length === 0) return null;
+  const exact = items.some((d) => d.exact);
+  return (
+    <div className={styles.dup} role="status">
+      <div className={styles.dupHead}>
+        <TriangleAlert size={15} aria-hidden="true" />
+        {exact ? 'Тайтл с таким названием уже есть' : 'Похожие тайтлы уже есть'}
+      </div>
+      <p className={styles.dupHint}>
+        {'Проверьте, не дубль ли это. Если тайтл уже есть, добавьте свою озвучку к нему, а не создавайте новый.'}
+      </p>
+      <ul className={styles.dupList}>
+        {items.map((d) => (
+          <li key={d.id}>
+            <a href={`/title/${d.slug}`} target="_blank" rel="noopener" className={styles.dupItem}>
+              {d.cover_thumb_url ? <img src={d.cover_thumb_url} alt="" className={styles.dupCover} /> : <span className={styles.dupCover} />}
+              <span className={styles.dupText}>
+                <span className={styles.dupName}>{d.name}</span>
+                <span className={styles.dupMeta}>
+                  {[d.narrators.join(', '), d.mod_status !== 'approved' ? 'на модерации' : '']
+                    .filter(Boolean)
+                    .join(' · ') || 'без чтецов'}
+                </span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -116,6 +183,7 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
   const [genreIds, setGenreIds] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const duplicates = useDuplicates(name);
 
   useEffect(() => {
     ensureLoaded();
@@ -214,6 +282,7 @@ function TitleForm({ onDone, onBack }: { onDone: () => void; onBack: () => void 
           maxLength={300}
           onChange={(e) => setName(e.target.value)}
         />
+        <DuplicateWarning items={duplicates} />
       </div>
 
       <div className={styles.field}>
