@@ -5,6 +5,7 @@ import { BookOpen, Braces, Check, ChevronRight, Copy, ExternalLink, FileJson, Se
 import JsonBlock from '@/components/JsonBlock/JsonBlock';
 import { useResolveAuth } from '@/lib/useResolveAuth';
 import { API_DOCS_GROUPS, type Param } from '@/lib/apiDocsGroups';
+import EmbedBuilder from './EmbedBuilder';
 import styles from './page.module.css';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
@@ -217,6 +218,8 @@ export default function ApiDocsPage() {
           </a>
         </div>
       </header>
+
+      <EmbedBuilder />
 
       <div className={styles.layout}>
         <nav className={styles.side} aria-label={'Разделы'}>

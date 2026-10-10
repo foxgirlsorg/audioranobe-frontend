@@ -1,0 +1,372 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --accent: #de6161;
+  --accent-hover: #ec7d7d;
+  --accent-soft: rgba(222, 97, 97, 0.12);
+  --bg: #161616;
+  --surface: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #e8e8e8;
+  --text-secondary: #a6acb2;
+  --text-muted: #7b8087;
+  color-scheme: dark;
+}
+
+:root.light {
+  --accent-hover: #c94f4f;
+  --accent-soft: rgba(222, 97, 97, 0.1);
+  --bg: #ffffff;
+  --surface: #f6f6f7;
+  --border: #e6e6e9;
+  --text: #1c1c1f;
+  --text-secondary: #55585e;
+  --text-muted: #8a8d93;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ar {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ar-state {
+  margin: auto;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.ar-state a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------ head */
+
+.ar-head {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ar-cover {
+  flex: none;
+  width: 64px;
+  height: 96px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--surface);
+}
+
+.ar-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-title {
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ar-title:hover {
+  color: var(--accent);
+}
+
+.ar-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ar-narr {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.ar-narr:hover {
+  color: var(--accent);
+}
+
+.ar-now {
+  margin-top: auto;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ar-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+}
+
+.ar-btn:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.ar-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ar-play {
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  color: #fff;
+}
+
+.ar-play:hover:not(:disabled) {
+  background: var(--accent-hover);
+  color: #fff;
+}
+
+.ar-seek {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.ar-volume {
+  display: none;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+}
+
+.ar-vol {
+  width: 64px;
+  accent-color: var(--accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ar-volume {
+    display: inline-flex;
+  }
+}
+
+.ar-time {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ list */
+
+.ar-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.ar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.ar-row:hover {
+  background: var(--surface);
+}
+
+.ar-row.is-current {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ar-num {
+  flex: none;
+  min-width: 2.2em;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ar-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ar-dur {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ar-row.is-locked,
+.ar-row:disabled {
+  color: var(--text-muted);
+}
+
+.ar-row:disabled {
+  cursor: default;
+}
+
+.ar-row:disabled:hover {
+  background: none;
+}
+
+/* ------------------------------------------------------------ foot */
+
+.ar-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.ar-brand {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text);
+}
+
+.ar-brand b {
+  color: var(--accent);
+}
+
+/* ------------------------------------------------------------ outro */
+
+.ar-outro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, backdrop-filter 0.35s ease, -webkit-backdrop-filter 0.35s ease,
+    visibility 0s linear 0.35s;
+}
+
+.ar-outro.is-open {
+  opacity: 1;
+  visibility: visible;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition-delay: 0s;
+}
+
+.ar-outro > * {
+  transform: translateY(8px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ar-outro.is-open > * {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-outro,
+  .ar-outro > * {
+    transition: none;
+  }
+}
+
+.ar-outro-text {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ar-outro-cta {
+  padding: 9px 18px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.ar-outro-cta:hover {
+  background: var(--accent-hover);
+}
+
+.ar-outro-close {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ar-outro-close:hover {
+  color: var(--text);
+}
