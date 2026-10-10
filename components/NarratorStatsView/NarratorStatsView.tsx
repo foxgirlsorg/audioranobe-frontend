@@ -15,8 +15,10 @@ import {
   RangeSwitch,
   fmtHours,
   listTotal,
+  splitSeries,
   statsStyles as styles,
   sumSeries,
+  trend,
 } from '@/components/StatsBlocks/StatsBlocks';
 
 const MINI: { key: keyof StatsDay; label: string }[] = [
@@ -26,6 +28,7 @@ const MINI: { key: keyof StatsDay; label: string }[] = [
   { key: 'favorites', label: 'В избранное' },
   { key: 'ratings', label: 'Оценки' },
   { key: 'comments', label: 'Комментарии' },
+  { key: 'embed_plays', label: 'Прослушивания из виджета' },
 ];
 
 /** Private narrator stats for the narrator edit page's «Статистика» tab. */
@@ -36,7 +39,7 @@ export default function NarratorStatsView({ narratorId }: { narratorId: number }
 
   useEffect(() => {
     setError('');
-    api<NarratorStats>(`/panel/narrators/${narratorId}/stats`, { params: { days } })
+    api<NarratorStats>(`/panel/narrators/${narratorId}/stats`, { params: { days: days * 2 } })
       .then(setStats)
       .catch((e) => setError(errMsg(e)));
   }, [narratorId, days]);
@@ -44,7 +47,7 @@ export default function NarratorStatsView({ narratorId }: { narratorId: number }
   if (error) return <p className={styles.empty}>{error}</p>;
 
   const t = stats?.totals;
-  const series = stats?.series ?? [];
+  const [series, prev] = splitSeries(stats?.series ?? [], days);
   const titles = [...(stats?.titles ?? [])].sort((a, b) => b.listeners - a.listeners || b.listens - a.listens);
 
   return (
@@ -60,18 +63,45 @@ export default function NarratorStatsView({ narratorId }: { narratorId: number }
               value={formatCount(stats.subscribers_count)}
               label={'Подписчики'}
               hint={`+${formatCount(sumSeries(series, 'subscribers'))} за период`}
+              change={trend(series, prev, 'subscribers')}
             />
             <Kpi value={formatCount(t.listeners)} label={'Слушатели'} />
-            <Kpi value={fmtHours(t.listen_seconds)} label={'Время прослушивания'} hint={`${fmtHours(sumSeries(series, 'listen_seconds'))} за период`} />
+            <Kpi
+              value={fmtHours(t.listen_seconds)}
+              label={'Время прослушивания'}
+              hint={`${fmtHours(sumSeries(series, 'listen_seconds'))} за период`}
+              change={trend(series, prev, 'listen_seconds')}
+            />
             <Kpi value={formatCount(t.listens)} label={'Прослушивания глав'} />
-            <Kpi value={formatCount(t.views)} label={'Просмотры'} hint={`+${formatCount(sumSeries(series, 'views'))} новых за период`} />
-            <Kpi value={formatCount(t.favorites)} label={'В избранном'} hint={`+${formatCount(sumSeries(series, 'favorites'))} за период`} />
+            <Kpi
+              value={formatCount(t.views)}
+              label={'Просмотры'}
+              hint={`+${formatCount(sumSeries(series, 'views'))} новых за период`}
+              change={trend(series, prev, 'views')}
+            />
+            <Kpi
+              value={formatCount(t.favorites)}
+              label={'В избранном'}
+              hint={`+${formatCount(sumSeries(series, 'favorites'))} за период`}
+              change={trend(series, prev, 'favorites')}
+            />
             <Kpi
               value={t.avg_rating != null ? t.avg_rating.toFixed(1) : '—'}
               label={'Средняя оценка'}
               hint={`${formatCount(t.ratings)} оценок`}
             />
-            <Kpi value={formatCount(listTotal(t.lists))} label={'В списках'} hint={`+${formatCount(sumSeries(series, 'library_adds'))} за период`} />
+            <Kpi
+              value={formatCount(listTotal(t.lists))}
+              label={'В списках'}
+              hint={`+${formatCount(sumSeries(series, 'library_adds'))} за период`}
+              change={trend(series, prev, 'library_adds')}
+            />
+            <Kpi
+              value={formatCount(t.embed_plays)}
+              label={'Из виджета'}
+              hint={`+${formatCount(sumSeries(series, 'embed_plays'))} за период`}
+              change={trend(series, prev, 'embed_plays')}
+            />
           </section>
 
           <ListeningCharts series={series} />

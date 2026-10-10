@@ -1055,6 +1055,8 @@ export interface TitleStats extends StatsBreakdown {
   /** Distinct users with progress on any chapter. */
   listeners: number;
   comments_count: number;
+  /** All-time plays started in the embeddable widget. */
+  embed_plays: number;
 }
 
 /** One day of a stats window (title or narrator). */
@@ -1068,6 +1070,8 @@ export interface StatsDay {
   favorites: number;
   library_adds: number;
   comments: number;
+  /** Plays started in the embeddable widget that day. */
+  embed_plays: number;
   /** Narrator stats only: new subscribers that day. */
   subscribers?: number;
 }
@@ -1087,6 +1091,8 @@ export interface TitleStatsChapter {
 /** GET /panel/titles/{id}/stats?days= */
 export interface TitleStatsFull extends TitleStats {
   days: number;
+  /** Sites embedding the widget (top 20 by plays). */
+  embed_sites: { host: string; plays: number; first_seen: number; last_seen: number }[];
   listen_seconds: number;
   series: StatsDay[];
   chapters: TitleStatsChapter[];
@@ -1106,6 +1112,7 @@ export interface NarratorStats {
     avg_rating: number | null;
     /** All-time listening seconds across the titles. */
     listen_seconds: number;
+    embed_plays: number;
   };
   titles: TitleStats[];
   days: number;

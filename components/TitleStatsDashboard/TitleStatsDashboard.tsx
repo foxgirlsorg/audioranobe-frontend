@@ -19,8 +19,10 @@ import {
   Tip,
   fmtHours,
   listTotal,
+  splitSeries,
   statsStyles as styles,
   sumSeries,
+  trend,
 } from '@/components/StatsBlocks/StatsBlocks';
 
 const MINI: { key: keyof StatsDay; label: string }[] = [
@@ -29,6 +31,7 @@ const MINI: { key: keyof StatsDay; label: string }[] = [
   { key: 'favorites', label: 'В избранное' },
   { key: 'ratings', label: 'Оценки' },
   { key: 'comments', label: 'Комментарии' },
+  { key: 'embed_plays', label: 'Прослушивания из виджета' },
 ];
 
 const chapterLabel = (c: TitleStatsChapter) =>
@@ -42,14 +45,14 @@ export default function TitleStatsDashboard({ titleId }: { titleId: number }) {
 
   useEffect(() => {
     setError('');
-    api<TitleStatsFull>(`/panel/titles/${titleId}/stats`, { params: { days } })
+    api<TitleStatsFull>(`/panel/titles/${titleId}/stats`, { params: { days: days * 2 } })
       .then(setStats)
       .catch((e) => setError(errMsg(e)));
   }, [titleId, days]);
 
   if (error) return <p className={styles.empty}>{error}</p>;
 
-  const series = stats?.series ?? [];
+  const [series, prev] = splitSeries(stats?.series ?? [], days);
   const chapters = stats?.chapters ?? [];
   const firstListeners = chapters.find((c) => c.listeners > 0)?.listeners ?? 0;
 
@@ -63,22 +66,77 @@ export default function TitleStatsDashboard({ titleId }: { titleId: number }) {
         <>
           <section className={styles.kpis}>
             <Kpi value={formatCount(stats.listeners)} label={'Слушатели'} />
-            <Kpi value={fmtHours(stats.listen_seconds)} label={'Время прослушивания'} hint={`${fmtHours(sumSeries(series, 'listen_seconds'))} за период`} />
+            <Kpi
+              value={fmtHours(stats.listen_seconds)}
+              label={'Время прослушивания'}
+              hint={`${fmtHours(sumSeries(series, 'listen_seconds'))} за период`}
+              change={trend(series, prev, 'listen_seconds')}
+            />
             <Kpi value={formatCount(stats.listens)} label={'Прослушивания глав'} />
-            <Kpi value={formatCount(stats.views_count)} label={'Просмотры'} hint={`+${formatCount(sumSeries(series, 'views'))} новых за период`} />
-            <Kpi value={formatCount(stats.favorites_count)} label={'В избранном'} hint={`+${formatCount(sumSeries(series, 'favorites'))} за период`} />
+            <Kpi
+              value={formatCount(stats.views_count)}
+              label={'Просмотры'}
+              hint={`+${formatCount(sumSeries(series, 'views'))} новых за период`}
+              change={trend(series, prev, 'views')}
+            />
+            <Kpi
+              value={formatCount(stats.favorites_count)}
+              label={'В избранном'}
+              hint={`+${formatCount(sumSeries(series, 'favorites'))} за период`}
+              change={trend(series, prev, 'favorites')}
+            />
             <Kpi
               value={stats.avg_rating != null ? stats.avg_rating.toFixed(1) : '—'}
               label={'Средняя оценка'}
               hint={`${formatCount(stats.rating_count)} оценок`}
             />
-            <Kpi value={formatCount(listTotal(stats.lists))} label={'В списках'} hint={`+${formatCount(sumSeries(series, 'library_adds'))} за период`} />
-            <Kpi value={formatCount(stats.comments_count)} label={'Комментарии'} />
+            <Kpi
+              value={formatCount(listTotal(stats.lists))}
+              label={'В списках'}
+              hint={`+${formatCount(sumSeries(series, 'library_adds'))} за период`}
+              change={trend(series, prev, 'library_adds')}
+            />
+            <Kpi value={formatCount(stats.comments_count)} label={'Комментарии'} change={trend(series, prev, 'comments')} />
+            <Kpi
+              value={formatCount(stats.embed_plays)}
+              label={'Из виджета'}
+              hint={`+${formatCount(sumSeries(series, 'embed_plays'))} за период · сайтов: ${stats.embed_sites.length}`}
+              change={trend(series, prev, 'embed_plays')}
+            />
           </section>
 
           <ListeningCharts series={series} />
           <MiniCharts series={series} items={MINI} />
           <ListsAndRatings lists={stats.lists} distribution={stats.rating_distribution} avg={stats.avg_rating} />
+
+          <section className={`glass-panel ${styles.panel}`}>
+            <h2 className={styles.panelTitle}>
+              {'Сайты с виджетом'}
+              <span className={styles.panelValue}>{formatCount(stats.embed_sites.length)}</span>
+            </h2>
+            {stats.embed_sites.length === 0 ? (
+              <p className={styles.empty}>{'Виджет тайтла пока не слушали на других сайтах.'}</p>
+            ) : (
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>{'Сайт'}</th>
+                    <th className={styles.num}>{'Прослушивания'}</th>
+                    <th className={styles.num}>{'Последнее'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.embed_sites.map((site) => (
+                    <tr key={site.host}>
+                      <td>{site.host}</td>
+                      <td className={styles.num}>{formatCount(site.plays)}</td>
+                      <td className={styles.num}>{new Date(site.last_seen * 1000).toLocaleDateString('ru-RU')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
 
           <section className={`glass-panel ${styles.panel}`}>
             <h2 className={styles.panelTitle}>

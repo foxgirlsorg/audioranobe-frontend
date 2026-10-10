@@ -49,12 +49,33 @@ export function Tip({
   return <div className={styles.tip}>{render(payload[0].payload as never)}</div>;
 }
 
-export function Kpi({ value, label, hint }: { value: string; label: string; hint?: string }) {
+/**
+ * The dashboards fetch twice their window; this splits it into the current
+ * window (last `days`) and the one before it.
+ */
+export function splitSeries(series: StatsDay[], days: number): [StatsDay[], StatsDay[]] {
+  return [series.slice(-days), series.slice(0, Math.max(0, series.length - days))];
+}
+
+/** Change vs the previous window in %, or null when there is nothing to compare with. */
+export function trend(cur: StatsDay[], prev: StatsDay[], key: keyof StatsDay): number | null {
+  const a = sumSeries(cur, key);
+  const b = sumSeries(prev, key);
+  if (b === 0) return null;
+  return Math.round(((a - b) / b) * 100);
+}
+
+export function Kpi({ value, label, hint, change }: { value: string; label: string; hint?: string; change?: number | null }) {
   return (
     <div className={styles.kpi}>
       <span className={styles.kpiValue}>{value}</span>
       <span className={styles.kpiLabel}>{label}</span>
       {hint ? <span className={styles.kpiHint}>{hint}</span> : null}
+      {change != null ? (
+        <span className={change >= 0 ? styles.trendUp : styles.trendDown}>
+          {`${change >= 0 ? '↑' : '↓'} ${Math.abs(change)}% к прошлому периоду`}
+        </span>
+      ) : null}
     </div>
   );
 }
