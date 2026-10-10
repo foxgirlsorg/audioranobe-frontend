@@ -3,9 +3,12 @@
  * /embed?type=narrator&id={id}, /embed?type=collection&id={id}; all take &theme=light.
  * A standalone page (no site chrome) meant for third-party iframes; the UI
  * lives in public/embed/widget.{js,css}. Configured on /dev/widgets.
+ * Umami counts views under the "widget" tag; the embedding page shows up as the referrer.
  */
 const V = Date.now().toString(36);
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api';
+const UMAMI_ID = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+const UMAMI_DOMAINS = process.env.NEXT_PUBLIC_UMAMI_DOMAINS;
 
 const page = (light: boolean) => `<!doctype html>
 <html lang="ru"${light ? ' class="light"' : ''}>
@@ -20,7 +23,8 @@ const page = (light: boolean) => `<!doctype html>
 <div id="app" class="ar"><div class="ar-state">Загрузка…</div></div>
 <script>window.AR_API = ${JSON.stringify(API_BASE)};</script>
 <script src="/embed/widget.js?v=${V}"></script>
-</body>
+${UMAMI_ID ? `<script defer src="/stats/script.js" data-website-id="${UMAMI_ID}" data-host-url="/stats"${UMAMI_DOMAINS ? ` data-domains="${UMAMI_DOMAINS}"` : ''} data-tag="widget"></script>
+` : ''}</body>
 </html>`;
 
 export function GET(req: Request) {

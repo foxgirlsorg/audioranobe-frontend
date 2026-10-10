@@ -335,7 +335,8 @@
   var counted = {};
   var embedHost = '';
   try {
-    embedHost = document.referrer ? new URL(document.referrer).hostname : '';
+    var parent = document.referrer || (location.ancestorOrigins && location.ancestorOrigins[0]) || '';
+    embedHost = parent ? new URL(parent).hostname : '';
   } catch (e) {}
   function countPlay(chapterId) {
     if (counted[chapterId]) return;
@@ -347,6 +348,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chapter_id: chapterId, host: embedHost }),
     }).catch(function () {});
+    if (window.umami) window.umami.track('widget-play', { host: embedHost || 'unknown', chapter: chapterId, title: titleRef });
   }
 
   function foot(href, label) {
