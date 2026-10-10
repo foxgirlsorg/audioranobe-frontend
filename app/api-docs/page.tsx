@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, ChevronRight, Copy, Send } from 'lucide-react';
+import { BookOpen, Braces, Check, ChevronRight, Copy, ExternalLink, FileJson, Send } from 'lucide-react';
 import JsonBlock from '@/components/JsonBlock/JsonBlock';
 import { useResolveAuth } from '@/lib/useResolveAuth';
 import { API_DOCS_GROUPS, type Param } from '@/lib/apiDocsGroups';
@@ -168,55 +168,134 @@ function TryIt({ path, params }: { path: string; params?: Param[] }) {
   );
 }
 
+const epId = (path: string) => `ep${path.replace(/[^a-z0-9]+/gi, '-')}`;
+
+const CURL = `curl "${API_BASE}/titles?sort=rating&per_page=5"`;
+const FETCH = `const res = await fetch('${API_BASE}/titles/random');
+const { slug } = await res.json();
+const title = await fetch(\`${API_BASE}/titles/\${slug}\`).then((r) => r.json());`;
+const PAGE_SHAPE = `{
+  "items": [ /* … */ ],
+  "page": 1,
+  "per_page": 24,
+  "total": 312
+}`;
+
+const BASICS: { title: string; text: string }[] = [
+  { title: 'Формат', text: 'JSON в UTF-8. Только GET, тело запроса не нужно.' },
+  { title: 'Авторизация', text: 'Не нужна: ключей и токенов нет, все эндпоинты публичные.' },
+  { title: 'CORS', text: 'Access-Control-Allow-Origin: * — вызывайте прямо из браузера с любого домена.' },
+  { title: 'Ошибки', text: 'Тело {"error": "текст"} и соответствующий HTTP-статус (400, 404…)' },
+];
+
 export default function ApiDocsPage() {
   useResolveAuth();
   return (
     <div className={styles.wrap}>
-      <span className="eyebrow">{'Для разработчиков'}</span>
-      <h1 className={styles.title}>
-        {'документация'} <span className={styles.titleAccent}>{'API'}</span>
-      </h1>
-
-      <section className={`glass-panel ${styles.panel}`}>
-        <h2 className={styles.panelTitle}>{'Базовый адрес'}</h2>
-        <div className={styles.codeRow}>
-          <code className={styles.code}>{API_BASE}</code>
-          <CopyButton text={API_BASE} />
+      <header className={styles.hero}>
+        <span className="eyebrow">{'Для разработчиков'}</span>
+        <h1 className={styles.title}>
+          {'AudioRanobe'} <span className={styles.titleAccent}>{'API'}</span>
+        </h1>
+        <p className={styles.subtitle}>
+          {'Открытое read-only API каталога: тайтлы, главы с аудио, чтецы, авторы, подборки и комментарии. '}
+          {'Без ключей и регистрации — берите данные для своих приложений, ботов и плееров.'}
+        </p>
+        <div className={styles.heroActions}>
+          <a className={styles.btnPrimary} href="/api-docs/swagger" target="_blank" rel="noopener">
+            <BookOpen size={14} />
+            {'Swagger UI'}
+            <ExternalLink size={12} />
+          </a>
+          <a className={styles.btn} href="/openapi.json" target="_blank" rel="noopener">
+            <FileJson size={14} />
+            {'openapi.json'}
+          </a>
+          <a className={styles.btn} href="/.well-known/api-catalog" target="_blank" rel="noopener">
+            <Braces size={14} />
+            {'api-catalog'}
+          </a>
         </div>
-        <p className={styles.note}>
-          {'Ответы — JSON в UTF-8; ошибки приходят как {"error": "текст"} с соответствующим HTTP-статусом.'}
-        </p>
-        <p className={styles.note}>
-          {'Все эндпоинты ниже — публичные GET: авторизация не нужна, вызвать их можно с любого домена. '}
-          {'Запросы отсюда уходят без авторизации, поэтому поля, зависящие от аккаунта, приходят пустыми.'}
-        </p>
-      </section>
+      </header>
 
-      {API_DOCS_GROUPS.map((group) => (
-        <section key={group.title} className={styles.group}>
-          <h2 className={styles.groupTitle}>{group.title}</h2>
-          <div className={styles.endpoints}>
-            {group.endpoints.map((ep) => (
-              <article key={ep.path} className={`glass-panel ${styles.endpoint}`}>
-                <div className={styles.epHead}>
-                  <span className={styles.method}>{'GET'}</span>
-                  <code className={styles.epPath}>{ep.path}</code>
-                  <CopyButton text={API_BASE + ep.path} />
+      <div className={styles.layout}>
+        <nav className={styles.side} aria-label={'Разделы'}>
+          <a className={styles.sideTop} href="#start">{'Быстрый старт'}</a>
+          <a className={styles.sideTop} href="#basics">{'Основы'}</a>
+          {API_DOCS_GROUPS.map((group, gi) => (
+            <div key={group.title} className={styles.sideGroup}>
+              <a className={styles.sideTop} href={`#g${gi}`}>{group.title}</a>
+              {group.endpoints.map((ep) => (
+                <a key={ep.path} className={styles.sideLink} href={`#${epId(ep.path)}`}>
+                  {ep.path}
+                </a>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <main className={styles.main}>
+          <section id="start" className={`glass-panel ${styles.panel}`}>
+            <h2 className={styles.panelTitle}>{'Базовый адрес'}</h2>
+            <div className={styles.codeRow}>
+              <code className={styles.code}>{API_BASE}</code>
+              <CopyButton text={API_BASE} />
+            </div>
+            <h2 className={styles.panelTitle}>{'curl'}</h2>
+            <JsonBlock code={CURL} />
+            <h2 className={styles.panelTitle}>{'JavaScript'}</h2>
+            <JsonBlock code={FETCH} />
+          </section>
+
+          <section id="basics" className={styles.group}>
+            <h2 className={styles.groupTitle}>{'Основы'}</h2>
+            <div className={styles.basics}>
+              {BASICS.map((b) => (
+                <div key={b.title} className={`glass-panel ${styles.basic}`}>
+                  <h3 className={styles.basicTitle}>{b.title}</h3>
+                  <p className={styles.basicText}>{b.text}</p>
                 </div>
-                <p className={styles.epDesc}>{ep.desc}</p>
-                {ep.note ? <p className={styles.epNote}>{ep.note}</p> : null}
-                <details className={styles.sample}>
-                  <summary className={styles.sampleToggle}>
-                    <ChevronRight size={13} className={styles.sampleChev} />
-                    {'Попробовать'}
-                  </summary>
-                  <TryIt path={ep.path} params={ep.params} />
-                </details>
-              </article>
-            ))}
-          </div>
-        </section>
-      ))}
+              ))}
+            </div>
+            <div className={`glass-panel ${styles.panel} ${styles.panelGap}`}>
+              <h2 className={styles.panelTitle}>{'Пагинация'}</h2>
+              <p className={styles.noteTop}>
+                {'Списки принимают page (с 1) и per_page (по умолчанию 24, максимум 100) и возвращают:'}
+              </p>
+              <JsonBlock code={PAGE_SHAPE} />
+              <p className={styles.note}>
+                {'Кнопка «Попробовать» отправляет запрос без авторизации, поэтому поля, зависящие от аккаунта (my_rating, my_position…), приходят пустыми.'}
+              </p>
+            </div>
+          </section>
+
+          {API_DOCS_GROUPS.map((group, gi) => (
+            <section key={group.title} id={`g${gi}`} className={styles.group}>
+              <h2 className={styles.groupTitle}>{group.title}</h2>
+              <div className={styles.endpoints}>
+                {group.endpoints.map((ep) => (
+                  <article key={ep.path} id={epId(ep.path)} className={`glass-panel ${styles.endpoint}`}>
+                    <div className={styles.epHead}>
+                      <span className={styles.method}>{'GET'}</span>
+                      <code className={styles.epPath}>{ep.path}</code>
+                      <CopyButton text={API_BASE + ep.path} />
+                    </div>
+                    <p className={styles.epDesc}>{ep.desc}</p>
+                    {ep.note ? <p className={styles.epNote}>{ep.note}</p> : null}
+                    <details className={styles.sample}>
+                      <summary className={styles.sampleToggle}>
+                        <ChevronRight size={13} className={styles.sampleChev} />
+                        {'Попробовать'}
+                      </summary>
+                      <TryIt path={ep.path} params={ep.params} />
+                    </details>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+        </main>
+      </div>
     </div>
   );
 }
