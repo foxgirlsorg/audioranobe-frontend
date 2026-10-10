@@ -293,7 +293,7 @@
         .then(function (d) {
           if (seq !== loadSeq) return;
           audio.src = d.audio_url;
-          return audio.play();
+          return audio.play().then(function () { countPlay(c.id); });
         })
         .catch(function () {
           if (seq === loadSeq) now.textContent = 'Не удалось загрузить главу.';
@@ -328,6 +328,25 @@
     });
 
     sync();
+  }
+
+  // One play beacon per chapter per widget load; the host page's domain is
+  // whatever the browser passes as the iframe's referrer (may be empty).
+  var counted = {};
+  var embedHost = '';
+  try {
+    embedHost = document.referrer ? new URL(document.referrer).hostname : '';
+  } catch (e) {}
+  function countPlay(chapterId) {
+    if (counted[chapterId]) return;
+    counted[chapterId] = true;
+    fetch(API + '/embed/plays', {
+      method: 'POST',
+      credentials: 'omit',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chapter_id: chapterId, host: embedHost }),
+    }).catch(function () {});
   }
 
   function foot(href, label) {
