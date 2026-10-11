@@ -1003,11 +1003,6 @@ export default function TitlePageClient({
                                   из основной
                                 </span>
                               ) : null}
-                              {ch.fromVersion ? (
-                                <span className={styles.defaultedPill} title={`В этой озвучке тома нет — играет из «${ch.fromVersion}»`}>
-                                  {`из «${ch.fromVersion}»`}
-                                </span>
-                              ) : null}
                               {(ch.narrators ?? []).length > 0 ? (
                                 <span className={styles.chNarrators} title={'Чтецы главы'}>
                                   <Mic size={11} />
