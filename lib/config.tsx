@@ -8,6 +8,17 @@ export interface AppConfig {
   email_verification: boolean;
   auth_providers: ProviderInfo[];
   captcha: { enabled: boolean; site_key: string; script_url: string; widget_var: string };
+  links: SiteLinks | null;
+}
+
+/** Footer links from the mod panel; an empty string hides that link. */
+export interface SiteLinks {
+  support_email: string;
+  support_bot: string;
+  support_channel: string;
+  org_url: string;
+  fdroid_url: string;
+  apk_url: string;
 }
 
 interface ConfigCtx {
@@ -20,8 +31,8 @@ const ConfigContext = createContext<ConfigCtx | null>(null);
 /**
  * Lazily fetches /config once and shares it. Nothing is requested on a plain
  * page load: the fetch only fires when a component that actually needs config
- * mounts and calls ensure() — the login/signup modal (auth providers) or the
- * unverified-email banner (only for a signed-in user). /config is CDN-cached, so
+ * mounts and calls ensure() — the login/signup modal (auth providers), the
+ * unverified-email banner (only for a signed-in user) or the footer (links). /config is CDN-cached, so
  * the single fetch is shared across every consumer for the rest of the session.
  */
 export function ConfigProvider({ children }: { children: React.ReactNode }): JSX.Element {
@@ -35,6 +46,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }): JSX
       email_verification?: boolean;
       auth_providers?: ProviderInfo[];
       captcha?: { enabled?: boolean; site_key?: string; script_url?: string; widget_var?: string };
+      links?: SiteLinks;
     }>('/config')
       .then((c) =>
         setConfig({
@@ -46,6 +58,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }): JSX
             script_url: c.captcha?.script_url ?? '',
             widget_var: c.captcha?.widget_var ?? '',
           },
+          links: c.links ?? null,
         })
       )
       .catch(() =>
@@ -53,6 +66,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }): JSX
           email_verification: false,
           auth_providers: [],
           captcha: { enabled: false, site_key: '', script_url: '', widget_var: '' },
+          links: null,
         })
       );
   }, []);

@@ -1,4 +1,5 @@
 import {
+  Link2,
   LayoutDashboard,
   Inbox,
   Flag,
@@ -94,6 +95,7 @@ export const GROUPS: Group[] = [
       { href: '/mod/announcements', label: 'Новости', icon: Megaphone, perm: 'announcements.manage' },
       { href: '/mod/banners', label: 'Баннеры', icon: GalleryHorizontal, perm: 'banners.manage' },
       { href: '/mod/donations', label: 'Пожертвования', icon: Heart, perm: 'donations.manage' },
+      { href: '/mod/links', label: 'Ссылки', icon: Link2, perm: 'site.links' },
       { href: '/mod/audit', label: 'Аудит', icon: ScrollText, perm: 'audit.view' },
       { href: '/mod/recap', label: 'Итоги', icon: Sparkles, perm: 'recap.manage' },
       { href: '/mod/narration', label: 'Озвучка', icon: BookHeadphones, perm: 'narration.manage' },
