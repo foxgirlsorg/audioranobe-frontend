@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers';
 import { API_URL } from '@/lib/api';
+import { viewerHeaders } from '@/lib/ssr';
 import { plainSummary } from '@/lib/format';
 import type { TitleFull } from '@/lib/types';
 import TitlePageClient from './TitlePageClient';
@@ -9,7 +9,7 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://audioranobe.com')
 async function fetchTitleForViewer(slug: string): Promise<TitleFull | null> {
   try {
     const res = await fetch(`${API_URL}/titles/${encodeURIComponent(slug)}`, {
-      headers: { cookie: cookies().toString() },
+      headers: viewerHeaders(),
       cache: 'no-store',
     });
     if (!res.ok) return null;

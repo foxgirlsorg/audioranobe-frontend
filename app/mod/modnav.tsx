@@ -12,6 +12,7 @@ import { useModCollapse } from './modSidebarCollapse';
 import { GROUPS, type CountKey } from './navGroups';
 import Spinner from '@/components/Spinner/Spinner';
 import styles from './modnav.module.css';
+import { lockScroll } from '@/lib/scrollLock';
 
 export function splitHeading(heading: string): { title: string; accent?: string } {
   const i = heading.indexOf(' ');
@@ -131,11 +132,10 @@ export function ModNav() {
       if (e.key === 'Escape') setOpen(false);
     };
     document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockScroll();
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
+      unlock();
     };
   }, [open, setOpen]);
 

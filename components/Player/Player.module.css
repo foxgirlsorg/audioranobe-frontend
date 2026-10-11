@@ -690,6 +690,7 @@
   }
 
   .barFull .inner {
+    width: 100%;
     padding: 0 20px;
   }
 
@@ -827,8 +828,6 @@
   .fullControls {
     justify-content: space-between;
     width: 100%;
-    max-width: 380px;
-    margin: 0 auto;
   }
 
   .fullControls .ctrlBtn {
