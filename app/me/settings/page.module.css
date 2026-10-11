@@ -406,3 +406,38 @@
   flex-direction: column;
   gap: 0.55rem;
 }
+
+.blockedList {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.blockedRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.blockedName {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--text);
+  font-size: 13.5px;
+  text-decoration: none;
+}
+
+.blockedName:hover {
+  color: var(--accent);
+}
+
+.blockedHandle {
+  color: var(--text-muted);
+  font-size: 12px;
+}

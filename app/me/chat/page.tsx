@@ -327,7 +327,7 @@ function ChatInner() {
             const updated = prev.messages.map((m) => freshMap.get(m.id) ?? m);
             const merged = brandNew.length ? [...updated, ...brandNew] : updated;
             // Refresh the header's presence (online/last-seen) each tick.
-            return { ...prev, user: t.user, messages: merged, their_last_read_id: t.their_last_read_id, can_send: t.can_send };
+            return { ...prev, user: t.user, messages: merged, their_last_read_id: t.their_last_read_id, can_send: t.can_send, block_reason: t.block_reason };
           });
           if (brandNew.length) loadList();
         })

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
   Calendar,
+  Check,
+  CheckCheck,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -58,20 +60,28 @@ import ArchiveDownloadButton, { type ArchiveItem } from '@/components/ArchiveDow
 import AiBadge from '@/components/AiBadge/AiBadge';
 import VerifiedBadge from '@/components/VerifiedBadge/VerifiedBadge';
 import Modal from '@/components/Modal/Modal';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { SUPPORT_URL } from '@/lib/support';
 import styles from './page.module.css';
 
 const DESC_CLAMP_CHARS = 420;
 
 // A chapter as shown for the selected version: `defaulted` marks a slot the alt
-// version doesn't supply, played from the main version instead; `fromVersion`
-// names another version whose standalone volume fills a volume this one lacks.
-type VersionChapter = ChapterRow & { defaulted?: boolean; fromVersion?: string };
-type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[] };
+// version doesn't supply, played from the main version instead.
+type VersionChapter = ChapterRow & { defaulted?: boolean };
+type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[]; from?: string };
 
 // Soft-deleted chapters are gone as far as counts and totals are concerned.
 function liveChapters(v: Pick<Volume, 'chapters'>): ChapterRow[] {
   return v.chapters.filter((c) => !c.is_deleted);
+}
+
+function isListened(c: ChapterRow): boolean {
+  return c.duration_seconds > 0 && (c.my_position ?? 0) >= c.duration_seconds - 5;
+}
+
+function markable(v: Pick<Volume, 'chapters'>): ChapterRow[] {
+  return liveChapters(v).filter((c) => c.audio_status === 'ready' && c.duration_seconds > 0);
 }
 
 function volumeDuration(v: Volume): number {
@@ -208,6 +218,7 @@ export default function TitlePageClient({
   const tagsRef = useRef<HTMLParagraphElement | null>(null);
   const canEdit = title?.can_edit ?? false;
   const [reNarrating, setReNarrating] = useState<number | null>(null);
+  const [confirmUnlisten, setConfirmUnlisten] = useState<{ chapters: ChapterRow[]; what: string } | null>(null);
   const skipInitialFetch = useRef(initialTitle !== null);
 
   // Chosen narration version (0 = main). Seeded from the saved selection, then
@@ -239,21 +250,20 @@ export default function TitlePageClient({
     return title.volumes.map((v) => {
       const own = takeover(v.id, v.chapters.length > 0);
       if (own !== 0) {
-        const fromVersion = own === selectedVersion ? undefined : title.versions.find((x) => x.id === own)?.name;
-        return { ...v, chapters: ownChapters(own, v.id).map((c) => ({ ...c, fromVersion })) };
+        const from = own === selectedVersion ? undefined : `из «${title.versions.find((x) => x.id === own)?.name ?? ''}»`;
+        return { ...v, chapters: ownChapters(own, v.id), from };
       }
       if (selectedVersion === 0) return v;
-      return {
-        ...v,
-        chapters: v.chapters.map((c) => {
+      const chapters: VersionChapter[] = v.chapters.map((c) => {
           const a = altByKey.get(`${v.id}:${c.number}`);
           if (a && a.audio_status === 'ready') {
             // Keep the shared name/number from main; play the alt's audio.
             return { ...a, name: c.name, number: c.number, number_end: c.number_end };
           }
           return { ...c, defaulted: true };
-        }),
-      };
+        });
+      const from = chapters.length > 0 && chapters.every((c) => c.defaulted) ? 'из основной' : undefined;
+      return { ...v, chapters, from };
     });
   }, [title, selectedVersion]);
 
@@ -372,6 +382,35 @@ export default function TitlePageClient({
     document.body.appendChild(a);
     a.click();
     a.remove();
+  }
+
+  function toggleListened(chapters: ChapterRow[], what: string) {
+    if (chapters.every(isListened)) setConfirmUnlisten({ chapters, what });
+    else void setListened(chapters, true);
+  }
+
+  async function setListened(chapters: ChapterRow[], listened: boolean) {
+    const ids = new Set(chapters.map((c) => c.id));
+    if (ids.size === 0) return;
+    try {
+      await api('/me/progress/listened', { method: 'POST', body: { chapter_ids: [...ids], listened } });
+    } catch (e) {
+      toast(errMsg(e), 'error');
+      return;
+    }
+    const patch = (c: ChapterRow): ChapterRow =>
+      ids.has(c.id) ? { ...c, my_position: listened ? c.duration_seconds : null } : c;
+    setTitle((prev) =>
+      prev
+        ? {
+            ...prev,
+            volumes: prev.volumes.map((v) => ({ ...v, chapters: v.chapters.map(patch) })),
+            alt_chapters: Object.fromEntries(
+              Object.entries(prev.alt_chapters ?? {}).map(([k, cs]) => [k, cs.map(patch)])
+            ),
+          }
+        : prev
+    );
   }
 
   async function reNarrate(ch: ChapterRow) {
@@ -517,7 +556,7 @@ export default function TitlePageClient({
       {title.cover_url && restricted ? (
         <div className={styles.coverLocked}>
           <img
-            src={title.cover_url}
+            src={title.cover_thumb_url ?? title.cover_url}
             alt=""
             aria-hidden="true"
             className={`${styles.cover} ${styles.coverBlurred}`}
@@ -527,7 +566,7 @@ export default function TitlePageClient({
         <>
           <PhotoView src={title.cover_url}>
             <button type="button" className={styles.coverBtn} aria-label="Увеличить обложку">
-              <img src={title.cover_url} alt={`Обложка «${title.name}»`} className={styles.cover} />
+              <img src={title.cover_thumb_url ?? title.cover_url} alt={`Обложка «${title.name}»`} className={styles.cover} />
             </button>
           </PhotoView>
           {title.volumes
@@ -833,7 +872,7 @@ export default function TitlePageClient({
           const open = !!openVols[v.id];
           const total = volumeDuration(v);
           return (
-            <div key={v.id} className={`glass-panel ${styles.volume}`}>
+            <div key={v.id} className={`glass-panel ${styles.volume}${v.from ? ` ${styles.volumeBackfilled}` : ''}`}>
 
               <div className={styles.volHeadRow}>
                 <button
@@ -845,6 +884,11 @@ export default function TitlePageClient({
                   <span className={styles.volTitle}>
                     <span className={styles.volLabel}>{`${title.volume_label} ${v.number}`}</span>
                     {v.name ? <span className={styles.volName}>{v.name}</span> : null}
+                    {v.from ? (
+                      <span className={styles.defaultedPill} title="В выбранной версии этого тома нет — играет из другой версии">
+                        {v.from}
+                      </span>
+                    ) : null}
                   </span>
                   <span className={styles.volMeta}>
                     <span className={styles.volMetaItem}>
@@ -859,6 +903,26 @@ export default function TitlePageClient({
                     ) : null}
                   </span>
                 </button>
+                {user && markable(v).length > 0 ? (
+                  <button
+                    type="button"
+                    className={
+                      markable(v).every(isListened)
+                        ? `${styles.volDownload} ${styles.listenedOn}`
+                        : styles.volDownload
+                    }
+                    onClick={() => toggleListened(markable(v), `тома ${v.number}`)}
+                    title={markable(v).every(isListened) ? 'Снять отметку «прослушано» с тома' : 'Отметить том прослушанным'}
+                    aria-label={
+                      markable(v).every(isListened)
+                        ? `Снять отметку «прослушано» с тома ${v.number}`
+                        : `Отметить том ${v.number} прослушанным`
+                    }
+                    aria-pressed={markable(v).every(isListened)}
+                  >
+                    <CheckCheck size={15} />
+                  </button>
+                ) : null}
                 {user ? (
                   <ArchiveDownloadButton
                     items={archiveItems([v], false)}
@@ -934,7 +998,7 @@ export default function TitlePageClient({
                               {chapterLabel(ch.number, ch.number_end, ch.name)}
                             </Link>
                             <span className={styles.rowRight}>
-                              {ch.defaulted && selectedVersion !== 0 ? (
+                              {ch.defaulted && selectedVersion !== 0 && !v.from ? (
                                 <span className={styles.defaultedPill} title="В выбранной версии этой главы нет — играет из основной">
                                   из основной
                                 </span>
@@ -972,6 +1036,22 @@ export default function TitlePageClient({
                                 <span className={styles.chDur}>
                                   {formatDuration(ch.duration_seconds)}
                                 </span>
+                              ) : null}
+                              {playable && user && ch.duration_seconds > 0 ? (
+                                <button
+                                  type="button"
+                                  className={isListened(ch) ? `${styles.dlBtn} ${styles.listenedOn}` : styles.dlBtn}
+                                  onClick={() => toggleListened([ch], `главы ${chapterNumberLabel(ch.number, ch.number_end)}`)}
+                                  title={isListened(ch) ? 'Снять отметку «прослушано»' : 'Отметить прослушанной'}
+                                  aria-label={
+                                    isListened(ch)
+                                      ? `Снять отметку «прослушано» с главы ${ch.number}`
+                                      : `Отметить главу ${ch.number} прослушанной`
+                                  }
+                                  aria-pressed={isListened(ch)}
+                                >
+                                  <Check size={14} />
+                                </button>
                               ) : null}
                               {playable && user ? (
                                 <button
@@ -1100,12 +1180,23 @@ export default function TitlePageClient({
   );
 
   const detailsModal = (
+    <>
+    <ConfirmDialog
+      open={confirmUnlisten !== null}
+      onClose={() => setConfirmUnlisten(null)}
+      onConfirm={() => {
+        if (confirmUnlisten) void setListened(confirmUnlisten.chapters, false);
+      }}
+      title={'Снять отметку «прослушано»?'}
+      body={`Прогресс ${confirmUnlisten?.what ?? ''} будет сброшен.`}
+    />
     <Modal open={detailsOpen} onClose={() => setDetailsOpen(false)} title={'Детали'}>
       <div className={styles.factsModal}>
         {factRows}
         {narratorsBlock(true)}
       </div>
     </Modal>
+    </>
   );
 
   const infoContent = (

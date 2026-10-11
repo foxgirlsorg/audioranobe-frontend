@@ -19,6 +19,7 @@ import {
   X,
   ShieldBan,
   Pencil,
+  Ban,
 } from 'lucide-react';
 import { api, ApiError } from '@/lib/api';
 import {
@@ -36,6 +37,7 @@ import {
 } from '@/lib/types';
 import { chapterLabel, formatCount, formatDate, initialsOf, ruPlural, timeAgo } from '@/lib/format';
 import PresenceDot from '@/components/PresenceDot/PresenceDot';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import PresenceLabel from '@/components/PresenceLabel/PresenceLabel';
 import { useAuth } from '@/lib/auth';
 import { useToast, errMsg } from '@/lib/toast';
@@ -416,6 +418,23 @@ export default function UserPageClient({
     );
   };
 
+  const [blockBusy, setBlockBusy] = useState(false);
+  const [confirmBlock, setConfirmBlock] = useState(false);
+  const toggleBlock = async () => {
+    if (!profile || blockBusy) return;
+    const blocking = !profile.is_blocked;
+    setBlockBusy(true);
+    try {
+      await api(`/users/${profile.user.id}/block`, { method: blocking ? 'POST' : 'DELETE' });
+      setProfile(await api<UserProfile>(`/users/${encodeURIComponent(userRef)}`));
+      toast(blocking ? 'Пользователь заблокирован — вы больше не сможете переписываться' : 'Пользователь разблокирован', 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    } finally {
+      setBlockBusy(false);
+    }
+  };
+
   const runFriend = async (
     method: 'POST' | 'DELETE',
     path: string,
@@ -565,6 +584,29 @@ export default function UserPageClient({
                   <span className={styles.friendLabelUnfriend}>Удалить из друзей</span>
                 </button>
               ) : null}
+              {profile.can_block || profile.is_blocked ? (
+                <button
+                  type="button"
+                  className={`${styles.actBtn} ${styles.actGhost} ${styles.actIcon}`}
+                  disabled={blockBusy}
+                  aria-label={profile.is_blocked ? 'Разблокировать' : 'Заблокировать'}
+                  title={profile.is_blocked ? 'Разблокировать' : 'Заблокировать: вы не сможете переписываться'}
+                  onClick={() => (profile.is_blocked ? void toggleBlock() : setConfirmBlock(true))}
+                >
+                  <Ban size={16} className={profile.is_blocked ? styles.blockedIcon : undefined} />
+                </button>
+              ) : null}
+              <ConfirmDialog
+                open={confirmBlock}
+                onClose={() => setConfirmBlock(false)}
+                onConfirm={() => {
+                  setConfirmBlock(false);
+                  void toggleBlock();
+                }}
+                title={`Заблокировать @${user.username}?`}
+                body="Вы не сможете переписываться друг с другом в личных сообщениях. Разблокировать можно в любой момент — здесь или в настройках."
+                danger
+              />
             </div>
           ) : null}
         </div>

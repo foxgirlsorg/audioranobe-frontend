@@ -24,6 +24,10 @@
   flex-direction: column;
 }
 
+.pageWide {
+  max-width: 1120px;
+}
+
 .heading {
   font-size: clamp(1.3rem, 3vw, 1.8rem);
   font-weight: 300;

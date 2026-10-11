@@ -6,11 +6,11 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ImagePlus, Mic } from 'lucide-react';
 import { api } from '@/lib/api';
-import { ruPlural } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
 import { useToast, errMsg } from '@/lib/toast';
-import type { NarratorFull, NarratorStats, UserBrief, UserSearchHit } from '@/lib/types';
+import { useMyNarrators } from '@/lib/narrators';
+import type { NarratorFull, UserBrief, UserSearchHit } from '@/lib/types';
 import Spinner from '@/components/Spinner/Spinner';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import SocialsEditor from '@/components/SocialsEditor/SocialsEditor';
@@ -21,6 +21,7 @@ import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import Toggle from '@/components/Toggle/Toggle';
 import UserPicker from '@/components/UserPicker/UserPicker';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
+import NarratorStatsView from '@/components/NarratorStatsView/NarratorStatsView';
 import styles from './page.module.css';
 
 // Lazily loaded: react-easy-crop only needs to load once the user actually
@@ -67,8 +68,6 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
   const [members, setMembers] = useState<MemberRow[] | null>(null);
   const [membersError, setMembersError] = useState('');
 
-  const [stats, setStats] = useState<NarratorStats | null>(null);
-  const [statsError, setStatsError] = useState('');
 
   const [transferTo, setTransferTo] = useState<UserSearchHit | null>(null);
   const [confirmTransfer, setConfirmTransfer] = useState(false);
@@ -136,22 +135,10 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     }
   }, [narrator]);
 
-  const loadStats = useCallback(async () => {
-    if (!narrator) return;
-    try {
-      setStatsError('');
-      const data = await api<NarratorStats>(`/panel/narrators/${narrator.id}/stats`);
-      setStats(data);
-    } catch (e) {
-      setStatsError(errMsg(e));
-    }
-  }, [narrator]);
-
   useEffect(() => {
     if (!canEdit) return;
     if (tab === 'info') void loadMembers();
-    if (tab === 'stats') void loadStats();
-  }, [tab, canEdit, loadMembers, loadStats]);
+  }, [tab, canEdit, loadMembers]);
 
   async function handleSaveInfo(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -205,6 +192,8 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
     }
   }
 
+  const { refresh: refreshMyNarrators } = useMyNarrators();
+
   async function handleTransfer() {
     if (!narrator || !transferTo) return;
     setTransferring(true);
@@ -214,6 +203,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         body: { user_id: transferTo.id },
       });
       if (res.applied) {
+        refreshMyNarrators();
         toast(`Права на чтеца переданы @${transferTo.username}`);
         // The previous owner has no edit access any more (staff keep theirs,
         // but the public page is the useful place to land either way).
@@ -281,7 +271,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
   }
 
   return (
-    <div className={styles.page}>
+    <div className={tab === 'stats' ? `${styles.page} ${styles.pageWide}` : styles.page}>
       <Link href={`/narrator/${routeSlug}`} className="back-link">
         <ArrowLeft size={14} />
         К чтецу
@@ -496,48 +486,7 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
         </div>
       )}
 
-      {tab === 'stats' && (
-        <div className={`glass-panel ${styles.formPanel}`}>
-          {statsError ? (
-            <div className={styles.formError}>{statsError}</div>
-          ) : !stats ? (
-            <Spinner />
-          ) : (
-            <>
-              <div className={styles.statsGrid}>
-                <div className={styles.statCard}>
-                  <span className={styles.statValue}>{stats.subscribers_count}</span>
-                  <span className={styles.statLabel}>Подписчиков</span>
-                </div>
-                <div className={styles.statCard}>
-                  <span className={styles.statValue}>{stats.totals.listens}</span>
-                  <span className={styles.statLabel}>Прослушиваний</span>
-                </div>
-                <div className={styles.statCard}>
-                  <span className={styles.statValue}>{stats.titles.length}</span>
-                  <span className={styles.statLabel}>Тайтлов</span>
-                </div>
-              </div>
-
-              {stats.titles.length > 0 && (
-                <ul className={styles.statsTitles}>
-                  {stats.titles.map((t) => (
-                    <li key={t.id} className={styles.statsTitleRow}>
-                      <Link href={`/title/${t.slug}`} className={styles.statsTitleLink}>
-                        {t.name}
-                      </Link>
-                      <span className={styles.statsTitleMeta}>
-                        {t.listens.toLocaleString()} {ruPlural(t.listens, ['прослушивание', 'прослушивания', 'прослушиваний'])}
-                        {t.avg_rating != null ? ` · ${t.avg_rating.toFixed(1)}★` : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      {tab === 'stats' && <NarratorStatsView narratorId={narrator.id} />}
 
       {tab === 'transfer' && isOwner && (
         <div className={`glass-panel ${styles.formPanel}`}>
@@ -598,7 +547,10 @@ export default function NarratorEditPage({ params }: { params: { slug: string } 
           name={narrator.name}
           isDeleted={narrator.is_deleted}
           redirectTo="/catalog"
-          onChanged={loadNarrator}
+          onChanged={() => {
+            refreshMyNarrators();
+            void loadNarrator();
+          }}
         />
       ) : null}
 

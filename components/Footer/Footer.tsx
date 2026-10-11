@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import { Mail } from 'lucide-react';
+import { Download, Mail, Smartphone } from 'lucide-react';
 import { TelegramIcon } from '@/components/SocialLinks/brands';
 import { SUPPORT_EMAIL, SUPPORT_BOT, SUPPORT_CHANNEL } from '@/lib/support';
+import { useEnsureConfig, type SiteLinks } from '@/lib/config';
 import { APP_VERSION, APP_VERSION_NAME } from '@/lib/version';
 import { fetchDonateConfig, type DonateGoal } from '@/lib/donate';
 import GoalBar from '@/components/GoalBar/GoalBar';
@@ -15,7 +16,7 @@ const NAV = [
   { href: '/collections', label: 'Коллекции' },
   { href: '/news', label: 'Новости' },
   { href: '/donate', label: 'Поддержать' },
-  { href: '/api-docs', label: 'API' },
+  { href: '/dev', label: 'Для разработчиков' },
 ];
 
 const LEGAL = [
@@ -25,8 +26,27 @@ const LEGAL = [
   { href: '/dmca', label: 'DMCA' },
 ];
 
+const DEFAULT_LINKS: SiteLinks = {
+  support_email: SUPPORT_EMAIL,
+  support_bot: SUPPORT_BOT,
+  support_channel: SUPPORT_CHANNEL,
+  org_url: 'https://foxgirls.org',
+  fdroid_url: '',
+  apk_url: '',
+};
+
+function orgLabel(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
 export default function Footer() {
   const year = new Date().getFullYear();
+  const links = useEnsureConfig()?.links ?? DEFAULT_LINKS;
+  const hasApp = !!(links.fdroid_url || links.apk_url);
   const [goal, setGoal] = useState<DonateGoal | null>(null);
 
   useEffect(() => {
@@ -59,6 +79,28 @@ export default function Footer() {
               <GoalBar goal={goal} compact />
             </div>
           ) : null}
+          {hasApp ? (
+            <div className={styles.apps}>
+              {links.fdroid_url ? (
+                <a href={links.fdroid_url} target="_blank" rel="noopener noreferrer" className={styles.appCard}>
+                  <Smartphone size={20} className={styles.appIcon} />
+                  <span className={styles.appText}>
+                    <span className={styles.appHint}>{'Скачать в'}</span>
+                    <span className={styles.appName}>{'F-Droid'}</span>
+                  </span>
+                </a>
+              ) : null}
+              {links.apk_url ? (
+                <a href={links.apk_url} download className={styles.appCard}>
+                  <Download size={20} className={styles.appIcon} />
+                  <span className={styles.appText}>
+                    <span className={styles.appHint}>{'Скачать'}</span>
+                    <span className={styles.appName}>{'APK'}</span>
+                  </span>
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.cols}>
@@ -80,31 +122,29 @@ export default function Footer() {
             ))}
           </nav>
 
-          <div className={styles.col}>
-            <span className={styles.colTitle}>{'Связь'}</span>
-            <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.contact}>
-              <Mail size={14} />
-              {SUPPORT_EMAIL}
-            </a>
-            <a
-              href={SUPPORT_BOT}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.contact}
-            >
-              <TelegramIcon size={14} />
-              {'Поддержка'}
-            </a>
-            <a
-              href={SUPPORT_CHANNEL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.contact}
-            >
-              <TelegramIcon size={14} />
-              {'Канал'}
-            </a>
-          </div>
+          {links.support_email || links.support_bot || links.support_channel ? (
+            <div className={styles.col}>
+              <span className={styles.colTitle}>{'Связь'}</span>
+              {links.support_email ? (
+                <a href={`mailto:${links.support_email}`} className={styles.contact}>
+                  <Mail size={14} />
+                  {links.support_email}
+                </a>
+              ) : null}
+              {links.support_bot ? (
+                <a href={links.support_bot} target="_blank" rel="noopener noreferrer" className={styles.contact}>
+                  <TelegramIcon size={14} />
+                  {'Поддержка'}
+                </a>
+              ) : null}
+              {links.support_channel ? (
+                <a href={links.support_channel} target="_blank" rel="noopener noreferrer" className={styles.contact}>
+                  <TelegramIcon size={14} />
+                  {'Канал'}
+                </a>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -113,14 +153,11 @@ export default function Footer() {
           <span className={styles.copy}>{`© ${year} AudioRanobe`}</span>
           <span className={styles.version}>{`v${APP_VERSION} «${APP_VERSION_NAME}»`}</span>
         </span>
-        <a
-          href="https://foxgirls.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.copyLink}
-        >
-          foxgirls.org
-        </a>
+        {links.org_url ? (
+          <a href={links.org_url} target="_blank" rel="noopener noreferrer" className={styles.copyLink}>
+            {orgLabel(links.org_url)}
+          </a>
+        ) : null}
       </div>
     </footer>
   );

@@ -786,6 +786,21 @@ a.factV:hover {
   overflow: hidden;
 }
 
+.volumeBackfilled {
+  opacity: 0.6;
+  filter: grayscale(0.6);
+  transition: opacity 0.2s ease;
+}
+
+.volTitle .defaultedPill {
+  align-self: center;
+}
+
+.volumeBackfilled:hover,
+.volumeBackfilled:focus-within {
+  opacity: 0.9;
+}
+
 /* Toggle + archive icon + chevron on one line; the row owns the hover tint. */
 .volHeadRow {
   display: flex;
@@ -1737,4 +1752,9 @@ a.factV:hover {
   to {
     transform: rotate(360deg);
   }
+}
+
+.listenedOn,
+.listenedOn:hover {
+  color: var(--accent);
 }

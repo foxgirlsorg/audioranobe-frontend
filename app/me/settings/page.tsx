@@ -22,6 +22,7 @@ import { api } from '@/lib/api';
 import { LIMITS } from '@/lib/limits';
 import type {
   AuthProvider,
+  BlockedUser,
   ContentPrefs,
   Genre,
   Identity,
@@ -471,6 +472,24 @@ export default function SettingsPage() {
       toast(errMsg(e), 'error');
     } finally {
       setPrefBusy(null);
+    }
+  }
+
+  const [blocked, setBlocked] = useState<BlockedUser[] | null>(null);
+  useEffect(() => {
+    if (scoped) return;
+    api<{ items: BlockedUser[] }>('/me/blocks')
+      .then((r) => setBlocked(r.items))
+      .catch(() => setBlocked([]));
+  }, [scoped]);
+
+  async function unblock(b: BlockedUser) {
+    try {
+      await api(`/users/${b.user.id}/block`, { method: 'DELETE' });
+      setBlocked((prev) => (prev ?? []).filter((x) => x.user.id !== b.user.id));
+      toast(`@${b.user.username} разблокирован`, 'ok');
+    } catch (e) {
+      toast(errMsg(e), 'error');
     }
   }
 
@@ -1170,6 +1189,35 @@ export default function SettingsPage() {
               <span className={styles.knob} />
             </button>
           </div>
+          {!scoped ? (
+            <div className={styles.prefRow}>
+              <div className={styles.prefText}>
+                <span className={styles.prefLabel}>{'Заблокированные пользователи'}</span>
+                <span className={styles.prefHint}>
+                  {blocked === null
+                    ? 'Загрузка…'
+                    : blocked.length === 0
+                      ? 'Вы никого не блокировали. Заблокировать можно на странице пользователя.'
+                      : 'С ними нельзя переписываться ни вам, ни им.'}
+                </span>
+                {blocked && blocked.length > 0 ? (
+                  <ul className={styles.blockedList}>
+                    {blocked.map((b) => (
+                      <li key={b.user.id} className={styles.blockedRow}>
+                        <Link href={`/user/${b.user.username}`} className={styles.blockedName}>
+                          {b.user.display_name || b.user.username}
+                          <span className={styles.blockedHandle}>{`@${b.user.username}`}</span>
+                        </Link>
+                        <button type="button" className="btn btn-ghost" onClick={() => void unblock(b)}>
+                          {'Разблокировать'}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
 
