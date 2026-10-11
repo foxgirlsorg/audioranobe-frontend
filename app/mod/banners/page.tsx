@@ -85,7 +85,7 @@ function BannersInner() {
     }
   };
 
-  const patch = async (b: Banner, body: Partial<Pick<Banner, 'url' | 'is_enabled' | 'is_public' | 'placement'>>) => {
+  const patch = async (b: Banner, body: Partial<Pick<Banner, 'url' | 'is_enabled' | 'is_public' | 'placement' | 'group'>>) => {
     try {
       const next = await api<Banner>(`/mod/banners/${b.id}`, { method: 'PATCH', body });
       setItems((xs) => xs.map((x) => (x.id === b.id ? next : x)));
@@ -146,8 +146,15 @@ function BannersInner() {
   return (
     <div className={styles.wrap}>
       <p className={styles.lead}>
-        Карусель на главной под блоком «Новые тайтлы». Формат 3:1, {BANNER_WIDTH}×{BANNER_HEIGHT}.
+        Карусель на главной под блоком «Новые тайтлы». Формат 3:1, {BANNER_WIDTH}×{BANNER_HEIGHT}. Баннеры
+        с одинаковой группой занимают одно место в карусели, и каждому посетителю показывается случайный из
+        них.
       </p>
+      <datalist id="banner-groups">
+        {[...new Set(items.map((b) => b.group).filter(Boolean))].map((g) => (
+          <option key={g} value={g} />
+        ))}
+      </datalist>
 
       {items.length === 0 ? null : (
         <div className={styles.rows}>
@@ -176,8 +183,23 @@ function BannersInner() {
                   if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                 }}
               />
+              <input
+                className={`input ${styles.group}`}
+                defaultValue={b.group ?? ''}
+                placeholder="группа"
+                list="banner-groups"
+                maxLength={40}
+                aria-label="Группа"
+                onBlur={(e) => {
+                  if (e.target.value.trim() !== (b.group ?? '')) void patch(b, { group: e.target.value.trim() });
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                }}
+              />
               <Select
                 size="sm"
+                className={styles.placement}
                 value={b.placement ?? 'both'}
                 options={PLACEMENTS}
                 onChange={(v) => void patch(b, { placement: v as Banner['placement'] })}

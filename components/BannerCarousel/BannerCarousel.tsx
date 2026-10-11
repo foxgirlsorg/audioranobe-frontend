@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -10,8 +10,23 @@ import styles from './BannerCarousel.module.css';
 
 const INTERVAL_MS = 10000;
 
+/** Banners sharing a group fill one slot (the first member's) with a random member. */
+function pickGroups(list: Banner[]): Banner[] {
+  const groups = new Map<string, Banner[]>();
+  for (const b of list) if (b.group) groups.set(b.group, [...(groups.get(b.group) ?? []), b]);
+  const done = new Set<string>();
+  return list.flatMap((b) => {
+    if (!b.group) return [b];
+    if (done.has(b.group)) return [];
+    done.add(b.group);
+    const members = groups.get(b.group)!;
+    return [members[Math.floor(Math.random() * members.length)]];
+  });
+}
+
 export default function BannerCarousel({ initialBanners }: { initialBanners?: Banner[] } = {}) {
-  const [banners, setBanners] = useState<Banner[]>(initialBanners ?? []);
+  const [all, setBanners] = useState<Banner[]>(initialBanners ?? []);
+  const banners = useMemo(() => pickGroups(all), [all]);
   const [selected, setSelected] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 25 }, [
     Autoplay({ delay: INTERVAL_MS, stopOnInteraction: false, stopOnMouseEnter: true }),

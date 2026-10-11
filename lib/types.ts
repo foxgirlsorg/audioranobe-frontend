@@ -977,6 +977,7 @@ export interface Banner {
   is_enabled?: boolean;
   is_public?: boolean;
   placement?: 'both' | 'site' | 'app';
+  group?: string;
   sort_order?: number;
 }
 
