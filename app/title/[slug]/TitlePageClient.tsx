@@ -66,7 +66,7 @@ const DESC_CLAMP_CHARS = 420;
 // A chapter as shown for the selected version: `defaulted` marks a slot the alt
 // version doesn't supply, played from the main version instead.
 type VersionChapter = ChapterRow & { defaulted?: boolean };
-type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[] };
+type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[]; from?: string };
 
 // Soft-deleted chapters are gone as far as counts and totals are concerned.
 function liveChapters(v: Pick<Volume, 'chapters'>): ChapterRow[] {
@@ -237,19 +237,21 @@ export default function TitlePageClient({
     for (const c of alt) altByKey.set(`${c.volume_id}:${c.number}`, c);
     return title.volumes.map((v) => {
       const own = takeover(v.id, v.chapters.length > 0);
-      if (own !== 0) return { ...v, chapters: ownChapters(own, v.id) };
+      if (own !== 0) {
+        const from = own === selectedVersion ? undefined : `из «${title.versions.find((x) => x.id === own)?.name ?? ''}»`;
+        return { ...v, chapters: ownChapters(own, v.id), from };
+      }
       if (selectedVersion === 0) return v;
-      return {
-        ...v,
-        chapters: v.chapters.map((c) => {
+      const chapters: VersionChapter[] = v.chapters.map((c) => {
           const a = altByKey.get(`${v.id}:${c.number}`);
           if (a && a.audio_status === 'ready') {
             // Keep the shared name/number from main; play the alt's audio.
             return { ...a, name: c.name, number: c.number, number_end: c.number_end };
           }
           return { ...c, defaulted: true };
-        }),
-      };
+        });
+      const from = chapters.length > 0 && chapters.every((c) => c.defaulted) ? 'из основной' : undefined;
+      return { ...v, chapters, from };
     });
   }, [title, selectedVersion]);
 
@@ -829,7 +831,7 @@ export default function TitlePageClient({
           const open = !!openVols[v.id];
           const total = volumeDuration(v);
           return (
-            <div key={v.id} className={`glass-panel ${styles.volume}`}>
+            <div key={v.id} className={`glass-panel ${styles.volume}${v.from ? ` ${styles.volumeBackfilled}` : ''}`}>
 
               <div className={styles.volHeadRow}>
                 <button
@@ -841,6 +843,11 @@ export default function TitlePageClient({
                   <span className={styles.volTitle}>
                     <span className={styles.volLabel}>{`${title.volume_label} ${v.number}`}</span>
                     {v.name ? <span className={styles.volName}>{v.name}</span> : null}
+                    {v.from ? (
+                      <span className={styles.defaultedPill} title="В выбранной версии этого тома нет — играет из другой версии">
+                        {v.from}
+                      </span>
+                    ) : null}
                   </span>
                   <span className={styles.volMeta}>
                     <span className={styles.volMetaItem}>
@@ -930,7 +937,7 @@ export default function TitlePageClient({
                               {chapterLabel(ch.number, ch.number_end, ch.name)}
                             </Link>
                             <span className={styles.rowRight}>
-                              {ch.defaulted && selectedVersion !== 0 ? (
+                              {ch.defaulted && selectedVersion !== 0 && !v.from ? (
                                 <span className={styles.defaultedPill} title="В выбранной версии этой главы нет — играет из основной">
                                   из основной
                                 </span>
