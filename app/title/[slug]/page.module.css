@@ -1753,3 +1753,8 @@ a.factV:hover {
     transform: rotate(360deg);
   }
 }
+
+.listenedOn,
+.listenedOn:hover {
+  color: var(--accent);
+}
