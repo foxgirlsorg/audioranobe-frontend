@@ -1011,6 +1011,15 @@ a.factV:hover {
   color: var(--accent-hover);
 }
 
+.chNamePlay {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .rowRight {
   display: flex;
   align-items: center;

@@ -95,6 +95,12 @@
 }
 
 .chapterLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
   color: var(--text-secondary);
   font-size: 13px;
   overflow: hidden;

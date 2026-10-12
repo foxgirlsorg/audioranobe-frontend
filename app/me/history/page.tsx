@@ -131,10 +131,14 @@ export default function MyHistoryPage() {
                     <Link href={`/title/${h.title.slug}`} className={styles.titleLink}>
                       {h.title.name}
                     </Link>
-                    <Link href={`/chapter/${h.chapter.id}`} className={styles.chapterLink}>
+                    <button
+                      type="button"
+                      className={styles.chapterLink}
+                      onClick={() => resume(h.chapter.id)}
+                    >
                       {`Глава ${h.chapter.number}`}
                       {h.chapter.name ? ` — ${h.chapter.name}` : ''}
-                    </Link>
+                    </button>
                     <div className={styles.progressWrap}>
                       <div
                         className={styles.progressBar}

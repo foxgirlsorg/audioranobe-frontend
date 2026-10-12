@@ -960,6 +960,10 @@ export default function TitlePageClient({
                         ch.duration_seconds > 0
                           ? Math.min(100, (staticPos / ch.duration_seconds) * 100)
                           : 0;
+                      const nameClass = isCurrent
+                        ? `${styles.chName} ${styles.chNameCurrent}`
+                        : styles.chName;
+                      const nameLabel = chapterLabel(ch.number, ch.number_end, ch.name);
                       return (
                         <div
                           key={ch.id}
@@ -987,16 +991,17 @@ export default function TitlePageClient({
                               </span>
                             )}
                             <span className={styles.chNum}>{chapterNumberLabel(ch.number, ch.number_end)}</span>
-                            <Link
-                              href={`/chapter/${ch.id}`}
-                              className={
-                                isCurrent
-                                  ? `${styles.chName} ${styles.chNameCurrent}`
-                                  : styles.chName
-                              }
-                            >
-                              {chapterLabel(ch.number, ch.number_end, ch.name)}
-                            </Link>
+                            {playable ? (
+                              <button
+                                type="button"
+                                className={`${nameClass} ${styles.chNamePlay}`}
+                                onClick={() => void playChapter(ch)}
+                              >
+                                {nameLabel}
+                              </button>
+                            ) : (
+                              <span className={nameClass}>{nameLabel}</span>
+                            )}
                             <span className={styles.rowRight}>
                               {ch.defaulted && selectedVersion !== 0 && !v.from ? (
                                 <span className={styles.defaultedPill} title="В выбранной версии этой главы нет — играет из основной">
