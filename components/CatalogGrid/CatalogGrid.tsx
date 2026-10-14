@@ -48,19 +48,12 @@ export default function CatalogGrid({
   const [asc, setAsc] = useState(false);
   const [finishedOnly, setFinishedOnly] = useState(false);
   const [nonce, setNonce] = useState(0);
-  // The default sort/asc/finishedOnly on mount matches what /home already
-  // fetched — skip re-fetching that same page once.
-  const skipNextFetch = useRef(initialItems !== undefined);
+  // Server-rendered items match the default view until the user changes a control.
+  const pristine = useRef(initialItems !== undefined);
 
   useEffect(() => {
-    if (skipNextFetch.current) {
-      skipNextFetch.current = false;
-      // Undo on cleanup so React StrictMode's dev-only double-invoke (mount,
-      // cleanup, mount) doesn't consume this skip on the throwaway mount.
-      return () => {
-        skipNextFetch.current = true;
-      };
-    }
+    if (pristine.current && sort === 'updated' && !asc && !finishedOnly) return;
+    pristine.current = false;
     let alive = true;
     setLoading(true);
     setError('');
