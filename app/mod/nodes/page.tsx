@@ -22,8 +22,8 @@ function stateLabel(n: WorkerNode): string {
   return n.state === 'working' ? 'работает' : 'ожидает';
 }
 
-// The broker runs on the backend box; its hostname is the API host (AMQP is
-// always :5672 regardless of the API's HTTP port).
+// The broker runs on the backend box behind the API's domain; its hostname is
+// the API host (AMQPS is always :5671 regardless of the API's HTTP port).
 function brokerHost(): string {
   try {
     return new URL(API_URL).hostname;
@@ -201,7 +201,7 @@ function NodesContent() {
           <h3>{'Учётные данные ноды (показаны один раз)'}</h3>
           <div className={styles.credRow}>
             <span>{'AMQP_URL:'}</span>
-            <code>{`amqp://${creds.rmq_username}:${creds.secret}@${brokerHost()}:5672/`}</code>
+            <code>{`amqps://${creds.rmq_username}:${creds.secret}@${brokerHost()}:5671/`}</code>
           </div>
           <div className={styles.credRow}>
             <span>{'Пользователь:'}</span> <code>{creds.rmq_username}</code>
