@@ -355,6 +355,14 @@ export default function SettingsPage() {
     api<SessionList>('/me/sessions', { params: asParam }).then(setSessions).catch(() => setSessions(null));
   }, [user?.id, scoped]);
 
+  const [blocked, setBlocked] = useState<BlockedUser[] | null>(null);
+  useEffect(() => {
+    if (scoped) return;
+    api<{ items: BlockedUser[] }>('/me/blocks')
+      .then((r) => setBlocked(r.items))
+      .catch(() => setBlocked([]));
+  }, [scoped]);
+
   if (authLoading || !user) {
     return (
       <div className={styles.center}>
@@ -474,14 +482,6 @@ export default function SettingsPage() {
       setPrefBusy(null);
     }
   }
-
-  const [blocked, setBlocked] = useState<BlockedUser[] | null>(null);
-  useEffect(() => {
-    if (scoped) return;
-    api<{ items: BlockedUser[] }>('/me/blocks')
-      .then((r) => setBlocked(r.items))
-      .catch(() => setBlocked([]));
-  }, [scoped]);
 
   async function unblock(b: BlockedUser) {
     try {
