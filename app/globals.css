@@ -725,3 +725,75 @@ body.pwa.dm-fullscreen main.container {
 body.dm-fullscreen .app-dock {
   display: none;
 }
+
+/* ---------- edit screens: calmer buttons ---------- */
+
+.edit-ui .btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.edit-ui .btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+.edit-ui .btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.edit-ui .btn-primary:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+  box-shadow: none;
+}
+
+.edit-ui .btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.edit-ui .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: transparent;
+  color: var(--text);
+}
+
+.edit-ui .btn-danger {
+  border-color: rgba(197, 52, 52, 0.4);
+  background: transparent;
+  color: #eba1a1;
+}
+
+.edit-ui .btn-danger:hover {
+  background: rgba(197, 52, 52, 0.12);
+  border-color: rgba(197, 52, 52, 0.6);
+  box-shadow: none;
+}
+
+.edit-ui .btn-sm {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+@media (max-width: 768px) {
+  .edit-ui .btn {
+    height: 44px;
+  }
+
+  .edit-ui .btn-sm {
+    height: 36px;
+  }
+}
