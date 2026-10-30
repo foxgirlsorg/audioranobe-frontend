@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Flame,
   Layers,
+  Users,
   Pencil,
   Plus,
   RefreshCw,
@@ -46,32 +47,170 @@ const nextNumberIn = (v: Volume): number =>
 
 const formatNumber = (n: number): string => String(Math.round(n * 1000) / 1000);
 
+interface StagedFile {
+  key: string;
+  file: File;
+  number: string;
+  name: string;
+  state: 'queued' | 'uploading' | 'done' | 'error';
+  progress: number;
+  error?: string;
+}
+
+const RANGE_RE = /^(\d+(?:[.,]\d+)?)(?:\s*[-–—]\s*(\d+(?:[.,]\d+)?))?$/;
+
+function parseChapterNo(
+  text: string,
+  allowRange: boolean
+): { n: number; end: number | null } | string {
+  const m = RANGE_RE.exec(text.trim());
+  if (!m) return allowRange ? 'Введите номер: 25 или 30–35' : 'Введите номер, например 25';
+  const n = Number(m[1].replace(',', '.'));
+  if (m[2] === undefined) return { n, end: null };
+  if (!allowRange) return 'Диапазон глав доступен только модераторам';
+  const end = Number(m[2].replace(',', '.'));
+  if (!(end > n)) return 'Конец диапазона должен быть больше начала';
+  return { n, end };
+}
+
+const chapterNoText = (n: number, end: number | null): string =>
+  end != null ? `${formatNumber(n)}–${formatNumber(end)}` : formatNumber(n);
+
+const formatSize = (b: number): string =>
+  b >= 1024 * 1024 * 1024
+    ? `${(b / 1024 / 1024 / 1024).toFixed(1)} ГБ`
+    : `${Math.max(1, Math.round(b / 1024 / 1024))} МБ`;
+
+const stripExt = (name: string): string => name.replace(/\.[^.]+$/, '');
+
+type NarratorOpt = { id: number; name: string };
+
+function NarratorChecklist({
+  all,
+  value,
+  onChange,
+}: {
+  all: NarratorOpt[];
+  value: number[];
+  onChange: (ids: number[]) => void;
+}) {
+  const [q, setQ] = useState('');
+  const needle = q.trim().toLowerCase();
+  const shown = needle ? all.filter((n) => n.name.toLowerCase().includes(needle)) : all;
+  const toggle = (id: number) =>
+    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+  return (
+    <div className={styles.narList}>
+      {all.length > 6 ? (
+        <input
+          className="input"
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Найти чтеца"
+          aria-label="Найти чтеца"
+        />
+      ) : null}
+      <div className={styles.narOptions} role="group" aria-label="Чтецы">
+        {shown.map((n) => (
+          <label key={n.id} className={styles.narOpt}>
+            <input
+              type="checkbox"
+              className={styles.selectBox}
+              checked={value.includes(n.id)}
+              onChange={() => toggle(n.id)}
+            />
+            {n.name}
+          </label>
+        ))}
+        {shown.length === 0 ? <p className={styles.narEmpty}>Никого не нашли</p> : null}
+      </div>
+      <p className={styles.formNote}>{`Выбрано ${value.length} из ${all.length}`}</p>
+    </div>
+  );
+}
+
 function ChapterNarratorPicker({
   all,
   value,
   onChange,
 }: {
-  all: { id: number; name: string }[];
+  all: NarratorOpt[];
   value: number[];
   onChange: (ids: number[]) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<number[]>([]);
   if (all.length === 0) return null;
   const toggle = (id: number) =>
     onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+
+  if (all.length <= 4) {
+    return (
+      <span className={styles.chNarratorPicker}>
+        {all.map((n) => (
+          <button
+            key={n.id}
+            type="button"
+            className={value.includes(n.id) ? 'pill pill-active' : 'pill'}
+            onClick={() => toggle(n.id)}
+            aria-pressed={value.includes(n.id)}
+          >
+            {n.name}
+          </button>
+        ))}
+      </span>
+    );
+  }
+
+  const chosen = all.filter((n) => value.includes(n.id));
   return (
-    <span className={styles.chNarratorPicker}>
-      {all.map((n) => (
+    <>
+      <span className={styles.chNarratorPicker}>
+        {chosen.map((n) => (
+          <span key={n.id} className={styles.narChip}>
+            {n.name}
+            <button
+              type="button"
+              onClick={() => toggle(n.id)}
+              aria-label={`Убрать чтеца ${n.name}`}
+            >
+              <X size={12} />
+            </button>
+          </span>
+        ))}
         <button
-          key={n.id}
           type="button"
-          className={value.includes(n.id) ? 'pill pill-active' : 'pill'}
-          onClick={() => toggle(n.id)}
-          aria-pressed={value.includes(n.id)}
+          className={styles.narAdd}
+          onClick={() => {
+            setDraft(value);
+            setOpen(true);
+          }}
         >
-          {n.name}
+          {chosen.length > 0 ? 'Изменить' : '+ Выбрать чтецов'}
         </button>
-      ))}
-    </span>
+      </span>
+      <Modal open={open} onClose={() => setOpen(false)} title="Кто читает" size="sheet">
+        <div className={styles.reviewDialog}>
+          <NarratorChecklist all={all} value={draft} onChange={setDraft} />
+          <div className={styles.reviewActions}>
+            <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>
+              Отмена
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                onChange(draft);
+                setOpen(false);
+              }}
+            >
+              {`Применить (${draft.length})`}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }
 
@@ -104,7 +243,14 @@ export default function TitleContentManager({
   const [editVolNumber, setEditVolNumber] = useState('');
   const [editVolName, setEditVolName] = useState('');
   const [volumeToDelete, setVolumeToDelete] = useState<Volume | null>(null);
-  const [openVolumes, setOpenVolumes] = useState<Set<number>>(new Set());
+  const [openVolumes, setOpenVolumes] = useState<Set<number>>(
+    () =>
+      new Set(
+        title.volumes.length <= 3
+          ? title.volumes.map((v) => v.id)
+          : title.volumes.slice(-1).map((v) => v.id)
+      )
+  );
 
   const toggleVolume = (id: number) =>
     setOpenVolumes((prev) => {
@@ -114,21 +260,10 @@ export default function TitleContentManager({
       return next;
     });
 
-  const [addChapterVol, setAddChapterVol] = useState<number | null>(null);
-  const [chName, setChName] = useState('');
-  const [chNumber, setChNumber] = useState('');
-  const [chRange, setChRange] = useState(false);
-  const [chNumberEnd, setChNumberEnd] = useState('');
   const [savingChapter, setSavingChapter] = useState(false);
   const [editingChapter, setEditingChapter] = useState<number | null>(null);
   const [editChName, setEditChName] = useState('');
   const [editChNumber, setEditChNumber] = useState('');
-  const [editChRange, setEditChRange] = useState(false);
-  const [editChNumberEnd, setEditChNumberEnd] = useState('');
-  const [chNarratorIds, setChNarratorIds] = useState<number[]>([]);
-  const [chFile, setChFile] = useState<File | null>(null);
-  const [chProgress, setChProgress] = useState<number | null>(null);
-  const newChapterInputRef = useRef<HTMLInputElement | null>(null);
   const [editChNarratorIds, setEditChNarratorIds] = useState<number[]>([]);
   const [chapterToDelete, setChapterToDelete] = useState<ChapterRow | null>(null);
   const [chapterToPurge, setChapterToPurge] = useState<ChapterRow | null>(null);
@@ -147,20 +282,21 @@ export default function TitleContentManager({
   const altInputRef = useRef<HTMLInputElement | null>(null);
   const altSlotTarget = useRef<{ volumeId: number; number: number; narratorIds: number[] } | null>(null);
   const [altUploads, setAltUploads] = useState<Record<string, number>>({});
-  const bulkInputRef = useRef<HTMLInputElement | null>(null);
-  const [bulkVolume, setBulkVolume] = useState('');
-  const [bulkStart, setBulkStart] = useState('');
-  const [bulkNarratorIds, setBulkNarratorIds] = useState<number[]>([]);
-  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
-  const [bulkProgress, setBulkProgress] = useState<number | null>(null);
-  const [bulkUseFileNames, setBulkUseFileNames] = useState(false);
+  const stageInputRef = useRef<HTMLInputElement | null>(null);
+  const stageTarget = useRef<number | null>(null);
+  const [staged, setStaged] = useState<StagedFile[]>([]);
+  const [stageVolume, setStageVolume] = useState('');
+  const [stageStart, setStageStart] = useState('');
+  const [stageNarrators, setStageNarrators] = useState<number[]>([]);
+  const [stageNames, setStageNames] = useState(false);
+  const [stageRunning, setStageRunning] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const [selected, setSelected] = useState<number[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
-  const [bulkEditOpen, setBulkEditOpen] = useState(false);
-  const [bulkEditVolume, setBulkEditVolume] = useState('');
-  const [bulkEditChangeNarr, setBulkEditChangeNarr] = useState(false);
-  const [bulkEditNarrIds, setBulkEditNarrIds] = useState<number[]>([]);
+  const [bulkMode, setBulkMode] = useState<'move' | 'narrators' | null>(null);
+  const [bulkMoveVolume, setBulkMoveVolume] = useState('');
+  const [bulkNarrIds, setBulkNarrIds] = useState<number[]>([]);
   const [selectionAction, setSelectionAction] = useState<
     'approve' | 'reject' | 'delete' | 'purge' | null
   >(null);
@@ -183,16 +319,6 @@ export default function TitleContentManager({
   useEffect(() => {
     void loadJobs();
   }, [loadJobs]);
-
-  useEffect(() => {
-    if (title.volumes.length > 0) {
-      setBulkVolume((prev) =>
-        prev && title.volumes.some((v) => String(v.id) === prev)
-          ? prev
-          : String(title.volumes[0].id)
-      );
-    }
-  }, [title]);
 
   const activeJobs = jobs?.active ?? 0;
 
@@ -281,106 +407,21 @@ export default function TitleContentManager({
     }
   }
 
-  function openAddChapter(v: Volume) {
-    setOpenVolumes((prev) => new Set(prev).add(v.id));
-    setAddChapterVol(v.id);
-    setChNumber(String(nextNumberIn(standaloneHere(v) ? { ...v, chapters: ownAltChapters(v) } : v)));
-    setChName('');
-    setChFile(null);
-    setChNarratorIds([]);
-    setChRange(false);
-    setChNumberEnd('');
-  }
-
-  async function addChapter(e: React.FormEvent<HTMLFormElement>, volumeId: number) {
-    e.preventDefault();
-    const n = Number(chNumber);
-    if (!Number.isFinite(n) || n < 0) {
-      toast('Номер главы должен быть числом не меньше 0', 'error');
-      return;
-    }
-    let numberEnd: number | null = null;
-    if (isMod && chRange) {
-      const end = Number(chNumberEnd);
-      if (!Number.isFinite(end) || end <= n) {
-        toast('Конец диапазона должен быть больше начального номера', 'error');
-        return;
-      }
-      numberEnd = end;
-    }
-    if (title.narrators.length > 0 && chNarratorIds.length === 0) {
-      toast('Отметьте чтеца главы', 'error');
-      return;
-    }
-    if (!chFile) {
-      toast('Выберите аудиофайл — глава без аудио не создаётся', 'error');
-      return;
-    }
-    const bad = validAudio(chFile);
-    if (bad) {
-      toast(bad, 'error');
-      return;
-    }
-
-    setSavingChapter(true);
-    setChProgress(0);
-    try {
-      const uploadId = await uploadInChunks(chFile, setChProgress);
-      const row = await api<ChapterRow & { mod_status: string }>(
-        `/panel/titles/${titleId}/chapters`,
-        {
-          body: {
-            volume_id: volumeId,
-            number: n,
-            number_end: numberEnd,
-            name: chName.trim(),
-            narrator_ids: chNarratorIds,
-            upload_id: uploadId,
-            version_id: currentVersion,
-          },
-        }
-      );
-      toast(
-        row?.mod_status === 'approved'
-          ? 'Глава добавлена — аудио в очереди на конвертацию'
-          : 'Глава добавлена — отправлена на модерацию'
-      );
-      setAddChapterVol(null);
-      setChFile(null);
-      await Promise.all([onReload(), loadJobs()]);
-    } catch (err) {
-      toast(errMsg(err), 'error');
-    } finally {
-      setSavingChapter(false);
-      setChProgress(null);
-    }
-  }
-
   function startEditChapter(c: ChapterRow) {
     setEditingChapter(c.id);
     setEditChName(c.name);
-    setEditChNumber(String(c.number));
-    setEditChRange(c.number_end != null);
-    setEditChNumberEnd(c.number_end != null ? String(c.number_end) : '');
+    setEditChNumber(chapterNoText(c.number, c.number_end));
     setEditChNarratorIds((c.narrators ?? []).map((n) => n.id));
   }
 
   async function saveChapter(e: React.FormEvent<HTMLFormElement>, chapterId: number) {
     e.preventDefault();
-    const n = Number(editChNumber);
-    if (!Number.isFinite(n) || n < 0) {
-      toast('Номер главы должен быть числом не меньше 0', 'error');
+    const parsed = parseChapterNo(editChNumber, isMod);
+    if (typeof parsed === 'string') {
+      toast(parsed, 'error');
       return;
     }
-    let numberEnd: number | null = null;
-    if (isMod && editChRange) {
-      const end = Number(editChNumberEnd);
-      if (!Number.isFinite(end) || end <= n) {
-        toast('Конец диапазона должен быть больше начального номера', 'error');
-        return;
-      }
-      numberEnd = end;
-    }
+    const { n, end: numberEnd } = parsed;
     setSavingChapter(true);
     try {
       const body: {
@@ -624,15 +665,18 @@ export default function TitleContentManager({
   }
 
   async function submitBulkEdit() {
-    if (selected.length === 0) return;
+    if (selected.length === 0 || bulkMode === null) return;
     const body: { chapter_ids: number[]; volume_id?: number; narrator_ids?: number[] } = {
       chapter_ids: selected,
     };
-    if (bulkEditVolume) body.volume_id = Number(bulkEditVolume);
-    if (bulkEditChangeNarr) body.narrator_ids = bulkEditNarrIds;
-    if (body.volume_id === undefined && body.narrator_ids === undefined) {
-      toast('Выберите том или отметьте смену чтецов', 'error');
-      return;
+    if (bulkMode === 'move') {
+      if (!bulkMoveVolume) {
+        toast('Выберите том', 'error');
+        return;
+      }
+      body.volume_id = Number(bulkMoveVolume);
+    } else {
+      body.narrator_ids = bulkNarrIds;
     }
     setBulkBusy(true);
     try {
@@ -640,11 +684,14 @@ export default function TitleContentManager({
         method: 'POST',
         body,
       });
-      toast(`Изменено глав: ${res?.updated ?? selected.length}`);
-      setBulkEditOpen(false);
-      setBulkEditVolume('');
-      setBulkEditChangeNarr(false);
-      setBulkEditNarrIds([]);
+      toast(
+        bulkMode === 'move'
+          ? `Перемещено глав: ${res?.updated ?? selected.length}`
+          : `Чтецы изменены у глав: ${res?.updated ?? selected.length}`
+      );
+      setBulkMode(null);
+      setBulkMoveVolume('');
+      setBulkNarrIds([]);
       setSelected([]);
       await onReload();
     } catch (err) {
@@ -770,9 +817,30 @@ export default function TitleContentManager({
       );
   }
 
-  function onBulkPicked(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = '';
+  const uploadVolumes = isAlt ? displayVolumes.filter((v) => standaloneHere(v)) : displayVolumes;
+
+  const existingNumbers = (v: Volume | undefined): Set<number> =>
+    new Set(
+      (v ? (standaloneHere(v) ? ownAltChapters(v) : liveChapters(v)) : []).map((c) => c.number)
+    );
+
+  const nextFor = (v: Volume): number =>
+    nextNumberIn(standaloneHere(v) ? { ...v, chapters: ownAltChapters(v) } : v);
+
+  const stageTargetVolume = uploadVolumes.find((v) => String(v.id) === stageVolume) ?? null;
+  const stageExisting = existingNumbers(stageTargetVolume ?? undefined);
+  const stagePending = staged.filter((r) => r.state !== 'done');
+  const stageHasError = staged.some((r) => r.state === 'error');
+
+  const patchStaged = (key: string, patch: Partial<StagedFile>) =>
+    setStaged((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+
+  const renumberFrom = (rows: StagedFile[], start: number): StagedFile[] => {
+    let i = 0;
+    return rows.map((r) => (r.state === 'done' ? r : { ...r, number: formatNumber(start + i++) }));
+  };
+
+  function addToStage(files: File[], volumeId?: number | null) {
     if (files.length === 0) return;
     for (const f of files) {
       const bad = validAudio(f);
@@ -781,72 +849,146 @@ export default function TitleContentManager({
         return;
       }
     }
-    setBulkFiles([...files].sort((a, b) => naturalCompare(a.name, b.name)));
+    const vol =
+      uploadVolumes.find((v) => v.id === volumeId) ??
+      stageTargetVolume ??
+      uploadVolumes[uploadVolumes.length - 1] ??
+      null;
+    if (!vol) {
+      toast('Сначала добавьте том', 'error');
+      return;
+    }
+    if (staged.length === 0 || String(vol.id) !== stageVolume) {
+      setStageVolume(String(vol.id));
+    }
+    const sorted = [...files].sort((a, b) => naturalCompare(a.name, b.name));
+    const keep = String(vol.id) === stageVolume ? staged : [];
+    const start =
+      keep.length > 0
+        ? Math.floor(Math.max(...keep.map((r) => {
+          const q = parseChapterNo(r.number, true);
+          return typeof q === 'string' ? 0 : (q.end ?? q.n);
+        }))) + 1
+        : nextFor(vol);
+    const added: StagedFile[] = sorted.map((f, i) => ({
+      key: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2, 7)}`,
+      file: f,
+      number: formatNumber(start + i),
+      name: stageNames ? stripExt(f.name) : '',
+      state: 'queued',
+      progress: 0,
+    }));
+    setStaged([...keep, ...added]);
+    setStageStart('');
+    if (stageNarrators.length === 0 && title.narrators.length === 1) {
+      setStageNarrators([title.narrators[0].id]);
+    }
   }
 
-  const bulkTargetVolume = displayVolumes.find((v) => String(v.id) === bulkVolume) ?? null;
+  function onStagePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    const target = stageTarget.current;
+    stageTarget.current = null;
+    addToStage(files, target);
+  }
 
-  const bulkFirstNumber = useMemo(() => {
-    const typed = bulkStart.trim();
-    if (typed !== '') {
-      const n = Number(typed);
-      return Number.isFinite(n) && n >= 0 ? n : null;
+  function pickForStage(volumeId: number | null = null) {
+    stageTarget.current = volumeId;
+    stageInputRef.current?.click();
+  }
+
+  function onStageDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    addToStage(Array.from(e.dataTransfer.files).filter((f) => AUDIO_RE.test(f.name) || f.type.startsWith('audio/')));
+  }
+
+  function changeStageVolume(id: string) {
+    const vol = uploadVolumes.find((v) => String(v.id) === id);
+    setStageVolume(id);
+    setStageStart('');
+    if (vol) setStaged((rows) => renumberFrom(rows, nextFor(vol)));
+  }
+
+  function changeStageStart(val: string) {
+    setStageStart(val);
+    const n = Number(val);
+    if (val.trim() !== '' && Number.isFinite(n) && n >= 0) {
+      setStaged((rows) => renumberFrom(rows, n));
     }
-    return bulkTargetVolume ? nextNumberIn(bulkTargetVolume) : 1;
-  }, [bulkStart, bulkTargetVolume]);
+  }
 
-  function startBulkUpload() {
-    const volId = Number(bulkVolume);
+  function toggleStageNames(on: boolean) {
+    setStageNames(on);
+    setStaged((rows) =>
+      rows.map((r) => (r.state === 'done' ? r : { ...r, name: on ? stripExt(r.file.name) : '' }))
+    );
+  }
+
+  async function runStage() {
+    const volId = Number(stageVolume);
     if (!Number.isInteger(volId) || volId <= 0) {
-      toast('Сначала выберите том', 'error');
+      toast('Выберите том', 'error');
       return;
     }
-    if (bulkFiles.length === 0) return;
-    if (bulkFirstNumber === null) {
-      toast('Начальный номер должен быть числом не меньше 0', 'error');
+    if (title.narrators.length > 0 && stageNarrators.length === 0) {
+      toast('Отметьте, кто читает эти главы', 'error');
       return;
     }
-    if (title.narrators.length > 0 && bulkNarratorIds.length === 0) {
-      toast('Отметьте чтецов этих глав', 'error');
-      return;
-    }
-
-    const files = bulkFiles;
-    const total = files.reduce((sum, f) => sum + f.size, 0) || 1;
-    let done = 0;
-
-    setBulkProgress(0);
-    (async () => {
-      const uploadIds: number[] = [];
-      for (const f of files) {
-        const id = await uploadInChunks(f, (frac) =>
-          setBulkProgress(Math.min(1, (done + frac * f.size) / total))
-        );
-        uploadIds.push(id);
-        done += f.size;
-        setBulkProgress(Math.min(1, done / total));
+    const todo = staged.filter((r) => r.state !== 'done');
+    const parsedNo = new Map<string, { n: number; end: number | null }>();
+    for (const r of todo) {
+      const q = parseChapterNo(r.number, isMod);
+      if (typeof q === 'string') {
+        toast(`${r.file.name}: ${q}`, 'error');
+        return;
       }
-      return api<{ chapters: ChapterRow[] }>(`/panel/titles/${titleId}/chapters/bulk`, {
-        body: {
-          volume_id: volId,
-          start_number: bulkFirstNumber,
-          use_file_names: bulkUseFileNames,
-          narrator_ids: bulkNarratorIds,
-          upload_ids: uploadIds,
-          version_id: currentVersion,
-        },
-      });
-    })()
-      .then(async (res: { chapters: ChapterRow[] }) => {
-        const n = res?.chapters?.length ?? files.length;
-        toast(`Создано глав: ${n} — аудио в очереди на конвертацию`);
-        setBulkFiles([]);
-        setBulkStart('');
-        await Promise.all([onReload(), loadJobs()]);
-      })
-      .catch((err) => toast(errMsg(err), 'error'))
-      .finally(() => setBulkProgress(null));
+      parsedNo.set(r.key, q);
+    }
+    setStageRunning(true);
+    let ok = 0;
+    let failed = 0;
+    let pending = false;
+    for (const r of todo) {
+      patchStaged(r.key, { state: 'uploading', progress: 0, error: undefined });
+      try {
+        const uploadId = await uploadInChunks(r.file, (p) => patchStaged(r.key, { progress: p }));
+        const row = await api<ChapterRow & { mod_status: string }>(
+          `/panel/titles/${titleId}/chapters`,
+          {
+            body: {
+              volume_id: volId,
+              number: parsedNo.get(r.key)?.n,
+              number_end: parsedNo.get(r.key)?.end ?? null,
+              name: r.name.trim(),
+              narrator_ids: stageNarrators,
+              upload_id: uploadId,
+              version_id: currentVersion,
+            },
+          }
+        );
+        if (row?.mod_status && row.mod_status !== 'approved') pending = true;
+        patchStaged(r.key, { state: 'done', progress: 1 });
+        ok++;
+      } catch (err) {
+        patchStaged(r.key, { state: 'error', error: errMsg(err) });
+        failed++;
+      }
+    }
+    setStageRunning(false);
+    if (ok > 0) {
+      toast(
+        pending
+          ? `Добавлено глав: ${ok} — отправлены на модерацию`
+          : `Добавлено глав: ${ok} — аудио в очереди на конвертацию`
+      );
+    }
+    if (failed > 0) toast(`Не загрузилось: ${failed}. Нажмите «Повторить»`, 'error');
+    else setStaged([]);
+    await Promise.all([onReload(), loadJobs()]);
   }
+
 
   const activeAltVersion = title.versions.find((v) => v.id === currentVersion) ?? null;
 
@@ -1009,20 +1151,34 @@ export default function TitleContentManager({
                 </button>
               </>
             ) : null}
-            <button
-              type="button"
-              className="btn"
-              disabled={bulkBusy}
-              onClick={() => {
-                setBulkEditVolume('');
-                setBulkEditChangeNarr(false);
-                setBulkEditNarrIds([]);
-                setBulkEditOpen(true);
-              }}
-            >
-              <Layers size={15} />
-              {isAlt ? 'Чтецы' : 'Том / чтецы'}
-            </button>
+            {!isAlt ? (
+              <button
+                type="button"
+                className="btn"
+                disabled={bulkBusy}
+                onClick={() => {
+                  setBulkMoveVolume('');
+                  setBulkMode('move');
+                }}
+              >
+                <Layers size={15} />
+                Переместить в том
+              </button>
+            ) : null}
+            {title.narrators.length > 0 ? (
+              <button
+                type="button"
+                className="btn"
+                disabled={bulkBusy}
+                onClick={() => {
+                  setBulkNarrIds([]);
+                  setBulkMode('narrators');
+                }}
+              >
+                <Users size={15} />
+                Назначить чтецов
+              </button>
+            ) : null}
             <button
               type="button"
               className="btn btn-danger"
@@ -1090,6 +1246,211 @@ export default function TitleContentManager({
               Отмена
             </button>
           </form>
+        ) : null}
+
+        {displayVolumes.length > 0 && uploadVolumes.length > 0 ? (
+          staged.length === 0 ? (
+            <div
+              className={dragOver ? `${styles.drop} ${styles.dropOver}` : styles.drop}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={onStageDrop}
+            >
+              <Upload size={26} className={styles.dropIcon} aria-hidden="true" />
+              <p className={styles.dropTitle}>Перетащите аудио сюда</p>
+              <p className={styles.dropHint}>
+                Один файл — одна глава. Несколько файлов встанут по порядку имён.
+              </p>
+              <button type="button" className="btn btn-primary" onClick={() => pickForStage()}>
+                Выбрать файлы
+              </button>
+            </div>
+          ) : (
+            <div
+              className={`glass-panel ${styles.stage}`}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onStageDrop}
+            >
+              <div className={styles.stageGrid}>
+                <div className={styles.bulkField}>
+                  <label className={styles.label} htmlFor="stage-volume">
+                    Том
+                  </label>
+                  <Select
+                    id="stage-volume"
+                    block
+                    value={stageVolume}
+                    disabled={stageRunning}
+                    options={uploadVolumes.map((v) => ({
+                      value: String(v.id),
+                      label: `${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`,
+                    }))}
+                    onChange={changeStageVolume}
+                  />
+                </div>
+                <div className={styles.bulkField}>
+                  <label className={styles.label} htmlFor="stage-start">
+                    Первая глава
+                  </label>
+                  <input
+                    id="stage-start"
+                    className="input"
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    value={stageStart}
+                    disabled={stageRunning}
+                    onChange={(e) => changeStageStart(e.target.value)}
+                    placeholder={stageTargetVolume ? String(nextFor(stageTargetVolume)) : '1'}
+                  />
+                </div>
+              </div>
+
+              {title.narrators.length > 0 ? (
+                <div className={styles.bulkField}>
+                  <span className={styles.label}>
+                    Кто читает <span className={styles.required}>обязательно</span>
+                  </span>
+                  <ChapterNarratorPicker
+                    all={title.narrators}
+                    value={stageNarrators}
+                    onChange={setStageNarrators}
+                  />
+                </div>
+              ) : null}
+
+              <Toggle
+                checked={stageNames}
+                onChange={toggleStageNames}
+                label="Названия глав из имён файлов"
+              />
+
+              <div className={styles.stageList}>
+                {staged.map((r) => {
+                  const parsed = parseChapterNo(r.number, isMod);
+                  const noError = typeof parsed === 'string' && r.number.trim() !== '' ? parsed : null;
+                  const dup =
+                    r.state !== 'done' &&
+                    typeof parsed !== 'string' &&
+                    (stageExisting.has(parsed.n) ||
+                      staged.some((o) => o !== r && o.state !== 'done' && o.number.trim() === r.number.trim()));
+                  const locked = stageRunning || r.state === 'done';
+                  return (
+                    <div key={r.key} className={styles.stageRow} data-state={r.state}>
+                      <div className={styles.stageNum}>
+                        <input
+                          className="input"
+                          type="text"
+                          inputMode="decimal"
+                          value={r.number}
+                          disabled={locked}
+                          onChange={(e) => patchStaged(r.key, { number: e.target.value })}
+                          placeholder={isMod ? '25 или 30–35' : '25'}
+                          aria-label={`Номер главы: ${r.file.name}`}
+                          aria-invalid={noError ? true : undefined}
+                        />
+                        {noError ? (
+                          <span className={styles.noErr}>{noError}</span>
+                        ) : typeof parsed !== 'string' && parsed.end !== null ? (
+                          <span className={styles.noHint}>{`Главы ${formatNumber(parsed.n)}–${formatNumber(parsed.end)}`}</span>
+                        ) : null}
+                      </div>
+                      <div className={styles.stageFile}>
+                        <span className={styles.stageFileName}>{r.file.name}</span>
+                        <span className={styles.stageFileSize}>{formatSize(r.file.size)}</span>
+                      </div>
+                      <input
+                        className={`input ${styles.stageName}`}
+                        type="text"
+                        value={r.name}
+                        maxLength={300}
+                        disabled={locked}
+                        onChange={(e) => patchStaged(r.key, { name: e.target.value })}
+                        placeholder="Название — необязательно"
+                        aria-label={`Название главы: ${r.file.name}`}
+                      />
+                      <div className={styles.stageState}>
+                        {r.state === 'uploading' ? (
+                          <>
+                            <span className={styles.progress}>
+                              <span
+                                className={styles.progressFill}
+                                style={{ width: `${Math.round(r.progress * 100)}%` }}
+                              />
+                            </span>
+                            <span className={styles.progressPct}>{Math.round(r.progress * 100)}%</span>
+                          </>
+                        ) : r.state === 'done' ? (
+                          <span className={styles.okTag}>
+                            <Check size={12} /> Загружено
+                          </span>
+                        ) : r.state === 'error' ? (
+                          <span className={styles.errTag}>Ошибка</span>
+                        ) : dup ? (
+                          <span className={styles.warnTag}>Номер занят</span>
+                        ) : stageRunning ? (
+                          <span className={styles.stageWait}>В очереди</span>
+                        ) : null}
+                        {!stageRunning && r.state !== 'done' ? (
+                          <button
+                            type="button"
+                            className={styles.iconBtn}
+                            onClick={() => setStaged((rows) => rows.filter((x) => x.key !== r.key))}
+                            title="Убрать из списка"
+                            aria-label={`Убрать файл ${r.file.name}`}
+                          >
+                            <X size={14} />
+                          </button>
+                        ) : null}
+                      </div>
+                      {r.state === 'error' && r.error ? (
+                        <p className={styles.stageErr}>{r.error}</p>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={styles.stageFoot}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => void runStage()}
+                  disabled={stageRunning || stagePending.length === 0}
+                >
+                  <Upload size={15} />
+                  {stageRunning
+                    ? 'Загружаем…'
+                    : stageHasError
+                      ? `Повторить (${stagePending.length})`
+                      : `Загрузить глав: ${stagePending.length}`}
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => pickForStage(stageTargetVolume?.id ?? null)}
+                  disabled={stageRunning}
+                >
+                  <Plus size={15} />
+                  Ещё файлы
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setStaged([])}
+                  disabled={stageRunning}
+                >
+                  Очистить
+                </button>
+                <span className={styles.stageTotal}>
+                  {formatSize(staged.reduce((s, r) => s + r.file.size, 0))}
+                </span>
+              </div>
+            </div>
+          )
         ) : null}
 
         {displayVolumes.length === 0 ? (
@@ -1185,15 +1546,15 @@ export default function TitleContentManager({
                           {standaloneHere(v) ? 'Привязать к основной' : 'Отдельный том'}
                         </button>
                       ) : null}
-                      {standaloneHere(v) ? (
+                      {!isAlt || standaloneHere(v) ? (
                         <button
                           type="button"
-                          className={styles.iconBtn}
-                          onClick={() => openAddChapter(v)}
-                          title="Добавить главу"
-                          aria-label={`Добавить главу в том ${v.number}`}
+                          className="btn btn-sm"
+                          onClick={() => pickForStage(v.id)}
+                          disabled={stageRunning}
                         >
-                          <Plus size={15} />
+                          <Plus size={14} />
+                          Добавить главы
                         </button>
                       ) : null}
                       {!isAlt && isMod && pendingIn(v) > 0 ? (
@@ -1223,15 +1584,6 @@ export default function TitleContentManager({
                       ) : null}
                       {!isAlt ? (
                         <>
-                          <button
-                            type="button"
-                            className={styles.iconBtn}
-                            onClick={() => openAddChapter(v)}
-                            title="Добавить главу"
-                            aria-label={`Добавить главу в том ${v.number}`}
-                          >
-                            <Plus size={15} />
-                          </button>
                           <button
                             type="button"
                             className={styles.iconBtn}
@@ -1267,95 +1619,14 @@ export default function TitleContentManager({
                 )}
               </div>
 
-              {openVolumes.has(v.id) && addChapterVol === v.id ? (
-                <form className={styles.inlineForm} onSubmit={(e) => addChapter(e, v.id)} noValidate>
-                  <input
-                    className={`input ${styles.numInput}`}
-                    type="number"
-                    step="0.1"
-                    min={0}
-                    value={chNumber}
-                    onChange={(e) => setChNumber(e.target.value)}
-                    aria-label={chRange ? 'Начальный номер главы' : 'Номер главы'}
-                    title="Может быть дробным: 4.1 встанет между 4 и 5"
-                  />
-                  {isMod && chRange ? (
-                    <>
-                      <span className={styles.rangeDash} aria-hidden="true">
-                        –
-                      </span>
-                      <input
-                        className={`input ${styles.numInput}`}
-                        type="number"
-                        step="0.1"
-                        min={0}
-                        value={chNumberEnd}
-                        onChange={(e) => setChNumberEnd(e.target.value)}
-                        aria-label="Конечный номер главы"
-                        placeholder="по"
-                      />
-                    </>
-                  ) : null}
-                  {isMod ? (
-                    <label
-                      className={styles.rangeToggle}
-                      title="Один файл охватывает несколько глав, например 30–35"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={chRange}
-                        onChange={(e) => setChRange(e.target.checked)}
-                      />
-                      неск. глав
-                    </label>
-                  ) : null}
-                  <input
-                    className={`input ${styles.growInput}`}
-                    type="text"
-                    value={chName}
-                    maxLength={300}
-                    onChange={(e) => setChName(e.target.value)}
-                    placeholder="Название главы — необязательно"
-                    aria-label="Название главы"
-                  />
-                  <ChapterNarratorPicker
-                    all={title.narrators}
-                    value={chNarratorIds}
-                    onChange={setChNarratorIds}
-                  />
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => newChapterInputRef.current?.click()}
-                    disabled={savingChapter}
-                  >
-                    <Upload size={14} />
-                    {chFile ? chFile.name : 'Выбрать аудио'}
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={savingChapter || !chFile}
-                  >
-                    {savingChapter
-                      ? chProgress !== null
-                        ? `Загружаем… ${Math.round(chProgress * 100)}%`
-                        : 'Добавляем…'
-                      : 'Добавить главу'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setAddChapterVol(null)}
-                  >
-                    Отмена
-                  </button>
-                </form>
-              ) : null}
-
               {!openVolumes.has(v.id) ? null : standaloneHere(v) ? (
                 ownAltChapters(v).length === 0 ? (
-                  <p className={styles.noChapters}>В этом томе пока нет глав.</p>
+                  <p className={styles.noChapters}>
+                  В этом томе пока нет глав.{' '}
+                  <button type="button" className={styles.linkBtn} onClick={() => pickForStage(v.id)}>
+                    Загрузить аудио
+                  </button>
+                </p>
                 ) : (
                   ownAltChapters(v).map((c) => (
                     <div key={c.id} className={styles.chapterRow}>
@@ -1516,82 +1787,15 @@ export default function TitleContentManager({
                   })
                 )
               ) : visibleChapters(v).length === 0 ? (
-                <p className={styles.noChapters}>В этом томе пока нет глав.</p>
+                <p className={styles.noChapters}>
+                  В этом томе пока нет глав.{' '}
+                  <button type="button" className={styles.linkBtn} onClick={() => pickForStage(v.id)}>
+                    Загрузить аудио
+                  </button>
+                </p>
               ) : (
                 visibleChapters(v).map((c) => (
                   <div key={c.id} className={styles.chapterRow}>
-                    {editingChapter === c.id ? (
-                      <form
-                        className={styles.chapterEditForm}
-                        onSubmit={(e) => saveChapter(e, c.id)}
-                        noValidate
-                      >
-                        <input
-                          className={`input ${styles.numInput}`}
-                          type="number"
-                          step="0.1"
-                          min={0}
-                          value={editChNumber}
-                          onChange={(e) => setEditChNumber(e.target.value)}
-                          aria-label={editChRange ? 'Начальный номер главы' : 'Номер главы'}
-                          title="Может быть дробным: 4.1 встанет между 4 и 5"
-                        />
-                        {isMod && editChRange ? (
-                          <>
-                            <span className={styles.rangeDash} aria-hidden="true">
-                              –
-                            </span>
-                            <input
-                              className={`input ${styles.numInput}`}
-                              type="number"
-                              step="0.1"
-                              min={0}
-                              value={editChNumberEnd}
-                              onChange={(e) => setEditChNumberEnd(e.target.value)}
-                              aria-label="Конечный номер главы"
-                              placeholder="по"
-                            />
-                          </>
-                        ) : null}
-                        {isMod ? (
-                          <label
-                            className={styles.rangeToggle}
-                            title="Один файл охватывает несколько глав, например 30–35"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={editChRange}
-                              onChange={(e) => setEditChRange(e.target.checked)}
-                            />
-                            неск. глав
-                          </label>
-                        ) : null}
-                        <input
-                          className={`input ${styles.growInput}`}
-                          type="text"
-                          value={editChName}
-                          maxLength={300}
-                          onChange={(e) => setEditChName(e.target.value)}
-                          placeholder="Название главы — необязательно"
-                          aria-label="Название главы"
-                        />
-                        <ChapterNarratorPicker
-                          all={title.narrators}
-                          value={editChNarratorIds}
-                          onChange={setEditChNarratorIds}
-                        />
-                        <button type="submit" className="btn btn-primary" disabled={savingChapter}>
-                          Сохранить
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost"
-                          onClick={() => setEditingChapter(null)}
-                        >
-                          <X size={14} />
-                        </button>
-                      </form>
-                    ) : (
                       <>
                         <input
                           type="checkbox"
@@ -1614,8 +1818,12 @@ export default function TitleContentManager({
                           </span>
                         ) : null}
                         {(c.narrators ?? []).length > 0 ? (
-                          <span className={styles.chNarrators} title="Чтецы главы">
-                            {c.narrators.map((n) => n.name).join(', ')}
+                          <span
+                            className={styles.chNarrators}
+                            title={c.narrators.map((n) => n.name).join(', ')}
+                          >
+                            {c.narrators[0].name}
+                            {c.narrators.length > 1 ? ` +${c.narrators.length - 1}` : ''}
                           </span>
                         ) : null}
                         <span className={styles.chBadges}>
@@ -1699,138 +1907,12 @@ export default function TitleContentManager({
                           </span>
                         ) : null}
                       </>
-                    )}
                   </div>
                 ))
               )}
             </div>
           ))
         )}
-      </section>
-
-      <section className={styles.section}>
-        <span className={styles.sectionLabel}>Массовая загрузка</span>
-        <div className={`glass-panel ${styles.bulkPanel}`}>
-          <p className={styles.bulkHint}>
-            Файлы сортируются по имени и добавляются в выбранный том одной пачкой. Названия
-            глав по умолчанию не задаются — главы показываются как «Глава N».
-          </p>
-
-          <div className={styles.bulkGrid}>
-            <div className={styles.bulkField}>
-              <label className={styles.label} htmlFor="bulk-volume">
-                Целевой том
-              </label>
-              <Select
-                id="bulk-volume"
-                block
-                value={bulkVolume}
-                placeholder="Томов пока нет"
-                disabled={title.volumes.length === 0}
-                options={title.volumes.map((v) => ({
-                  value: String(v.id),
-                  label: `${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`,
-                }))}
-                onChange={setBulkVolume}
-              />
-            </div>
-
-            <div className={styles.bulkField}>
-              <label className={styles.label} htmlFor="bulk-start">
-                Начать с главы{' '}
-                <span className={styles.optional}>
-                  {bulkTargetVolume && liveChapters(bulkTargetVolume).length > 0
-                    ? `сейчас ${liveChapters(bulkTargetVolume).length}`
-                    : 'том пуст'}
-                </span>
-              </label>
-              <input
-                id="bulk-start"
-                className="input"
-                type="number"
-                step="0.1"
-                min={0}
-                value={bulkStart}
-                onChange={(e) => setBulkStart(e.target.value)}
-                placeholder={bulkTargetVolume ? String(nextNumberIn(bulkTargetVolume)) : '1'}
-              />
-            </div>
-          </div>
-
-          {title.narrators.length > 0 ? (
-            <div className={styles.bulkField}>
-              <span className={styles.label}>
-                Чтецы этих глав <span className={styles.required}>обязательно</span>
-              </span>
-              <ChapterNarratorPicker
-                all={title.narrators}
-                value={bulkNarratorIds}
-                onChange={setBulkNarratorIds}
-              />
-            </div>
-          ) : null}
-
-          <Toggle
-            checked={bulkUseFileNames}
-            onChange={setBulkUseFileNames}
-            label="Использовать имена файлов как названия глав"
-          />
-
-          <div className={styles.bulkRow}>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => bulkInputRef.current?.click()}
-              disabled={bulkProgress !== null || title.volumes.length === 0}
-            >
-              <Plus size={15} />
-              {bulkFiles.length > 0 ? 'Выбрать другие файлы' : 'Выбрать файлы'}
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={startBulkUpload}
-              disabled={bulkProgress !== null || bulkFiles.length === 0}
-            >
-              <Upload size={15} />
-              {bulkProgress !== null
-                ? 'Загружаем…'
-                : bulkFiles.length > 0
-                  ? `Загрузить (${bulkFiles.length})`
-                  : 'Загрузить'}
-            </button>
-            {bulkFiles.length > 0 && bulkProgress === null ? (
-              <button type="button" className="btn btn-ghost" onClick={() => setBulkFiles([])}>
-                Очистить
-              </button>
-            ) : null}
-          </div>
-
-          {bulkFiles.length > 0 ? (
-            <ol className={styles.bulkList}>
-              {bulkFiles.map((f, i) => (
-                <li key={`${f.name}-${i}`} className={styles.bulkItem}>
-                  <span className={styles.bulkItemNum}>
-                    {bulkFirstNumber === null ? '?' : formatNumber(bulkFirstNumber + i)}
-                  </span>
-                  <span className={styles.bulkItemName}>{f.name}</span>
-                </li>
-              ))}
-            </ol>
-          ) : null}
-
-          {bulkProgress !== null ? (
-            <div className={styles.bulkProgressRow}>
-              <span className={styles.progress}>
-                <span
-                  className={styles.progressFill}
-                  style={{ width: `${Math.round(bulkProgress * 100)}%` }}
-                />
-              </span>
-              <span className={styles.progressPct}>{Math.round(bulkProgress * 100)}%</span>
-            </div>
-          ) : null}
-        </div>
       </section>
 
       <section className={styles.section}>
@@ -1897,31 +1979,12 @@ export default function TitleContentManager({
         tabIndex={-1}
       />
       <input
-        ref={newChapterInputRef}
-        type="file"
-        accept={AUDIO_ACCEPT}
-        className={styles.hiddenInput}
-        onChange={(e) => {
-          const f = e.target.files?.[0] ?? null;
-          e.target.value = '';
-          if (!f) return;
-          const bad = validAudio(f);
-          if (bad) {
-            toast(bad, 'error');
-            return;
-          }
-          setChFile(f);
-        }}
-        aria-hidden="true"
-        tabIndex={-1}
-      />
-      <input
-        ref={bulkInputRef}
+        ref={stageInputRef}
         type="file"
         multiple
         accept={AUDIO_ACCEPT}
         className={styles.hiddenInput}
-        onChange={onBulkPicked}
+        onChange={onStagePicked}
         aria-hidden="true"
         tabIndex={-1}
       />
@@ -2015,65 +2078,142 @@ export default function TitleContentManager({
       />
 
       <Modal
-        open={bulkEditOpen}
-        onClose={() => setBulkEditOpen(false)}
-        title="Изменить выбранные главы"
+        open={bulkMode === 'move'}
+        onClose={() => setBulkMode(null)}
+        title={`Переместить главы: ${selected.length}`}
+        size="sheet"
       >
         <div className={styles.reviewDialog}>
-          <p className={styles.reviewBody}>
-            {`Изменения применятся к выбранным главам (${selected.length}) одним запросом.`}
-          </p>
-          {!isAlt ? (
-            <div className={styles.bulkField}>
-              <label className={styles.label} htmlFor="be-volume">
-                Переместить в том
-              </label>
-              <Select
-                id="be-volume"
-                block
-                value={bulkEditVolume}
-                placeholder="— не менять —"
-                disabled={title.volumes.length === 0}
-                options={title.volumes.map((v) => ({
-                  value: String(v.id),
-                  label: `${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`,
-                }))}
-                onChange={setBulkEditVolume}
-              />
-            </div>
-          ) : null}
-          {title.narrators.length > 0 ? (
-            <div className={styles.bulkField}>
-              <Toggle
-                checked={bulkEditChangeNarr}
-                onChange={setBulkEditChangeNarr}
-                label="Изменить чтецов"
-                hint="Заменит список чтецов у выбранных глав"
-              />
-              {bulkEditChangeNarr ? (
-                <ChapterNarratorPicker
-                  all={title.narrators}
-                  value={bulkEditNarrIds}
-                  onChange={setBulkEditNarrIds}
-                />
-              ) : null}
-            </div>
-          ) : null}
-          <div className={styles.bulkRow}>
+          <div className={styles.volOptions} role="radiogroup" aria-label="Том">
+            {title.volumes.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                role="radio"
+                aria-checked={bulkMoveVolume === String(v.id)}
+                className={
+                  bulkMoveVolume === String(v.id)
+                    ? `${styles.volOpt} ${styles.volOptOn}`
+                    : styles.volOpt
+                }
+                onClick={() => setBulkMoveVolume(String(v.id))}
+              >
+                {`${title.volume_label} ${v.number}${v.name ? ` — ${v.name}` : ''}`}
+                {bulkMoveVolume === String(v.id) ? <Check size={15} /> : null}
+              </button>
+            ))}
+          </div>
+          <div className={styles.reviewActions}>
+            <button type="button" className="btn btn-ghost" onClick={() => setBulkMode(null)}>
+              Отмена
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={bulkBusy || !bulkMoveVolume}
+              onClick={() => void submitBulkEdit()}
+            >
+              Переместить
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={bulkMode === 'narrators'}
+        onClose={() => setBulkMode(null)}
+        title={`Чтецы для глав: ${selected.length}`}
+        size="sheet"
+      >
+        <div className={styles.reviewDialog}>
+          <p className={styles.reviewBody}>Заменит список чтецов у выбранных глав.</p>
+          <NarratorChecklist all={title.narrators} value={bulkNarrIds} onChange={setBulkNarrIds} />
+          <div className={styles.reviewActions}>
+            <button type="button" className="btn btn-ghost" onClick={() => setBulkMode(null)}>
+              Отмена
+            </button>
             <button
               type="button"
               className="btn btn-primary"
               disabled={bulkBusy}
               onClick={() => void submitBulkEdit()}
             >
-              <Check size={15} />
-              Применить
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={() => setBulkEditOpen(false)}>
-              Отмена
+              {`Применить (${bulkNarrIds.length})`}
             </button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        open={editingChapter !== null}
+        onClose={() => setEditingChapter(null)}
+        title="Редактирование главы"
+        size="sheet"
+      >
+        {editingChapter !== null ? (
+          <form
+            className={styles.reviewDialog}
+            onSubmit={(e) => saveChapter(e, editingChapter)}
+            noValidate
+          >
+            <div className={styles.bulkField}>
+              <label className={styles.label} htmlFor="ec-number">
+                {isMod ? 'Глава или диапазон' : 'Номер главы'}
+              </label>
+              <input
+                id="ec-number"
+                className="input"
+                type="text"
+                inputMode="decimal"
+                value={editChNumber}
+                onChange={(e) => setEditChNumber(e.target.value)}
+                placeholder={isMod ? '25 или 30–35' : '25'}
+              />
+              {(() => {
+                const q = parseChapterNo(editChNumber, isMod);
+                if (typeof q === 'string')
+                  return editChNumber.trim() ? <span className={styles.noErr}>{q}</span> : null;
+                return q.end !== null ? (
+                  <span className={styles.noHint}>{`Главы ${formatNumber(q.n)}–${formatNumber(q.end)}`}</span>
+                ) : (
+                  <span className={styles.noHint}>Может быть дробным: 4.1 встанет между 4 и 5</span>
+                );
+              })()}
+            </div>
+            <div className={styles.bulkField}>
+              <label className={styles.label} htmlFor="ec-name">
+                Название <span className={styles.optional}>необязательно</span>
+              </label>
+              <input
+                id="ec-name"
+                className="input"
+                type="text"
+                value={editChName}
+                maxLength={300}
+                onChange={(e) => setEditChName(e.target.value)}
+                placeholder="Название главы"
+              />
+            </div>
+            {title.narrators.length > 0 ? (
+              <div className={styles.bulkField}>
+                <span className={styles.label}>Кто читает</span>
+                <ChapterNarratorPicker
+                  all={title.narrators}
+                  value={editChNarratorIds}
+                  onChange={setEditChNarratorIds}
+                />
+              </div>
+            ) : null}
+            <div className={styles.reviewActions}>
+              <button type="button" className="btn btn-ghost" onClick={() => setEditingChapter(null)}>
+                Отмена
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={savingChapter}>
+                {savingChapter ? 'Сохраняем…' : 'Сохранить'}
+              </button>
+            </div>
+          </form>
+        ) : null}
       </Modal>
 
       <Modal

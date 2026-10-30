@@ -326,7 +326,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   }
 
   return (
-    <div className={tab === 'stats' ? `${styles.page} ${styles.pageWide}` : styles.page}>
+    <div className={tab === 'stats' || tab === 'content' ? `${styles.page} ${styles.pageWide}` : styles.page}>
       <Link href={`/title/${routeSlug}`} className="back-link">
         <ArrowLeft size={14} />
         К тайтлу

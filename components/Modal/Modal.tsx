@@ -20,7 +20,7 @@ export function Modal({
   open: boolean;
   onClose: () => void;
   title?: string;
-  size?: 'default' | 'wide';
+  size?: 'default' | 'wide' | 'sheet';
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -63,7 +63,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className={[styles.overlay, size === 'wide' ? styles.overlayWide : '', open ? '' : styles.overlayOut]
+      className={[styles.overlay, size !== 'default' ? styles.overlayWide : '', open ? '' : styles.overlayOut]
         .filter(Boolean)
         .join(' ')}
       onMouseDown={(e) => {
