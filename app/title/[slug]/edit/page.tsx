@@ -438,7 +438,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             { key: 'artwork', label: 'Оформление' },
             ...(canIllustrations ? [{ key: 'illustrations', label: 'Иллюстрации' }] : []),
             { key: 'content', label: 'Главы' },
-            ...(canText && title.text_branch ? [{ key: 'text', label: 'Текст' }] : []),
+            ...(canText ? [{ key: 'text', label: 'Текст' }] : []),
             { key: 'stats', label: 'Статистика' },
           ]}
           active={tab}
@@ -456,7 +456,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         <TitleContentManager title={title} onReload={reloadTitle} />
       ) : null}
 
-      {tab === 'text' && canText && title.text_branch ? <TextBranchManager title={title} onReload={reloadTitle} /> : null}
+      {tab === 'text' && canText ? <TextBranchManager title={title} onReload={reloadTitle} /> : null}
 
       {tab === 'stats' ? <TitleStatsDashboard titleId={title.id} /> : null}
 

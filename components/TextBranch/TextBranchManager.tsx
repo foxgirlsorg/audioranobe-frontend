@@ -10,6 +10,7 @@ import Spinner from '@/components/Spinner/Spinner';
 import Toggle from '@/components/Toggle/Toggle';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { announcementLine } from '@/lib/ttsMode';
+import BookImportModal from './BookImportModal';
 import TextEditorModal from './TextEditorModal';
 import { AddChapterModal, EditVolumeModal, MoveModal, type VolumeOption } from './TextDialogs';
 import styles from './TextBranch.module.css';
@@ -44,6 +45,7 @@ export default function TextBranchManager({ title, onReload }: { title: TitleFul
   const [editing, setEditing] = useState<TextChapter | null>(null);
   const [confirm, setConfirm] = useState<{ ids: number[]; action: 'remove' | 'resync' } | null>(null);
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [editVolume, setEditVolume] = useState<VolumeOption | null>(null);
   const [moving, setMoving] = useState<number[] | null>(null);
 
@@ -197,6 +199,11 @@ export default function TextBranchManager({ title, onReload }: { title: TitleFul
         <button type="button" className="btn btn-ghost" disabled={volumeOptions.length === 0} onClick={() => setAdding(true)}>
           Добавить главу
         </button>
+        {totals.n === 0 ? (
+          <button type="button" className="btn btn-ghost" onClick={() => setImporting(true)}>
+            Импорт из файла
+          </button>
+        ) : null}
       </div>
 
       {groups.length === 0 ? <p className={styles.empty}>Ничего не найдено.</p> : null}
@@ -355,6 +362,16 @@ export default function TextBranchManager({ title, onReload }: { title: TitleFul
           volumeWord={title.volume_label}
           onClose={() => setMoving(null)}
           onDone={async () => { setSelected(new Set()); await Promise.all([load(), onReload()]); }}
+        />
+      ) : null}
+
+      {importing ? (
+        <BookImportModal
+          titleId={title.id}
+          volumeWord={title.volume_label}
+          defaultVolume={title.volumes.length === 0 ? 1 : Math.max(...title.volumes.map((v) => v.number)) + 1}
+          onClose={() => setImporting(false)}
+          onDone={async () => { await Promise.all([load(), onReload()]); }}
         />
       ) : null}
 
