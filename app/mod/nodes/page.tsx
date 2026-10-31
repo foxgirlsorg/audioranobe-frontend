@@ -34,7 +34,6 @@ function brokerHost(): string {
 
 const NODE_TYPE_OPTIONS: { value: NodeType; label: string }[] = [
   { value: 'converter', label: 'Конвертер' },
-  { value: 'narrator', label: 'Озвучка' },
 ];
 
 function NodesContent() {
