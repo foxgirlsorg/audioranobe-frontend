@@ -182,6 +182,15 @@ export default function TtsStage() {
             <button type="button" className={`${styles.sw} ${tts.follow ? styles.swOn : ''}`} aria-pressed={tts.follow} aria-label="Следовать за озвучкой" onClick={() => tts.setFollow(!tts.follow)} />
           </div>
         </section>
+
+        <section className={styles.card}>
+          <h2 className={styles.micro}><span>Объявление главы</span></h2>
+          <div className={styles.row}>
+            <span className={styles.stat}>{'Объявлять главу'}</span>
+            <button type="button" className={`${styles.sw} ${tts.announce ? styles.swOn : ''}`} aria-pressed={tts.announce} aria-label="Объявлять главу" onClick={() => tts.setAnnounce(!tts.announce)} />
+          </div>
+          <p className={styles.note}>{'Первой строкой прозвучат том, номер главы и название. Применится со следующей главы.'}</p>
+        </section>
       </aside>
       <div className={`${styles.scrim} ${tts.sheet ? styles.scrimOpen : ''}`} onClick={() => tts.setSheet(false)} />
     </div>

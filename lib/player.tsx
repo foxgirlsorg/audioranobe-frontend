@@ -79,7 +79,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [user]);
 
   const { toast } = useToast();
-  const tts = useTtsMode({ rate, toast, onEnded: (ch) => ttsEndedRef.current(ch) });
+  const tts = useTtsMode({ rate, volume: toGain(volume), toast, onEnded: (ch) => ttsEndedRef.current(ch) });
   const ttsRef = useRef(tts);
   ttsRef.current = tts;
 
@@ -213,8 +213,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         const ch = await api<ChapterPlay>(`/chapters/${id}`);
         if (seq !== loadSeqRef.current) return;
 
-        if (!ch.audio_url) {
-          // Text-only chapter: no audio to load, it is read aloud in the browser instead.
+        if (ch.narration === 'tts' || !ch.audio_url) {
+          // Read aloud in the browser: the AI branch is selected or the chapter has no audio.
           if (autoplay) await playTtsRef.current(id, startAt);
           else {
             try {
@@ -336,14 +336,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const next = useCallback(() => {
     const cur = currentRef.current;
     if (!cur?.next_id) return;
-    if (ttsOnRef.current) playTts(cur.next_id).catch(() => {});
-    else playChapter(cur.next_id).catch(() => {});
+    playChapter(cur.next_id).catch(() => {});
   }, [playChapter, playTts]);
 
   const prev = useCallback(() => {
     const cur = currentRef.current;
     if (!cur) return;
-    if (cur.prev_id) (ttsOnRef.current ? playTts(cur.prev_id) : playChapter(cur.prev_id)).catch(() => {});
+    if (cur.prev_id) playChapter(cur.prev_id).catch(() => {});
     else seek(0);
   }, [playChapter, playTts, seek]);
 
@@ -464,7 +463,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         setSleepRemaining(null);
         return;
       }
-      if (ch.next_id) playTts(ch.next_id).catch(() => {});
+      if (ch.next_id) playChapter(ch.next_id).catch(() => {});
     };
   }, [playTts, saveProgress]);
 

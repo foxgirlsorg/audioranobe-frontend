@@ -10,6 +10,7 @@ export interface NarrationSession {
   stop(): void;
   setRate(rate: number): void;
   setPause(seconds: number): void;
+  setVolume(gain: number): void;
 }
 
 export interface SessionOptions {
@@ -19,6 +20,7 @@ export interface SessionOptions {
   deviceVoice?: string;
   rate: number;
   pause: number;
+  volume: number;
   onIndex(i: number): void;
   onEnd(): void;
   onError(message: string): void;
@@ -34,9 +36,11 @@ const errText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 function sileroSession(o: SessionOptions): NarrationSession {
   let ctx: AudioContext | null = null;
+  let out: GainNode | null = null;
   let gen = 0;
   let rate = o.rate;
   let pause = o.pause;
+  let volume = o.volume;
   let sources: AudioBufferSourceNode[] = [];
   let scheduled: { idx: number; at: number }[] = [];
   let abort: AbortController | null = null;
@@ -81,7 +85,7 @@ function sileroSession(o: SessionOptions): NarrationSession {
       buf.getChannelData(0).set(audio);
       const src = c.createBufferSource();
       src.buffer = buf;
-      src.connect(c.destination);
+      src.connect(out ?? c.destination);
       const startAt = Math.max(playAt, c.currentTime + 0.02);
       src.start(startAt);
       sources.push(src);
@@ -109,7 +113,12 @@ function sileroSession(o: SessionOptions): NarrationSession {
   return {
     start(from) {
       halt();
-      if (!ctx) ctx = new AudioContext({ sampleRate: NARRATION_SAMPLE_RATE });
+      if (!ctx) {
+        ctx = new AudioContext({ sampleRate: NARRATION_SAMPLE_RATE });
+        out = ctx.createGain();
+        out.gain.value = volume;
+        out.connect(ctx.destination);
+      }
       cur = -1;
       const g = gen;
       void ctx.resume();
@@ -123,10 +132,12 @@ function sileroSession(o: SessionOptions): NarrationSession {
       o.onBusy(false);
       const c = ctx;
       ctx = null;
+      out = null;
       if (c) void c.close();
     },
     setRate(r) { rate = r; },
     setPause(p) { pause = p; },
+    setVolume(v) { volume = v; if (out) out.gain.value = v; },
   };
 }
 
@@ -135,6 +146,7 @@ function deviceSession(o: SessionOptions): NarrationSession {
   let gen = 0;
   let rate = o.rate;
   let pause = o.pause;
+  let volume = o.volume;
 
   return {
     start(from) {
@@ -151,6 +163,7 @@ function deviceSession(o: SessionOptions): NarrationSession {
           u.voice = voice;
           u.lang = voice.lang;
           u.rate = rate;
+          u.volume = volume;
           u.onstart = () => { if (g === gen) o.onIndex(k); };
           u.onend = () => { if (g === gen) window.setTimeout(() => speak(k + 1), pause * 1000); };
           u.onerror = (e) => { if (g === gen && e.error !== 'canceled' && e.error !== 'interrupted') o.onError(e.error); };
@@ -164,6 +177,7 @@ function deviceSession(o: SessionOptions): NarrationSession {
     stop() { gen++; synth.cancel(); },
     setRate(r) { rate = r; },
     setPause(p) { pause = p; },
+    setVolume(v) { volume = v; },
   };
 }
 

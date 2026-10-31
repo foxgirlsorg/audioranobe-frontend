@@ -15,6 +15,7 @@ import {
 } from '@/lib/browserNarration';
 import { createNarrationSession, type NarrationSession } from '@/lib/narrationSession';
 import { errMsg } from '@/lib/toast';
+import { chapterNumberLabel } from '@/lib/format';
 
 export type ReaderStyle = 'focus' | 'prompter';
 
@@ -26,6 +27,33 @@ const ls = {
   get: (k: string): string | null => { try { return localStorage.getItem(`tts.ui.${k}`); } catch { return null; } },
   set: (k: string, v: string) => { try { localStorage.setItem(`tts.ui.${k}`, v); } catch { /* private mode */ } },
 };
+/** "Том 2 глава 5 - Название"; the volume only when the title has several, the name only when it says more than the number. */
+export function announcementLine(o: {
+  volumeCount: number;
+  volumeLabel: string;
+  volumeNumber: number;
+  number: number;
+  numberEnd: number | null;
+  name: string;
+}): string {
+  const parts: string[] = [];
+  if (o.volumeCount > 1) parts.push(`${o.volumeLabel} ${chapterNumberLabel(o.volumeNumber)}`);
+  parts.push(`${parts.length ? 'глава' : 'Глава'} ${chapterNumberLabel(o.number, o.numberEnd)}`);
+  const name = o.name.trim();
+  const bare = /^(глава|главы)?\s*[\d.,\s–-]*$/i.test(name);
+  return name && !bare ? `${parts.join(' ')} - ${name}` : parts.join(' ');
+}
+
+export const chapterAnnouncement = (ch: ChapterPlay): string =>
+  announcementLine({
+    volumeCount: ch.volume.count ?? 1,
+    volumeLabel: ch.title.volume_label,
+    volumeNumber: ch.volume.number,
+    number: ch.number,
+    numberEnd: ch.number_end,
+    name: ch.name,
+  });
+
 const num = (k: string, d: number, min: number, max: number) => {
   const raw = ls.get(k);
   const v = Number(raw);
@@ -67,6 +95,9 @@ export interface TtsMode {
   deviceVoices: { name: string; lang: string }[];
   pause: number;
   setPause(v: number): void;
+  /** Read the volume, chapter number and name before the text. */
+  announce: boolean;
+  setAnnounce(v: boolean): void;
 
   engines: NarrationEngineInfo[];
   install: { done: number; total: number } | null;
@@ -87,10 +118,12 @@ export interface TtsMode {
 
 export function useTtsMode({
   rate,
+  volume,
   toast,
   onEnded,
 }: {
   rate: number;
+  volume: number;
   toast: (msg: string, kind?: 'ok' | 'error') => void;
   onEnded: (chapter: ChapterPlay) => void;
 }): TtsMode {
@@ -113,6 +146,8 @@ export function useTtsMode({
   const [speaker, setSpeakerState] = useState<string | null>(null);
   const [deviceVoice, setDeviceVoiceState] = useState('');
   const [pause, setPauseState] = useState(0.35);
+  const [announce, setAnnounceState] = useState(true);
+  const [annLen, setAnnLen] = useState(0);
   useEffect(() => {
     setStyleState(ls.get('style') === 'prompter' ? 'prompter' : 'focus');
     setFontSizeState(num('fs', 26, 16, 40));
@@ -121,6 +156,7 @@ export function useTtsMode({
     setSpeakerState(ls.get('speaker'));
     setDeviceVoiceState(ls.get('deviceVoice') ?? '');
     setPauseState(num('pause', 0.35, 0.1, 0.9));
+    setAnnounceState(ls.get('announce') !== '0');
   }, []);
 
   const [engines, setEngines] = useState<NarrationEngineInfo[]>([]);
@@ -130,6 +166,8 @@ export function useTtsMode({
   const [measured, setMeasured] = useState({ chars: 0, secs: 0 });
 
   const sessRef = useRef<NarrationSession | null>(null);
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
   const idxRef = useRef(0);
   const playingRef = useRef(false);
   const idxAt = useRef(0);
@@ -143,6 +181,8 @@ export function useTtsMode({
   const listenedRef = useRef(0);
   const busyRef = useRef(false);
   busyRef.current = busy;
+  const announceRef = useRef(announce);
+  announceRef.current = announce;
   const rateRef = useRef(rate);
   rateRef.current = rate;
 
@@ -168,9 +208,9 @@ export function useTtsMode({
   const progress = useMemo(() => {
     let chars = 0;
     const upTo = finished ? sentences.length : idx;
-    for (let i = 0; i < upTo; i++) chars += sentences[i].length + 1;
+    for (let i = annLen; i < upTo; i++) chars += sentences[i].length + 1;
     return chars / STORED_CPS;
-  }, [sentences, idx, finished]);
+  }, [sentences, idx, finished, annLen]);
   const sentenceLen = (starts[idx + 1] ?? duration) - (starts[idx] ?? 0);
   const position = finished ? duration : Math.min(duration, (starts[idx] ?? 0) + Math.min(smooth, sentenceLen));
 
@@ -219,7 +259,10 @@ export function useTtsMode({
       .then((t) => {
         if (seq !== loadSeq.current) return;
         setChapterSpeaker(t.speaker || 'baya');
-        setParas(splitParagraphs(t.text));
+        const body = splitParagraphs(t.text);
+        const line = announceRef.current ? chapterAnnouncement(ch) : '';
+        setAnnLen(line ? 1 : 0);
+        setParas(line ? [[line], ...body] : body);
       })
       .catch((e) => { if (seq === loadSeq.current) setLoadError(errMsg(e)); });
   }, [stopSession]);
@@ -243,6 +286,7 @@ export function useTtsMode({
         deviceVoice,
         rate,
         pause,
+        volume: volumeRef.current,
         onIndex: (i) => { idxRef.current = i; idxAt.current = performance.now(); setSmooth(0); setIdx(i); },
         onBusy: setBusy,
         onMeasure: (chars, secs) => setMeasured((m) => ({ chars: m.chars + chars, secs: m.secs + secs })),
@@ -323,7 +367,7 @@ export function useTtsMode({
     let start = 0;
     if (resumeRef.current > 0) {
       let chars = 0;
-      for (let i = 0; i < sentences.length && chars / STORED_CPS < resumeRef.current; i++) {
+      for (let i = annLen; i < sentences.length && chars / STORED_CPS < resumeRef.current; i++) {
         start = i;
         chars += sentences[i].length + 1;
       }
@@ -337,7 +381,7 @@ export function useTtsMode({
       autoplayRef.current = false;
       play(start);
     }
-  }, [sentences, play]);
+  }, [sentences, play, annLen]);
 
   const pauseNow = useCallback(() => {
     if (!playingRef.current) return;
@@ -390,6 +434,7 @@ export function useTtsMode({
     return () => window.clearTimeout(t);
   }, [engine, activeSpeaker, deviceVoice, rate, stopSession]);
   useEffect(() => { sessRef.current?.setPause(pause); }, [pause]);
+  useEffect(() => { sessRef.current?.setVolume(volume); }, [volume]);
 
   useEffect(() => {
     if (!playing) return;
@@ -419,6 +464,7 @@ export function useTtsMode({
     deviceVoice, setDeviceVoice: (v) => { setDeviceVoiceState(v); ls.set('deviceVoice', v); },
     deviceVoices,
     pause, setPause: (v) => { setPauseState(v); ls.set('pause', String(v)); },
+    announce, setAnnounce: (v) => { setAnnounceState(v); ls.set('announce', v ? '1' : '0'); },
     engines, install, doInstall, cancelInstall: () => installAbort.current?.abort(), doRemove,
     load, takeListened: () => { const v = listenedRef.current; listenedRef.current = 0; return v; }, toggle, pauseNow, seekSentence, seekSeconds, stop,
   };
