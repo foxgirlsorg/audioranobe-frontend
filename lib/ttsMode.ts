@@ -441,7 +441,8 @@ export function useTtsMode({
     let last = performance.now();
     const iv = window.setInterval(() => {
       const now = performance.now();
-      if (!busyRef.current) listenedRef.current += ((now - last) / 1000) * rateRef.current;
+      if (busyRef.current) idxAt.current = now;
+      else listenedRef.current += ((now - last) / 1000) * rateRef.current;
       last = now;
       setSmooth((now - idxAt.current) / 1000);
     }, 250);
