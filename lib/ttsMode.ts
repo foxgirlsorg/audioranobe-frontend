@@ -260,7 +260,12 @@ export function useTtsMode({
         if (seq !== loadSeq.current) return;
         setChapterSpeaker(t.speaker || 'baya');
         const body = splitParagraphs(t.text);
-        const line = announceRef.current ? chapterAnnouncement(ch) : '';
+        const d = t.defaults;
+        if (d && ls.get('pause') === null) setPauseState(d.pause);
+        if (d && ls.get('engine') === null) setEngineState(d.engine);
+        const announceOn = d && ls.get('announce') === null ? d.announce : announceRef.current;
+        if (d && ls.get('announce') === null) setAnnounceState(d.announce);
+        const line = announceOn ? chapterAnnouncement(ch) : '';
         setAnnLen(line ? 1 : 0);
         setParas(line ? [[line], ...body] : body);
       })

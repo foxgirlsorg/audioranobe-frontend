@@ -31,7 +31,7 @@ export function useRequestNarration() {
           body: { ref },
         });
         toast(
-          res.already ? 'Этот тайтл уже озвучивается' : 'Озвучка заказана — скоро будет готова',
+          res.already ? 'Этот тайтл уже озвучивается' : 'Озвучка заказана',
           'ok'
         );
         router.push(`/title/${res.slug}`);

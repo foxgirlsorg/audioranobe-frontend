@@ -12,7 +12,6 @@ import Spinner from '@/components/Spinner/Spinner';
 import styles from './page.module.css';
 
 const VOICES = ['xenia', 'baya', 'kseniya', 'aidar', 'eugene', 'random'];
-const RATES = ['48000', '24000', '8000'];
 
 export default function NarrationSettingsPage() {
   return (
@@ -67,9 +66,9 @@ function NarrationSettingsInner() {
         enabled: cfg.enabled,
         narrator_id: cfg.narrator_id,
         speaker: cfg.speaker,
-        sample_rate: cfg.sample_rate,
-        batch_size: cfg.batch_size,
-        batch_threshold: cfg.batch_threshold,
+        pause: cfg.pause,
+        announce: cfg.announce,
+        engine: cfg.engine,
         poll_interval_minutes: cfg.poll_interval_minutes,
       };
       if (clearToken) body.rl_token = '';
@@ -104,8 +103,7 @@ function NarrationSettingsInner() {
   return (
     <div className={styles.wrap}>
       <p className={styles.lead}>
-        Импорт книг из внешнего каталога и их ИИ-озвучка. Чтец, голос и токен применяются
-        ко всем заказанным озвучкам.
+        Импорт книг из внешнего каталога и озвучка в браузере слушателя. Голос, пауза и объявление глав — значения по умолчанию: слушатель может изменить их у себя.
       </p>
 
       <div className={`glass-panel ${styles.panel}`}>
@@ -128,13 +126,12 @@ function NarrationSettingsInner() {
             options={narrators}
             onChange={(v) => patch({ narrator_id: v ? Number(v) : null })}
           />
-          <span className={styles.hint}>Аудио заказанных озвучек привязывается к этому чтецу.</span>
         </div>
 
         <div className={styles.row}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="narr-voice">
-              Голос Silero
+              Голос Silero по умолчанию
             </label>
             <Select
               id="narr-voice"
@@ -145,65 +142,57 @@ function NarrationSettingsInner() {
             />
           </div>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="narr-rate">
-              Частота дискретизации
+            <label className={styles.label} htmlFor="narr-engine">
+              Движок по умолчанию
             </label>
             <Select
-              id="narr-rate"
+              id="narr-engine"
               block
-              value={String(cfg.sample_rate)}
-              options={RATES.map((r) => ({ value: r, label: `${r} Гц` }))}
-              onChange={(v) => patch({ sample_rate: Number(v) })}
+              value={cfg.engine}
+              options={[
+                { value: 'silero', label: 'Silero' },
+                { value: 'device', label: 'Голос устройства' },
+              ]}
+              onChange={(v) => patch({ engine: v === 'device' ? 'device' : 'silero' })}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="narr-pause">
+              Пауза между предложениями, с
+            </label>
+            <input
+              id="narr-pause"
+              type="number"
+              className="input"
+              min={0.1}
+              max={0.9}
+              step={0.05}
+              value={cfg.pause}
+              onChange={(e) => patch({ pause: Number(e.target.value) })}
             />
           </div>
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="narr-batch">
-              Размер партии
-            </label>
-            <input
-              id="narr-batch"
-              type="number"
-              className="input"
-              min={1}
-              max={200}
-              value={cfg.batch_size}
-              onChange={(e) => patch({ batch_size: Number(e.target.value) })}
-            />
-            <span className={styles.hint}>Сколько глав ставить в очередь за раз.</span>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="narr-threshold">
-              Порог догрузки
-            </label>
-            <input
-              id="narr-threshold"
-              type="number"
-              className="input"
-              min={0}
-              max={cfg.batch_size}
-              value={cfg.batch_threshold}
-              onChange={(e) => patch({ batch_threshold: Number(e.target.value) })}
-            />
-            <span className={styles.hint}>За сколько глав до конца ставить следующую партию.</span>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="narr-poll">
-              Интервал опроса, мин
-            </label>
-            <input
-              id="narr-poll"
-              type="number"
-              className="input"
-              min={5}
-              max={1440}
-              value={cfg.poll_interval_minutes}
-              onChange={(e) => patch({ poll_interval_minutes: Number(e.target.value) })}
-            />
-            <span className={styles.hint}>Как часто проверять новые главы у продолжающихся тайтлов.</span>
-          </div>
+        <Toggle
+          checked={cfg.announce}
+          onChange={(on) => patch({ announce: on })}
+          label="Объявлять главы"
+          hint="Первой строкой читать «Том N глава M - Название»"
+        />
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="narr-poll">
+            Интервал опроса, мин
+          </label>
+          <input
+            id="narr-poll"
+            type="number"
+            className="input"
+            min={5}
+            value={cfg.poll_interval_minutes}
+            onChange={(e) => patch({ poll_interval_minutes: Number(e.target.value) })}
+          />
+          <span className={styles.hint}>Как часто проверять новые главы у продолжающихся тайтлов.</span>
         </div>
 
         <div className={styles.field}>

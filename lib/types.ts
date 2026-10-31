@@ -894,7 +894,7 @@ export interface OrderStatus {
 
 /** A narration/convert queue task (GET /mod/narration-jobs). */
 export interface NarrationJob {
-  kind: 'narration' | 'convert';
+  kind: 'narration' | 'convert' | 'import';
   id: number;
   title: { id: number; slug: string; name: string };
   volume: string;
@@ -908,6 +908,10 @@ export interface NarrationJob {
   /** When a node picked the job up; null while it is still queued. */
   claimed_at: string | null;
   finished_at: string | null;
+  /** Import jobs: chapters whose text is stored out of all the source has. */
+  progress?: { done: number; total: number };
+  /** Import jobs: unix time of the next automatic attempt while the source is unreachable. */
+  retry_at?: number | null;
 }
 
 export interface NarrationJobList extends Paginated<NarrationJob> {
@@ -919,9 +923,9 @@ export interface NarrationSettings {
   enabled: boolean;
   narrator_id: number | null;
   speaker: string;
-  sample_rate: number;
-  batch_size: number;
-  batch_threshold: number;
+  pause: number;
+  announce: boolean;
+  engine: 'silero' | 'device';
   poll_interval_minutes: number;
   has_token: boolean;
 }
