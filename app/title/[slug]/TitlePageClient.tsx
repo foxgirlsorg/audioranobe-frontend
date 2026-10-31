@@ -229,8 +229,17 @@ export default function TitlePageClient({
     setSelectedVersion(title?.selected_version_id ?? 0);
   }, [title?.id, title?.selected_version_id]);
 
+  const aiOn = title?.versions.find((x) => x.id === selectedVersion)?.kind === 'ai';
+  const hasAudio = !!title?.volumes.some((v) => v.chapters.some((c) => c.audio_status === 'ready'));
+
   const displayVolumes = useMemo<VersionVolume[]>(() => {
     if (!title) return [];
+    if (aiOn) {
+      return title.volumes.map((v) => ({
+        ...v,
+        chapters: v.chapters.map((c): VersionChapter => (c.has_text ? c : { ...c, defaulted: true })),
+      }));
+    }
     // A version's standalone volumes list its own chapters; a volume with no
     // main chapters is filled in from a standalone version (selected one first).
     const standaloneIn = (ver: number, volumeId: number) =>
@@ -265,7 +274,7 @@ export default function TitlePageClient({
       const from = chapters.length > 0 && chapters.every((c) => c.defaulted) ? 'из основной' : undefined;
       return { ...v, chapters, from };
     });
-  }, [title, selectedVersion]);
+  }, [title, selectedVersion, aiOn]);
 
   async function changeVersion(vid: number) {
     setSelectedVersion(vid);
@@ -369,7 +378,7 @@ export default function TitlePageClient({
       return;
     }
     try {
-      if (ch.audio_status !== 'ready' && ch.has_text) {
+      if (ch.has_text && (aiOn || ch.audio_status !== 'ready')) {
         await player.playTts(ch.id);
         player.setFull(true);
         return;
@@ -848,7 +857,7 @@ export default function TitlePageClient({
       />
     ) : (
       <div className={styles.volumes}>
-        {title.versions.length > 0 ? (
+        {title.versions.length > 0 && (hasAudio || title.versions.some((x) => x.kind !== 'ai')) ? (
           <div className={styles.versionTabs} role="tablist" aria-label="Версия озвучки">
             <button
               type="button"

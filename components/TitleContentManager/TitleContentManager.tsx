@@ -230,6 +230,7 @@ export default function TitleContentManager({
   // 0 = main version; an alt version id otherwise. All chapter management on this
   // page operates on the active version.
   const [currentVersion, setCurrentVersion] = useState(0);
+  const pickVersion = (id: number) => setCurrentVersion(id);
   const [versionForm, setVersionForm] = useState<'add' | 'rename' | 'main' | null>(null);
   const [versionName, setVersionName] = useState('');
   const [versionBusy, setVersionBusy] = useState(false);
@@ -992,75 +993,82 @@ export default function TitleContentManager({
 
   const activeAltVersion = title.versions.find((v) => v.id === currentVersion) ?? null;
 
-  return (
-    <div className={styles.manager}>
-      <section className={styles.section}>
+  const tabsRow = (
+    <>
+    {canManageVersions ? (
+      <div className={styles.versionTabs}>
+        <button
+          type="button"
+          className={currentVersion === 0 ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
+          onClick={() => pickVersion(0)}
+        >
+          {title.version_name}
+        </button>
+        {title.versions.filter((v) => v.kind !== 'ai').map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            className={currentVersion === v.id ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
+            onClick={() => pickVersion(v.id)}
+          >
+            {v.name}
+          </button>
+        ))}
         {canManageVersions ? (
-          <div className={styles.versionTabs}>
-            <button
-              type="button"
-              className={currentVersion === 0 ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
-              onClick={() => setCurrentVersion(0)}
-            >
-              {title.version_name}
-            </button>
-            {title.versions.map((v) => (
+          <span className={styles.versionActions}>
+            {currentVersion === 0 ? (
               <button
-                key={v.id}
                 type="button"
-                className={currentVersion === v.id ? `${styles.versionTab} ${styles.versionTabActive}` : styles.versionTab}
-                onClick={() => setCurrentVersion(v.id)}
+                className={styles.iconBtn}
+                onClick={() => openVersionForm('main')}
+                title="Переименовать основную версию"
+                aria-label="Переименовать основную версию"
               >
-                {v.name}
+                <Pencil size={14} />
               </button>
-            ))}
-            {canManageVersions ? (
-              <span className={styles.versionActions}>
-                {currentVersion === 0 ? (
-                  <button
-                    type="button"
-                    className={styles.iconBtn}
-                    onClick={() => openVersionForm('main')}
-                    title="Переименовать основную версию"
-                    aria-label="Переименовать основную версию"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.iconBtn}
-                      onClick={() => openVersionForm('rename')}
-                      title="Переименовать версию"
-                      aria-label="Переименовать версию"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.iconBtnDanger}
-                      onClick={() => activeAltVersion && setVersionToDelete(activeAltVersion)}
-                      title="Удалить версию"
-                      aria-label="Удалить версию"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </>
-                )}
+            ) : (
+              <>
                 <button
                   type="button"
                   className={styles.iconBtn}
-                  onClick={() => openVersionForm('add')}
-                  title="Добавить версию"
-                  aria-label="Добавить версию"
+                  onClick={() => openVersionForm('rename')}
+                  title="Переименовать версию"
+                  aria-label="Переименовать версию"
                 >
-                  <Plus size={14} />
+                  <Pencil size={14} />
                 </button>
-              </span>
-            ) : null}
-          </div>
+                <button
+                  type="button"
+                  className={styles.iconBtnDanger}
+                  onClick={() => activeAltVersion && setVersionToDelete(activeAltVersion)}
+                  title="Удалить версию"
+                  aria-label="Удалить версию"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={() => openVersionForm('add')}
+              title="Добавить версию"
+              aria-label="Добавить версию"
+            >
+              <Plus size={14} />
+            </button>
+          </span>
         ) : null}
+      </div>
+    ) : null}
+    </>
+  );
+
+
+  return (
+    <div className={styles.manager}>
+      <section className={styles.section}>
+        {tabsRow}
 
         {versionForm ? (
           <form className={`glass-panel ${styles.inlinePanel}`} onSubmit={submitVersionForm} noValidate>

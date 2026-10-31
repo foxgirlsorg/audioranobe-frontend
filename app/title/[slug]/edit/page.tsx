@@ -30,6 +30,7 @@ import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import DangerZone from '@/components/DangerZone/DangerZone';
 import Tabs from '@/components/Tabs/Tabs';
 import TitleContentManager from '@/components/TitleContentManager/TitleContentManager';
+import TextBranchManager from '@/components/TextBranch/TextBranchManager';
 import TitleArtwork from '@/components/TitleArtwork/TitleArtwork';
 import IllustrationManager from '@/components/Illustrations/IllustrationManager';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
@@ -80,6 +81,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const canVolumeLabel = can('titles.volume_label');
   // The page itself already requires title edit access; this is the extra grant.
   const canIllustrations = can('illustrations.edit');
+  const canText = can('narration.books');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -403,7 +405,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     );
   }
 
-  const wide = tab === 'stats' || tab === 'content';
+  const wide = tab === 'stats' || tab === 'content' || tab === 'text';
   const showSaveBar = tab === 'info' && (dirty || saving || formError !== '');
 
   return (
@@ -436,6 +438,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             { key: 'artwork', label: 'Оформление' },
             ...(canIllustrations ? [{ key: 'illustrations', label: 'Иллюстрации' }] : []),
             { key: 'content', label: 'Главы' },
+            ...(canText && title.text_branch ? [{ key: 'text', label: 'Текст' }] : []),
             { key: 'stats', label: 'Статистика' },
           ]}
           active={tab}
@@ -452,6 +455,8 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       {tab === 'content' ? (
         <TitleContentManager title={title} onReload={reloadTitle} />
       ) : null}
+
+      {tab === 'text' && canText && title.text_branch ? <TextBranchManager title={title} onReload={reloadTitle} /> : null}
 
       {tab === 'stats' ? <TitleStatsDashboard titleId={title.id} /> : null}
 
