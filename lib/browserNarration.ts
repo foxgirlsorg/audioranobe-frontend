@@ -271,6 +271,7 @@ export interface ChapterText {
   edited: boolean;
   speaker: string;
   sample_rate: number;
+  defaults?: { pause: number; announce: boolean; engine: NarrationEngineId };
 }
 
 export const fetchChapterText = (chapterId: number) => api<ChapterText>(`/chapters/${chapterId}/text`);
@@ -406,5 +407,19 @@ export function splitParagraphs(text: string): string[][] {
     .split(/\n+/)
     .map((p) => p.replace(/\s+/g, ' ').trim())
     .filter(Boolean)
-    .map((p) => p.split(/(?<=[.!?…])\s+(?!—\s*[а-яё])/).filter(Boolean));
+    .map((p) => p.split(/(?<=[.!?…])\s+(?!—\s*[а-яё])/).flatMap(breakLong).filter(Boolean));
+}
+
+const MAX_SENTENCE = 300;
+
+function breakLong(s: string): string[] {
+  const out: string[] = [];
+  while (s.length > MAX_SENTENCE) {
+    const cut = Math.max(s.lastIndexOf(' ', MAX_SENTENCE), s.lastIndexOf(', ', MAX_SENTENCE) + 1);
+    const at = cut > MAX_SENTENCE / 3 ? cut : MAX_SENTENCE;
+    out.push(s.slice(0, at).trim());
+    s = s.slice(at).trim();
+  }
+  out.push(s);
+  return out;
 }
