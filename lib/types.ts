@@ -374,6 +374,8 @@ export interface ChapterRow {
   name: string;
   duration_seconds: number;
   audio_status: AudioStatus;
+  /** The chapter has stored text, so it can be read aloud in the browser even without audio. */
+  has_text?: boolean;
   mod_status: ModStatus;
   my_position: number | null;
   narrators: { id: number; slug: string; name: string }[];
@@ -598,6 +600,7 @@ export interface NodeCredentials {
   secret: string;
   queue: string;
   vhost: string;
+  amqp_url: string;
 }
 
 export interface LibraryEntry {

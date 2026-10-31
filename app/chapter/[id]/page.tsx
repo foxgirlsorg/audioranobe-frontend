@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock,
   Download,
+  FileText,
   Headphones,
   History,
   RefreshCw,
@@ -91,8 +92,22 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
       player.toggle();
       return;
     }
+    if (!chapter.audio_url) {
+      await onReadAloud();
+      return;
+    }
     try {
       await player.playChapter(chapter.id);
+    } catch (e) {
+      toast(errMsg(e), 'error');
+    }
+  }
+
+  async function onReadAloud() {
+    if (!chapter) return;
+    try {
+      await player.playTts(chapter.id);
+      player.setFull(true);
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -236,6 +251,7 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
               {`Остановились на ${formatDuration(chapter.my_position)}`}
             </span>
           ) : null}
+          {chapter.audio_url ? (
           <a
             href={chapter.audio_url}
             download={`${chapter.title.name} — ${chapter.number}. ${chapterLabel}.opus`}
@@ -245,6 +261,11 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
             <Download size={12} />
             {'Скачать'}
           </a>
+          ) : null}
+          <button type="button" className={styles.chipLink} onClick={() => void onReadAloud()} title={'Озвучка в браузере с текстом'}>
+            <FileText size={12} />
+            {'Читать с озвучкой'}
+          </button>
         </div>
 
         <div className={styles.pager}>

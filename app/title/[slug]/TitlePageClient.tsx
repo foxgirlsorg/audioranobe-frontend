@@ -341,7 +341,7 @@ export default function TitlePageClient({
     const out: ChapterRow[] = [];
     for (const v of title.volumes) {
       for (const c of liveChapters(v)) {
-        if (c.audio_status === 'ready' && c.mod_status === 'approved') out.push(c);
+        if ((c.audio_status === 'ready' || c.has_text) && c.mod_status === 'approved') out.push(c);
       }
     }
     return out;
@@ -369,6 +369,11 @@ export default function TitlePageClient({
       return;
     }
     try {
+      if (ch.audio_status !== 'ready' && ch.has_text) {
+        await player.playTts(ch.id);
+        player.setFull(true);
+        return;
+      }
       await player.playChapter(ch.id);
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -954,7 +959,7 @@ export default function TitlePageClient({
                   ) : (
                     v.chapters.map((ch) => {
                       const isCurrent = player.current?.id === ch.id;
-                      const playable = ch.audio_status === 'ready';
+                      const playable = ch.audio_status === 'ready' || !!ch.has_text;
                       const staticPos = ch.my_position ?? 0;
                       const staticPct =
                         ch.duration_seconds > 0
@@ -1017,7 +1022,7 @@ export default function TitlePageClient({
                               {ch.mod_status !== 'approved' ? (
                                 <StatusBadge status={ch.mod_status} />
                               ) : null}
-                              {ch.audio_status !== 'ready' && (canEdit || ch.audio_status !== 'none') ? (
+                              {ch.audio_status !== 'ready' && !ch.has_text && (canEdit || ch.audio_status !== 'none') ? (
                                 <StatusBadge status={ch.audio_status} />
                               ) : null}
                               {isMod && title.is_imported && title.is_ai ? (
@@ -1037,7 +1042,7 @@ export default function TitlePageClient({
                                   {formatDuration(ch.duration_seconds)}
                                 </span>
                               ) : null}
-                              {playable && user && ch.duration_seconds > 0 ? (
+                              {ch.audio_status === 'ready' && user && ch.duration_seconds > 0 ? (
                                 <button
                                   type="button"
                                   className={isListened(ch) ? `${styles.dlBtn} ${styles.listenedOn}` : styles.dlBtn}
@@ -1053,7 +1058,7 @@ export default function TitlePageClient({
                                   <Check size={14} />
                                 </button>
                               ) : null}
-                              {playable && user ? (
+                              {ch.audio_status === 'ready' && user ? (
                                 <button
                                   type="button"
                                   className={styles.dlBtn}

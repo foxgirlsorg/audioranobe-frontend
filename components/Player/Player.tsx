@@ -11,13 +11,15 @@ import {
   RotateCcw,
   RotateCw,
   Share2,
+  SlidersHorizontal,
   SkipBack,
   SkipForward,
   Volume2,
   VolumeX,
   X,
 } from 'lucide-react';
-import { usePlayer, usePlayerPosition } from '@/lib/player';
+import { usePlayer, usePlayerPosition, useTts } from '@/lib/player';
+import TtsStage from '@/components/TtsPlayer/TtsStage';
 import { isStandalone, useIsMobile } from '@/lib/pwa';
 import { chapterNumberLabel, formatDuration } from '@/lib/format';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
@@ -59,7 +61,10 @@ export default function Player() {
     barHidden,
     full,
     setFull,
+    mode,
   } = usePlayer();
+  const tts = useTts();
+  const isTts = mode === 'tts';
   const { position, buffered } = usePlayerPosition();
   const { toast } = useToast();
 
@@ -117,8 +122,7 @@ export default function Player() {
   useEffect(() => {
     if (!menu) return;
     const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (extrasRef.current?.contains(t) || fullSetRef.current?.contains(t)) return;
+      if ((e.target as Element).closest?.('[data-player-menu]')) return;
       setMenu(null);
     };
     document.addEventListener('mousedown', onDown);
@@ -183,11 +187,11 @@ export default function Player() {
   };
 
   const share = async () => {
-    const at = Math.round(scrub !== null ? scrub : position);
+    const at = Math.round(isTts ? tts.progress : scrub !== null ? scrub : position);
     const url = `${window.location.origin}/chapter/${current.id}?t=${at}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast(`Ссылка на ${formatDuration(at)} скопирована`, 'ok');
+      toast(isTts ? 'Ссылка на это место в тексте скопирована' : `Ссылка на ${formatDuration(at)} скопирована`, 'ok');
     } catch (e) {
       toast(errMsg(e), 'error');
     }
@@ -255,7 +259,7 @@ export default function Player() {
     </button>
   );
   const speedControl = (
-    <div className={styles.menuWrap}>
+    <div className={styles.menuWrap} data-player-menu>
       <button
         type="button"
         className={`${styles.textBtn} ${rate !== 1 ? styles.textBtnActive : ''}`}
@@ -287,7 +291,7 @@ export default function Player() {
     </div>
   );
   const sleepControl = (
-    <div className={styles.menuWrap}>
+    <div className={styles.menuWrap} data-player-menu>
       <button
         type="button"
         className={`${styles.iconBtn} ${sleep !== null ? styles.iconBtnActive : ''}`}
@@ -420,7 +424,8 @@ export default function Player() {
           >
             <Minimize2 />
           </button>
-          <div className={styles.stageArtBox}>
+          {isTts ? <TtsStage /> : null}
+          <div className={styles.stageArtBox} style={isTts ? { display: "none" } : undefined}>
             {current.illustrations && current.illustrations.length > 0 ? (
               // The chapter's own illustrations take the cover's place.
               <IllustrationCarousel
@@ -437,7 +442,7 @@ export default function Player() {
               </Link>
             )}
           </div>
-          <div className={styles.stageMeta}>
+          <div className={styles.stageMeta} style={isTts ? { display: "none" } : undefined}>
             <Link href={`/title/${current.title.slug}`} className={styles.stageTitle}>
               {current.title.name}
             </Link>
@@ -464,7 +469,7 @@ export default function Player() {
         </div>
       ) : null}
 
-      <div className={styles.inner}>
+      <div className={isTts ? `${styles.inner} ${styles.innerWide}` : styles.inner}>
         <div className={styles.seekRow}>
           <span className={styles.time}>{formatDuration(shown)}</span>
           <input
@@ -543,6 +548,11 @@ export default function Player() {
             <div className={styles.fullExtras}>
               {speedControl}
               {sleepControl}
+              {isTts ? (
+                <button type="button" className={styles.iconBtn} onClick={() => tts.setSheet(true)} title="Настройки озвучки" aria-label="Настройки озвучки">
+                  <SlidersHorizontal />
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}
