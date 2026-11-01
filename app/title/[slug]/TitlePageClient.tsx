@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -23,6 +23,7 @@ import {
   RefreshCw,
   ShieldAlert,
   Star,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import { api, API_URL, ApiError } from '@/lib/api';
@@ -72,6 +73,32 @@ type VersionChapter = ChapterRow & { defaulted?: boolean };
 type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[]; from?: string };
 
 // Soft-deleted chapters are gone as far as counts and totals are concerned.
+function Dismissible({ storageKey, children }: { storageKey: string; children: (close: ReactNode) => ReactNode }) {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    try {
+      setHidden(localStorage.getItem(storageKey) === '1');
+    } catch {}
+  }, [storageKey]);
+  if (hidden) return null;
+  const close = (
+    <button
+      type="button"
+      className={styles.bannerClose}
+      aria-label="Закрыть"
+      onClick={() => {
+        setHidden(true);
+        try {
+          localStorage.setItem(storageKey, '1');
+        } catch {}
+      }}
+    >
+      <X size={14} aria-hidden="true" />
+    </button>
+  );
+  return <>{children(close)}</>;
+}
+
 function liveChapters(v: Pick<Volume, 'chapters'>): ChapterRow[] {
   return v.chapters.filter((c) => !c.is_deleted);
 }
@@ -794,56 +821,71 @@ export default function TitlePageClient({
   const banners = (
     <>
       {showInfoBanner && infoBanner ? (
-        <div className={`${styles.claimBanner} ${styles.infoBanner}`} role="status">
-          <Info size={17} aria-hidden="true" className={styles.claimBannerIcon} />
-          <div className={styles.claimBannerBody}>
-            {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
-            {infoBanner.text ? <span>{infoBanner.text}</span> : null}
-          </div>
-          {infoBanner.url ? (
-            <a
-              href={infoBanner.url}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-              className={styles.claimBannerBtn}
-            >
-              Открыть
-            </a>
-          ) : null}
-        </div>
+        <Dismissible storageKey={`banner:${title.id}:info`}>
+          {(close) => (
+            <div className={`${styles.claimBanner} ${styles.infoBanner}`} role="status">
+              <Info size={17} aria-hidden="true" className={styles.claimBannerIcon} />
+              <div className={styles.claimBannerBody}>
+                {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
+                {infoBanner.text ? <span>{infoBanner.text}</span> : null}
+              </div>
+              {infoBanner.url ? (
+                <a
+                  href={infoBanner.url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className={styles.claimBannerBtn}
+                >
+                  Открыть
+                </a>
+              ) : null}
+              {close}
+            </div>
+          )}
+        </Dismissible>
       ) : null}
 
       {title.narration_pending ? (
-        <div className={styles.narrationBanner}>
-          <Headphones size={17} aria-hidden="true" />
-          <div className={styles.narrationBannerBody}>
-            <strong>Идёт ИИ-озвучка</strong>
-            <span>
-              Главы появляются по мере готовности — уже озвученные можно слушать, остальные в работе.
-            </span>
-          </div>
-        </div>
+        <Dismissible storageKey={`banner:${title.id}:narration`}>
+          {(close) => (
+            <div className={styles.narrationBanner}>
+              <Headphones size={17} aria-hidden="true" />
+              <div className={styles.narrationBannerBody}>
+                <strong>Идёт ИИ-озвучка</strong>
+                <span>
+                  Главы появляются по мере готовности — уже озвученные можно слушать, остальные в работе.
+                </span>
+              </div>
+              {close}
+            </div>
+          )}
+        </Dismissible>
       ) : null}
 
       {title.is_ai ? (
-        <div className={styles.claimBanner}>
-          <Mic size={17} aria-hidden="true" className={styles.claimBannerIcon} />
-          <div className={styles.claimBannerBody}>
-            <strong>Озвучиваете эту книгу?</strong>
-            <span>
-              Этот тайтл озвучен синтезированным голосом. Если вы чтец и озвучили
-              эту книгу сами — напишите в поддержку, и мы передадим тайтл вам.
-            </span>
-          </div>
-          <a
-            href={SUPPORT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.claimBannerBtn}
-          >
-            Связаться с поддержкой
-          </a>
-        </div>
+        <Dismissible storageKey={`banner:${title.id}:claim`}>
+          {(close) => (
+            <div className={styles.claimBanner}>
+              <Mic size={17} aria-hidden="true" className={styles.claimBannerIcon} />
+              <div className={styles.claimBannerBody}>
+                <strong>Озвучиваете эту книгу?</strong>
+                <span>
+                  Этот тайтл озвучен синтезированным голосом. Если вы чтец и озвучили
+                  эту книгу сами — напишите в поддержку, и мы передадим тайтл вам.
+                </span>
+              </div>
+              <a
+                href={SUPPORT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.claimBannerBtn}
+              >
+                Связаться с поддержкой
+              </a>
+              {close}
+            </div>
+          )}
+        </Dismissible>
       ) : null}
     </>
   );
