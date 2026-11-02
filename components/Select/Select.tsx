@@ -70,7 +70,9 @@ export default function Select<T extends string = string>({
       close(false);
     };
     const onScroll = (e: Event) => {
-      if (listRef.current?.contains(e.target as Node)) return;
+      const t = e.target;
+      if (listRef.current?.contains(t as Node)) return;
+      if (t instanceof Element && !t.contains(btnRef.current)) return;
       close(false);
     };
     document.addEventListener('mousedown', onDown);
