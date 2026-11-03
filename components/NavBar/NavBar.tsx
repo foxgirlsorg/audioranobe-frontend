@@ -118,7 +118,6 @@ export default function NavBar() {
   const desktopMenuRef = useRef<HTMLDivElement | null>(null);
   const avatarBtnRef = useRef<HTMLButtonElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const seqRef = useRef(0);
 
   const [mounted, setMounted] = useState(false);
@@ -251,11 +250,9 @@ export default function NavBar() {
     };
   }, [mobileSearchOpen]);
 
-  // The floating search's own way out, beyond its close button: Escape, and
-  // autofocus so typing can start immediately.
+  // The floating search's own way out, beyond its close button: Escape.
   useEffect(() => {
     if (!mobileSearchOpen) return;
-    mobileSearchInputRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setMobileSearchOpen(false);
     };
@@ -853,7 +850,7 @@ export default function NavBar() {
             <div className={styles.searchPanelRow}>
               <Search className={styles.searchIcon} aria-hidden="true" />
               <input
-                ref={mobileSearchInputRef}
+                autoFocus
                 className={styles.searchPanelInput}
                 type="text"
                 placeholder={'Поиск тайтлов и чтецов…'}
