@@ -217,6 +217,8 @@ function TitlePageSkeleton() {
   );
 }
 
+const M_FACTS_SHOWN = 6;
+
 export default function TitlePageClient({
   slug: rawSlug,
   initialTitle,
@@ -1172,68 +1174,30 @@ export default function TitlePageClient({
     />
   );
 
-  const factRows = (
-    <>
-      {title.author && (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Автор'}</span>
-          <Link
-            href={`/author/${title.author.id}`}
-            className={styles.factV}
-            title={`Ещё от ${title.author.name}`}
-          >
+  const facts: [string, ReactNode][] = [
+    ...(title.author
+      ? [['Автор', (
+          <Link href={`/author/${title.author.id}`} className={styles.factV} title={`Ещё от ${title.author.name}`}>
             {title.author.name}
           </Link>
-        </div>
-      )}
-      {runtime > 0 ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Длительность'}</span>
-          <span className={styles.factV}>{formatDuration(runtime)}</span>
-        </div>
-      ) : null}
-      {title.updated_at ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Обновлён'}</span>
-          <span className={styles.factV}>{formatDate(title.updated_at)}</span>
-        </div>
-      ) : null}
-      <div className={styles.factRow2}>
-        <span className={styles.factK}>{'Страна'}</span>
-        <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-      </div>
-      <div className={styles.factRow2}>
-        <span className={styles.factK}>{'Тайтл'}</span>
-        <span className={styles.factV}>
-          {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
-        </span>
-      </div>
-      {title.narrators.length > 0 ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Озвучка'}</span>
-          <span className={styles.factV}>
-            {NARRATION_STATUS_LABELS[narrationStatus]}
-          </span>
-        </div>
-      ) : null}
-      <div className={styles.factRow2}>
-        <span className={styles.factK}>{'Просмотров'}</span>
-        <span className={styles.factV}>{formatCount(title.views_count)}</span>
-      </div>
-      {chaptersTotal > 0 ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Глав'}</span>
-          <span className={styles.factV}>{chaptersTotal}</span>
-        </div>
-      ) : null}
-      {title.translator ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Переводчик'}</span>
-          <span className={styles.factV}>{title.translator}</span>
-        </div>
-      ) : null}
-    </>
+        )] as [string, ReactNode]]
+      : []),
+    ...(runtime > 0 ? [['Длительность', formatDuration(runtime)] as [string, ReactNode]] : []),
+    ...(title.updated_at ? [['Обновлён', formatDate(title.updated_at)] as [string, ReactNode]] : []),
+    ['Страна', COUNTRY_LABELS[title.country] ?? title.country],
+    ['Тайтл', RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status],
+    ...(title.narrators.length > 0 ? [['Озвучка', NARRATION_STATUS_LABELS[narrationStatus]] as [string, ReactNode]] : []),
+    ['Просмотров', formatCount(title.views_count)],
+    ...(chaptersTotal > 0 ? [['Глав', chaptersTotal] as [string, ReactNode]] : []),
+    ...(title.translator ? [['Переводчик', title.translator] as [string, ReactNode]] : []),
+  ];
+  const factRow = ([k, v]: [string, ReactNode]) => (
+    <div key={k} className={styles.factRow2}>
+      <span className={styles.factK}>{k}</span>
+      {typeof v === 'object' && v !== null ? v : <span className={styles.factV}>{v}</span>}
+    </div>
   );
+  const factRows = <>{facts.map(factRow)}</>;
 
   const detailsModal = (
     <>
@@ -1327,53 +1291,24 @@ export default function TitlePageClient({
 
         {mobileTab === 'about' ? (
           <div className={styles.mAbout}>
-            <div className={styles.mFactsCard}>
-              <div className={styles.mFacts}>
-                <div className={styles.mFact}>
-                  <b>Автор</b>
-                  {title.author ? (
-                    <Link href={`/author/${title.author.id}`}>{title.author.name}</Link>
-                  ) : (
-                    <span className={styles.quickMuted}>не указан</span>
-                  )}
-                </div>
-                {title.narrators.length > 0 ? (
-                  <div className={styles.mFact}>
-                    <b>Озвучка</b>
-                    <span>{NARRATION_STATUS_LABELS[narrationStatus]}</span>
-                  </div>
-                ) : null}
-                {title.updated_at ? (
-                  <div className={styles.mFact}>
-                    <b>Обновлён</b>
-                    <span>{formatDate(title.updated_at)}</span>
-                  </div>
-                ) : null}
-                {runtime > 0 ? (
-                  <div className={styles.mFact}>
-                    <b>Длительность</b>
-                    <span>{formatDuration(runtime)}</span>
-                  </div>
-                ) : null}
-                <div className={styles.mFact}>
-                  <b>Страна</b>
-                  <span>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-                </div>
-                <div className={styles.mFact}>
-                  <b>Просмотров</b>
-                  <span>{formatCount(title.views_count)}</span>
-                </div>
-              </div>
-              <button type="button" className={styles.mFactsMore} onClick={() => setDetailsOpen(true)}>
-                {'Все детали'}
-                <ChevronRight size={13} />
-              </button>
+            {descBlock}
+            {tagsBlock}
+            <div className={`glass-panel ${styles.mFactsCard}`}>
+              <span className={styles.sideEyebrow}>
+                <Info size={12} />
+                {'Детали'}
+              </span>
+              <div className={styles.mFacts}>{facts.slice(0, M_FACTS_SHOWN).map(factRow)}</div>
+              {facts.length > M_FACTS_SHOWN ? (
+                <button type="button" className={styles.factsMore} onClick={() => setDetailsOpen(true)}>
+                  {'Все детали'}
+                  <ChevronRight size={12} />
+                </button>
+              ) : null}
             </div>
             {detailsModal}
 
             {mNarratorsBlock}
-            {descBlock}
-            {tagsBlock}
             {ratingCard}
             {libraryWidget}
           </div>
