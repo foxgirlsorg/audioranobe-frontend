@@ -23,6 +23,7 @@ export default function NotificationBell({ scrolled = false }: { scrolled?: bool
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [long, setLong] = useState<Record<number, boolean>>({});
   const menuMounted = useAnimatedPresence(open, 140);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -165,10 +166,22 @@ export default function NotificationBell({ scrolled = false }: { scrolled?: bool
                   >
                     <span className={styles.dot} aria-hidden="true" />
                     <span className={styles.itemBody}>
-                      <span className={styles.itemText}>{n.body}</span>
+                      <ClampedText text={n.body} onLong={() => setLong((m) => ({ ...m, [n.id]: true }))} />
                       <span className={styles.itemTime}>{timeAgo(n.created_at)}</span>
                     </span>
                   </button>
+                  {long[n.id] ? (
+                    <Link
+                      href={`/me/notifications?n=${n.id}`}
+                      className={styles.moreLink}
+                      onClick={() => {
+                        markItemRead(n);
+                        setOpen(false);
+                      }}
+                    >
+                      {'Подробнее'}
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     className={styles.markReadBtn}
@@ -194,5 +207,19 @@ export default function NotificationBell({ scrolled = false }: { scrolled?: bool
           )
         : null}
     </div>
+  );
+}
+
+function ClampedText({ text, onLong }: { text: string; onLong: () => void }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && el.scrollHeight > el.clientHeight + 1) onLong();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text]);
+  return (
+    <span ref={ref} className={styles.itemText}>
+      {text}
+    </span>
   );
 }

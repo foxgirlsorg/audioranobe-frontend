@@ -125,6 +125,40 @@
   overflow-wrap: anywhere;
 }
 
+.focused {
+  animation: notifFocus 2.4s ease-out;
+  border-color: var(--accent);
+}
+
+@keyframes notifFocus {
+  0%, 30% {
+    box-shadow: 0 0 0 3px rgba(222, 97, 97, 0.45);
+    background: rgba(222, 97, 97, 0.14);
+  }
+}
+
+.clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+.expandBtn {
+  margin-top: 4px;
+  padding: 3px 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.expandBtn:hover {
+  color: var(--accent-hover);
+}
+
 .unread .body {
   color: var(--text);
 }
