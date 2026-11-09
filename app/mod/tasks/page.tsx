@@ -141,7 +141,7 @@ function TasksInner() {
                       Перезапустить
                     </button>
                   ) : null}
-                  {job.status === 'processing' && canRequeue ? (
+                  {job.status === 'processing' && canRequeue && job.kind !== 'import' ? (
                     <button
                       type="button"
                       className="btn btn-ghost"
