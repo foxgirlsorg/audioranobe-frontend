@@ -15,12 +15,16 @@ export function Modal({
   onClose,
   title,
   size = 'default',
+  subtitle,
+  actions,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
-  size?: 'default' | 'wide';
+  size?: 'default' | 'wide' | 'xwide' | 'sheet';
+  subtitle?: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -63,7 +67,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className={[styles.overlay, size === 'wide' ? styles.overlayWide : '', open ? '' : styles.overlayOut]
+      className={[styles.overlay, size !== 'default' ? styles.overlayWide : '', open ? '' : styles.overlayOut]
         .filter(Boolean)
         .join(' ')}
       onMouseDown={(e) => {
@@ -72,7 +76,7 @@ export function Modal({
     >
       <div
         ref={panelRef}
-        className={[styles.panel, size === 'wide' ? styles.panelWide : '', open ? '' : styles.panelOut]
+        className={[styles.panel, size === 'wide' ? styles.panelWide : size === 'xwide' ? styles.panelXWide : '', open ? '' : styles.panelOut]
           .filter(Boolean)
           .join(' ')}
         role="dialog"
@@ -98,10 +102,20 @@ export function Modal({
       >
         <span className={styles.topBar} aria-hidden="true" />
         <div className={styles.head}>
-          {title ? <h3 className={styles.title}>{title}</h3> : <span />}
+          {title ? (
+            <div className={styles.titleBox}>
+              {subtitle ? <small className={styles.subtitle}>{subtitle}</small> : null}
+              <h3 className={styles.title}>{title}</h3>
+            </div>
+          ) : (
+            <span />
+          )}
+          <div className={styles.headActions}>
+            {actions}
           <button type="button" className={styles.close} onClick={onClose} aria-label="Закрыть">
             <X size={18} />
           </button>
+          </div>
         </div>
         <div className={styles.body}>{children}</div>
       </div>

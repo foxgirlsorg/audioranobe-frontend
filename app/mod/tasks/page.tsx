@@ -64,7 +64,7 @@ function TasksInner() {
     if (retrying) return;
     setRetrying(key);
     try {
-      const base = job.kind === 'convert' ? '/mod/convert-jobs' : '/mod/narration-jobs';
+      const base = job.kind === 'convert' ? '/mod/convert-jobs' : job.kind === 'import' ? '/mod/import-jobs' : '/mod/narration-jobs';
       await api(`${base}/${job.id}/${action}`, { method: 'POST' });
       toast(action === 'requeue' ? 'Задача возвращена в очередь' : 'Задача перезапущена', 'ok');
       setNonce((n) => n + 1);
@@ -113,12 +113,16 @@ function TasksInner() {
                   </Link>
                   <span className={styles.jobMeta}>
                     <span className={`${styles.kindChip}${job.kind === 'convert' ? ` ${styles.kindConvert}` : ''}`}>
-                      {job.kind === 'convert' ? 'Конвертация' : 'Озвучка'}
+                      {job.kind === 'convert' ? 'Конвертация' : job.kind === 'import' ? 'Импорт' : 'Озвучка'}
                     </span>
-                    Том {job.volume || '—'} · Глава {job.number}
-                    {job.name ? ` · ${job.name}` : ''}
+                    {job.kind === 'import' && job.progress
+                      ? `Текст: ${job.progress.done} из ${job.progress.total} глав`
+                      : `Том ${job.volume || '—'} · Глава ${job.number}${job.name ? ` · ${job.name}` : ''}`}
                   </span>
                   {job.error ? <span className={styles.jobError} title={job.error}>{job.error}</span> : null}
+                  {job.retry_at ? (
+                    <span className={styles.jobSince}>{`следующая попытка ${new Date(job.retry_at * 1000).toLocaleString('ru-RU')}`}</span>
+                  ) : null}
                   {job.status === 'processing' && job.claimed_at ? (
                     <span className={styles.jobSince}>{`в работе ${timeAgo(job.claimed_at)}`}</span>
                   ) : null}

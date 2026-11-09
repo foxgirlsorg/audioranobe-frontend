@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { LIMITS } from '@/lib/limits';
 import { errMsg, useToast } from '@/lib/toast';
 import { useAnimatedPresence } from '@/lib/useAnimatedPresence';
 import type { Genre, Paginated } from '@/lib/types';
+import Highlight from './Highlight';
 import styles from './GenrePicker.module.css';
 
 interface Props {
@@ -35,6 +36,7 @@ export default function GenrePicker({
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [active, setActive] = useState(0);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -70,11 +72,13 @@ export default function GenrePicker({
 
   const q = query.trim().toLowerCase();
   const matches = useMemo(
-    () =>
-      genres
+    () => {
+      const list = genres
         .filter((g) => !value.includes(g.id))
-        .filter((g) => (q ? g.name.toLowerCase().includes(q) : true))
-        .slice(0, 30),
+        .filter((g) => (q ? g.name.toLowerCase().includes(q) : true));
+      if (!q) list.sort((a, b) => b.titles_count - a.titles_count);
+      return list.slice(0, 30);
+    },
     [genres, value, q]
   );
 
@@ -116,9 +120,18 @@ export default function GenrePicker({
       remove(value[value.length - 1]);
       return;
     }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      setOpen(true);
+      if (matches.length > 0) {
+        const step = e.key === 'ArrowDown' ? 1 : -1;
+        setActive((i) => (i + step + matches.length) % matches.length);
+      }
+      return;
+    }
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (matches.length > 0) add(matches[0]);
+      if (matches.length > 0) add(matches[Math.min(active, matches.length - 1)]);
       else if (canCreate) void createGenre();
       return;
     }
@@ -127,46 +140,61 @@ export default function GenrePicker({
 
   return (
     <div className={styles.wrap} ref={wrapRef}>
-      <div className={styles.bar} onClick={() => inputRef.current?.focus()}>
-        {selected.map((g) => (
-          <span key={g.id} className={styles.chip}>
-            {g.name}
-            <button
-              type="button"
-              className={styles.chipRemove}
-              onClick={(e) => {
-                e.stopPropagation();
-                remove(g.id);
-              }}
-              aria-label={`Убрать тег ${g.name}`}
-            >
-              <X size={12} />
-            </button>
-          </span>
-        ))}
+      {selected.length > 0 ? (
+        <div className={styles.chips}>
+          {selected.map((g) => (
+            <span key={g.id} className={styles.chip}>
+              {g.name}
+              <button
+                type="button"
+                className={styles.chipRemove}
+                onClick={() => remove(g.id)}
+                aria-label={`Убрать тег ${g.name}`}
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <div className={styles.bar}>
+        <Search size={15} className={styles.searchIcon} aria-hidden="true" />
         <input
           ref={inputRef}
           className={styles.input}
           type="text"
           maxLength={LIMITS.genreName}
           value={query}
-          placeholder={selected.length === 0 ? placeholder : ''}
+          placeholder={placeholder}
           onChange={(e) => {
             setQuery(e.target.value);
+            setActive(0);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           autoComplete="off"
           aria-labelledby={ariaLabelledBy}
+          aria-autocomplete="list"
         />
       </div>
 
       {dropdownMounted ? (
         <div className={`${styles.dropdown} ${dropdownShown ? '' : styles.dropdownOut}`} role="listbox">
-          {matches.map((g) => (
-            <button key={g.id} type="button" className={styles.option} onClick={() => add(g)}>
-              <span>{g.name}</span>
+          {!q && matches.length > 0 ? <div className={styles.dropHead}>Популярные</div> : null}
+          {matches.map((g, i) => (
+            <button
+              key={g.id}
+              type="button"
+              role="option"
+              aria-selected={i === active}
+              className={i === active ? `${styles.option} ${styles.optionActive}` : styles.option}
+              onMouseEnter={() => setActive(i)}
+              onClick={() => add(g)}
+            >
+              <span>
+                <Highlight text={g.name} query={query} />
+              </span>
               <span className={styles.optionCount}>{g.titles_count}</span>
             </button>
           ))}

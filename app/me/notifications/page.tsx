@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Award,
   Bell,
@@ -75,8 +75,58 @@ function splitHeading(s: string): [string, string] {
   return i === -1 ? [s, ''] : [s.slice(0, i), s.slice(i + 1)];
 }
 
+function NotifBody({ text, expanded = false }: { text: string; expanded?: boolean }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [long, setLong] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && !open) setLong(el.scrollHeight > el.clientHeight + 1);
+  }, [text, open]);
+
+  useLayoutEffect(() => {
+    if (expanded) setOpen(true);
+  }, [expanded]);
+
+  return (
+    <>
+      <p ref={ref} className={open ? styles.body : `${styles.body} ${styles.clamped}`}>
+        {text}
+      </p>
+      {long ? (
+        <button
+          type="button"
+          className={styles.expandBtn}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(!open);
+          }}
+        >
+          {open ? 'Свернуть' : 'Показать полностью'}
+        </button>
+      ) : null}
+    </>
+  );
+}
+
 export default function MyNotificationsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.center}>
+          <Spinner size={34} />
+        </div>
+      }
+    >
+      <NotificationsInner />
+    </Suspense>
+  );
+}
+
+function NotificationsInner() {
   const { user, loading: authLoading } = useAuth();
+  const focusId = Number(useSearchParams().get('n')) || 0;
   const { notifications: unreadCount } = useBadges();
   const router = useRouter();
   const { toast } = useToast();
@@ -89,6 +139,15 @@ export default function MyNotificationsPage() {
   useEffect(() => {
     if (!authLoading && !user) router.replace('/auth/login');
   }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (focusId) setPage(1);
+  }, [focusId]);
+
+  useEffect(() => {
+    if (!focusId || !data) return;
+    document.getElementById(`notif-${focusId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [focusId, data]);
 
   useEffect(() => {
     if (!user) return;
@@ -208,9 +267,15 @@ export default function MyNotificationsPage() {
               return (
                 <div
                   key={n.id}
-                  className={
-                    n.is_read ? `glass-panel ${styles.row}` : `glass-panel ${styles.row} ${styles.unread}`
-                  }
+                  id={`notif-${n.id}`}
+                  className={[
+                    'glass-panel',
+                    styles.row,
+                    n.is_read ? '' : styles.unread,
+                    n.id === focusId ? styles.focused : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   role={clickable ? 'button' : undefined}
                   tabIndex={clickable ? 0 : undefined}
                   onClick={() => open(n)}
@@ -228,7 +293,7 @@ export default function MyNotificationsPage() {
                     <span className={styles.typeLabel}>
                       {TYPE_LABELS[n.type] ?? n.type}
                     </span>
-                    <p className={styles.body}>{n.body}</p>
+                    <NotifBody text={n.body} expanded={n.id === focusId} />
                   </div>
                   <div className={styles.rowEnd}>
                     <span className={styles.when}>{timeAgo(n.created_at)}</span>

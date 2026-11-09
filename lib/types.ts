@@ -374,6 +374,8 @@ export interface ChapterRow {
   name: string;
   duration_seconds: number;
   audio_status: AudioStatus;
+  /** The chapter has stored text, so it can be read aloud in the browser even without audio. */
+  has_text?: boolean;
   mod_status: ModStatus;
   my_position: number | null;
   narrators: { id: number; slug: string; name: string }[];
@@ -391,6 +393,8 @@ export interface Volume {
 
 /** An alternative narration version. Main version is id 0 (name in TitleFull.version_name). */
 export interface TitleVersion {
+  /** 'ai' is the AudioRanobe AI branch: chapter texts read aloud in the browser. */
+  kind?: 'audio' | 'ai';
   id: number;
   name: string;
   sort: number;
@@ -520,6 +524,31 @@ export interface TitleFull extends TitleCard {
   selected_version_id: number;
   /** Alt-version chapters keyed by version id — overlaid on the main skeleton. */
   alt_chapters: Record<string, ChapterRow[]>;
+  /** The AudioRanobe AI branch (chapter texts narrated in the listener's browser); null when the title has no texts. */
+  text_branch?: TextBranch | null;
+}
+
+export interface TextBranch {
+  enabled: boolean;
+  /** Stored texts, switched-off and removed ones included (what editors manage). */
+  total: number;
+  /** Texts a listener can narrate. */
+  active: number;
+}
+
+export interface TextChapter {
+  id: number;
+  volume_id: number;
+  volume_number: number;
+  volume_name: string;
+  number: number;
+  number_end: number | null;
+  name: string;
+  chars: number;
+  edited: boolean;
+  enabled: boolean;
+  removed: boolean;
+  updated_at: number;
 }
 
 export interface ChapterPlay {
@@ -530,7 +559,9 @@ export interface ChapterPlay {
   duration_seconds: number;
   audio_url: string;
   my_position: number | null;
-  volume: { id: number; number: number; name: string; cover_url: string | null; cover_thumb_url: string | null };
+  /** 'tts': the browser reads the stored text aloud (AI branch selected, or the chapter has no audio). */
+  narration?: 'audio' | 'tts';
+  volume: { id: number; number: number; name: string; count?: number; cover_url: string | null; cover_thumb_url: string | null };
   title: { id: number; slug: string; name: string; cover_url: string | null; volume_label: string };
   prev_id: number | null;
   next_id: number | null;
@@ -598,6 +629,7 @@ export interface NodeCredentials {
   secret: string;
   queue: string;
   vhost: string;
+  amqp_url: string;
 }
 
 export interface LibraryEntry {
@@ -862,7 +894,7 @@ export interface OrderStatus {
 
 /** A narration/convert queue task (GET /mod/narration-jobs). */
 export interface NarrationJob {
-  kind: 'narration' | 'convert';
+  kind: 'narration' | 'convert' | 'import';
   id: number;
   title: { id: number; slug: string; name: string };
   volume: string;
@@ -876,6 +908,10 @@ export interface NarrationJob {
   /** When a node picked the job up; null while it is still queued. */
   claimed_at: string | null;
   finished_at: string | null;
+  /** Import jobs: chapters whose text is stored out of all the source has. */
+  progress?: { done: number; total: number };
+  /** Import jobs: unix time of the next automatic attempt while the source is unreachable. */
+  retry_at?: number | null;
 }
 
 export interface NarrationJobList extends Paginated<NarrationJob> {
@@ -887,9 +923,9 @@ export interface NarrationSettings {
   enabled: boolean;
   narrator_id: number | null;
   speaker: string;
-  sample_rate: number;
-  batch_size: number;
-  batch_threshold: number;
+  pause: number;
+  announce: boolean;
+  engine: 'silero' | 'device';
   poll_interval_minutes: number;
   has_token: boolean;
 }

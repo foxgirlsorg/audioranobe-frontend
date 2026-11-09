@@ -26,6 +26,7 @@ export default function DangerZone({
   isHidden = false,
   redirectTo,
   onChanged,
+  bare = false,
 }: {
   kind: TrashKind;
   id: number;
@@ -34,6 +35,7 @@ export default function DangerZone({
   isHidden?: boolean;
   redirectTo: string;
   onChanged?: () => void | Promise<void>;
+  bare?: boolean;
 }) {
   const { isMod, can } = useAuth();
   const trashView = can(`trash.view.${kind}`);
@@ -136,11 +138,13 @@ export default function DangerZone({
   }
 
   return (
-    <div className={`glass-panel ${styles.zone}`}>
-      <div className={styles.head}>
-        <AlertTriangle size={16} className={styles.icon} />
-        <span className={styles.title}>Опасная зона</span>
-      </div>
+    <div className={bare ? undefined : `glass-panel ${styles.zone}`}>
+      {bare ? null : (
+        <div className={styles.head}>
+          <AlertTriangle size={16} className={styles.icon} />
+          <span className={styles.title}>Опасная зона</span>
+        </div>
+      )}
 
       {isDeleted && (canRestore || canPurge) ? (
         <p className={styles.text}>

@@ -146,6 +146,7 @@
 .item {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   width: 100%;
@@ -215,6 +216,18 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.moreLink {
+  order: 3;
+  flex-basis: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.moreLink:hover {
+  color: var(--accent-hover);
 }
 
 .itemTime {

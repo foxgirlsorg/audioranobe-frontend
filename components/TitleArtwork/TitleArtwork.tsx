@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ImagePlus, X } from 'lucide-react';
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { api } from '@/lib/api';
 import { useToast, errMsg } from '@/lib/toast';
 import type { TitleFull, Volume } from '@/lib/types';
@@ -25,6 +26,7 @@ export default function TitleArtwork({
   const [cropper, setCropper] = useState<Kind | null>(null);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState<number | null>(null);
+  const [confirmBg, setConfirmBg] = useState(false);
 
   async function onCropped(blob: Blob) {
     const kind = cropper;
@@ -39,6 +41,20 @@ export default function TitleArtwork({
     try {
       await api(url, { formData: fd });
       toast(typeof kind === 'object' ? 'Обложка тома обновлена' : kind === 'cover' ? 'Обложка обновлена' : 'Фон обновлён');
+      await onReload();
+    } catch (err) {
+      toast(errMsg(err), 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeBg() {
+    setSaving(true);
+    try {
+      await api(`/panel/titles/${title.id}/bg`, { method: 'DELETE' });
+      toast('Баннер удалён');
+      setConfirmBg(false);
       await onReload();
     } catch (err) {
       toast(errMsg(err), 'error');
@@ -62,12 +78,9 @@ export default function TitleArtwork({
 
   return (
     <div className={styles.wrap}>
-      <div className={`glass-panel ${styles.card}`}>
-        <div className={styles.cardHead}>
-          <span className={styles.label}>Обложка</span>
-          <span className={styles.ratio}>2:3</span>
-        </div>
-        <div className={styles.stage}>
+      <div className={`glass-panel ${styles.card} ${styles.mainCard}`}>
+        <div className={styles.block}>
+          <h3 className={styles.blockTitle}>Обложка</h3>
           <div className={styles.coverPreview}>
             {title.cover_url ? (
               <img src={title.cover_url} alt="" className={styles.previewImg} />
@@ -75,28 +88,20 @@ export default function TitleArtwork({
               <ImagePlus size={24} />
             )}
           </div>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={`btn ${styles.actionFill}`}
+              onClick={() => setCropper('cover')}
+              disabled={saving}
+            >
+              {title.cover_url ? 'Заменить' : 'Загрузить обложку'}
+            </button>
+          </div>
         </div>
-        <p className={styles.hint}>
-          Показывается в каталоге и на карточках. Лучше всего — вертикальное изображение от 600
-          пикселей по ширине.
-        </p>
-        <button
-          type="button"
-          className={`btn ${styles.action}`}
-          onClick={() => setCropper('cover')}
-          disabled={saving}
-        >
-          <ImagePlus size={15} />
-          {title.cover_url ? 'Сменить обложку' : 'Загрузить обложку'}
-        </button>
-      </div>
 
-      <div className={`glass-panel ${styles.card}`}>
-        <div className={styles.cardHead}>
-          <span className={styles.label}>Фоновый баннер</span>
-          <span className={styles.ratio}>3:1</span>
-        </div>
-        <div className={styles.stage}>
+        <div className={styles.block}>
+          <h3 className={styles.blockTitle}>Фоновый баннер</h3>
           <div className={styles.bgPreview}>
             {title.bg_url ? (
               <img src={title.bg_url} alt="" className={styles.previewImg} />
@@ -104,29 +109,33 @@ export default function TitleArtwork({
               <ImagePlus size={24} />
             )}
           </div>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setCropper('bg')}
+              disabled={saving}
+            >
+              {title.bg_url ? 'Заменить' : 'Загрузить баннер'}
+            </button>
+            {title.bg_url ? (
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => setConfirmBg(true)}
+                disabled={saving}
+              >
+                Удалить
+              </button>
+            ) : null}
+          </div>
         </div>
-        <p className={styles.hint}>
-          Широкая подложка в шапке страницы тайтла. Она затемняется и размывается, поэтому мелкие
-          детали и текст на ней не читаются.
-        </p>
-        <button
-          type="button"
-          className={`btn ${styles.action}`}
-          onClick={() => setCropper('bg')}
-          disabled={saving}
-        >
-          <ImagePlus size={15} />
-          {title.bg_url ? 'Сменить фон' : 'Загрузить фон'}
-        </button>
       </div>
 
       {title.volumes.length > 0 ? (
         <div className={`glass-panel ${styles.card} ${styles.volumesCard}`}>
-          <div className={styles.cardHead}>
-            <span className={styles.label}>Обложки томов</span>
-            <span className={styles.ratio}>2:3</span>
-          </div>
-          <p className={styles.hint}>
+          <h3 className={styles.blockTitle}>Обложки томов</h3>
+          <p className={styles.blockDesc}>
             Показывается в плеере, пока играет глава из этого тома. Без своей обложки том
             использует обложку тайтла.
           </p>
@@ -146,6 +155,15 @@ export default function TitleArtwork({
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmBg}
+        onClose={() => setConfirmBg(false)}
+        onConfirm={() => void removeBg()}
+        title="Удалить баннер?"
+        body="Фоновый баннер будет удалён, шапка страницы тайтла останется без подложки."
+        danger
+      />
 
       <ImageCropper
         open={cropper !== null}
@@ -242,7 +260,7 @@ function VolumeCoverItem({
       />
       <button
         type="button"
-        className={`btn btn-ghost ${styles.actionSm}`}
+        className={`btn btn-sm ${styles.actionSm}`}
         onClick={onCrop}
         disabled={saving}
       >

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft, ImageIcon, Info } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { LIMITS } from '@/lib/limits';
@@ -30,11 +30,13 @@ import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import DangerZone from '@/components/DangerZone/DangerZone';
 import Tabs from '@/components/Tabs/Tabs';
 import TitleContentManager from '@/components/TitleContentManager/TitleContentManager';
+import TextBranchManager from '@/components/TextBranch/TextBranchManager';
 import TitleArtwork from '@/components/TitleArtwork/TitleArtwork';
 import IllustrationManager from '@/components/Illustrations/IllustrationManager';
 import MarkdownEditor from '@/components/MarkdownEditor/MarkdownEditor';
 import Select from '@/components/Select/Select';
 import Toggle from '@/components/Toggle/Toggle';
+import StatusBadge from '@/components/StatusBadge/StatusBadge';
 import TitleStatsDashboard from '@/components/TitleStatsDashboard/TitleStatsDashboard';
 import styles from './page.module.css';
 
@@ -51,6 +53,26 @@ interface Form {
   translator: string;
 }
 
+function Section({
+  title,
+  desc,
+  children,
+}: {
+  title: string;
+  desc?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionSide}>
+        <h2 className={styles.sectionTitle}>{title}</h2>
+        {desc ? <p className={styles.sectionDesc}>{desc}</p> : null}
+      </div>
+      <div className={styles.sectionBody}>{children}</div>
+    </section>
+  );
+}
+
 export default function TitleEditPage({ params }: { params: { slug: string } }) {
   const routeSlug = decodeURIComponent(params.slug);
   const { user, loading: authLoading, isMod, can } = useAuth();
@@ -59,6 +81,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const canVolumeLabel = can('titles.volume_label');
   // The page itself already requires title edit access; this is the extra grant.
   const canIllustrations = can('illustrations.edit');
+  const canText = can('narration.books');
   const { toast } = useToast();
   const router = useRouter();
 
@@ -90,6 +113,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   const [commentSub, setCommentSub] = useState(false);
   const [commentSubBusy, setCommentSubBusy] = useState(false);
   const formInit = useRef(false);
+  const [baseline, setBaseline] = useState<string | null>(null);
 
   const [form, setForm] = useState<Form>({
     name: '',
@@ -103,6 +127,11 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
   });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.add('edit-ui');
+    return () => document.body.classList.remove('edit-ui');
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -132,34 +161,27 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     await loadTitle();
   }, [loadTitle]);
 
-  useEffect(() => {
-    if (!title || formInit.current) return;
-    formInit.current = true;
+  const applyTitle = useCallback((t: TitleFull) => {
     setForm({
-      name: title.name,
-      slug: title.slug,
-      alt: (title.alt_names ?? []).join(', '),
-      desc: title.description,
-      year: title.year != null ? String(title.year) : '',
-      status: title.release_status,
-      country: title.country,
-      translator: title.translator ?? '',
+      name: t.name,
+      slug: t.slug,
+      alt: (t.alt_names ?? []).join(', '),
+      desc: t.description,
+      year: t.year != null ? String(t.year) : '',
+      status: t.release_status,
+      country: t.country,
+      translator: t.translator ?? '',
     });
-    setAuthor(
-      title.author ? { ...title.author, titles_count: 0 } : null
-    );
-    setIsAi(title.is_ai);
-    setAiLocked(title.is_ai);
-    setIsNsfw(title.is_nsfw);
-    setNsfwLocked(title.is_nsfw);
-    setInfoBanner(
-      title.info_banner ?? { enabled: false, title: '', text: '', url: '' }
-    );
-    setVolumeLabel(title.volume_label);
-    setVolumeLabelPlural(title.volume_label_plural);
-    setCommentSub(title.comment_subscribed);
+    setAuthor(t.author ? { ...t.author, titles_count: 0 } : null);
+    setIsAi(t.is_ai);
+    setAiLocked(t.is_ai);
+    setIsNsfw(t.is_nsfw);
+    setNsfwLocked(t.is_nsfw);
+    setInfoBanner(t.info_banner ?? { enabled: false, title: '', text: '', url: '' });
+    setVolumeLabel(t.volume_label);
+    setVolumeLabelPlural(t.volume_label_plural);
     setNarrators(
-      (title.narrators ?? []).map((n) => ({
+      (t.narrators ?? []).map((n) => ({
         id: n.id,
         slug: n.slug,
         name: n.name,
@@ -167,9 +189,18 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       }))
     );
     const statuses: Record<number, NarrationStatus> = {};
-    for (const n of title.narrators ?? []) statuses[n.id] = n.narration_status ?? 'ongoing';
+    for (const n of t.narrators ?? []) statuses[n.id] = n.narration_status ?? 'ongoing';
     setNarrationStatuses(statuses);
-  }, [title]);
+    setGenreIds((t.genres ?? []).map((g) => g.id));
+    setFormError('');
+  }, []);
+
+  useEffect(() => {
+    if (!title || formInit.current) return;
+    formInit.current = true;
+    applyTitle(title);
+    setCommentSub(title.comment_subscribed);
+  }, [title, applyTitle]);
 
   useEffect(() => {
     if (!user) return;
@@ -178,19 +209,62 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       .then((list) => {
         if (alive) setMyNarratorIds((Array.isArray(list) ? list : []).map((n) => n.id));
       })
-      .catch(() => {
-      });
+      .catch(() => {});
     return () => {
       alive = false;
     };
   }, [user]);
 
-  const [genresReady, setGenresReady] = useState(false);
+  const snapshot = useMemo(
+    () =>
+      JSON.stringify([
+        form,
+        genreIds,
+        author?.id ?? null,
+        narrators.map((n) => n.id),
+        narrationStatuses,
+        isAi,
+        isNsfw,
+        infoBanner,
+        volumeLabel,
+        volumeLabelPlural,
+      ]),
+    [
+      form,
+      genreIds,
+      author,
+      narrators,
+      narrationStatuses,
+      isAi,
+      isNsfw,
+      infoBanner,
+      volumeLabel,
+      volumeLabelPlural,
+    ]
+  );
+
+  // The first snapshot taken after the title has been poured into the form is
+  // what "unchanged" means; anything that differs from it is an edit.
   useEffect(() => {
-    if (!title || genresReady) return;
-    setGenresReady(true);
-    setGenreIds((title.genres ?? []).map((g) => g.id));
-  }, [title, genresReady]);
+    if (baseline === null && formInit.current && title && form.name !== '') setBaseline(snapshot);
+  }, [baseline, snapshot, title, form.name]);
+
+  const dirty = baseline !== null && snapshot !== baseline;
+
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  function resetForm() {
+    if (!title) return;
+    applyTitle(title);
+    setBaseline(null);
+  }
 
   const losingAccess =
     !isMod &&
@@ -281,7 +355,13 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
       });
       toast(res.applied ? 'Изменения применены' : 'Отправлено на модерацию');
       const fresh = await api<TitleFull>(`/titles/${title.id}`);
-      router.push(`/title/${fresh.slug}`);
+      setTitle(fresh);
+      setAiLocked(fresh.is_ai);
+      setNsfwLocked(fresh.is_nsfw);
+      setBaseline(snapshot);
+      if (fresh.slug !== routeSlug) {
+        router.replace(`/title/${encodeURIComponent(fresh.slug)}/edit`);
+      }
     } catch (err) {
       toast(errMsg(err), 'error');
     } finally {
@@ -325,16 +405,30 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
     );
   }
 
-  return (
-    <div className={tab === 'stats' ? `${styles.page} ${styles.pageWide}` : styles.page}>
-      <Link href={`/title/${routeSlug}`} className="back-link">
-        <ArrowLeft size={14} />
-        К тайтлу
-      </Link>
+  const wide = tab === 'stats' || tab === 'content' || tab === 'text';
+  const showSaveBar = tab === 'info' && (dirty || saving || formError !== '');
 
+  return (
+    <div className={wide ? `${styles.page} ${styles.pageWide}` : styles.page}>
       <header className={styles.head}>
-        <h1 className={styles.heading}>Редактирование тайтла</h1>
-        <p className={styles.subtitle}>{title.name}</p>
+        <div className={styles.headCover}>
+          {title.cover_url ? (
+            <img src={title.cover_url} alt="" className={styles.headCoverImg} />
+          ) : (
+            <ImageIcon size={18} aria-hidden="true" />
+          )}
+        </div>
+        <div className={styles.headBody}>
+          <Link href={`/title/${routeSlug}`} className={styles.backLink}>
+            <ArrowLeft size={14} />
+            К тайтлу
+          </Link>
+          <h1 className={styles.heading}>{title.name}</h1>
+        </div>
+        <div className={styles.headTags}>
+          <span className={styles.tag}>{RELEASE_STATUS_LABELS[title.release_status]}</span>
+          <StatusBadge status={title.mod_status} />
+        </div>
       </header>
 
       <div className={styles.tabsRow}>
@@ -344,6 +438,7 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
             { key: 'artwork', label: 'Оформление' },
             ...(canIllustrations ? [{ key: 'illustrations', label: 'Иллюстрации' }] : []),
             { key: 'content', label: 'Главы' },
+            ...(canText ? [{ key: 'text', label: 'Текст' }] : []),
             { key: 'stats', label: 'Статистика' },
           ]}
           active={tab}
@@ -361,83 +456,90 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
         <TitleContentManager title={title} onReload={reloadTitle} />
       ) : null}
 
+      {tab === 'text' && canText ? <TextBranchManager title={title} onReload={reloadTitle} /> : null}
+
       {tab === 'stats' ? <TitleStatsDashboard titleId={title.id} /> : null}
 
       <form
-        className={`glass-panel ${styles.formPanel} ${
-          tab === 'info' ? '' : styles.hiddenPanel
-        }`}
+        className={tab === 'info' ? styles.form : styles.hiddenPanel}
         onSubmit={handleSubmit}
         noValidate
         hidden={tab !== 'info'}
       >
+        <Section title="Основное" desc="Название и адрес страницы">
+          <div className={styles.formRow}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="t-name">
+                Название
+              </label>
+              <input
+                id="t-name"
+                className="input"
+                type="text"
+                value={form.name}
+                maxLength={300}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="t-slug">
+                Адрес страницы
+              </label>
+              <input
+                id="t-slug"
+                className="input"
+                type="text"
+                value={form.slug}
+                maxLength={200}
+                onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                placeholder="my-book-slug"
+              />
+            </div>
+          </div>
 
-        {formError ? <div className={styles.formError}>{formError}</div> : null}
-
-        <div className={styles.formRow}>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="t-name">
-              Название
+            <label className={styles.label} htmlFor="t-alt">
+              Альтернативные названия <span className={styles.optional}>через запятую</span>
             </label>
             <input
-              id="t-name"
+              id="t-alt"
               className="input"
               type="text"
-              value={form.name}
-              maxLength={300}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              value={form.alt}
+              onChange={(e) => setForm((f) => ({ ...f, alt: e.target.value }))}
+              placeholder="Оригинальное название, перевод…"
             />
           </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="t-slug">
-              Slug <span className={styles.optional}>адрес страницы</span>
-            </label>
-            <input
-              id="t-slug"
-              className="input"
-              type="text"
-              value={form.slug}
-              maxLength={200}
-              onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-              placeholder="my-book-slug"
-            />
+
+          <div className={styles.formRow}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="t-year">
+                Год
+              </label>
+              <input
+                id="t-year"
+                className="input"
+                type="number"
+                value={form.year}
+                onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
+                placeholder="2020"
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="t-country">
+                Страна
+              </label>
+              <Select<Country>
+                id="t-country"
+                block
+                value={form.country}
+                options={COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] }))}
+                onChange={(country) => setForm((f) => ({ ...f, country }))}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className={styles.field}>
-          <span className={styles.label}>Автор</span>
-          <AuthorPicker value={author} onChange={setAuthor} />
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="t-alt">
-            Альт. названия <span className={styles.optional}>через запятую</span>
-          </label>
-          <input
-            id="t-alt"
-            className="input"
-            type="text"
-            value={form.alt}
-            onChange={(e) => setForm((f) => ({ ...f, alt: e.target.value }))}
-            placeholder="Оригинальное название, перевод…"
-          />
-        </div>
-
-        <div className={styles.formRow}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="t-year">
-              Год
-            </label>
-            <input
-              id="t-year"
-              className="input"
-              type="number"
-              value={form.year}
-              onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
-              placeholder="2020"
-            />
-          </div>
-          <div className={styles.field}>
+          <div className={styles.fieldHalf}>
             <label className={styles.label} htmlFor="t-status">
               Статус тайтла
             </label>
@@ -449,272 +551,281 @@ export default function TitleEditPage({ params }: { params: { slug: string } }) 
               onChange={(status) => setForm((f) => ({ ...f, status }))}
             />
           </div>
-        </div>
+        </Section>
 
-        <div className={styles.formRow}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="t-country">
-              Страна
-            </label>
-            <Select<Country>
-              id="t-country"
-              block
-              value={form.country}
-              options={COUNTRY_VALUES.map((c) => ({ value: c, label: COUNTRY_LABELS[c] }))}
-              onChange={(country) => setForm((f) => ({ ...f, country }))}
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="t-translator">
-              Переводчик
-            </label>
-            <input
-              id="t-translator"
-              className="input"
-              type="text"
-              maxLength={200}
-              value={form.translator}
-              onChange={(e) => setForm((f) => ({ ...f, translator: e.target.value }))}
-              placeholder="Команда или имя переводчика"
-            />
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <span className={styles.label}>Чтецы</span>
-          <NarratorPicker value={narrators} onChange={setNarrators} />
-          <p className={styles.formNote}>
-            Можно добавить любого существующего чтеца. Отмечать чтецов по главам можно в
-            управлении главами.
-          </p>
-          {losingAccess ? (
-            <p className={styles.formWarn}>
-              Вы убираете всех своих чтецов из этого тайтла — после сохранения вы потеряете к
-              нему доступ.
-            </p>
-          ) : null}
-        </div>
-
-        {narrators.length > 0 ? (
-          <div className={styles.field}>
-            <span className={styles.label}>Статус озвучки</span>
-            <div className={styles.narrationList}>
-              {narrators.map((n) => (
-                <div key={n.id} className={styles.narrationRow}>
-                  <span className={styles.narrationName}>{n.name}</span>
-                  <Select<NarrationStatus>
-                    size="sm"
-                    value={narrationStatuses[n.id] ?? 'ongoing'}
-                    options={STATUS_VALUES.map((s) => ({
-                      value: s,
-                      label: NARRATION_STATUS_LABELS[s],
-                    }))}
-                    onChange={(v) =>
-                      setNarrationStatuses((prev) => ({ ...prev, [n.id]: v }))
-                    }
-                    ariaLabel={`Статус озвучки: ${n.name}`}
-                  />
-                </div>
-              ))}
+        <Section title="Люди" desc="Автор, переводчик и те, кто читает">
+          <div className={styles.formRow}>
+            <div className={styles.field}>
+              <span className={styles.label}>Автор</span>
+              <AuthorPicker value={author} onChange={setAuthor} />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="t-translator">
+                Переводчик
+              </label>
+              <input
+                id="t-translator"
+                className="input"
+                type="text"
+                maxLength={200}
+                value={form.translator}
+                onChange={(e) => setForm((f) => ({ ...f, translator: e.target.value }))}
+                placeholder="Команда или имя переводчика"
+              />
             </div>
           </div>
-        ) : null}
 
-        <div className={styles.field}>
-          <span className={styles.label}>Описание</span>
-          <MarkdownEditor
-            value={form.desc}
-            onChange={(desc) => setForm((f) => ({ ...f, desc }))}
-            maxLength={LIMITS.titleDescription}
-            placeholder="О чём эта книга? **Markdown** поддерживается."
-          />
-        </div>
-
-        <div className={styles.field}>
-          <span className={styles.label}>Теги</span>
-          <GenrePicker value={genreIds} onChange={setGenreIds} />
-        </div>
-
-        <div className={styles.field}>
-          <Toggle
-            checked={isAi}
-            disabled={aiLocked && !isMod}
-            onChange={setIsAi}
-            label="Озвучено ИИ"
-            hint="Отметьте, если главы озвучены синтезированным голосом."
-          />
-        </div>
-
-        <div className={styles.field}>
-          <Toggle
-            checked={isNsfw}
-            disabled={nsfwLocked && !isAdmin}
-            onChange={onNsfwToggle}
-            label="Материал 18+"
-            hint={
-              nsfwLocked && !isAdmin
-                ? 'Отметка 18+ уже установлена. Снять её может только администратор.'
-                : 'После включения отметку нельзя снять самостоятельно — только через администратора.'
-            }
-          />
-        </div>
-
-        {canInfoBanner ? (
           <div className={styles.field}>
-            <Toggle
-              checked={infoBanner.enabled}
-              onChange={(enabled) => setInfoBanner((b) => ({ ...b, enabled }))}
-              label="Инфо-баннер"
-              hint="Заметка над тайтлом — её видят все посетители страницы."
+            <span className={styles.label}>Чтецы</span>
+            <NarratorPicker value={narrators} onChange={setNarrators} />
+            <p className={styles.formNote}>
+              Можно добавить любого существующего чтеца. Чтецов по главам отмечают во вкладке
+              «Главы».
+            </p>
+            {losingAccess ? (
+              <p className={styles.formWarn}>
+                Вы убираете всех своих чтецов из этого тайтла — после сохранения вы потеряете к
+                нему доступ.
+              </p>
+            ) : null}
+          </div>
+
+          {narrators.length > 0 ? (
+            <div className={styles.field}>
+              <span className={styles.label}>Статус озвучки</span>
+              <div className={styles.narrationList}>
+                {narrators.map((n) => (
+                  <div key={n.id} className={styles.narrationRow}>
+                    <span className={styles.narrationName}>{n.name}</span>
+                    <Select<NarrationStatus>
+                      size="sm"
+                      value={narrationStatuses[n.id] ?? 'ongoing'}
+                      options={STATUS_VALUES.map((s) => ({
+                        value: s,
+                        label: NARRATION_STATUS_LABELS[s],
+                      }))}
+                      onChange={(v) =>
+                        setNarrationStatuses((prev) => ({ ...prev, [n.id]: v }))
+                      }
+                      ariaLabel={`Статус озвучки: ${n.name}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </Section>
+
+        <Section title="Описание" desc="Что видят читатели на странице тайтла">
+          <div className={styles.field}>
+            <span className={styles.label}>Описание</span>
+            <MarkdownEditor
+              value={form.desc}
+              onChange={(desc) => setForm((f) => ({ ...f, desc }))}
+              maxLength={LIMITS.titleDescription}
+              placeholder="О чём эта книга? **Markdown** поддерживается."
             />
-            {infoBanner.enabled ? (
-              <div className={styles.infoBannerFields}>
+          </div>
+          <div className={styles.field}>
+            <span className={styles.label}>Теги</span>
+            <GenrePicker value={genreIds} onChange={setGenreIds} />
+          </div>
+        </Section>
+
+        <Section title="Пометки" desc="Влияют на показ и фильтры">
+          <div className={styles.toggleList}>
+            <Toggle
+              checked={isAi}
+              disabled={aiLocked && !isMod}
+              onChange={setIsAi}
+              label="Озвучено ИИ"
+              hint="Отметьте, если главы озвучены синтезированным голосом."
+            />
+            <Toggle
+              checked={isNsfw}
+              disabled={nsfwLocked && !isAdmin}
+              onChange={onNsfwToggle}
+              label="Материал 18+"
+              hint={
+                nsfwLocked && !isAdmin
+                  ? 'Отметка 18+ уже установлена. Снять её может только администратор.'
+                  : 'После включения отметку нельзя снять самостоятельно — только через администратора.'
+              }
+            />
+            <Toggle
+              checked={commentSub}
+              disabled={commentSubBusy}
+              onChange={toggleCommentSub}
+              label="Уведомлять о новых комментариях"
+              hint="Сохраняется сразу, без кнопки «Сохранить»."
+            />
+          </div>
+        </Section>
+
+        {canInfoBanner || canVolumeLabel ? (
+          <Section title="Для редакторов" desc="Видно тем, у кого есть право">
+            {canInfoBanner ? (
+              <div className={styles.field}>
+                <Toggle
+                  checked={infoBanner.enabled}
+                  onChange={(enabled) => setInfoBanner((b) => ({ ...b, enabled }))}
+                  label="Инфо-баннер"
+                  hint="Заметка над тайтлом — её видят все посетители страницы."
+                />
+                {infoBanner.enabled ? (
+                  <div className={styles.infoBannerFields}>
+                    <div className={styles.formRow}>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="t-ib-title">
+                          Заголовок <span className={styles.optional}>необязательно</span>
+                        </label>
+                        <input
+                          id="t-ib-title"
+                          className="input"
+                          type="text"
+                          value={infoBanner.title}
+                          maxLength={120}
+                          onChange={(e) =>
+                            setInfoBanner((b) => ({ ...b, title: e.target.value }))
+                          }
+                          placeholder="Переозвучка в работе"
+                        />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label} htmlFor="t-ib-url">
+                          Ссылка кнопки «Открыть»{' '}
+                          <span className={styles.optional}>необязательно</span>
+                        </label>
+                        <input
+                          id="t-ib-url"
+                          className="input"
+                          type="url"
+                          value={infoBanner.url}
+                          maxLength={2000}
+                          onChange={(e) =>
+                            setInfoBanner((b) => ({ ...b, url: e.target.value }))
+                          }
+                          placeholder="https://example.com/post"
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="t-ib-text">
+                        Описание <span className={styles.optional}>необязательно</span>
+                      </label>
+                      <textarea
+                        id="t-ib-text"
+                        className="input"
+                        rows={3}
+                        value={infoBanner.text}
+                        maxLength={500}
+                        onChange={(e) =>
+                          setInfoBanner((b) => ({ ...b, text: e.target.value }))
+                        }
+                        placeholder="Что важно знать читателям об этом тайтле?"
+                      />
+                      <p className={styles.formNote}>
+                        Без ссылки баннер показывается без кнопки.
+                      </p>
+                    </div>
+
+                    <div className={styles.infoBannerPreview}>
+                      <span className={styles.label}>Как это выглядит</span>
+                      <div className={styles.previewBanner}>
+                        <Info size={17} aria-hidden="true" className={styles.previewIcon} />
+                        <div className={styles.previewBody}>
+                          {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
+                          {infoBanner.text ? <span>{infoBanner.text}</span> : null}
+                          {!infoBanner.title && !infoBanner.text ? (
+                            <span>Заполните заголовок или описание…</span>
+                          ) : null}
+                        </div>
+                        {infoBanner.url ? (
+                          <span className={styles.previewBtn}>Открыть</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {canVolumeLabel ? (
+              <div className={styles.formRow}>
                 <div className={styles.field}>
-                  <label className={styles.label} htmlFor="t-ib-title">
-                    Заголовок <span className={styles.optional}>необязательно</span>
+                  <label className={styles.label} htmlFor="t-volume-label">
+                    Слово вместо «Том»
                   </label>
                   <input
-                    id="t-ib-title"
+                    id="t-volume-label"
                     className="input"
                     type="text"
-                    value={infoBanner.title}
-                    maxLength={120}
-                    onChange={(e) =>
-                      setInfoBanner((b) => ({ ...b, title: e.target.value }))
-                    }
-                    placeholder="Переозвучка в работе"
+                    value={volumeLabel}
+                    maxLength={40}
+                    onChange={(e) => setVolumeLabel(e.target.value)}
+                    placeholder="Том"
                   />
+                  <p className={styles.formNote}>Например, «Арка».</p>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label} htmlFor="t-ib-text">
-                    Описание <span className={styles.optional}>необязательно</span>
-                  </label>
-                  <textarea
-                    id="t-ib-text"
-                    className="input"
-                    rows={3}
-                    value={infoBanner.text}
-                    maxLength={500}
-                    onChange={(e) =>
-                      setInfoBanner((b) => ({ ...b, text: e.target.value }))
-                    }
-                    placeholder="Что важно знать читателям об этом тайтле?"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="t-ib-url">
-                    Ссылка кнопки «Открыть»{' '}
-                    <span className={styles.optional}>необязательно</span>
+                  <label className={styles.label} htmlFor="t-volume-label-plural">
+                    Во множественном числе
                   </label>
                   <input
-                    id="t-ib-url"
+                    id="t-volume-label-plural"
                     className="input"
-                    type="url"
-                    value={infoBanner.url}
-                    maxLength={2000}
-                    onChange={(e) =>
-                      setInfoBanner((b) => ({ ...b, url: e.target.value }))
-                    }
-                    placeholder="https://example.com/post"
+                    type="text"
+                    value={volumeLabelPlural}
+                    maxLength={40}
+                    onChange={(e) => setVolumeLabelPlural(e.target.value)}
+                    placeholder="Тома"
                   />
                   <p className={styles.formNote}>
-                    Без ссылки баннер показывается без кнопки.
+                    Например, «Арки» — для заголовков списков.
                   </p>
-                </div>
-
-                <div className={styles.infoBannerPreview}>
-                  <span className={styles.label}>Как это выглядит</span>
-                  <div className={styles.previewBanner}>
-                    <Info size={17} aria-hidden="true" className={styles.previewIcon} />
-                    <div className={styles.previewBody}>
-                      {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
-                      {infoBanner.text ? <span>{infoBanner.text}</span> : null}
-                      {!infoBanner.title && !infoBanner.text ? (
-                        <span>Заполните заголовок или описание…</span>
-                      ) : null}
-                    </div>
-                    {infoBanner.url ? (
-                      <span className={styles.previewBtn}>Открыть</span>
-                    ) : null}
-                  </div>
                 </div>
               </div>
             ) : null}
-          </div>
+          </Section>
         ) : null}
 
-        {canVolumeLabel ? (
-          <div className={styles.formRow}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="t-volume-label">
-                Название тома
-              </label>
-              <input
-                id="t-volume-label"
-                className="input"
-                type="text"
-                value={volumeLabel}
-                maxLength={40}
-                onChange={(e) => setVolumeLabel(e.target.value)}
-                placeholder="Том"
-              />
-              <p className={styles.formNote}>
-                Слово, которым заменяется «Том» — например, «Арка».
-              </p>
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="t-volume-label-plural">
-                Во множественном числе
-              </label>
-              <input
-                id="t-volume-label-plural"
-                className="input"
-                type="text"
-                value={volumeLabelPlural}
-                maxLength={40}
-                onChange={(e) => setVolumeLabelPlural(e.target.value)}
-                placeholder="Тома"
-              />
-              <p className={styles.formNote}>
-                Например, «Арки» — используется в заголовках списков томов.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        <div className={styles.formFoot}>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Сохраняем…' : 'Сохранить изменения'}
-          </button>
-          {!isMod && title.mod_status === 'approved' ? (
-            <span className={styles.formNote}>Правки проходят модерацию</span>
-          ) : null}
-        </div>
-      </form>
-
-      {tab === 'info' ? (
-        <section className={`glass-panel ${styles.formPanel}`}>
-          <Toggle
-            checked={commentSub}
-            disabled={commentSubBusy}
-            onChange={toggleCommentSub}
-            label="Уведомлять о новых комментариях"
-            hint="Уведомления о новых комментариях к этому тайтлу."
+        <Section title="Опасная зона" desc="Скрыть или удалить тайтл">
+          <DangerZone
+            bare
+            kind="title"
+            id={title.id}
+            name={title.name}
+            isDeleted={title.is_deleted}
+            isHidden={title.is_hidden}
+            redirectTo="/catalog"
+            onChanged={reloadTitle}
           />
-        </section>
-      ) : null}
+        </Section>
 
-      {tab === 'info' ? (
-        <DangerZone
-          kind="title"
-          id={title.id}
-          name={title.name}
-          isDeleted={title.is_deleted}
-          isHidden={title.is_hidden}
-          redirectTo="/catalog"
-          onChanged={reloadTitle}
-        />
-      ) : null}
+        {showSaveBar ? (
+          <div className={styles.saveBar} role="region" aria-label="Сохранение">
+            <span className={formError ? styles.saveDotError : styles.saveDot} aria-hidden="true" />
+            <span className={styles.saveText}>
+              {formError ? (
+                <span className={styles.saveError}>{formError}</span>
+              ) : (
+                <>
+                  Есть несохранённые изменения
+                  {!isMod && title.mod_status === 'approved' ? (
+                    <span className={styles.saveNote}> · Правки проходят модерацию</span>
+                  ) : null}
+                </>
+              )}
+            </span>
+            <button type="button" className="btn btn-ghost" onClick={resetForm} disabled={saving}>
+              Сбросить
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Сохраняем…' : 'Сохранить изменения'}
+            </button>
+          </div>
+        ) : null}
+      </form>
 
       <ConfirmDialog
         open={confirmNsfw}

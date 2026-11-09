@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -23,6 +23,7 @@ import {
   RefreshCw,
   ShieldAlert,
   Star,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import { api, API_URL, ApiError } from '@/lib/api';
@@ -72,6 +73,32 @@ type VersionChapter = ChapterRow & { defaulted?: boolean };
 type VersionVolume = Omit<Volume, 'chapters'> & { chapters: VersionChapter[]; from?: string };
 
 // Soft-deleted chapters are gone as far as counts and totals are concerned.
+function Dismissible({ storageKey, children }: { storageKey: string; children: (close: ReactNode) => ReactNode }) {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    try {
+      setHidden(localStorage.getItem(storageKey) === '1');
+    } catch {}
+  }, [storageKey]);
+  if (hidden) return null;
+  const close = (
+    <button
+      type="button"
+      className={styles.bannerClose}
+      aria-label="Закрыть"
+      onClick={() => {
+        setHidden(true);
+        try {
+          localStorage.setItem(storageKey, '1');
+        } catch {}
+      }}
+    >
+      <X size={14} aria-hidden="true" />
+    </button>
+  );
+  return <>{children(close)}</>;
+}
+
 function liveChapters(v: Pick<Volume, 'chapters'>): ChapterRow[] {
   return v.chapters.filter((c) => !c.is_deleted);
 }
@@ -190,6 +217,8 @@ function TitlePageSkeleton() {
   );
 }
 
+const M_FACTS_SHOWN = 6;
+
 export default function TitlePageClient({
   slug: rawSlug,
   initialTitle,
@@ -229,8 +258,17 @@ export default function TitlePageClient({
     setSelectedVersion(title?.selected_version_id ?? 0);
   }, [title?.id, title?.selected_version_id]);
 
+  const aiOn = title?.versions.find((x) => x.id === selectedVersion)?.kind === 'ai';
+  const hasAudio = !!title?.volumes.some((v) => v.chapters.some((c) => c.audio_status === 'ready'));
+
   const displayVolumes = useMemo<VersionVolume[]>(() => {
     if (!title) return [];
+    if (aiOn) {
+      return title.volumes.map((v) => ({
+        ...v,
+        chapters: v.chapters.map((c): VersionChapter => (c.has_text ? c : { ...c, defaulted: true })),
+      }));
+    }
     // A version's standalone volumes list its own chapters; a volume with no
     // main chapters is filled in from a standalone version (selected one first).
     const standaloneIn = (ver: number, volumeId: number) =>
@@ -265,7 +303,7 @@ export default function TitlePageClient({
       const from = chapters.length > 0 && chapters.every((c) => c.defaulted) ? 'из основной' : undefined;
       return { ...v, chapters, from };
     });
-  }, [title, selectedVersion]);
+  }, [title, selectedVersion, aiOn]);
 
   async function changeVersion(vid: number) {
     setSelectedVersion(vid);
@@ -341,7 +379,7 @@ export default function TitlePageClient({
     const out: ChapterRow[] = [];
     for (const v of title.volumes) {
       for (const c of liveChapters(v)) {
-        if (c.audio_status === 'ready' && c.mod_status === 'approved') out.push(c);
+        if ((c.audio_status === 'ready' || c.has_text) && c.mod_status === 'approved') out.push(c);
       }
     }
     return out;
@@ -369,6 +407,11 @@ export default function TitlePageClient({
       return;
     }
     try {
+      if (ch.has_text && (aiOn || ch.audio_status !== 'ready')) {
+        await player.playTts(ch.id);
+        player.setFull(true);
+        return;
+      }
       await player.playChapter(ch.id);
     } catch (e) {
       toast(errMsg(e), 'error');
@@ -780,56 +823,71 @@ export default function TitlePageClient({
   const banners = (
     <>
       {showInfoBanner && infoBanner ? (
-        <div className={`${styles.claimBanner} ${styles.infoBanner}`} role="status">
-          <Info size={17} aria-hidden="true" className={styles.claimBannerIcon} />
-          <div className={styles.claimBannerBody}>
-            {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
-            {infoBanner.text ? <span>{infoBanner.text}</span> : null}
-          </div>
-          {infoBanner.url ? (
-            <a
-              href={infoBanner.url}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-              className={styles.claimBannerBtn}
-            >
-              Открыть
-            </a>
-          ) : null}
-        </div>
+        <Dismissible storageKey={`banner:${title.id}:info`}>
+          {(close) => (
+            <div className={`${styles.claimBanner} ${styles.infoBanner}`} role="status">
+              <Info size={17} aria-hidden="true" className={styles.claimBannerIcon} />
+              <div className={styles.claimBannerBody}>
+                {infoBanner.title ? <strong>{infoBanner.title}</strong> : null}
+                {infoBanner.text ? <span>{infoBanner.text}</span> : null}
+              </div>
+              {infoBanner.url ? (
+                <a
+                  href={infoBanner.url}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className={styles.claimBannerBtn}
+                >
+                  Открыть
+                </a>
+              ) : null}
+              {close}
+            </div>
+          )}
+        </Dismissible>
       ) : null}
 
       {title.narration_pending ? (
-        <div className={styles.narrationBanner}>
-          <Headphones size={17} aria-hidden="true" />
-          <div className={styles.narrationBannerBody}>
-            <strong>Идёт ИИ-озвучка</strong>
-            <span>
-              Главы появляются по мере готовности — уже озвученные можно слушать, остальные в работе.
-            </span>
-          </div>
-        </div>
+        <Dismissible storageKey={`banner:${title.id}:narration`}>
+          {(close) => (
+            <div className={styles.narrationBanner}>
+              <Headphones size={17} aria-hidden="true" />
+              <div className={styles.narrationBannerBody}>
+                <strong>Идёт ИИ-озвучка</strong>
+                <span>
+                  Главы появляются по мере готовности — уже озвученные можно слушать, остальные в работе.
+                </span>
+              </div>
+              {close}
+            </div>
+          )}
+        </Dismissible>
       ) : null}
 
       {title.is_ai ? (
-        <div className={styles.claimBanner}>
-          <Mic size={17} aria-hidden="true" className={styles.claimBannerIcon} />
-          <div className={styles.claimBannerBody}>
-            <strong>Озвучиваете эту книгу?</strong>
-            <span>
-              Этот тайтл озвучен синтезированным голосом. Если вы чтец и озвучили
-              эту книгу сами — напишите в поддержку, и мы передадим тайтл вам.
-            </span>
-          </div>
-          <a
-            href={SUPPORT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.claimBannerBtn}
-          >
-            Связаться с поддержкой
-          </a>
-        </div>
+        <Dismissible storageKey={`banner:${title.id}:claim`}>
+          {(close) => (
+            <div className={styles.claimBanner}>
+              <Mic size={17} aria-hidden="true" className={styles.claimBannerIcon} />
+              <div className={styles.claimBannerBody}>
+                <strong>Озвучиваете эту книгу?</strong>
+                <span>
+                  Этот тайтл озвучен синтезированным голосом. Если вы чтец и озвучили
+                  эту книгу сами — напишите в поддержку, и мы передадим тайтл вам.
+                </span>
+              </div>
+              <a
+                href={SUPPORT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.claimBannerBtn}
+              >
+                Связаться с поддержкой
+              </a>
+              {close}
+            </div>
+          )}
+        </Dismissible>
       ) : null}
     </>
   );
@@ -843,7 +901,7 @@ export default function TitlePageClient({
       />
     ) : (
       <div className={styles.volumes}>
-        {title.versions.length > 0 ? (
+        {title.versions.length > 0 && (hasAudio || title.versions.some((x) => x.kind !== 'ai')) ? (
           <div className={styles.versionTabs} role="tablist" aria-label="Версия озвучки">
             <button
               type="button"
@@ -954,7 +1012,7 @@ export default function TitlePageClient({
                   ) : (
                     v.chapters.map((ch) => {
                       const isCurrent = player.current?.id === ch.id;
-                      const playable = ch.audio_status === 'ready';
+                      const playable = ch.audio_status === 'ready' || !!ch.has_text;
                       const staticPos = ch.my_position ?? 0;
                       const staticPct =
                         ch.duration_seconds > 0
@@ -1017,7 +1075,7 @@ export default function TitlePageClient({
                               {ch.mod_status !== 'approved' ? (
                                 <StatusBadge status={ch.mod_status} />
                               ) : null}
-                              {ch.audio_status !== 'ready' && (canEdit || ch.audio_status !== 'none') ? (
+                              {ch.audio_status !== 'ready' && !ch.has_text && (canEdit || ch.audio_status !== 'none') ? (
                                 <StatusBadge status={ch.audio_status} />
                               ) : null}
                               {isMod && title.is_imported && title.is_ai ? (
@@ -1037,7 +1095,7 @@ export default function TitlePageClient({
                                   {formatDuration(ch.duration_seconds)}
                                 </span>
                               ) : null}
-                              {playable && user && ch.duration_seconds > 0 ? (
+                              {ch.audio_status === 'ready' && user && ch.duration_seconds > 0 ? (
                                 <button
                                   type="button"
                                   className={isListened(ch) ? `${styles.dlBtn} ${styles.listenedOn}` : styles.dlBtn}
@@ -1053,7 +1111,7 @@ export default function TitlePageClient({
                                   <Check size={14} />
                                 </button>
                               ) : null}
-                              {playable && user ? (
+                              {ch.audio_status === 'ready' && user ? (
                                 <button
                                   type="button"
                                   className={styles.dlBtn}
@@ -1116,68 +1174,30 @@ export default function TitlePageClient({
     />
   );
 
-  const factRows = (
-    <>
-      {title.author && (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Автор'}</span>
-          <Link
-            href={`/author/${title.author.id}`}
-            className={styles.factV}
-            title={`Ещё от ${title.author.name}`}
-          >
+  const facts: [string, ReactNode][] = [
+    ...(title.author
+      ? [['Автор', (
+          <Link href={`/author/${title.author.id}`} className={styles.factV} title={`Ещё от ${title.author.name}`}>
             {title.author.name}
           </Link>
-        </div>
-      )}
-      {runtime > 0 ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Длительность'}</span>
-          <span className={styles.factV}>{formatDuration(runtime)}</span>
-        </div>
-      ) : null}
-      {title.updated_at ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Обновлён'}</span>
-          <span className={styles.factV}>{formatDate(title.updated_at)}</span>
-        </div>
-      ) : null}
-      <div className={styles.factRow2}>
-        <span className={styles.factK}>{'Страна'}</span>
-        <span className={styles.factV}>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-      </div>
-      <div className={styles.factRow2}>
-        <span className={styles.factK}>{'Тайтл'}</span>
-        <span className={styles.factV}>
-          {RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status}
-        </span>
-      </div>
-      {title.narrators.length > 0 ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Озвучка'}</span>
-          <span className={styles.factV}>
-            {NARRATION_STATUS_LABELS[narrationStatus]}
-          </span>
-        </div>
-      ) : null}
-      <div className={styles.factRow2}>
-        <span className={styles.factK}>{'Просмотров'}</span>
-        <span className={styles.factV}>{formatCount(title.views_count)}</span>
-      </div>
-      {chaptersTotal > 0 ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Глав'}</span>
-          <span className={styles.factV}>{chaptersTotal}</span>
-        </div>
-      ) : null}
-      {title.translator ? (
-        <div className={styles.factRow2}>
-          <span className={styles.factK}>{'Переводчик'}</span>
-          <span className={styles.factV}>{title.translator}</span>
-        </div>
-      ) : null}
-    </>
+        )] as [string, ReactNode]]
+      : []),
+    ...(runtime > 0 ? [['Длительность', formatDuration(runtime)] as [string, ReactNode]] : []),
+    ...(title.updated_at ? [['Обновлён', formatDate(title.updated_at)] as [string, ReactNode]] : []),
+    ['Страна', COUNTRY_LABELS[title.country] ?? title.country],
+    ['Тайтл', RELEASE_STATUS_LABELS[title.release_status] ?? title.release_status],
+    ...(title.narrators.length > 0 ? [['Озвучка', NARRATION_STATUS_LABELS[narrationStatus]] as [string, ReactNode]] : []),
+    ['Просмотров', formatCount(title.views_count)],
+    ...(chaptersTotal > 0 ? [['Глав', chaptersTotal] as [string, ReactNode]] : []),
+    ...(title.translator ? [['Переводчик', title.translator] as [string, ReactNode]] : []),
+  ];
+  const factRow = ([k, v]: [string, ReactNode]) => (
+    <div key={k} className={styles.factRow2}>
+      <span className={styles.factK}>{k}</span>
+      {typeof v === 'object' && v !== null ? v : <span className={styles.factV}>{v}</span>}
+    </div>
   );
+  const factRows = <>{facts.map(factRow)}</>;
 
   const detailsModal = (
     <>
@@ -1271,53 +1291,24 @@ export default function TitlePageClient({
 
         {mobileTab === 'about' ? (
           <div className={styles.mAbout}>
-            <div className={styles.mFactsCard}>
-              <div className={styles.mFacts}>
-                <div className={styles.mFact}>
-                  <b>Автор</b>
-                  {title.author ? (
-                    <Link href={`/author/${title.author.id}`}>{title.author.name}</Link>
-                  ) : (
-                    <span className={styles.quickMuted}>не указан</span>
-                  )}
-                </div>
-                {title.narrators.length > 0 ? (
-                  <div className={styles.mFact}>
-                    <b>Озвучка</b>
-                    <span>{NARRATION_STATUS_LABELS[narrationStatus]}</span>
-                  </div>
-                ) : null}
-                {title.updated_at ? (
-                  <div className={styles.mFact}>
-                    <b>Обновлён</b>
-                    <span>{formatDate(title.updated_at)}</span>
-                  </div>
-                ) : null}
-                {runtime > 0 ? (
-                  <div className={styles.mFact}>
-                    <b>Длительность</b>
-                    <span>{formatDuration(runtime)}</span>
-                  </div>
-                ) : null}
-                <div className={styles.mFact}>
-                  <b>Страна</b>
-                  <span>{COUNTRY_LABELS[title.country] ?? title.country}</span>
-                </div>
-                <div className={styles.mFact}>
-                  <b>Просмотров</b>
-                  <span>{formatCount(title.views_count)}</span>
-                </div>
-              </div>
-              <button type="button" className={styles.mFactsMore} onClick={() => setDetailsOpen(true)}>
-                {'Все детали'}
-                <ChevronRight size={13} />
-              </button>
+            {descBlock}
+            {tagsBlock}
+            <div className={`glass-panel ${styles.mFactsCard}`}>
+              <span className={styles.sideEyebrow}>
+                <Info size={12} />
+                {'Детали'}
+              </span>
+              <div className={styles.mFacts}>{facts.slice(0, M_FACTS_SHOWN).map(factRow)}</div>
+              {facts.length > M_FACTS_SHOWN ? (
+                <button type="button" className={styles.factsMore} onClick={() => setDetailsOpen(true)}>
+                  {'Все детали'}
+                  <ChevronRight size={12} />
+                </button>
+              ) : null}
             </div>
             {detailsModal}
 
             {mNarratorsBlock}
-            {descBlock}
-            {tagsBlock}
             {ratingCard}
             {libraryWidget}
           </div>

@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/lib/toast';
 import { chapterLabel } from '@/lib/format';
 import type { ChapterPlay } from '@/lib/types';
+import { useTtsMode, type TtsMode } from '@/lib/ttsMode';
 
 interface PlayerContextValue {
   current: ChapterPlay | null;
@@ -24,6 +25,9 @@ interface PlayerContextValue {
   sleepRemaining: number | null;
   sleep: number | 'chapter' | null;
   playChapter(id: number, startAt?: number): Promise<void>;
+  /** Narrate the chapter's stored text in the browser instead of playing its audio. */
+  playTts(id: number, startAt?: number): Promise<void>;
+  mode: 'audio' | 'tts';
   toggle(): void;
   seek(s: number): void;
   skip(delta: number): void;
@@ -46,6 +50,7 @@ interface PlayerPositionValue {
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 const PlayerPositionContext = createContext<PlayerPositionValue | null>(null);
+const TtsContext = createContext<TtsMode | null>(null);
 
 const RATE_KEY = 'audioranobe_rate';
 const VOL_KEY = 'audioranobe_volume';
@@ -65,6 +70,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const [buffered, setBuffered] = useState(0);
   const [barHidden, setBarHidden] = useState(false);
   const [full, setFull] = useState(false);
+  const [ttsOn, setTtsOn] = useState(false);
 
   const { user } = useAuth();
   const authedRef = useRef(false);
@@ -73,6 +79,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [user]);
 
   const { toast } = useToast();
+  const tts = useTtsMode({ rate, volume: toGain(volume), toast, onEnded: (ch) => ttsEndedRef.current(ch) });
+  const ttsRef = useRef(tts);
+  ttsRef.current = tts;
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentRef = useRef<ChapterPlay | null>(null);
@@ -83,19 +92,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const endedRef = useRef<() => void>(() => {});
   const loadSeqRef = useRef(0);
   const switchingRef = useRef(false);
+  const ttsOnRef = useRef(false);
+  const ttsEndedRef = useRef<(ch: ChapterPlay) => void>(() => {});
+  const playTtsRef = useRef<(id: number, startAt?: number) => Promise<void>>(async () => {});
 
   const saveProgress = useCallback((keepalive = false, positionOverride?: number) => {
     const cur = currentRef.current;
     const audio = audioRef.current;
-    if (!cur || !audio) return;
+    const tts = ttsOnRef.current;
+    if (!cur || (!audio && !tts)) return;
     if (!authedRef.current) return;
-    const pos = positionOverride !== undefined ? positionOverride : audio.currentTime;
+    const pos = positionOverride !== undefined ? positionOverride : tts ? ttsRef.current.progress : audio!.currentTime;
     if (!Number.isFinite(pos)) return;
     try {
       fetch(`${API_URL}/me/progress/${cur.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ position: Math.max(0, pos) }),
+        body: JSON.stringify(tts ? { position: Math.max(0, pos), listened: ttsRef.current.takeListened() } : { position: Math.max(0, pos) }),
         credentials: 'include',
         keepalive,
       }).catch(() => {});
@@ -106,7 +119,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const persistOpen = useCallback(() => {
     const cur = currentRef.current;
     const audio = audioRef.current;
-    if (!cur) return;
+    if (!cur || ttsOnRef.current) return;
     const pos = audio && Number.isFinite(audio.currentTime) ? Math.round(audio.currentTime) : 0;
     try {
       document.cookie = `${OPEN_KEY}=${cur.id}:${pos};path=/;max-age=31536000;samesite=lax`;
@@ -176,6 +189,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
 
   const playChapter = useCallback(
       async (id: number, startAt?: number, autoplay = true) => {
+        if (ttsOnRef.current) {
+          ttsRef.current.stop();
+          ttsOnRef.current = false;
+          setTtsOn(false);
+          currentRef.current = null;
+        }
         const audio = ensureAudio();
         if (currentRef.current && currentRef.current.id === id && audio.src) {
           if (startAt != null) {
@@ -193,6 +212,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         const seq = ++loadSeqRef.current;
         const ch = await api<ChapterPlay>(`/chapters/${id}`);
         if (seq !== loadSeqRef.current) return;
+
+        if (ch.narration === 'tts' || !ch.audio_url) {
+          // Read aloud in the browser: the AI branch is selected or the chapter has no audio.
+          if (autoplay) await playTtsRef.current(id, startAt);
+          else {
+            try {
+              document.cookie = `${OPEN_KEY}=;path=/;max-age=0`;
+            } catch {
+            }
+          }
+          return;
+        }
 
         currentRef.current = ch;
         setCurrent(ch);
@@ -229,7 +260,33 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       [ensureAudio, saveProgress, reportPlayError]
   );
 
+  const playTts = useCallback(
+      async (id: number, startAt?: number) => {
+        const audio = audioRef.current;
+        if (currentRef.current && currentRef.current.id !== id) saveProgress();
+        if (audio && currentRef.current && !ttsOnRef.current) audio.pause();
+        const seq = ++loadSeqRef.current;
+        const ch = await api<ChapterPlay>(`/chapters/${id}`);
+        if (seq !== loadSeqRef.current) return;
+        currentRef.current = ch;
+        setCurrent(ch);
+        ttsOnRef.current = true;
+        setTtsOn(true);
+        setPosition(0);
+        setDuration(0);
+        setBuffered(0);
+        ttsRef.current.load(ch, true, startAt);
+      },
+      [saveProgress]
+  );
+
+  playTtsRef.current = playTts;
+
   const toggle = useCallback(() => {
+    if (ttsOnRef.current) {
+      ttsRef.current.toggle();
+      return;
+    }
     const audio = audioRef.current;
     if (!audio || !currentRef.current) return;
     if (audio.paused) {
@@ -241,6 +298,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
 
   const seek = useCallback(
       (s: number) => {
+        if (ttsOnRef.current) {
+          ttsRef.current.seekSeconds(s);
+          return;
+        }
         const audio = audioRef.current;
         const cur = currentRef.current;
         if (!audio || !cur) return;
@@ -261,6 +322,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
 
   const skip = useCallback(
       (delta: number) => {
+        if (ttsOnRef.current) {
+          ttsRef.current.seekSeconds(ttsRef.current.position + delta);
+          return;
+        }
         const audio = audioRef.current;
         if (!audio || !currentRef.current) return;
         seek(audio.currentTime + delta);
@@ -270,15 +335,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
 
   const next = useCallback(() => {
     const cur = currentRef.current;
-    if (cur?.next_id) playChapter(cur.next_id).catch(() => {});
-  }, [playChapter]);
+    if (!cur?.next_id) return;
+    playChapter(cur.next_id).catch(() => {});
+  }, [playChapter, playTts]);
 
   const prev = useCallback(() => {
     const cur = currentRef.current;
     if (!cur) return;
     if (cur.prev_id) playChapter(cur.prev_id).catch(() => {});
     else seek(0);
-  }, [playChapter, seek]);
+  }, [playChapter, playTts, seek]);
 
   const setRate = useCallback((r: number) => {
     const clamped = Math.min(3, Math.max(0.5, r));
@@ -330,6 +396,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const stop = useCallback(() => {
     const audio = audioRef.current;
     loadSeqRef.current++;
+    if (ttsOnRef.current) {
+      ttsRef.current.stop();
+      ttsOnRef.current = false;
+      setTtsOn(false);
+    }
     if (audio && currentRef.current) {
       saveProgress();
       audio.pause();
@@ -384,6 +455,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   }, [handleEnded]);
 
   useEffect(() => {
+    ttsEndedRef.current = (ch) => {
+      saveProgress(false, ch.duration_seconds || ttsRef.current.progress);
+      if (sleepRef.current === 'chapter') {
+        sleepRef.current = null;
+        setSleepState(null);
+        setSleepRemaining(null);
+        return;
+      }
+      if (ch.next_id) playChapter(ch.next_id).catch(() => {});
+    };
+  }, [playTts, saveProgress]);
+
+  useEffect(() => {
     try {
       const r = parseFloat(localStorage.getItem(RATE_KEY) || '');
       if (Number.isFinite(r) && r >= 0.5 && r <= 3) {
@@ -399,14 +483,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
     }
   }, []);
 
+  const livePlaying = ttsOn ? tts.playing : playing;
   useEffect(() => {
-    if (!playing) return;
+    if (!livePlaying) return;
     const iv = window.setInterval(() => {
       saveProgress();
       persistOpen();
     }, 10000);
     return () => window.clearInterval(iv);
-  }, [playing, saveProgress, persistOpen]);
+  }, [livePlaying, saveProgress, persistOpen]);
+
+  // Narration paused or stopped: keep where it got to.
+  const ttsWasPlaying = useRef(false);
+  useEffect(() => {
+    if (ttsOn && ttsWasPlaying.current && !tts.playing) saveProgress();
+    ttsWasPlaying.current = ttsOn && tts.playing;
+  }, [ttsOn, tts.playing, saveProgress]);
 
   useEffect(() => {
     const handler = () => {
@@ -442,6 +534,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
       setSleepRemaining(remaining);
       if (remaining <= 0) {
         audioRef.current?.pause();
+        ttsRef.current.pauseNow();
         sleepRef.current = null;
         sleepUntilRef.current = 0;
         setSleepState(null);
@@ -549,13 +642,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   const value = useMemo<PlayerContextValue>(
       () => ({
         current,
-        playing,
-        duration,
+        playing: ttsOn ? tts.playing : playing,
+        duration: ttsOn ? tts.duration : duration,
         rate,
         volume,
         sleepRemaining,
         sleep,
         playChapter,
+        playTts,
+        mode: ttsOn ? 'tts' : 'audio',
         toggle,
         seek,
         skip,
@@ -574,6 +669,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
         current,
         playing,
         duration,
+        ttsOn,
+        tts.playing,
+        tts.duration,
+        playTts,
         rate,
         volume,
         sleepRemaining,
@@ -594,14 +693,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }): JSX
   );
 
   const positionValue = useMemo<PlayerPositionValue>(
-      () => ({ position, buffered }),
-      [position, buffered]
+      () => (ttsOn ? { position: tts.position, buffered: tts.position } : { position, buffered }),
+      [position, buffered, ttsOn, tts.position]
   );
 
   return (
       <PlayerContext.Provider value={value}>
         <PlayerPositionContext.Provider value={positionValue}>
-          {children}
+          <TtsContext.Provider value={tts}>{children}</TtsContext.Provider>
         </PlayerPositionContext.Provider>
       </PlayerContext.Provider>
   );
@@ -616,5 +715,10 @@ export function usePlayer(): PlayerContextValue {
 export function usePlayerPosition(): PlayerPositionValue {
   const ctx = useContext(PlayerPositionContext);
   if (!ctx) throw new Error('usePlayerPosition must be used inside <PlayerProvider>');
+  return ctx;
+}
+export function useTts(): TtsMode {
+  const ctx = useContext(TtsContext);
+  if (!ctx) throw new Error('useTts must be used inside <PlayerProvider>');
   return ctx;
 }

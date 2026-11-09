@@ -45,6 +45,10 @@
   max-width: 800px;
 }
 
+.panelXWide {
+  max-width: 1180px;
+}
+
 @media (max-width: 800px) {
   .overlayWide {
     padding: 0;
@@ -88,6 +92,24 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #ffffff;
+}
+
+.titleBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--text-muted, #8a8a8a);
+}
+
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .close {
