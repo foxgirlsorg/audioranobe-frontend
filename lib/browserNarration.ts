@@ -112,7 +112,7 @@ export async function installSilero(onProgress?: (p: InstallProgress) => void, s
     await deleteVersions(db, m.version);
     ls.set(LS_VERSION, m.version);
   } catch (e) {
-    await deleteVersions(db).catch(() => {});
+    await deleteVersions(db, ls.get(LS_VERSION) ?? undefined).catch(() => {});
     throw e;
   } finally {
     db.close();
