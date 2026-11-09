@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/tts-assets.mjs",
     "build": "next build",
     "start": "next start",
     "build:check": "node scripts/build-check.mjs"
