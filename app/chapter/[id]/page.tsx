@@ -262,10 +262,12 @@ export default function ChapterPage({ params }: { params: { id: string } }) {
             {'Скачать'}
           </a>
           ) : null}
+          {chapter.narration === 'tts' ? (
           <button type="button" className={styles.chipLink} onClick={() => void onReadAloud()} title={'Озвучка в браузере с текстом'}>
             <FileText size={12} />
             {'Читать с озвучкой'}
           </button>
+          ) : null}
         </div>
 
         <div className={styles.pager}>
