@@ -984,8 +984,8 @@ export interface BackupRunItem {
   destination: string;
   error: string | null;
   size_bytes: number | null;
-  started_at: string | null;
-  finished_at: string | null;
+  started_at: number | null;
+  finished_at: number | null;
 }
 
 export interface BackupRestorePoint {

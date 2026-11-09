@@ -5,6 +5,7 @@ import { Loader2, Save, Plus, Pencil, Trash2, PlayCircle, FlaskConical, RefreshC
 import { api, API_URL } from '@/lib/api';
 import { uploadInChunks } from '@/lib/upload';
 import { errMsg, useToast } from '@/lib/toast';
+import { formatDateTime } from '@/lib/format';
 import type { BackupDestination, BackupDestType, BackupRestorePoint, BackupRunItem, BackupSchedule, BackupSettings } from '@/lib/types';
 import { ModShell, ErrorPanel } from '../modnav';
 import Select from '@/components/Select/Select';
@@ -42,9 +43,8 @@ function humanSize(n: number | null): string {
   return `${v.toFixed(1)} ${units[i]}`;
 }
 
-function fmtDate(s: string | null): string {
-  if (!s) return '—';
-  return new Date(s).toLocaleString('ru-RU');
+function fmtDate(v: string | number | null): string {
+  return v === null ? '—' : formatDateTime(v) || '—';
 }
 
 export default function BackupPage() {
