@@ -15,4 +15,4 @@ for (const f of ['ort.wasm.min.js', 'ort-wasm-simd-threaded.wasm', 'ort-wasm-sim
 const py = join(root, 'node_modules', 'pyodide');
 for (const f of ['pyodide.js', 'pyodide.asm.js', 'pyodide.asm.wasm', 'python_stdlib.zip', 'pyodide-lock.json']) copy(join(py, f), join(out, 'vendor', 'pyodide', f));
 
-console.log('tts runtime ready in public/tts/vendor (models are served by the backend: php src/cli/tts_upload.php <dir>)');
+console.log('tts runtime ready in public/tts/vendor (models are served by the backend)');
